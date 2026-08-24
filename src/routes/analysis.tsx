@@ -57,14 +57,8 @@ function Analysis() {
 
   useEffect(() => {
     if (!initialFen) return;
-    try {
-      game.game.current.load(initialFen);
-      setFenInput(initialFen);
-      game.reset();
-      game.game.current.load(initialFen);
-    } catch {
-      setLoadError("That position could not be loaded.");
-    }
+    setFenInput(initialFen);
+    if (!game.loadFen(initialFen)) setLoadError("That position could not be loaded.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFen]);
 
