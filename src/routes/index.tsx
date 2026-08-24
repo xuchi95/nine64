@@ -130,7 +130,7 @@ function Home() {
       />
 
       {/* ── Quick modes strip: icon + sparkline, text in tooltip ── */}
-      <section className="mt-14 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4 lg:mt-14">
         <ModeTile to="/play/local" icon={<Users className="size-5" />} title="Local" tooltip="Pass &amp; play on one device">
           <LocalSparkline />
         </ModeTile>
@@ -146,14 +146,14 @@ function Home() {
       </section>
 
       {/* ── Closing CTA ── */}
-      <section className="panel mt-14 mb-4 overflow-hidden px-6 py-12 text-center sm:px-12">
+      <section className="panel mt-12 mb-4 overflow-hidden px-4 py-10 text-center sm:px-8 sm:py-12 lg:mt-14 lg:px-12">
         <div className="mx-auto max-w-xl">
-          <h2 className="font-display text-3xl font-bold tracking-tight">Your next game is one click away</h2>
+          <h2 className="font-display text-[clamp(1.5rem,6vw,1.875rem)] font-bold tracking-tight sm:text-3xl">Your next game is one click away</h2>
           <p className="mt-3 text-sm text-muted-foreground">
             No download. Offline-ready board. {APP.tagline}
           </p>
           <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-13 px-10 text-base font-semibold">
+            <Button asChild size="lg" className="h-13 px-8 text-base font-semibold sm:px-10">
               <Link to="/play/ai" search={{ quick: true }}>
                 <Play className="size-5" />
                 New game
@@ -198,9 +198,9 @@ function FeatureRow({
   reverse?: boolean;
 }) {
   return (
-    <section className="grid items-center gap-8 border-t border-border py-12 lg:grid-cols-2 lg:gap-16 lg:py-16">
-      <div className={reverse ? "lg:order-2" : ""}>
-        <h2 className="font-display text-3xl font-bold leading-tight tracking-tight sm:text-[2.1rem]">
+    <section className="grid items-center gap-8 border-t border-border py-10 md:grid-cols-2 md:gap-10 md:py-12 lg:gap-16 lg:py-16">
+      <div className={`min-w-0 ${reverse ? "md:order-2" : ""}`}>
+        <h2 className="font-display text-[clamp(1.55rem,6vw,1.875rem)] font-bold leading-tight tracking-tight sm:text-3xl lg:text-[2.1rem]">
           {title}
         </h2>
         <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{text}</p>
@@ -211,7 +211,7 @@ function FeatureRow({
           </Link>
         </Button>
       </div>
-      <div className={`flex justify-center ${reverse ? "lg:order-1" : ""}`}>{visual}</div>
+      <div className={`flex min-w-0 justify-center ${reverse ? "md:order-1" : ""}`}>{visual}</div>
     </section>
   );
 }
@@ -332,7 +332,7 @@ function StartBoard() {
 function BotsVisual() {
   const faces = BOT_PERSONALITIES.slice(0, 6);
   return (
-    <div className="grid w-full max-w-sm grid-cols-3 gap-3">
+    <div className="grid w-full max-w-sm grid-cols-3 gap-2 sm:gap-3">
       {faces.map((p, i) => (
         <div
           key={p.id}
@@ -356,7 +356,7 @@ function BotsVisual() {
 function TilesVisual() {
   const tiles = ["♟", "♞", "♝", "♜", "♛", "♚"];
   return (
-    <div className="grid w-full max-w-sm grid-cols-3 gap-3 [perspective:900px]">
+    <div className="grid w-full max-w-[18rem] grid-cols-3 gap-2 sm:max-w-sm sm:gap-3 [perspective:900px]">
       {tiles.map((t, i) => (
         <div
           key={t}
@@ -379,7 +379,7 @@ function EvalVisual() {
     .map((v, i) => `${i === 0 ? "M" : "L"}${(i / (points.length - 1)) * 100},${100 - v}`)
     .join(" ");
   return (
-    <div className="panel w-full max-w-md p-5">
+    <div className="panel w-full max-w-md p-4 sm:p-5">
       <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
         <span>Eval curve</span>
         <span className="font-mono text-primary">92% accuracy</span>
@@ -406,7 +406,7 @@ function EvalVisual() {
 
 function OnlineVisual() {
   return (
-    <div className="panel w-full max-w-md p-5">
+    <div className="panel w-full max-w-md p-4 sm:p-5">
       {[
         { name: "You", rating: 1842, clock: "4:58", active: true },
         { name: "Opponent", rating: 1867, clock: "5:00", active: false },
