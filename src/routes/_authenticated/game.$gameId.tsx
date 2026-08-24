@@ -226,7 +226,7 @@ function OnlineGamePage() {
   );
 
   const handleMove = useCallback(
-    async (from: string, to: string, promotion?: "q" | "r" | "b" | "n") => {
+    (from: string, to: string, promotion?: "q" | "r" | "b" | "n") => {
       if (!game || !myColor || finishedRef.current) return false;
       if (game.status !== "active") return false;
       if (gameRef.current.turn() !== myColor) return false;
@@ -246,51 +246,53 @@ function OnlineGamePage() {
       const nextClock = { ...clock };
       // Add increment for the side that just moved
       if (game.time_control.startsWith("rapid15m")) {
-        nextClock[turnBefore] += 10_000;
+        nextClock[turnBefore as "w" | "b"] += 10_000;
       }
 
-      try {
-        await makeMoveFn({
-          data: {
-            gameId: game.id,
-            san: move.san,
-            uci: `${from}${to}${promotion ?? ""}`,
-            fen: gameRef.current.fen(),
-            whiteTimeMs: nextClock.w,
-            blackTimeMs: nextClock.b,
-          },
+      const currentFen = gameRef.current.fen();
+      setLastMove({ from: move.from, to: move.to });
+      setClock(nextClock);
+      playMoveSound(gameRef.current, move);
+      setMoves((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          game_id: game.id,
+          move_number: prev.length + 1,
+          san: move.san,
+          uci: `${from}${to}`,
+          fen: currentFen,
+          white_time_ms: nextClock.w,
+          black_time_ms: nextClock.b,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      // Send to server in background
+      makeMoveFn({
+        data: {
+          gameId: game.id,
+          san: move.san,
+          uci: `${from}${to}${promotion ?? ""}`,
+          fen: currentFen,
+          whiteTimeMs: nextClock.w,
+          blackTimeMs: nextClock.b,
+        },
+      })
+        .then(() => {
+          if (gameRef.current.isCheckmate()) {
+            void finishIfOver("Checkmate", myColor);
+          } else if (gameRef.current.isDraw()) {
+            void finishIfOver("Draw", "draw");
+          }
+        })
+        .catch((e: unknown) => {
+          gameRef.current.undo();
+          setError(e instanceof Error ? e.message : "Move failed");
+          setFenFromGame();
         });
-        setLastMove({ from: move.from, to: move.to });
-        setClock(nextClock);
-        playMoveSound(gameRef.current, move);
-        setMoves((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            game_id: game.id,
-            move_number: prev.length + 1,
-            san: move.san,
-            uci: `${from}${to}`,
-            fen: gameRef.current.fen(),
-            white_time_ms: nextClock.w,
-            black_time_ms: nextClock.b,
-            created_at: new Date().toISOString(),
-          },
-        ]);
 
-        // Check local end conditions
-        if (gameRef.current.isCheckmate()) {
-          await finishIfOver("Checkmate", myColor);
-        } else if (gameRef.current.isDraw()) {
-          await finishIfOver("Draw", "draw");
-        }
-        return true;
-      } catch (e) {
-        // Revert local move on server error
-        gameRef.current.undo();
-        setError(e instanceof Error ? e.message : "Move failed");
-        return false;
-      }
+      return true;
     },
     [clock, finishIfOver, game, makeMoveFn, myColor],
   );
