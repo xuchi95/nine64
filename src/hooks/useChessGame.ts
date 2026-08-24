@@ -70,6 +70,9 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   const [started, setStarted] = useState(false);
   const resultRef = useRef<GameResult | null>(null);
   const lowTimeFlag = useRef<{ w: boolean; b: boolean }>({ w: false, b: false });
+  // Mirrors of state used to build a snapshot synchronously when the game ends.
+  const movesRef = useRef<MoveRecord[]>([]);
+  const startFenRef = useRef<string>(gameRef.current.fen());
 
   const reset = useCallback(() => {
     const rules = VARIANT_RULES[variant];
@@ -80,6 +83,8 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       game.reset();
     }
     gameRef.current = game;
+    startFenRef.current = game.fen();
+    movesRef.current = [];
     setFen(game.fen());
     setMoves([]);
     setResult(null);
@@ -100,6 +105,8 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
         return false;
       }
       gameRef.current = game;
+      startFenRef.current = game.fen();
+      movesRef.current = [];
       setFen(game.fen());
       setMoves([]);
       setResult(null);
@@ -122,7 +129,11 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       if (resultRef.current) return;
       resultRef.current = r;
       setResult(r);
-      onGameEnd?.(r);
+      onGameEnd?.(r, {
+        startFen: startFenRef.current,
+        finalFen: gameRef.current.fen(),
+        moves: [...movesRef.current],
+      });
     },
     [onGameEnd],
   );
