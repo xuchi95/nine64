@@ -4,6 +4,7 @@ import { evaluateGame } from "./evaluate";
 import { sprt } from "./sprt";
 import { detectCollusion, type GameRecord } from "./collusion";
 import { THRESHOLDS } from "./thresholds";
+import { isLockActive, lockHoursFor } from "./lockPolicy";
 import type { FairplayEvaluation } from "./evaluate";
 import type { MoveObservation, TurnTelemetry } from "./types";
 
@@ -14,6 +15,8 @@ export interface EvaluateArgs {
   subjectId: string;
   observations: MoveObservation[];
   rating: number;
+  /** Wall-clock ms the engine spent producing the verdict (observability). */
+  evalMs?: number;
 }
 
 /** Read the subject's own behavioural telemetry — never taken from the reporter. */
@@ -60,6 +63,8 @@ export async function upsertReport(
     contributions: JSON.parse(JSON.stringify(verdict.contributions)) as Database["public"]["Tables"]["fairplay_reports"]["Row"]["contributions"],
     reasons: JSON.parse(JSON.stringify(verdict.reasons)) as Database["public"]["Tables"]["fairplay_reports"]["Row"]["reasons"],
     model: verdict.model,
+    eval_ms: Math.max(0, Math.round(args.evalMs ?? 0)),
+    rating: Math.round(args.rating),
   };
 
   if (existing) {
