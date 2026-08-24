@@ -28,6 +28,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const settings = useSettings();
+  const { user } = useAuth();
 
   return (
     <AppShell>
@@ -37,6 +38,13 @@ function SettingsPage() {
           Reset to defaults
         </Button>
       </div>
+
+      {user && (
+        <div className="mt-5">
+          <FairplayStatusCard />
+        </div>
+      )}
+
 
       <section className="panel mt-5 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
