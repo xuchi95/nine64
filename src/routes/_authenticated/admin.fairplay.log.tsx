@@ -21,6 +21,7 @@ import { listFairplayDecisions } from "@/lib/fairplay.functions";
 import { ACTION_LABEL, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import { RowSkeleton } from "@/components/layout/RowSkeleton";
 
 export const Route = createFileRoute("/_authenticated/admin/fairplay/log")({
   head: () => ({
@@ -336,11 +337,14 @@ function FairplayLogPage() {
         </Card>
 
         <div className="mt-4 space-y-4">
-          {filtered.length === 0 && (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              {busy ? "Đang tải nhật ký…" : "Chưa có quyết định nào khớp bộ lọc."}
-            </p>
-          )}
+          {filtered.length === 0 &&
+            (busy ? (
+              <RowSkeleton rows={6} />
+            ) : (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Chưa có quyết định nào khớp bộ lọc.
+              </p>
+            ))}
 
           {groups.map((bucket) =>
             group === "time" ? (

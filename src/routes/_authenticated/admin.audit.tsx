@@ -22,6 +22,7 @@ import { hasRole } from "@/lib/auth.functions";
 import { listAdminAuditLog, type AdminAuditRow } from "@/lib/admin.functions";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import { RowSkeleton } from "@/components/layout/RowSkeleton";
 
 export const Route = createFileRoute("/_authenticated/admin/audit")({
   head: () => ({
@@ -265,9 +266,13 @@ function AdminAuditPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {filtered.length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">
-                  {busy ? "Đang tải nhật ký…" : "Chưa có thao tác nào khớp bộ lọc."}
-                </p>
+                busy ? (
+                  <RowSkeleton rows={6} />
+                ) : (
+                  <p className="py-10 text-center text-sm text-muted-foreground">
+                    Chưa có thao tác nào khớp bộ lọc.
+                  </p>
+                )
               ) : (
                 filtered.map((row) => <AuditItem key={row.id} row={row} />)
               )}
