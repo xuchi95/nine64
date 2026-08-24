@@ -1,5 +1,14 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Moon, Sun, Crown, User, LogOut, Loader2, Bell } from "lucide-react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import {
+  Moon,
+  Sun,
+  Crown,
+  User,
+  LogOut,
+  Loader2,
+  Bell,
+  ChevronDown,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { APP } from "@/config/app";
 import { updateSettings, useSettings } from "@/lib/settings";
@@ -15,16 +24,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const NAV = [
+const MAIN_NAV = [
   { to: "/", label: "Home" },
   { to: "/play", label: "Play" },
   { to: "/games", label: "My games" },
   { to: "/puzzles", label: "Puzzles" },
+] as const;
+
+const MORE_NAV = [
   { to: "/drills", label: "Bài tập" },
   { to: "/progress", label: "Tiến bộ" },
   { to: "/insights", label: "Insights" },
   { to: "/analysis", label: "Analysis" },
-  { to: "/settings", label: "Settings" },
 ] as const;
 
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
@@ -43,7 +54,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             </span>
           </Link>
           <nav className="hidden items-center gap-1 text-sm lg:flex">
-            {NAV.map((item) => (
+            {MAIN_NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -54,6 +65,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
                 {item.label}
               </Link>
             ))}
+            <MoreNav />
           </nav>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <button
@@ -75,7 +87,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
           </div>
         </div>
         <nav className="flex items-center gap-1 overflow-x-auto px-4 pb-2 text-sm [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
-          {NAV.map((item) => (
+          {MAIN_NAV.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -86,6 +98,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
               {item.label}
             </Link>
           ))}
+          <MoreNav mobile />
         </nav>
       </header>
       <main className={cn("mx-auto w-full flex-1 px-4 py-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
@@ -95,6 +108,46 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
         {APP.name} — {APP.tagline}
       </footer>
     </div>
+  );
+}
+
+function MoreNav({ mobile }: { mobile?: boolean }) {
+  const { pathname } = useLocation();
+  const active = MORE_NAV.some((item) => pathname.startsWith(item.to));
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex items-center gap-1 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+            mobile && "shrink-0",
+            active && "bg-secondary text-foreground",
+          )}
+        >
+          More
+          <ChevronDown className="size-3.5 opacity-70" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-44">
+        {MORE_NAV.map((item) => {
+          const isActive = pathname.startsWith(item.to);
+          return (
+            <DropdownMenuItem
+              key={item.to}
+              asChild
+              className={cn(
+                "cursor-pointer",
+                isActive && "bg-secondary text-foreground",
+              )}
+            >
+              <Link to={item.to}>{item.label}</Link>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
