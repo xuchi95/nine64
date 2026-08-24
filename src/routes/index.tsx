@@ -127,12 +127,20 @@ function Home() {
         visual={<OnlineVisual />}
       />
 
-      {/* ── Quick modes strip ── */}
+      {/* ── Quick modes strip: icon + sparkline, text in tooltip ── */}
       <section className="mt-14 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ModeTile to="/play/local" icon={<Users className="size-5" />} title="Local" meta="Pass & play" />
-        <ModeTile to="/play/share" icon={<Link2 className="size-5" />} title="Share link" meta="Turn by turn" />
-        <ModeTile to="/analysis" icon={<Target className="size-5" />} title="Analysis" meta="Free board" />
-        <ModeTile to="/games" icon={<LineChart className="size-5" />} title="My games" meta="Archive" />
+        <ModeTile to="/play/local" icon={<Users className="size-5" />} title="Local" tooltip="Pass &amp; play on one device">
+          <LocalSparkline />
+        </ModeTile>
+        <ModeTile to="/play/share" icon={<Share2 className="size-5" />} title="Share" tooltip="Sync moves turn-by-turn via link">
+          <ShareSparkline />
+        </ModeTile>
+        <ModeTile to="/analysis" icon={<BarChart3 className="size-5" />} title="Analysis" tooltip="Free board with engine eval">
+          <AnalysisSparkline />
+        </ModeTile>
+        <ModeTile to="/games" icon={<LineChart className="size-5" />} title="Games" tooltip="Review your archived games">
+          <GamesSparkline />
+        </ModeTile>
       </section>
 
       {/* ── Closing CTA ── */}
