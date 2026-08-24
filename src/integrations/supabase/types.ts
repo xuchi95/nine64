@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      game_fairplay: {
+        Row: {
+          created_at: string
+          engine_match: number
+          flags: Json
+          game_id: string
+          hard_accuracy: number
+          hard_move_match: number
+          id: string
+          suspicion: number
+          time_cv: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          engine_match?: number
+          flags?: Json
+          game_id: string
+          hard_accuracy?: number
+          hard_move_match?: number
+          id?: string
+          suspicion?: number
+          time_cv?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          engine_match?: number
+          flags?: Json
+          game_id?: string
+          hard_accuracy?: number
+          hard_move_match?: number
+          id?: string
+          suspicion?: number
+          time_cv?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_fairplay_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_moves: {
         Row: {
           black_time_ms: number
@@ -195,9 +242,13 @@ export type Database = {
           draws: number
           games_played: number
           id: string
+          last_rated_at: string | null
           losses: number
+          peak_rating: number
           rating: number
+          rating_deviation: number
           updated_at: string
+          volatility: number
           wins: number
         }
         Insert: {
@@ -207,9 +258,13 @@ export type Database = {
           draws?: number
           games_played?: number
           id: string
+          last_rated_at?: string | null
           losses?: number
+          peak_rating?: number
           rating?: number
+          rating_deviation?: number
           updated_at?: string
+          volatility?: number
           wins?: number
         }
         Update: {
@@ -219,10 +274,107 @@ export type Database = {
           draws?: number
           games_played?: number
           id?: string
+          last_rated_at?: string | null
           losses?: number
+          peak_rating?: number
           rating?: number
+          rating_deviation?: number
           updated_at?: string
+          volatility?: number
           wins?: number
+        }
+        Relationships: []
+      }
+      puzzle_attempts: {
+        Row: {
+          created_at: string
+          grade: number
+          id: string
+          puzzle_id: string
+          rating_after: number | null
+          rating_before: number | null
+          solved: boolean
+          time_ms: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grade: number
+          id?: string
+          puzzle_id: string
+          rating_after?: number | null
+          rating_before?: number | null
+          solved?: boolean
+          time_ms?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grade?: number
+          id?: string
+          puzzle_id?: string
+          rating_after?: number | null
+          rating_before?: number | null
+          solved?: boolean
+          time_ms?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      puzzles: {
+        Row: {
+          attempts: number
+          color: string
+          created_at: string
+          fen: string
+          id: string
+          ply: number
+          rating: number
+          solution: string
+          solution_san: string | null
+          solved: number
+          source_game_id: string | null
+          srs: Json
+          swing: number
+          themes: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          color?: string
+          created_at?: string
+          fen: string
+          id: string
+          ply?: number
+          rating?: number
+          solution: string
+          solution_san?: string | null
+          solved?: number
+          source_game_id?: string | null
+          srs?: Json
+          swing?: number
+          themes?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          color?: string
+          created_at?: string
+          fen?: string
+          id?: string
+          ply?: number
+          rating?: number
+          solution?: string
+          solution_san?: string | null
+          solved?: number
+          source_game_id?: string | null
+          srs?: Json
+          swing?: number
+          themes?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -252,6 +404,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
       commit_move: {
         Args: {
           _base_fen: string
@@ -261,6 +414,18 @@ export type Database = {
           _san: string
           _uci: string
           _white_time_ms: number
+        }
+        Returns: Json
+      }
+      find_match: { Args: { _queue_id: string }; Returns: string }
+      glicko2_update: {
+        Args: {
+          _opp_rating: number
+          _opp_rd: number
+          _rating: number
+          _rd: number
+          _score: number
+          _sigma: number
         }
         Returns: Json
       }
