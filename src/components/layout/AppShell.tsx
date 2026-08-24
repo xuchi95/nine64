@@ -197,18 +197,22 @@ function MobileNav() {
             Train
           </p>
           <div className="flex flex-col gap-2">
-            {MORE_NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex min-h-[3.75rem] items-center rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
-                  isActive(item.to) && "bg-primary/15 text-primary",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {MORE_NAV.map((item) => {
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "flex min-h-[3.75rem] items-center justify-between rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                    active && "bg-primary/15 text-primary",
+                  )}
+                >
+                  {item.label}
+                  {active && <Check className="size-5 text-primary" />}
+                </Link>
+              );
+            })}
           </div>
 
           {user && (
