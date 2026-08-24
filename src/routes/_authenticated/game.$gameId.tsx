@@ -330,7 +330,7 @@ function OnlineGamePage() {
       .flat()
       .filter((sq): sq is NonNullable<typeof sq> => sq !== null)
       .map((sq) => ({ square: sq.square as string, type: sq.type, color: sq.color as PieceColor }));
-  }, [moves, result]);
+  }, [moves, result, boardRev]);
 
   const checkSquare = useMemo(() => {
     if (!gameRef.current.isCheck()) return null;
@@ -341,7 +341,7 @@ function OnlineGamePage() {
       }
     }
     return null;
-  }, [moves, result]);
+  }, [moves, result, boardRev]);
 
   const resign = useCallback(async () => {
     if (!game || !myColor || finishedRef.current) return;
