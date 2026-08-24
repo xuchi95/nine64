@@ -133,8 +133,11 @@ function RootComponent() {
       <AuthProvider>
         <SettingsBridge />
         <HistorySyncBridge />
+        <RouteProgress />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
