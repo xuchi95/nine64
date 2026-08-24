@@ -134,9 +134,18 @@ function Home() {
           <p className="mt-3 text-sm text-muted-foreground">
             No download. Offline-ready board. {APP.tagline}
           </p>
-          <Button asChild size="lg" className="mt-7 h-13 px-10 text-base font-semibold">
-            <Link to="/play">Start playing</Link>
-          </Button>
+          <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
+            <Button asChild size="lg" className="h-13 px-10 text-base font-semibold">
+              <Link to="/play/ai" search={{ quick: true }}>
+                <Play className="size-5" />
+                New game
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="h-13 px-8 text-base">
+              <Link to="/online">Play online</Link>
+            </Button>
+          </div>
+
         </div>
       </section>
     </AppShell>
