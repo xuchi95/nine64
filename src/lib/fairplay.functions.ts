@@ -252,8 +252,18 @@ export const resolveFairplayCase = createServerFn({ method: "POST" })
       note: data.note ?? null,
     });
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: hold ? "rating_hold" : data.decision === "unlock" ? "unlock" : "clear_warning",
+      targetUserId: data.userId,
+      note: data.note ?? null,
+      detail: hold ? { hours: data.hours, expiresAt } : {},
+    });
+
     return { ok: true, lockExpiresAt: expiresAt, lockHours: hold ? data.hours : 0 };
   });
+
 
 /** Detection / false-alarm / latency metrics for the admin dashboard. */
 export const getFairplayMetrics = createServerFn({ method: "GET" })
