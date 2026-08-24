@@ -27,6 +27,8 @@ import { normalizeResult, resultCodeFromWinner, resultLabel } from "@/lib/chess/
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
 import { buildPgn, shareUrl } from "@/lib/chess/share";
+import { FairplayBridge } from "@/components/game/FairplayBridge";
+import { useFairplayTelemetry } from "@/hooks/useFairplayTelemetry";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   head: () => ({
