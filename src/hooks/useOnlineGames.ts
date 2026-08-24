@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyGames, getGameMoves } from "@/lib/online.functions";
+import { getMyGames, getGameMoves, getGame } from "@/lib/online.functions";
 import type { Game, GameMove } from "@/lib/database.types";
 
 export interface OnlineGameDetail extends Game {
@@ -54,5 +54,12 @@ export function useOnlineGame(gameId: string) {
     };
   }, [gameId, getGameFn, getMovesFn]);
 
-  return { game, loading, refresh: () => void getGameFn({ data: { gameId } }).then((g) => setGame((prev) => (prev ? { ...prev, ...(g as Game) } : null))) };
+  return {
+    game,
+    loading,
+    refresh: () =>
+      void getGameFn({ data: { gameId } }).then((g: unknown) =>
+        setGame((prev) => (prev ? { ...prev, ...(g as Game) } : null)),
+      ),
+  };
 }
