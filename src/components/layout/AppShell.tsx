@@ -7,11 +7,12 @@ import {
   Loader2,
   Bell,
   ChevronDown,
+  Menu,
   Settings as SettingsIcon,
   ShieldCheck,
   History,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
 import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const MAIN_NAV = [
   { to: "/", label: "Home" },
@@ -54,16 +56,18 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 shadow-[0_1px_0_0_hsl(var(--border)/0.35),0_8px_24px_-20px_rgb(0_0_0/0.6)] backdrop-blur-xl">
         <div
           className={cn(
-            "mx-auto flex h-16 items-center gap-4 px-4 sm:px-6 lg:h-20 lg:gap-8",
+            "mx-auto grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 sm:h-16 sm:px-6 lg:flex lg:h-20 lg:gap-8",
             wide ? "max-w-[1600px]" : "max-w-6xl",
           )}
         >
-          <Link to="/" className="group flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 lg:size-11">
-              <Crown className="size-5 lg:size-6" />
+          <MobileNav />
+
+          <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 sm:size-10 lg:size-11">
+              <Crown className="size-[18px] sm:size-5 lg:size-6" />
             </span>
-            <span className="flex flex-col leading-none">
-              <span className="font-display text-base font-bold tracking-[0.16em] lg:text-lg">
+            <span className="flex min-w-0 flex-col leading-none">
+              <span className="truncate text-[13px] font-bold tracking-[0.14em] sm:text-base sm:tracking-[0.16em] lg:text-lg">
                 {APP.name.toUpperCase()}
               </span>
               <span className="mt-1 hidden text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:block">
@@ -87,14 +91,14 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             <MoreNav />
           </nav>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 justify-self-end sm:gap-2 lg:ml-auto">
             <button
               type="button"
               aria-label="Toggle colour mode"
               onClick={() =>
                 updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
               }
-              className="flex size-10 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+              className="hidden size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground sm:flex lg:size-10"
             >
               {settings.appearance === "dark" ? (
                 <Sun className="size-[18px]" />
@@ -106,20 +110,6 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             <AuthHeader />
           </div>
         </div>
-        <nav className="flex items-center gap-1.5 overflow-x-auto border-t border-border/60 px-4 py-2 text-sm font-medium [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
-          {MAIN_NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="shrink-0 rounded-lg px-3 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              activeProps={{ className: "bg-primary/15 text-primary" }}
-              activeOptions={{ exact: item.to === "/" }}
-            >
-              {item.label}
-            </Link>
-          ))}
-          <MoreNav mobile />
-        </nav>
       </header>
       <main className={cn("mx-auto w-full flex-1 px-4 py-6 sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
         {children}
@@ -130,6 +120,127 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
     </div>
   );
 }
+
+function MobileNav() {
+  const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const settings = useSettings();
+  const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button
+          type="button"
+          aria-label="Mở menu"
+          className="flex size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors active:bg-secondary lg:hidden"
+        >
+          <Menu className="size-5" />
+        </button>
+      </SheetTrigger>
+      <SheetContent side="left" className="flex w-[86vw] max-w-sm flex-col gap-0 p-0">
+        <div className="flex items-center gap-3 border-b border-border/70 px-4 py-4">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+            <Crown className="size-5" />
+          </span>
+          <SheetTitle className="text-base tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto p-3">
+          <div className="flex flex-col gap-1">
+            {MAIN_NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "flex min-h-12 items-center rounded-xl px-4 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
+                  isActive(item.to) && "bg-primary/15 text-primary",
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+            Luyện tập
+          </p>
+          <div className="flex flex-col gap-1">
+            {MORE_NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "flex min-h-12 items-center rounded-xl px-4 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                  isActive(item.to) && "bg-primary/15 text-primary",
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {user && (
+            <>
+              <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                Tài khoản
+              </p>
+              <div className="flex flex-col gap-1">
+                {PROFILE_MENU.map((item) => (
+                  <Link
+                    key={item.to + item.label}
+                    to={item.to}
+                    className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
+                  >
+                    <item.icon className="size-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+        </nav>
+
+        <div className="flex items-center gap-2 border-t border-border/70 p-3">
+          <Button
+            variant="outline"
+            className="h-12 flex-1 justify-center gap-2"
+            onClick={() =>
+              updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
+            }
+          >
+            {settings.appearance === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {settings.appearance === "dark" ? "Sáng" : "Tối"}
+          </Button>
+          {user ? (
+            <Button
+              variant="outline"
+              className="h-12 flex-1 justify-center gap-2 text-destructive"
+              onClick={() => {
+                setOpen(false);
+                void signOut();
+              }}
+            >
+              <LogOut className="size-4" />
+              Đăng xuất
+            </Button>
+          ) : (
+            <Button asChild className="h-12 flex-1 justify-center">
+              <Link to="/auth/login">Đăng nhập</Link>
+            </Button>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 
 function MoreNav({ mobile }: { mobile?: boolean }) {
   const { pathname } = useLocation();
@@ -185,7 +296,7 @@ function NotificationBell() {
         <button
           type="button"
           aria-label="Notifications"
-          className="relative flex size-10 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          className="relative flex size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:size-10"
         >
           <Bell className="size-[18px]" />
           {unreadCount > 0 && (
@@ -257,11 +368,14 @@ function AuthHeader() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" className="h-10 px-3">
+        <Button asChild variant="ghost" className="hidden h-11 px-3 sm:inline-flex lg:h-10">
           <Link to="/auth/login">Sign in</Link>
         </Button>
-        <Button asChild className="h-10 px-4">
-          <Link to="/auth/register">Register</Link>
+        <Button asChild className="h-11 px-4 lg:h-10">
+          <Link to="/auth/register">
+            <span className="sm:hidden">Đăng nhập</span>
+            <span className="hidden sm:inline">Register</span>
+          </Link>
         </Button>
       </div>
     );
@@ -275,12 +389,12 @@ function AuthHeader() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex h-10 items-center gap-2.5 rounded-xl border border-border/80 bg-secondary/30 pl-1.5 pr-2.5 text-sm font-medium transition-colors hover:border-primary/40"
+          className="flex h-11 items-center gap-2 rounded-xl border border-border/80 bg-secondary/30 pl-1.5 pr-2 text-sm font-medium transition-colors hover:border-primary/40 lg:h-10 lg:gap-2.5 lg:pr-2.5"
         >
-          <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 font-mono text-[11px] font-bold text-primary-foreground">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-[11px] font-bold text-primary-foreground lg:size-7">
             {initials}
           </span>
-          <span className="hidden max-w-[130px] truncate sm:inline">{displayName}</span>
+          <span className="hidden max-w-[130px] truncate lg:inline">{displayName}</span>
           <ChevronDown className="size-3.5 opacity-60" />
         </button>
       </DropdownMenuTrigger>
