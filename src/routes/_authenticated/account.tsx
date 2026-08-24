@@ -276,7 +276,8 @@ function PasswordCard() {
   }
 
   return (
-    <form onSubmit={save} className="panel max-w-xl space-y-4 p-5">
+    <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
+      <SectionHead title="Mật khẩu" desc="Tối thiểu 8 ký tự. Xác minh mật khẩu hiện tại trước." />
       <div className="space-y-2">
         <Label htmlFor="cur-pass">Mật khẩu hiện tại</Label>
         <Input
