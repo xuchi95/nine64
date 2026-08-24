@@ -129,7 +129,7 @@ function TrendChart({
       </svg>
       <div className="mt-2 grid gap-1 text-xs" style={{ gridTemplateColumns: `repeat(${rows.length}, minmax(0, 1fr))` }}>
         {rows.map((r, i) => {
-          const prev = i > 0 ? rows[i - 1].value : null;
+          const prev = i > 0 ? (rows[i - 1]?.value ?? null) : null;
           const better = prev === null ? null : lowerIsBetter ? r.value < prev : r.value > prev;
           return (
             <div key={r.label} className="min-w-0 text-center">
