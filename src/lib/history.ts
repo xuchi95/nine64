@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { MoveRecord, GameResult, Color } from "@/hooks/useChessGame";
 import type { PlyAnalysis, DeepReviewSummary } from "@/lib/analysis/types";
 import type { FairplayReport } from "@/lib/fairplay/score";
+import type { CoachReport } from "@/lib/coach/types";
 
 export interface GameReview {
   /** Centipawn evaluation (white POV) after each move; null when unavailable. */
@@ -34,6 +35,8 @@ export interface SavedGame {
   black: { name: string; subtitle?: string };
   opening: string | null;
   review?: GameReview;
+  /** AI coach commentary, generated on demand. */
+  coach?: CoachReport;
 }
 
 async function syncUp(game: SavedGame) {
@@ -142,6 +145,14 @@ export function mergeGames(games: SavedGame[]) {
 
 export function attachReview(id: string, review: GameReview) {
   state = state.map((g) => (g.id === id ? { ...g, review } : g));
+  persist();
+  emit();
+  const updated = state.find((g) => g.id === id);
+  if (updated) void syncUp(updated);
+}
+
+export function attachCoach(id: string, coach: CoachReport) {
+  state = state.map((g) => (g.id === id ? { ...g, coach } : g));
   persist();
   emit();
   const updated = state.find((g) => g.id === id);
