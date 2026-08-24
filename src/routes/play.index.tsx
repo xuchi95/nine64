@@ -36,6 +36,12 @@ const AVAILABLE = [
     text: "Two players, one device, real clocks.",
   },
   {
+    to: "/online",
+    icon: Globe,
+    title: "Online & ranked",
+    text: "Realtime matchmaking with Elo rating.",
+  },
+  {
     to: "/play/ai",
     icon: Swords,
     title: "Variants",
@@ -49,10 +55,7 @@ const AVAILABLE = [
   },
 ] as const;
 
-const SOON = [
-  { icon: Globe, title: "Online & ranked", text: "Matchmaking, ELO and realtime play." },
-  { icon: Trophy, title: "Tournaments", text: "Arenas, brackets and leaderboards." },
-] as const;
+const SOON = [{ icon: Trophy, title: "Tournaments", text: "Arenas, brackets and leaderboards." }] as const;
 
 function PlayHub() {
   return (
