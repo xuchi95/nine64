@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { SEVERITY_META, type MistakeSeverity } from "@/lib/coach/types";
 import type { SavedGame } from "@/lib/history";
-import { MOTIF_META } from "@/lib/analysis/motifs";
+import { MOTIF_LABEL } from "@/lib/analysis/motifs";
 
 /** A concrete practice task derived from one of the player's mistakes. */
 export interface Drill {
@@ -52,7 +52,7 @@ function gameLabel(game: SavedGame): string {
 
 function themeNames(motifs: string[]): string[] {
   return motifs
-    .map((m) => (MOTIF_META as Record<string, { title?: string } | undefined>)[m]?.title ?? m)
+    .map((m) => (MOTIF_LABEL as Record<string, string | undefined>)[m] ?? m)
     .slice(0, 3);
 }
 
