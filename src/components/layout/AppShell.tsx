@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useSwipeToClose } from "@/hooks/useSwipeToClose";
 
 const MAIN_NAV = [
   { to: "/", label: "Home" },
