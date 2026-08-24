@@ -84,6 +84,18 @@ function OnlineGamePage() {
   }, [game, user]);
 
   const orientation: PieceColor = myColor ?? "w";
+  const gameLive = game?.status === "active";
+  const myTurnNow = Boolean(myColor) && gameLive && gameRef.current.turn() === myColor;
+  const fairplay = useFairplayTelemetry({
+    gameId,
+    enabled: Boolean(myColor) && gameLive,
+    myTurn: myTurnNow,
+    ply: moves.length,
+  });
+
+  useEffect(() => {
+    if (game?.status === "completed") void fairplay.flush();
+  }, [fairplay, game?.status]);
   const spec = useMemo(() => timeControlSpec(game?.time_control ?? "blitz5m"), [game?.time_control]);
   const result = useMemo(() => (game ? normalizeResult(game) : null), [game]);
   const resultView = useMemo(() => resultLabel(result, myColor), [result, myColor]);
