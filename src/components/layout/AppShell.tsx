@@ -113,9 +113,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
 
 function MoreNav({ mobile }: { mobile?: boolean }) {
   const { pathname } = useLocation();
-  const active = MORE_NAV.some((item) =>
-    item.to === "/" ? pathname === "/" : pathname.startsWith(item.to),
-  );
+  const active = MORE_NAV.some((item) => pathname.startsWith(item.to));
 
   return (
     <DropdownMenu>
@@ -134,8 +132,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-44">
         {MORE_NAV.map((item) => {
-          const isActive =
-            item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+          const isActive = pathname.startsWith(item.to);
           return (
             <DropdownMenuItem
               key={item.to}
