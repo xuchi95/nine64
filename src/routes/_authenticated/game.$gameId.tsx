@@ -277,12 +277,134 @@ function OnlineGamePage() {
     else if (clock.b <= 0) void finishIfOver("Black flagged", "w");
   }, [clock, finishIfOver, game]);
 
+  const submitMove = useCallback(
+    async (
+      args: {
+        from: string;
+        to: string;
+        promotion?: "q" | "r" | "b" | "n";
+        san: string;
+        uci: string;
+        fen: string;
+        baseFen: string;
+        clock: { w: number; b: number };
+        previousClock: { w: number; b: number };
+      },
+      attempt: number,
+    ): Promise<void> => {
+      if (!game || !myColor) return;
+      inFlightRef.current = true;
+      try {
+        const res = (await makeMoveFn({
+          data: {
+            gameId: game.id,
+            san: args.san,
+            uci: args.uci,
+            fen: args.fen,
+            baseFen: args.baseFen,
+            whiteTimeMs: Math.round(args.clock.w),
+            blackTimeMs: Math.round(args.clock.b),
+          },
+        })) as MoveCommitResult;
+
+        setLastSyncAt(Date.now());
+
+        if (res.applied) {
+          setPendingMove(null);
+          setConflict(null);
+          if (syncMode !== "realtime") void refresh().catch(() => undefined);
+          if (gameRef.current.isCheckmate()) void finishIfOver("Checkmate", myColor);
+          else if (gameRef.current.isDraw()) void finishIfOver("Draw", "draw");
+          return;
+        }
+
+        // ---- Conflict: the server state moved on without our move ----
+        setPendingMove(null);
+        const label =
+          res.reason === "game_over"
+            ? "The game already ended on the server."
+            : res.reason === "not_your_turn"
+              ? "It was no longer your turn."
+              : "Your opponent's move landed first.";
+
+        // Rebuild the board from the authoritative server state.
+        await refresh({ showSpinner: true }).catch(() => undefined);
+
+        const canRetry =
+          attempt === 0 &&
+          res.reason === "stale_position" &&
+          res.status === "active" &&
+          gameRef.current.turn() === myColor;
+
+        if (canRetry) {
+          let replay: Move | null = null;
+          const baseFen = gameRef.current.fen();
+          try {
+            replay = gameRef.current.move({
+              from: args.from,
+              to: args.to,
+              promotion: args.promotion ?? "q",
+            });
+          } catch {
+            replay = null;
+          }
+          if (replay) {
+            const nextClock = { w: clockRef.current.w, b: clockRef.current.b };
+            nextClock[myColor] = Math.max(0, nextClock[myColor]) + spec.incrementMs;
+            tickRef.current = Date.now();
+            setLastMove({ from: replay.from, to: replay.to });
+            setClock(nextClock);
+            setPendingMove(replay.san);
+            setBoardRev((v) => v + 1);
+            setConflict(`${label} Re-sent your move on the new position.`);
+            toast.info("Move conflict resolved", {
+              description: `${label} Your move was replayed on the updated position.`,
+            });
+            await submitMove(
+              {
+                ...args,
+                san: replay.san,
+                fen: gameRef.current.fen(),
+                baseFen,
+                clock: nextClock,
+                previousClock: { ...clockRef.current },
+              },
+              attempt + 1,
+            );
+            return;
+          }
+        }
+
+        setConflict(`${label} Board resynced from the server — play again.`);
+        toast.warning("Move conflict", {
+          description: `${label} The board was resynced from the server.`,
+        });
+      } catch (e: unknown) {
+        gameRef.current.undo();
+        setLastMove(null);
+        setClock(args.previousClock);
+        setPendingMove(null);
+        setBoardRev((v) => v + 1);
+        setError(e instanceof Error ? e.message : "Move failed");
+      } finally {
+        inFlightRef.current = false;
+      }
+    },
+    [finishIfOver, game, makeMoveFn, myColor, refresh, spec.incrementMs, syncMode],
+  );
+
   const handleMove = useCallback(
     (from: string, to: string, promotion?: "q" | "r" | "b" | "n") => {
       if (!game || !myColor || finishedRef.current) return false;
       if (game.status !== "active") return false;
       if (gameRef.current.turn() !== myColor) return false;
+      // Guard against a second submission while one is still in flight.
+      if (inFlightRef.current) {
+        toast.info("Still syncing your previous move…");
+        return false;
+      }
 
+      const baseFen = gameRef.current.fen();
       let move: Move | null = null;
       try {
         move = gameRef.current.move({ from, to, promotion: promotion ?? "q" });
@@ -294,7 +416,7 @@ function OnlineGamePage() {
         return false;
       }
 
-      const previousClock = clock;
+      const previousClock = { ...clock };
       const nextClock = { ...clock };
       nextClock[myColor] = Math.max(0, nextClock[myColor]) + spec.incrementMs;
       tickRef.current = Date.now();
@@ -306,39 +428,26 @@ function OnlineGamePage() {
       setBoardRev((v) => v + 1);
       playMoveSound(gameRef.current, move);
 
-      makeMoveFn({
-        data: {
-          gameId: game.id,
+      void submitMove(
+        {
+          from,
+          to,
+          ...(promotion ? { promotion } : {}),
           san: move.san,
           uci: `${from}${to}${promotion ?? ""}`,
           fen: currentFen,
-          whiteTimeMs: Math.round(nextClock.w),
-          blackTimeMs: Math.round(nextClock.b),
+          baseFen,
+          clock: nextClock,
+          previousClock,
         },
-      })
-        .then(() => {
-          setLastSyncAt(Date.now());
-          setPendingMove(null);
-          if (syncMode !== "realtime") void refresh().catch(() => undefined);
-          if (gameRef.current.isCheckmate()) {
-            void finishIfOver("Checkmate", myColor);
-          } else if (gameRef.current.isDraw()) {
-            void finishIfOver("Draw", "draw");
-          }
-        })
-        .catch((e: unknown) => {
-          gameRef.current.undo();
-          setLastMove(null);
-          setClock(previousClock);
-          setPendingMove(null);
-          setBoardRev((v) => v + 1);
-          setError(e instanceof Error ? e.message : "Move failed");
-        });
+        0,
+      );
 
       return true;
     },
-    [clock, finishIfOver, game, makeMoveFn, myColor, refresh, spec.incrementMs, syncMode],
+    [clock, game, myColor, spec.incrementMs, submitMove],
   );
+
 
   const canMoveFrom = useCallback(
     (square: string) => {
