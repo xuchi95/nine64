@@ -485,23 +485,28 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
   const parentKey = pathname.split("/").slice(0, -1).join("/") || "/";
   const parentLabel = ROUTE_LABELS[parentKey] || ROUTE_LABELS[`/${pathname.split("/")[1]}`];
 
-  const currentLabel = exact || (gameId ? `Game ${gameId.slice(0, 6)}` : pathname.split("/").pop());
+  const currentLabel = exact || (gameId ? `Game ${gameId.slice(0, 6)}` : pathname.split("/").pop() || "");
 
   return (
     <div className="border-t border-border/40 bg-secondary/20">
-      <div className={cn("mx-auto flex items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
-        <Link to="/" className="flex items-center gap-1 hover:text-foreground">
+      <div
+        className={cn(
+          "mx-auto flex min-w-0 items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground sm:gap-1.5 sm:px-6",
+          wide ? "max-w-[1600px]" : "max-w-6xl",
+        )}
+      >
+        <Link to="/" className="flex shrink-0 items-center gap-1 hover:text-foreground">
           <Home className="size-3" />
           <span className="hidden sm:inline">Home</span>
         </Link>
         {parentLabel && parentKey !== "/" && (
           <>
-            <ChevronRight className="size-3 opacity-50" />
-            <span className="hidden sm:inline">{parentLabel}</span>
+            <ChevronRight className="size-3 shrink-0 opacity-50" />
+            <span className="hidden max-w-[100px] truncate sm:inline md:max-w-[180px]">{parentLabel}</span>
           </>
         )}
-        <ChevronRight className="size-3 opacity-50" />
-        <span className="truncate font-medium text-foreground">{currentLabel}</span>
+        <ChevronRight className="size-3 shrink-0 opacity-50" />
+        <span className="min-w-0 flex-1 truncate font-medium text-foreground">{currentLabel}</span>
       </div>
     </div>
   );
