@@ -176,26 +176,34 @@ export const tryMatch = createServerFn({ method: "POST" })
 
     const entry = myEntry as MatchmakingQueue;
 
-    // Find a waiting opponent with the same variant/time_control and similar rating (within 300)
-    const { data: opponents, error: oppError } = await supabaseAdmin
-      .from("matchmaking_queue")
-      .select("*")
-      .eq("status", "waiting")
-      .eq("variant", entry.variant)
-      .eq("time_control", entry.time_control)
-      .neq("user_id", context.userId)
-      .gte("rating", (entry.rating ?? 1200) - 300)
-      .lte("rating", (entry.rating ?? 1200) + 300)
-      .order("created_at", { ascending: true })
-      .limit(1);
+    // Priority matchmaking: closest rating + similar uncertainty, window widens
+    // with wait time, and rematches with the last two opponents are avoided.
+    const rpc = supabaseAdmin.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-    if (oppError) throw new Error(oppError.message);
+    const { data: matchId, error: matchError } = await rpc("find_match", {
+      _queue_id: entry.id,
+    });
 
-    if (!opponents || opponents.length === 0) {
+    if (matchError) throw new Error(matchError.message);
+    if (!matchId || typeof matchId !== "string") {
       return { game: null as Game | null };
     }
 
-    const opponent = opponents[0] as MatchmakingQueue;
+    const { data: opponentRow, error: oppError } = await supabaseAdmin
+      .from("matchmaking_queue")
+      .select("*")
+      .eq("id", matchId)
+      .eq("status", "waiting")
+      .maybeSingle();
+
+    if (oppError) throw new Error(oppError.message);
+    if (!opponentRow) return { game: null as Game | null };
+
+    const opponent = opponentRow as MatchmakingQueue;
+
 
     // Decide colors randomly
     const whiteIsMe = Math.random() < 0.5;
@@ -402,14 +410,17 @@ export const finishGame = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
-    // Update ratings and stats
-    const whiteWon = data.result === "1-0";
-    const blackWon = data.result === "0-1";
+    // Glicko-2 rating update (rating, deviation and volatility) — service role only.
     const draw = data.result === "1/2-1/2";
 
-    await supabase.rpc("update_ratings_after_game", {
-      _game_id: data.gameId,
-    });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const adminRpc = supabaseAdmin.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>;
+    const { error: ratingError } = await adminRpc("apply_glicko2", { _game_id: data.gameId });
+    if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
+
 
     // Notify both players
     const title = draw ? "Game drawn" : data.winnerId ? "You won!" : "Game over";
