@@ -217,25 +217,81 @@ function ModeTile({
   to,
   icon,
   title,
-  meta,
+  tooltip,
+  children,
 }: {
   to: string;
   icon: React.ReactNode;
   title: string;
-  meta: string;
+  tooltip: string;
+  children: React.ReactNode;
 }) {
   return (
-    <Link to={to} className="panel flex items-center gap-4 p-5 transition-colors hover:border-primary/50">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block font-semibold">{title}</span>
-        <span className="block font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-          {meta}
-        </span>
-      </span>
-    </Link>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to={to}
+          className="panel group flex flex-col items-center gap-3 p-4 text-center transition-colors hover:border-primary/50"
+        >
+          <span className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">
+            {icon}
+          </span>
+          <span className="font-display text-sm font-semibold">{title}</span>
+          <div className="h-10 w-full">{children}</div>
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p dangerouslySetInnerHTML={{ __html: tooltip }} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function LocalSparkline() {
+  return (
+    <div className="flex h-full items-end justify-center gap-1">
+      <div className="w-2 rounded-t bg-primary/40" style={{ height: "45%" }} />
+      <div className="w-2 rounded-t bg-primary" style={{ height: "70%" }} />
+      <div className="w-2 rounded-t bg-primary/40" style={{ height: "45%" }} />
+    </div>
+  );
+}
+
+function ShareSparkline() {
+  return (
+    <div className="flex h-full items-center justify-center gap-0.5">
+      {Array.from({ length: 8 }, (_, i) => (
+        <div
+          key={i}
+          className={`w-1 rounded-full ${i % 2 === 0 ? "bg-primary" : "bg-primary/25"}`}
+          style={{ height: `${30 + (i % 3) * 22}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AnalysisSparkline() {
+  const points = [20, 45, 35, 60, 55, 80, 70, 90];
+  const path = points
+    .map((v, i) => `${i === 0 ? "M" : "L"}${(i / (points.length - 1)) * 100},${100 - v}`)
+    .join(" ");
+  return (
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
+      <path d={`${path} L100,100 L0,100 Z`} fill="var(--primary)" opacity="0.14" />
+      <path d={path} fill="none" stroke="var(--primary)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+function GamesSparkline() {
+  return (
+    <div className="flex h-full items-center justify-center gap-1">
+      <div className="h-3 w-3 rounded-sm bg-primary" />
+      <div className="h-5 w-3 rounded-sm bg-primary/60" />
+      <div className="h-2 w-3 rounded-sm bg-primary/30" />
+      <div className="h-4 w-3 rounded-sm bg-primary/80" />
+    </div>
   );
 }
 
