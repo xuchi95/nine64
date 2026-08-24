@@ -18,6 +18,7 @@ import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
+import { Route as DrillsIndexRouteImport } from './routes/drills.index'
 import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
@@ -70,6 +71,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/auth/register',
   path: '/auth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DrillsIndexRoute = DrillsIndexRouteImport.update({
+  id: '/drills/',
+  path: '/drills/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesIndexRoute = GamesIndexRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
+  '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
+  '/drills': typeof DrillsIndexRoute
   '/games': typeof GamesIndexRoute
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
+  '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/play/ai'
     | '/play/local'
     | '/play/share'
+    | '/drills/'
     | '/games/'
     | '/play/'
     | '/puzzles/'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/play/ai'
     | '/play/local'
     | '/play/share'
+    | '/drills'
     | '/games'
     | '/play'
     | '/puzzles'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/play/ai'
     | '/play/local'
     | '/play/share'
+    | '/drills/'
     | '/games/'
     | '/play/'
     | '/puzzles/'
@@ -251,6 +263,7 @@ export interface RootRouteChildren {
   PlayAiRoute: typeof PlayAiRoute
   PlayLocalRoute: typeof PlayLocalRoute
   PlayShareRoute: typeof PlayShareRoute
+  DrillsIndexRoute: typeof DrillsIndexRoute
   GamesIndexRoute: typeof GamesIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PuzzlesIndexRoute: typeof PuzzlesIndexRoute
@@ -320,6 +333,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/register'
       fullPath: '/auth/register'
       preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drills/': {
+      id: '/drills/'
+      path: '/drills'
+      fullPath: '/drills/'
+      preLoaderRoute: typeof DrillsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/': {
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayAiRoute: PlayAiRoute,
   PlayLocalRoute: PlayLocalRoute,
   PlayShareRoute: PlayShareRoute,
+  DrillsIndexRoute: DrillsIndexRoute,
   GamesIndexRoute: GamesIndexRoute,
   PlayIndexRoute: PlayIndexRoute,
   PuzzlesIndexRoute: PuzzlesIndexRoute,
