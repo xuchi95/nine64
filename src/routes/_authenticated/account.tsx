@@ -42,55 +42,97 @@ export const Route = createFileRoute("/_authenticated/account")({
   component: AccountPage,
 });
 
+const SECTIONS = [
+  { value: "profile", label: "Hồ sơ", hint: "Tên hiển thị", icon: User },
+  { value: "email", label: "Email", hint: "Địa chỉ đăng nhập", icon: Mail },
+  { value: "password", label: "Mật khẩu", hint: "Đổi mật khẩu", icon: KeyRound },
+  { value: "mfa", label: "Xác thực 2 bước", hint: "TOTP", icon: ShieldCheck },
+] as const;
+
 function AccountPage() {
   const { user } = useAuth();
+  const name =
+    (user?.user_metadata?.["display_name"] as string | undefined) ||
+    user?.email?.split("@")[0] ||
+    "Player";
+  const initials = name.slice(0, 2).toUpperCase();
 
   return (
     <AppShell>
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Tài khoản &amp; bảo mật</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Cập nhật hồ sơ, thông tin đăng nhập và bật xác thực hai bước.
-          </p>
+      <section className="panel relative overflow-hidden p-6 sm:p-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl"
+        />
+        <div className="relative flex flex-wrap items-center gap-5">
+          <span className="grid size-16 shrink-0 place-items-center rounded-2xl border border-primary/30 bg-primary/15 font-display text-xl font-bold text-primary">
+            {initials}
+          </span>
+          <div className="min-w-0">
+            <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-muted-foreground">
+              Tài khoản &amp; bảo mật
+            </p>
+            <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight sm:text-3xl">
+              {name}
+            </h1>
+            <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{user?.email}</p>
+          </div>
         </div>
-        <span className="rounded-full border border-border bg-secondary/60 px-3 py-1.5 font-mono text-xs text-muted-foreground">
-          {user?.email}
-        </span>
-      </header>
+      </section>
 
-      <Tabs defaultValue="profile" className="mt-6">
-        <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="profile" className="gap-2">
-            <User className="size-4" /> Hồ sơ
-          </TabsTrigger>
-          <TabsTrigger value="email" className="gap-2">
-            <Mail className="size-4" /> Email
-          </TabsTrigger>
-          <TabsTrigger value="password" className="gap-2">
-            <KeyRound className="size-4" /> Mật khẩu
-          </TabsTrigger>
-          <TabsTrigger value="mfa" className="gap-2">
-            <ShieldCheck className="size-4" /> 2 bước (TOTP)
-          </TabsTrigger>
+      <Tabs
+        defaultValue="profile"
+        orientation="vertical"
+        className="mt-6 gap-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start"
+      >
+        <TabsList className="h-auto w-full flex-row gap-1 overflow-x-auto rounded-xl border border-border bg-card/60 p-1.5 lg:sticky lg:top-24 lg:flex-col lg:overflow-visible">
+          {SECTIONS.map((s) => (
+            <TabsTrigger
+              key={s.value}
+              value={s.value}
+              className="group w-full shrink-0 justify-start gap-3 rounded-lg px-3 py-2.5 text-left lg:shrink"
+            >
+              <s.icon className="size-4 shrink-0 opacity-70" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold leading-tight">
+                  {s.label}
+                </span>
+                <span className="hidden truncate text-xs text-muted-foreground lg:block">
+                  {s.hint}
+                </span>
+              </span>
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="profile" className="mt-5">
-          <ProfileCard />
-        </TabsContent>
-        <TabsContent value="email" className="mt-5">
-          <EmailCard />
-        </TabsContent>
-        <TabsContent value="password" className="mt-5">
-          <PasswordCard />
-        </TabsContent>
-        <TabsContent value="mfa" className="mt-5">
-          <MfaCard />
-        </TabsContent>
+        <div className="mt-4 lg:mt-0">
+          <TabsContent value="profile">
+            <ProfileCard />
+          </TabsContent>
+          <TabsContent value="email">
+            <EmailCard />
+          </TabsContent>
+          <TabsContent value="password">
+            <PasswordCard />
+          </TabsContent>
+          <TabsContent value="mfa">
+            <MfaCard />
+          </TabsContent>
+        </div>
       </Tabs>
     </AppShell>
   );
 }
+
+function SectionHead({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="border-b border-border/70 pb-4">
+      <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
+    </div>
+  );
+}
+
 
 function ProfileCard() {
   const { user } = useAuth();
@@ -117,7 +159,8 @@ function ProfileCard() {
   }
 
   return (
-    <form onSubmit={save} className="panel max-w-xl space-y-4 p-5">
+    <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
+      <SectionHead title="Hồ sơ" desc="Tên này xuất hiện trên bàn cờ và bảng xếp hạng." />
       <div className="space-y-2">
         <Label htmlFor="display-name">Tên hiển thị</Label>
         <Input
@@ -165,7 +208,8 @@ function EmailCard() {
   }
 
   return (
-    <form onSubmit={save} className="panel max-w-xl space-y-4 p-5">
+    <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
+      <SectionHead title="Email" desc="Đổi địa chỉ đăng nhập, cần xác nhận qua liên kết." />
       <div className="space-y-2">
         <Label>Email hiện tại</Label>
         <Input value={user?.email ?? ""} disabled />
@@ -232,7 +276,8 @@ function PasswordCard() {
   }
 
   return (
-    <form onSubmit={save} className="panel max-w-xl space-y-4 p-5">
+    <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
+      <SectionHead title="Mật khẩu" desc="Tối thiểu 8 ký tự. Xác minh mật khẩu hiện tại trước." />
       <div className="space-y-2">
         <Label htmlFor="cur-pass">Mật khẩu hiện tại</Label>
         <Input
@@ -357,7 +402,7 @@ function MfaCard() {
   }
 
   return (
-    <div className="panel max-w-2xl space-y-5 p-5">
+    <div className="panel max-w-2xl space-y-5 p-6">
       <div className="flex flex-wrap items-center gap-3">
         <span
           className={
