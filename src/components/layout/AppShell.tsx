@@ -454,7 +454,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/fairplay": "Fair Play",
 };
 
-function PageBreadcrumb() {
+function PageBreadcrumb({ wide }: { wide?: boolean }) {
   const { pathname } = useLocation();
   const params = useParams({ strict: false });
   const gameId = (params as { gameId?: string }).gameId;
@@ -469,7 +469,7 @@ function PageBreadcrumb() {
 
   return (
     <div className="border-t border-border/40 bg-secondary/20">
-      <div className={cn("mx-auto flex max-w-6xl items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground sm:px-6", "max-w-[1600px]" ? "" : "")}>
+      <div className={cn("mx-auto flex items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
         <Link to="/" className="flex items-center gap-1 hover:text-foreground">
           <Home className="size-3" />
           <span className="hidden sm:inline">Home</span>
