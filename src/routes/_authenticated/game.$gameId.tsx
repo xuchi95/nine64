@@ -63,11 +63,15 @@ function OnlineGamePage() {
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [pendingMove, setPendingMove] = useState<string | null>(null);
+  const [conflict, setConflict] = useState<string | null>(null);
 
   const gameRef = useRef<Chess>(new Chess());
   const finishedRef = useRef(false);
   const tickRef = useRef<number>(Date.now());
+  const inFlightRef = useRef(false);
+  const clockRef = useRef({ w: 0, b: 0 });
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
+
 
   const myColor: PieceColor | null = useMemo(() => {
     if (!game || !user) return null;
