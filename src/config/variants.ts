@@ -66,5 +66,5 @@ export const VARIANTS: VariantMeta[] = [
 ];
 
 export function getVariant(id: VariantId): VariantMeta {
-  return VARIANTS.find((v) => v.id === id) ?? VARIANTS[0];
+  return VARIANTS.find((v) => v.id === id) ?? VARIANTS[0]!;
 }

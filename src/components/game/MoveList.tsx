@@ -29,8 +29,9 @@ export function MoveList({
     const no = Math.floor(i / 2) + 1;
     if (i % 2 === 0) pairs.push({ no, white: m, wi: i, bi: -1 });
     else {
-      pairs[pairs.length - 1].black = m;
-      pairs[pairs.length - 1].bi = i;
+      const last = pairs[pairs.length - 1]!;
+      last.black = m;
+      last.bi = i;
     }
   });
 
@@ -42,10 +43,10 @@ export function MoveList({
             <tr key={p.no} className="border-b border-border/40 last:border-0">
               <td className="w-9 py-1 pl-3 text-xs text-muted-foreground tabular">{p.no}.</td>
               <td className="py-0.5">
-                <MoveCell record={p.white} index={p.wi} active={activeIndex === p.wi} onSelect={onSelect} />
+                <MoveCell record={p.white ?? null} index={p.wi} active={activeIndex === p.wi} onSelect={onSelect} />
               </td>
               <td className="py-0.5">
-                <MoveCell record={p.black} index={p.bi} active={activeIndex === p.bi} onSelect={onSelect} />
+                <MoveCell record={p.black ?? null} index={p.bi} active={activeIndex === p.bi} onSelect={onSelect} />
               </td>
             </tr>
           ))}
@@ -62,10 +63,10 @@ function MoveCell({
   active,
   onSelect,
 }: {
-  record?: MoveRecord;
+  record: MoveRecord | null;
   index: number;
-  active?: boolean;
-  onSelect?: (index: number) => void;
+  active?: boolean | undefined;
+  onSelect?: ((index: number) => void) | undefined;
 }) {
   if (!record) return <span className="px-2 text-muted-foreground">—</span>;
   return (
