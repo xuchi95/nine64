@@ -13,6 +13,7 @@ import {
   History,
   Home,
   ChevronRight,
+  Check,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
@@ -85,7 +86,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
                 key={item.to}
                 to={item.to}
                 className="relative rounded-lg px-4 py-2.5 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground after:absolute after:inset-x-4 after:-bottom-[9px] after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity"
-                activeProps={{ className: "text-foreground after:opacity-100" }}
+                activeProps={{ className: "bg-primary/10 text-foreground after:opacity-100" }}
                 activeOptions={{ exact: item.to === "/" }}
               >
                 {item.label}
@@ -174,36 +175,44 @@ function MobileNav() {
 
         <nav className="flex-1 overflow-y-auto p-5">
           <div className="flex flex-col gap-2">
-            {MAIN_NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex min-h-[3.75rem] items-center rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
-                  isActive(item.to) && "bg-primary/15 text-primary",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {MAIN_NAV.map((item) => {
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "flex min-h-[3.75rem] items-center justify-between rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
+                    active && "bg-primary/15 text-primary",
+                  )}
+                >
+                  {item.label}
+                  {active && <Check className="size-5 text-primary" />}
+                </Link>
+              );
+            })}
           </div>
 
           <p className="px-6 pb-2.5 pt-7 text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Train
           </p>
           <div className="flex flex-col gap-2">
-            {MORE_NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex min-h-[3.75rem] items-center rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
-                  isActive(item.to) && "bg-primary/15 text-primary",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {MORE_NAV.map((item) => {
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "flex min-h-[3.75rem] items-center justify-between rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                    active && "bg-primary/15 text-primary",
+                  )}
+                >
+                  {item.label}
+                  {active && <Check className="size-5 text-primary" />}
+                </Link>
+              );
+            })}
           </div>
 
           {user && (
@@ -212,16 +221,23 @@ function MobileNav() {
                 Account
               </p>
               <div className="flex flex-col gap-2">
-                {PROFILE_MENU.map((item) => (
-                  <Link
-                    key={item.to + item.label}
-                    to={item.to}
-                    className="flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
-                  >
-                    <item.icon className="size-5 shrink-0" />
-                    {item.label}
-                  </Link>
-                ))}
+                {PROFILE_MENU.map((item) => {
+                  const active = isActive(item.to);
+                  return (
+                    <Link
+                      key={item.to + item.label}
+                      to={item.to}
+                      className={cn(
+                        "flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                        active && "bg-primary/15 text-primary",
+                      )}
+                    >
+                      <item.icon className={cn("size-5 shrink-0", active && "text-primary")} />
+                      {item.label}
+                      {active && <Check className="ml-auto size-5 text-primary" />}
+                    </Link>
+                  );
+                })}
               </div>
             </>
           )}
@@ -290,10 +306,13 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
               asChild
               className={cn(
                 "cursor-pointer rounded-lg px-3.5 py-2.5",
-                isActive && "bg-secondary text-foreground",
+                isActive && "bg-primary/10 text-foreground",
               )}
             >
-              <Link to={item.to}>{item.label}</Link>
+              <Link to={item.to} className="flex items-center justify-between">
+                {item.label}
+                {isActive && <Check className="size-4 text-primary" />}
+              </Link>
             </DropdownMenuItem>
           );
         })}
@@ -375,6 +394,7 @@ function NotificationBell() {
 }
 
 function AuthHeader() {
+  const { pathname } = useLocation();
   const { user, isLoading, signOut } = useAuth();
 
   if (isLoading) {
@@ -429,14 +449,27 @@ function AuthHeader() {
           </div>
         </div>
         <DropdownMenuSeparator />
-        {PROFILE_MENU.map((item) => (
-          <DropdownMenuItem key={item.to + item.label} asChild className="cursor-pointer rounded-lg px-3.5 py-2.5">
-            <Link to={item.to}>
-              <item.icon className="mr-3 size-4 text-muted-foreground" />
-              <span className="flex-1">{item.label}</span>
-            </Link>
-          </DropdownMenuItem>
-        ))}
+        {PROFILE_MENU.map((item) => {
+          const active = pathname === item.to || pathname.startsWith(item.to);
+          return (
+            <DropdownMenuItem
+              key={item.to + item.label}
+              asChild
+              className={cn(
+                "cursor-pointer rounded-lg px-3.5 py-2.5",
+                active && "bg-primary/10 text-foreground",
+              )}
+            >
+              <Link to={item.to} className="flex items-center justify-between">
+                <span className="flex items-center">
+                  <item.icon className={cn("mr-3 size-4", active ? "text-primary" : "text-muted-foreground")} />
+                  <span className="flex-1">{item.label}</span>
+                </span>
+                {active && <Check className="size-4 text-primary" />}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={signOut}
@@ -506,7 +539,9 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
           </>
         )}
         <ChevronRight className="size-3 shrink-0 opacity-50" />
-        <span className="min-w-0 flex-1 truncate font-medium text-foreground">{currentLabel}</span>
+        <span className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+          {currentLabel}
+        </span>
       </div>
     </div>
   );
