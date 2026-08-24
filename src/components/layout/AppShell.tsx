@@ -448,14 +448,27 @@ function AuthHeader() {
           </div>
         </div>
         <DropdownMenuSeparator />
-        {PROFILE_MENU.map((item) => (
-          <DropdownMenuItem key={item.to + item.label} asChild className="cursor-pointer rounded-lg px-3.5 py-2.5">
-            <Link to={item.to}>
-              <item.icon className="mr-3 size-4 text-muted-foreground" />
-              <span className="flex-1">{item.label}</span>
-            </Link>
-          </DropdownMenuItem>
-        ))}
+        {PROFILE_MENU.map((item) => {
+          const active = pathname === item.to || pathname.startsWith(item.to);
+          return (
+            <DropdownMenuItem
+              key={item.to + item.label}
+              asChild
+              className={cn(
+                "cursor-pointer rounded-lg px-3.5 py-2.5",
+                active && "bg-primary/10 text-foreground",
+              )}
+            >
+              <Link to={item.to} className="flex items-center justify-between">
+                <span className="flex items-center">
+                  <item.icon className={cn("mr-3 size-4", active ? "text-primary" : "text-muted-foreground")} />
+                  <span className="flex-1">{item.label}</span>
+                </span>
+                {active && <Check className="size-4 text-primary" />}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={signOut}
