@@ -161,7 +161,7 @@ export class StockfishEngine {
       const pvIndex = Number(/ multipv (\d+)/.exec(line)?.[1] ?? 1);
       const pvMatch = / pv (.+)$/.exec(line);
       if (!pvMatch) return;
-      const pv = pvMatch[1].trim().split(/\s+/);
+      const pv = (pvMatch[1] ?? "").trim().split(/\s+/);
       const cpMatch = / score cp (-?\d+)/.exec(line);
       const mateMatch = / score mate (-?\d+)/.exec(line);
       lines.set(pvIndex, {
