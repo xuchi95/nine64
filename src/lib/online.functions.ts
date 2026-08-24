@@ -92,9 +92,10 @@ export const tryMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ queueId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const supabase = context.supabase;
+    // Matchmaking must bypass RLS so it can see other users' queue rows.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: myEntry, error: myError } = await supabase
+    const { data: myEntry, error: myError } = await supabaseAdmin
       .from("matchmaking_queue")
       .select("*")
       .eq("id", data.queueId)
@@ -107,7 +108,7 @@ export const tryMatch = createServerFn({ method: "POST" })
     const entry = myEntry as MatchmakingQueue;
 
     // Find a waiting opponent with the same variant/time_control and similar rating (within 300)
-    const { data: opponents, error: oppError } = await supabase
+    const { data: opponents, error: oppError } = await supabaseAdmin
       .from("matchmaking_queue")
       .select("*")
       .eq("status", "waiting")
@@ -135,7 +136,7 @@ export const tryMatch = createServerFn({ method: "POST" })
     const blackRating = whiteIsMe ? opponent.rating : entry.rating;
     const initialMs = timeControlToMs(entry.time_control);
 
-    const { data: game, error: gameError } = await supabase
+    const { data: game, error: gameError } = await supabaseAdmin
       .from("games")
       .insert({
         white_id: whiteId,
@@ -162,19 +163,28 @@ export const tryMatch = createServerFn({ method: "POST" })
     if (gameError || !game) throw new Error(gameError?.message || "Failed to create game");
 
     // Mark both queue entries as matched
-    await supabase
+    await supabaseAdmin
       .from("matchmaking_queue")
       .update({ status: "matched" })
       .in("id", [entry.id, opponent.id]);
 
-    // Notify opponent
-    await supabase.from("notifications").insert({
-      user_id: opponent.user_id,
-      type: "match_found",
-      title: "Match found",
-      body: `Your ${entry.time_control} ${entry.variant} game is ready.`,
-      data: { game_id: game.id },
-    });
+    // Notify both players
+    await supabaseAdmin.from("notifications").insert([
+      {
+        user_id: opponent.user_id,
+        type: "match_found",
+        title: "Match found",
+        body: `Your ${entry.time_control} ${entry.variant} game is ready.`,
+        data: { game_id: game.id },
+      },
+      {
+        user_id: context.userId,
+        type: "match_found",
+        title: "Match found",
+        body: `Your ${entry.time_control} ${entry.variant} game is ready.`,
+        data: { game_id: game.id },
+      },
+    ]);
 
     return { game: game as Game };
   });
