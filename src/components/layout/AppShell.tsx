@@ -59,15 +59,15 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 shadow-[0_1px_0_0_hsl(var(--border)/0.35),0_8px_24px_-20px_rgb(0_0_0/0.6)] backdrop-blur-xl">
         <div
           className={cn(
-            "mx-auto grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 sm:h-16 sm:px-6 lg:flex lg:h-20 lg:gap-8",
+            "mx-auto grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 sm:h-[4.5rem] sm:px-6 lg:flex lg:h-[5.25rem] lg:gap-10 lg:px-8",
             wide ? "max-w-[1600px]" : "max-w-6xl",
           )}
         >
           <MobileNav />
 
           <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 sm:size-10 lg:size-11">
-              <Crown className="size-[18px] sm:size-5 lg:size-6" />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 sm:size-11 lg:size-12">
+              <Crown className="size-5 sm:size-6" />
             </span>
             <span className="flex min-w-0 flex-col leading-none">
               <span className="truncate text-[13px] font-bold tracking-[0.14em] sm:text-base sm:tracking-[0.16em] lg:text-lg">
@@ -84,7 +84,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
               <Link
                 key={item.to}
                 to={item.to}
-                className="relative rounded-lg px-3.5 py-2 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground after:absolute after:inset-x-3.5 after:-bottom-[7px] after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity"
+                className="relative rounded-lg px-4 py-2.5 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground after:absolute after:inset-x-4 after:-bottom-[9px] after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity"
                 activeProps={{ className: "text-foreground after:opacity-100" }}
                 activeOptions={{ exact: item.to === "/" }}
               >
@@ -94,19 +94,19 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             <MoreNav />
           </nav>
 
-          <div className="flex shrink-0 items-center gap-1.5 justify-self-end sm:gap-2 lg:ml-auto">
+          <div className="flex shrink-0 items-center gap-2 justify-self-end sm:gap-2.5 lg:ml-auto">
             <button
               type="button"
               aria-label="Toggle colour mode"
               onClick={() =>
                 updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
               }
-              className="hidden size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground sm:flex lg:size-10"
+              className="hidden size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground sm:flex lg:size-11"
             >
               {settings.appearance === "dark" ? (
-                <Sun className="size-[18px]" />
+                <Sun className="size-5" />
               ) : (
-                <Moon className="size-[18px]" />
+                <Moon className="size-5" />
               )}
             </button>
             <NotificationBell />
@@ -115,7 +115,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
         </div>
         <PageBreadcrumb wide={wide} />
       </header>
-      <main className={cn("mx-auto w-full flex-1 px-4 py-6 sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
+      <main className={cn("mx-auto w-full flex-1 px-4 py-7 sm:px-6 sm:py-8 lg:py-10", wide ? "max-w-[1600px]" : "max-w-6xl")}>
         {children}
       </main>
       <footer className="border-t border-border/70 py-5 text-center text-xs text-muted-foreground">
@@ -144,15 +144,15 @@ function MobileNav() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label="Mở menu"
-          className="flex size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors active:bg-secondary lg:hidden"
-        >
-          <Menu className="size-5" />
-        </button>
-      </SheetTrigger>
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label="Mở menu"
+            className="flex size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors active:bg-secondary lg:hidden"
+          >
+            <Menu className="size-6" />
+          </button>
+        </SheetTrigger>
       <SheetContent
         ref={swipe.ref}
         side="left"
@@ -165,21 +165,21 @@ function MobileNav() {
           aria-hidden
           className="absolute right-2 top-1/2 h-20 w-1.5 -translate-y-1/2 rounded-full bg-border/80"
         />
-        <div className="flex items-center gap-4 border-b border-border/70 px-5 py-5">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-            <Crown className="size-6" />
+        <div className="flex items-center gap-4 border-b border-border/70 px-6 py-6">
+          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+            <Crown className="size-7" />
           </span>
-          <SheetTitle className="text-lg tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
+          <SheetTitle className="text-xl tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4">
+        <nav className="flex-1 overflow-y-auto p-5">
           <div className="flex flex-col gap-2">
             {MAIN_NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex min-h-14 items-center rounded-xl px-5 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
+                  "flex min-h-[3.75rem] items-center rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
                   isActive(item.to) && "bg-primary/15 text-primary",
                 )}
               >
@@ -188,7 +188,7 @@ function MobileNav() {
             ))}
           </div>
 
-          <p className="px-5 pb-2 pt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="px-6 pb-2.5 pt-7 text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Train
           </p>
           <div className="flex flex-col gap-2">
@@ -197,7 +197,7 @@ function MobileNav() {
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex min-h-14 items-center rounded-xl px-5 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                  "flex min-h-[3.75rem] items-center rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
                   isActive(item.to) && "bg-primary/15 text-primary",
                 )}
               >
@@ -208,7 +208,7 @@ function MobileNav() {
 
           {user && (
             <>
-              <p className="px-5 pb-2 pt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="px-6 pb-2.5 pt-7 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Account
               </p>
               <div className="flex flex-col gap-2">
@@ -216,7 +216,7 @@ function MobileNav() {
                   <Link
                     key={item.to + item.label}
                     to={item.to}
-                    className="flex min-h-14 items-center gap-4 rounded-xl px-5 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
+                    className="flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
                   >
                     <item.icon className="size-5 shrink-0" />
                     {item.label}
@@ -227,7 +227,7 @@ function MobileNav() {
           )}
         </nav>
 
-        <div className="flex items-center gap-3 border-t border-border/70 p-4">
+        <div className="flex items-center gap-3 border-t border-border/70 p-5">
           <Button
             variant="outline"
             className="h-14 flex-1 justify-center gap-2 text-base"
@@ -272,16 +272,16 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
         <button
           type="button"
           className={cn(
-            "flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground",
-            mobile && "shrink-0 px-3 py-1.5",
+            "flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground",
+            mobile && "shrink-0 px-3.5 py-2",
             active && "bg-primary/10 text-primary",
           )}
         >
           More
-          <ChevronDown className="size-3.5 opacity-70" />
+          <ChevronDown className="size-4 opacity-70" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48 rounded-xl p-1.5">
+      <DropdownMenuContent align="start" className="w-48 rounded-xl p-2">
         {MORE_NAV.map((item) => {
           const isActive = pathname.startsWith(item.to);
           return (
@@ -289,7 +289,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
               key={item.to}
               asChild
               className={cn(
-                "cursor-pointer rounded-lg px-3 py-2",
+                "cursor-pointer rounded-lg px-3.5 py-2.5",
                 isActive && "bg-secondary text-foreground",
               )}
             >
@@ -312,23 +312,23 @@ function NotificationBell() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative flex size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:size-10"
-        >
-          <Bell className="size-[18px]" />
-          {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 rounded-xl p-1.5">
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label="Notifications"
+            className="relative flex size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:size-11"
+          >
+            <Bell className="size-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80 rounded-xl p-2">
 
-        <div className="flex items-center justify-between px-2 py-1.5">
+        <div className="flex items-center justify-between px-2.5 py-2">
           <span className="text-sm font-medium">Notifications</span>
           {unreadCount > 0 && (
             <button
@@ -342,14 +342,14 @@ function NotificationBell() {
         </div>
         <DropdownMenuSeparator />
         {notifications.length === 0 ? (
-          <div className="px-2 py-4 text-center text-sm text-muted-foreground">No notifications yet.</div>
+          <div className="px-2.5 py-4 text-center text-sm text-muted-foreground">No notifications yet.</div>
         ) : (
           <div className="max-h-80 overflow-y-auto">
             {notifications.slice(0, 20).map((n) => (
               <DropdownMenuItem
                 key={n.id}
                 className={cn(
-                  "cursor-pointer flex-col items-start gap-0.5 px-3 py-2",
+                  "cursor-pointer flex-col items-start gap-1 px-3.5 py-2.5",
                   !n.read && "bg-primary/5",
                 )}
                 onClick={() => {
@@ -388,10 +388,10 @@ function AuthHeader() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" className="hidden h-11 px-3 sm:inline-flex lg:h-10">
+        <Button asChild variant="ghost" className="hidden h-12 px-4 sm:inline-flex lg:h-11">
           <Link to="/auth/login">Sign in</Link>
         </Button>
-        <Button asChild className="h-11 px-4 lg:h-10">
+        <Button asChild className="h-12 px-4 lg:h-11">
           <Link to="/auth/register">
             <span className="sm:hidden">Đăng nhập</span>
             <span className="hidden sm:inline">Register</span>
@@ -409,18 +409,18 @@ function AuthHeader() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex h-11 items-center gap-2 rounded-xl border border-border/80 bg-secondary/30 pl-1.5 pr-2 text-sm font-medium transition-colors hover:border-primary/40 lg:h-10 lg:gap-2.5 lg:pr-2.5"
+          className="flex h-12 items-center gap-2 rounded-xl border border-border/80 bg-secondary/30 pl-2 pr-2.5 text-sm font-medium transition-colors hover:border-primary/40 lg:h-11 lg:gap-2.5 lg:pr-3"
         >
-          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-[11px] font-bold text-primary-foreground lg:size-7">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-xs font-bold text-primary-foreground lg:size-8">
             {initials}
           </span>
           <span className="hidden max-w-[130px] truncate lg:inline">{displayName}</span>
-          <ChevronDown className="size-3.5 opacity-60" />
+          <ChevronDown className="size-4 opacity-60" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 rounded-xl p-1.5">
-        <div className="flex items-center gap-3 rounded-lg bg-secondary/40 px-3 py-3">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 font-mono text-sm font-bold text-primary-foreground">
+      <DropdownMenuContent align="end" className="w-72 rounded-xl p-2">
+        <div className="flex items-center gap-3 rounded-lg bg-secondary/40 px-3.5 py-3.5">
+          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 font-mono text-sm font-bold text-primary-foreground">
             {initials}
           </span>
           <div className="min-w-0">
@@ -430,9 +430,9 @@ function AuthHeader() {
         </div>
         <DropdownMenuSeparator />
         {PROFILE_MENU.map((item) => (
-          <DropdownMenuItem key={item.to + item.label} asChild className="cursor-pointer rounded-lg px-3 py-2">
+          <DropdownMenuItem key={item.to + item.label} asChild className="cursor-pointer rounded-lg px-3.5 py-2.5">
             <Link to={item.to}>
-              <item.icon className="mr-2.5 size-4 text-muted-foreground" />
+              <item.icon className="mr-3 size-4 text-muted-foreground" />
               <span className="flex-1">{item.label}</span>
             </Link>
           </DropdownMenuItem>
@@ -440,9 +440,9 @@ function AuthHeader() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={signOut}
-          className="cursor-pointer rounded-lg px-3 py-2 text-destructive focus:text-destructive"
+          className="cursor-pointer rounded-lg px-3.5 py-2.5 text-destructive focus:text-destructive"
         >
-          <LogOut className="mr-2.5 size-4" />
+          <LogOut className="mr-3 size-4" />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -491,7 +491,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
     <div className="border-t border-border/40 bg-secondary/20">
       <div
         className={cn(
-          "mx-auto flex min-w-0 items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground sm:gap-1.5 sm:px-6",
+          "mx-auto flex min-w-0 items-center gap-1 px-4 py-2 text-xs text-muted-foreground sm:gap-1.5 sm:px-6",
           wide ? "max-w-[1600px]" : "max-w-6xl",
         )}
       >
