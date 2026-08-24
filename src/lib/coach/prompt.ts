@@ -9,6 +9,7 @@ Nguyên tắc:
 - Phân loại lỗi theo mức độ: basic (lỗi cơ bản về nguyên tắc: chậm phát triển, đi quân hai lần, mất tempo), moderate (mất ưu thế nhỏ), serious (mất ưu thế lớn/bỏ lỡ thắng), critical (mất quân, bị mat, sụp đổ hoàn toàn).
 - Với mỗi lỗi: nói chuyện gì đã xảy ra và ý tưởng ĐÚNG lẽ ra nên làm (kế hoạch, không cần biến dài).
 - Lời khuyên phải cụ thể và làm được ngay, không nói chung chung kiểu "hãy tập nhiều hơn".
+- Viết tiếng Việt CÓ DẤU đầy đủ, đúng chính tả; tuyệt đối không viết tiếng Việt không dấu.
 - Không dùng emoji. Không markdown trong các trường văn bản.`;
 
 /** Compact, token-bounded description of the game for the model. */
