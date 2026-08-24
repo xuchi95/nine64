@@ -56,9 +56,9 @@ export async function upsertReport(
     probability: verdict.probability,
     confidence: verdict.confidence,
     action: verdict.action,
-    features: verdict.features as unknown as Database["public"]["Tables"]["fairplay_reports"]["Insert"]["features"],
-    contributions: verdict.contributions as unknown as Database["public"]["Tables"]["fairplay_reports"]["Insert"]["contributions"],
-    reasons: verdict.reasons as unknown as Database["public"]["Tables"]["fairplay_reports"]["Insert"]["reasons"],
+    features: JSON.parse(JSON.stringify(verdict.features)) as Database["public"]["Tables"]["fairplay_reports"]["Row"]["features"],
+    contributions: JSON.parse(JSON.stringify(verdict.contributions)) as Database["public"]["Tables"]["fairplay_reports"]["Row"]["contributions"],
+    reasons: JSON.parse(JSON.stringify(verdict.reasons)) as Database["public"]["Tables"]["fairplay_reports"]["Row"]["reasons"],
     model: verdict.model,
   };
 
@@ -148,7 +148,7 @@ export async function refreshStatus(admin: Admin, userId: string) {
       sandbagging_score: collusion.sandbaggingScore,
       rating_locked: locked,
       games_reviewed: list.length,
-      reasons: reasons as unknown as Database["public"]["Tables"]["fairplay_status"]["Insert"]["reasons"],
+      reasons: JSON.parse(JSON.stringify(reasons)) as Database["public"]["Tables"]["fairplay_status"]["Row"]["reasons"],
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },

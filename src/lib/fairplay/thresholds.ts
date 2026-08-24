@@ -1,5 +1,7 @@
 import type { FairplayAction } from "./types";
 
+export type { FairplayAction };
+
 export const THRESHOLDS = {
   monitor: 40,
   unrated: 70,

@@ -78,7 +78,7 @@ export function detectSegment(
   const n = observations.length;
   if (n < minWindow * 2) return EMPTY;
 
-  const hits = observations.map((o) => (o.isTop1 ? 1 : 0));
+  const hits: number[] = observations.map((o) => (o.isTop1 ? 1 : 0));
   const best = bestWindow(hits, minWindow);
   if (!best) return EMPTY;
 

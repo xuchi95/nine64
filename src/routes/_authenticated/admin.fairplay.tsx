@@ -61,6 +61,10 @@ function tone(score: number) {
   return "text-muted-foreground";
 }
 
+function isAction(value: string): value is FairplayAction {
+  return value === "none" || value === "monitor" || value === "unrated" || value === "rating_hold";
+}
+
 function asStrings(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
@@ -173,7 +177,7 @@ function AdminFairplayPage() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{row.displayName}</span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {ACTION_LABEL[(row.action as FairplayAction) ?? "none"]} · SPRT{" "}
+                      {ACTION_LABEL[isAction(row.action) ? row.action : "none"]} · SPRT{" "}
                       {row.sprt_decision} · {row.games_reviewed} ván
                       {row.boosting_score >= 60 ? " · dàn xếp" : ""}
                       {row.sandbagging_score >= 60 ? " · cố thua" : ""}
