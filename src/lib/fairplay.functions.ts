@@ -287,7 +287,11 @@ export const getFairplayMetrics = createServerFn({ method: "GET" })
         .limit(2000),
     ]);
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({ actorId: context.userId, action: "metrics_view" });
+
     return computeFairplayMetrics(
+
       (reports.data ?? []).map((r) => ({
         score: Number(r.score),
         probability: Number(r.probability),
