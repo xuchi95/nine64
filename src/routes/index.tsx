@@ -50,15 +50,28 @@ function Home() {
           </p>
           <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center lg:justify-start">
             <Button asChild size="lg" className="h-14 px-10 text-base font-semibold">
-              <Link to="/play/ai">
+              <Link to="/play/ai" search={{ quick: true }}>
                 <Play className="size-5" />
-                Play now
+                New game
               </Link>
             </Button>
             <Button asChild size="lg" variant="secondary" className="h-14 px-8 text-base">
-              <Link to="/online">Play online</Link>
+              <Link to="/online">
+                <Users className="size-5" />
+                Play online
+              </Link>
             </Button>
           </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            <Link to="/play/ai" className="underline underline-offset-4 hover:text-primary">
+              Custom setup
+            </Link>{" "}
+            ·{" "}
+            <Link to="/play/local" className="underline underline-offset-4 hover:text-primary">
+              Pass &amp; play
+            </Link>
+          </p>
+
           <dl className="mt-9 flex flex-wrap justify-center gap-8 lg:justify-start">
             <Metric value={`${BOT_LEVELS.length}`} label="Bot levels" />
             <Metric value={`${BOT_PERSONALITIES.length}`} label="Personalities" />
