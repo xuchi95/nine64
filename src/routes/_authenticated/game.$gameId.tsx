@@ -104,7 +104,7 @@ function OnlineGamePage() {
       setClock({ w: g.white_time_ms, b: g.black_time_ms });
 
       if (ms.length > 0) {
-        const last = ms[ms.length - 1];
+        const last = ms[ms.length - 1]!;
         setLastMove({ from: last.uci.slice(0, 2), to: last.uci.slice(2, 4) });
       }
 
