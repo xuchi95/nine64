@@ -42,8 +42,8 @@ function Home() {
     <TooltipProvider delayDuration={200}>
       <AppShell>
       {/* ── Hero: board left, promise right (chess.com rhythm, brass palette) ── */}
-      <section className="grid items-center gap-8 py-6 md:grid-cols-[minmax(0,46%)_minmax(0,1fr)] md:gap-10 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-16 lg:py-12">
-        <div className="mx-auto w-full max-w-[min(420px,88vw)] md:mx-0">
+      <section className="grid items-center gap-8 py-6 md:grid-cols-[minmax(0,50%)_minmax(0,1fr)] md:gap-10 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-16 lg:py-12">
+        <div className="mx-auto w-full max-w-[min(520px,92vw)] md:mx-0">
           <StartBoard />
         </div>
 
@@ -316,7 +316,7 @@ function StartBoard() {
           return (
             <div
               key={i}
-              className={`flex aspect-square items-center justify-center text-[clamp(1.2rem,4.2vw,2.15rem)] leading-none ${
+              className={`flex aspect-square items-center justify-center text-[clamp(1.6rem,5.8vw,2.85rem)] leading-none ${
                 dark ? "bg-primary/45" : "bg-primary/15"
               } ${isWhitePiece ? "text-foreground [text-shadow:0_1px_2px_var(--background)]" : "text-background"}`}
             >
