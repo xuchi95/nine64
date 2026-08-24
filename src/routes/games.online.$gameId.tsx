@@ -300,7 +300,7 @@ function OnlineGameDetail() {
               <>
                 <EvalGraph
                   className="mt-3"
-                  startEval={review.startEval}
+                  startEval={review.startEval ?? 0}
                   evals={review.evals}
                   activeIndex={cursor}
                   onSelect={setCursor}
