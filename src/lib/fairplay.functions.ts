@@ -408,5 +408,15 @@ export const listFairplayDecisions = createServerFn({ method: "GET" })
       })),
     ].sort((x, y) => y.createdAt.localeCompare(x.createdAt));
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: "decision_log_view",
+      targetUserId: data.userId ?? null,
+      targetGameId: data.gameId ?? null,
+      detail: { kind: data.kind, minScore: data.minScore, results: entries.length },
+    });
+
     return entries.slice(0, data.limit);
+
   });
