@@ -159,7 +159,8 @@ function ProfileCard() {
   }
 
   return (
-    <form onSubmit={save} className="panel max-w-xl space-y-4 p-5">
+    <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
+      <SectionHead title="Hồ sơ" desc="Tên này xuất hiện trên bàn cờ và bảng xếp hạng." />
       <div className="space-y-2">
         <Label htmlFor="display-name">Tên hiển thị</Label>
         <Input
