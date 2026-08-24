@@ -538,7 +538,9 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
           </>
         )}
         <ChevronRight className="size-3 shrink-0 opacity-50" />
-        <span className="min-w-0 flex-1 truncate font-medium text-foreground">{currentLabel}</span>
+        <span className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+          {currentLabel}
+        </span>
       </div>
     </div>
   );
