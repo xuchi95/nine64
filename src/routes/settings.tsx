@@ -9,6 +9,8 @@ import { Piece } from "@/components/chess/Piece";
 import { resetSettings, updateSettings, useSettings, type Settings } from "@/lib/settings";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
+import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
