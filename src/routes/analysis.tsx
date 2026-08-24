@@ -90,16 +90,10 @@ function Analysis() {
     }
   };
 
-  const loadFen = () => {
-    try {
-      game.game.current.load(fenInput.trim());
-      setLoadError(null);
-      setLines([]);
-      // force a re-render through a null move-less refresh
-      game.makeMove("a1", "a1");
-    } catch {
-      setLoadError("Invalid FEN.");
-    }
+  const handleLoadFen = () => {
+    setLines([]);
+    if (game.loadFen(fenInput.trim())) setLoadError(null);
+    else setLoadError("Invalid FEN.");
   };
 
   return (
