@@ -166,6 +166,7 @@ function Home() {
         </div>
       </section>
     </AppShell>
+    </TooltipProvider>
   );
 }
 
