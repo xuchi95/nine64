@@ -1,0 +1,43 @@
+import { memo } from "react";
+import { cn } from "@/lib/utils";
+
+function format(seconds: number) {
+  const s = Math.max(0, seconds);
+  const m = Math.floor(s / 60);
+  const rest = s - m * 60;
+  if (s < 20) return `${m}:${rest.toFixed(1).padStart(4, "0")}`;
+  return `${m}:${Math.floor(rest).toString().padStart(2, "0")}`;
+}
+
+export const Clock = memo(function Clock({
+  seconds,
+  active,
+  enabled = true,
+}: {
+  seconds: number;
+  active: boolean;
+  enabled?: boolean;
+}) {
+  if (!enabled) {
+    return (
+      <div className="tabular rounded-md border border-border bg-surface-2 px-3 py-1.5 text-lg text-muted-foreground">
+        --:--
+      </div>
+    );
+  }
+  const low = seconds <= 10;
+  return (
+    <div
+      aria-label="Clock"
+      className={cn(
+        "tabular rounded-md border px-3 py-1.5 text-lg font-semibold transition-colors",
+        active
+          ? "border-primary/60 bg-primary/15 text-foreground"
+          : "border-border bg-surface-2 text-muted-foreground",
+        low && active && "border-destructive/70 bg-destructive/20 text-destructive",
+      )}
+    >
+      {format(seconds)}
+    </div>
+  );
+});
