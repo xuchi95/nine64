@@ -410,14 +410,17 @@ export const finishGame = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
-    // Update ratings and stats
-    const whiteWon = data.result === "1-0";
-    const blackWon = data.result === "0-1";
+    // Glicko-2 rating update (rating, deviation and volatility) — service role only.
     const draw = data.result === "1/2-1/2";
 
-    await supabase.rpc("update_ratings_after_game", {
-      _game_id: data.gameId,
-    });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const adminRpc = supabaseAdmin.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>;
+    const { error: ratingError } = await adminRpc("apply_glicko2", { _game_id: data.gameId });
+    if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
+
 
     // Notify both players
     const title = draw ? "Game drawn" : data.winnerId ? "You won!" : "Game over";
