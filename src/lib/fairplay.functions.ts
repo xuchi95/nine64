@@ -147,12 +147,20 @@ export const listFairplayCases = createServerFn({ method: "GET" })
       : { data: [] };
     const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: "case_list_view",
+      detail: { cases: ids.length },
+    });
+
     return (data ?? []).map((row) => ({
       ...row,
       displayName: byId.get(row.user_id)?.display_name ?? "Người chơi",
       rating: byId.get(row.user_id)?.rating ?? null,
     }));
   });
+
 
 export const getFairplayCase = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
