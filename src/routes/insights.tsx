@@ -167,10 +167,7 @@ function InsightsPage() {
                     flip while targeting your weakest phase.
                   </p>
                   <Button asChild className="mt-4">
-                    <Link
-                      to="/play/ai"
-                      search={{ level: recommendation.level, bot: recommendation.personalityId }}
-                    >
+                    <Link to="/play/ai">
                       Play this bot <ChevronRight className="size-4" />
                     </Link>
                   </Button>

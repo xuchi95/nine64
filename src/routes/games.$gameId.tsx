@@ -21,6 +21,8 @@ import { APP } from "@/config/app";
 import type { Color } from "@/hooks/useChessGame";
 import { attachReview, formatEval, outcomeLabel, toPgn, useSavedGame } from "@/lib/history";
 import { reviewGame } from "@/lib/engine/review";
+import { generatePuzzles } from "@/lib/learn/puzzleGen";
+import { addPuzzles } from "@/lib/learn/store";
 import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/games/$gameId")({
@@ -142,8 +144,11 @@ function GameDetail() {
         signal: cancelRef.current,
       });
       attachReview(game.id, review);
+      const created = addPuzzles(generatePuzzles({ ...game, review }));
       toast.success("Review complete", {
-        description: `Accuracy — White ${review.accuracy.w}%, Black ${review.accuracy.b}%`,
+        description:
+          `Accuracy — White ${review.accuracy.w}%, Black ${review.accuracy.b}%` +
+          (created > 0 ? ` · ${created} puzzle${created === 1 ? "" : "s"} added` : ""),
       });
     } catch (e) {
       toast.error("Review failed", { description: (e as Error).message });
