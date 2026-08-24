@@ -147,12 +147,20 @@ export const listFairplayCases = createServerFn({ method: "GET" })
       : { data: [] };
     const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: "case_list_view",
+      detail: { cases: ids.length },
+    });
+
     return (data ?? []).map((row) => ({
       ...row,
       displayName: byId.get(row.user_id)?.display_name ?? "Người chơi",
       rating: byId.get(row.user_id)?.rating ?? null,
     }));
   });
+
 
 export const getFairplayCase = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -180,12 +188,21 @@ export const getFairplayCase = createServerFn({ method: "GET" })
         .limit(20),
     ]);
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: "case_view",
+      targetUserId: data.userId,
+      detail: { score: status.data?.score ?? null, action: status.data?.action ?? null },
+    });
+
     return {
       status: status.data ?? null,
       reports: reports.data ?? [],
       actions: actions.data ?? [],
     };
   });
+
 
 export const resolveFairplayCase = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -235,8 +252,18 @@ export const resolveFairplayCase = createServerFn({ method: "POST" })
       note: data.note ?? null,
     });
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: hold ? "rating_hold" : data.decision === "unlock" ? "unlock" : "clear_warning",
+      targetUserId: data.userId,
+      note: data.note ?? null,
+      detail: hold ? { hours: data.hours, expiresAt } : {},
+    });
+
     return { ok: true, lockExpiresAt: expiresAt, lockHours: hold ? data.hours : 0 };
   });
+
 
 /** Detection / false-alarm / latency metrics for the admin dashboard. */
 export const getFairplayMetrics = createServerFn({ method: "GET" })
@@ -260,7 +287,11 @@ export const getFairplayMetrics = createServerFn({ method: "GET" })
         .limit(2000),
     ]);
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({ actorId: context.userId, action: "metrics_view" });
+
     return computeFairplayMetrics(
+
       (reports.data ?? []).map((r) => ({
         score: Number(r.score),
         probability: Number(r.probability),
@@ -377,5 +408,15 @@ export const listFairplayDecisions = createServerFn({ method: "GET" })
       })),
     ].sort((x, y) => y.createdAt.localeCompare(x.createdAt));
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: "decision_log_view",
+      targetUserId: data.userId ?? null,
+      targetGameId: data.gameId ?? null,
+      detail: { kind: data.kind, minScore: data.minScore, results: entries.length },
+    });
+
     return entries.slice(0, data.limit);
+
   });

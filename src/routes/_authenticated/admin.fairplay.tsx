@@ -202,6 +202,10 @@ function AdminFairplayPage() {
           <Button asChild variant="secondary" size="sm">
             <Link to="/admin/fairplay/log">Nhật ký quyết định</Link>
           </Button>
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/admin/audit">Nhật ký quản trị</Link>
+          </Button>
+
           <Button variant="secondary" size="sm" disabled={busy} onClick={() => void load()}>
             <RefreshCw className={cn("mr-2 size-4", busy && "animate-spin")} />
             Làm mới

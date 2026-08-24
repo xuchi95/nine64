@@ -453,6 +453,8 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin": "Admin",
   "/admin/fairplay": "Fair Play",
   "/admin/fairplay/log": "Nhật ký",
+  "/admin/audit": "Audit log",
+
 };
 
 function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
