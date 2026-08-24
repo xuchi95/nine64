@@ -82,12 +82,14 @@ export const reportFairplayGame = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const rating = game.white_id === data.subjectId ? game.white_rating : game.black_rating;
+    const startedAt = Date.now();
     const turns = await loadTurns(supabaseAdmin, data.gameId, data.subjectId);
     const verdict = evaluateGame({ observations: data.observations, turns, rating });
+    const evalMs = Date.now() - startedAt;
 
     const stored = await upsertReport(
       supabaseAdmin,
-      { gameId: data.gameId, subjectId: data.subjectId, observations: data.observations, rating },
+      { gameId: data.gameId, subjectId: data.subjectId, observations: data.observations, rating, evalMs },
       verdict,
     );
     if (stored.stored) {
@@ -105,6 +107,9 @@ export const reportFairplayGame = createServerFn({ method: "POST" })
       action: verdict.action,
       statusAction: status.action,
       ratingLocked: status.locked,
+      lockExpiresAt: status.lockExpiresAt,
+      lockHours: status.lockHours,
+      evalMs,
       self: data.subjectId === context.userId,
     };
   });
@@ -114,7 +119,7 @@ export const getMyFairplayStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("fairplay_status")
-      .select("score, action, rating_locked, games_reviewed, updated_at")
+      .select("score, action, rating_locked, lock_started_at, lock_expires_at, lock_hours, games_reviewed, updated_at")
       .eq("user_id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -133,7 +138,7 @@ export const listFairplayCases = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("fairplay_status")
       .select(
-        "user_id, score, action, sprt_llr, sprt_decision, boosting_score, sandbagging_score, rating_locked, games_reviewed, reasons, updated_at",
+        "user_id, score, action, sprt_llr, sprt_decision, boosting_score, sandbagging_score, rating_locked, lock_started_at, lock_expires_at, lock_hours, games_reviewed, reasons, updated_at",
       )
       .order("score", { ascending: false })
       .limit(100);
@@ -195,7 +200,9 @@ export const resolveFairplayCase = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        decision: z.enum(["clear", "rating_hold"]),
+        decision: z.enum(["clear", "rating_hold", "unlock"]),
+        /** Lock duration in hours for a manual rating hold. */
+        hours: z.number().int().min(1).max(720).default(72),
         note: z.string().max(500).optional(),
       })
       .parse(input),
@@ -208,27 +215,79 @@ export const resolveFairplayCase = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const now = new Date();
+    const hold = data.decision === "rating_hold";
+    const expiresAt = hold ? new Date(now.getTime() + data.hours * 3_600_000).toISOString() : null;
+
     await supabaseAdmin
       .from("fairplay_status")
       .upsert(
         {
           user_id: data.userId,
-          rating_locked: data.decision === "rating_hold",
-          action: data.decision === "rating_hold" ? "rating_hold" : "none",
-          score: data.decision === "rating_hold" ? 100 : 0,
-          updated_at: new Date().toISOString(),
+          rating_locked: hold,
+          action: hold ? "rating_hold" : "none",
+          score: hold ? 100 : 0,
+          lock_started_at: hold ? now.toISOString() : null,
+          lock_expires_at: expiresAt,
+          lock_hours: hold ? data.hours : 0,
+          unlocked_at: hold ? null : now.toISOString(),
+          unlocked_by: hold ? null : context.userId,
+          updated_at: now.toISOString(),
         },
         { onConflict: "user_id" },
       );
 
     await supabaseAdmin.from("fairplay_actions").insert({
       user_id: data.userId,
-      action: data.decision === "rating_hold" ? "rating_hold" : "cleared",
-      score: data.decision === "rating_hold" ? 100 : 0,
+      action: hold ? "rating_hold" : data.decision === "unlock" ? "unlocked" : "cleared",
+      score: hold ? 100 : 0,
       automatic: false,
       decided_by: context.userId,
       note: data.note ?? null,
     });
 
-    return { ok: true };
+    return { ok: true, lockExpiresAt: expiresAt, lockHours: hold ? data.hours : 0 };
+  });
+
+/** Detection / false-alarm / latency metrics for the admin dashboard. */
+export const getFairplayMetrics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { computeFairplayMetrics } = await import("@/lib/fairplay/metrics");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [reports, actions] = await Promise.all([
+      supabaseAdmin
+        .from("fairplay_reports")
+        .select("score, probability, rating, eval_ms, created_at")
+        .order("created_at", { ascending: false })
+        .limit(2000),
+      supabaseAdmin
+        .from("fairplay_actions")
+        .select("user_id, action, automatic, created_at")
+        .order("created_at", { ascending: false })
+        .limit(2000),
+    ]);
+
+    return computeFairplayMetrics(
+      (reports.data ?? []).map((r) => ({
+        score: Number(r.score),
+        probability: Number(r.probability),
+        rating: Number(r.rating ?? 1200),
+        eval_ms: Number(r.eval_ms ?? 0),
+        created_at: r.created_at,
+      })),
+      (actions.data ?? []).map((a) => ({
+        user_id: a.user_id,
+        action: a.action,
+        automatic: a.automatic,
+        created_at: a.created_at,
+      })),
+    );
   });
