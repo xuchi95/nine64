@@ -1,5 +1,14 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Moon, Sun, Crown, User, LogOut, Loader2, Bell } from "lucide-react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import {
+  Moon,
+  Sun,
+  Crown,
+  User,
+  LogOut,
+  Loader2,
+  Bell,
+  ChevronDown,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { APP } from "@/config/app";
 import { updateSettings, useSettings } from "@/lib/settings";
@@ -15,16 +24,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const NAV = [
+const MAIN_NAV = [
   { to: "/", label: "Home" },
   { to: "/play", label: "Play" },
   { to: "/games", label: "My games" },
   { to: "/puzzles", label: "Puzzles" },
+] as const;
+
+const MORE_NAV = [
   { to: "/drills", label: "Bài tập" },
   { to: "/progress", label: "Tiến bộ" },
   { to: "/insights", label: "Insights" },
   { to: "/analysis", label: "Analysis" },
-  { to: "/settings", label: "Settings" },
 ] as const;
 
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
