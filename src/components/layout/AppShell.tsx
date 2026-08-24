@@ -112,7 +112,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             <AuthHeader />
           </div>
         </div>
-        <PageBreadcrumb />
+        <PageBreadcrumb wide={wide} />
       </header>
       <main className={cn("mx-auto w-full flex-1 px-4 py-6 sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
         {children}
