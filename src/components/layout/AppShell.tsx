@@ -221,16 +221,23 @@ function MobileNav() {
                 Account
               </p>
               <div className="flex flex-col gap-2">
-                {PROFILE_MENU.map((item) => (
-                  <Link
-                    key={item.to + item.label}
-                    to={item.to}
-                    className="flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
-                  >
-                    <item.icon className="size-5 shrink-0" />
-                    {item.label}
-                  </Link>
-                ))}
+                {PROFILE_MENU.map((item) => {
+                  const active = isActive(item.to);
+                  return (
+                    <Link
+                      key={item.to + item.label}
+                      to={item.to}
+                      className={cn(
+                        "flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                        active && "bg-primary/15 text-primary",
+                      )}
+                    >
+                      <item.icon className={cn("size-5 shrink-0", active && "text-primary")} />
+                      {item.label}
+                      {active && <Check className="ml-auto size-5 text-primary" />}
+                    </Link>
+                  );
+                })}
               </div>
             </>
           )}
