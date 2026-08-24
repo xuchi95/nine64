@@ -40,17 +40,17 @@ let idCounter = 0;
 function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackedPiece[] {
   const remaining = [...prev];
   const result: TrackedPiece[] = [];
-  const takeExact = (p: BoardPiece) => {
+  const takeExact = (p: BoardPiece): TrackedPiece | null => {
     const i = remaining.findIndex(
       (r) => r.square === p.square && r.type === p.type && r.color === p.color,
     );
     if (i === -1) return null;
-    return remaining.splice(i, 1)[0];
+    return remaining.splice(i, 1)[0] ?? null;
   };
-  const takeSimilar = (p: BoardPiece) => {
+  const takeSimilar = (p: BoardPiece): TrackedPiece | null => {
     const i = remaining.findIndex((r) => r.type === p.type && r.color === p.color);
     if (i === -1) return null;
-    return remaining.splice(i, 1)[0];
+    return remaining.splice(i, 1)[0] ?? null;
   };
 
   const pending: BoardPiece[] = [];
@@ -105,8 +105,8 @@ export function ChessBoard(props: ChessBoardProps) {
     const el = containerRef.current;
     if (!el) return;
     const observer = new ResizeObserver((entries) => {
-      const w = entries[0].contentRect.width;
-      setSize(w);
+      const w = entries[0]?.contentRect.width;
+      if (w) setSize(w);
     });
     observer.observe(el);
     setSize(el.getBoundingClientRect().width);
@@ -120,8 +120,8 @@ export function ChessBoard(props: ChessBoardProps) {
 
   const squareToXY = useCallback(
     (square: string) => {
-      const f = files.indexOf(square[0]);
-      const r = ranks.indexOf(square[1]);
+      const f = files.indexOf(square[0]!);
+      const r = ranks.indexOf(square[1]!);
       return { x: f * squareSize, y: r * squareSize };
     },
     [files, ranks, squareSize],
@@ -132,7 +132,7 @@ export function ChessBoard(props: ChessBoardProps) {
       const f = Math.floor(x / squareSize);
       const r = Math.floor(y / squareSize);
       if (f < 0 || f > 7 || r < 0 || r > 7) return null;
-      return `${files[f]}${ranks[r]}`;
+      return `${files[f]!}${ranks[r]!}`;
     },
     [files, ranks, squareSize],
   );
