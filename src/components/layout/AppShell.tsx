@@ -129,6 +129,11 @@ function MobileNav() {
   const { pathname } = useLocation();
   const settings = useSettings();
   const { user, signOut } = useAuth();
+  const swipe = useSwipeToClose({
+    side: "left",
+    enabled: open,
+    onClose: () => setOpen(false),
+  });
 
   useEffect(() => {
     setOpen(false);
@@ -147,13 +152,25 @@ function MobileNav() {
           <Menu className="size-5" />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="flex w-[86vw] max-w-sm flex-col gap-0 p-0">
+      <SheetContent
+        ref={swipe.ref}
+        side="left"
+        className="flex w-[86vw] max-w-sm flex-col gap-0 p-0"
+        style={swipe.style}
+        {...swipe.handlers}
+      >
+        {/* Drag affordance: vuốt sang trái để đóng menu */}
+        <span
+          aria-hidden
+          className="absolute right-1.5 top-1/2 h-16 w-1 -translate-y-1/2 rounded-full bg-border/70"
+        />
         <div className="flex items-center gap-3 border-b border-border/70 px-4 py-4">
           <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
             <Crown className="size-5" />
           </span>
           <SheetTitle className="text-base tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
         </div>
+
 
         <nav className="flex-1 overflow-y-auto p-3">
           <div className="flex flex-col gap-1">
