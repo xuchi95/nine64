@@ -65,6 +65,7 @@ function OnlineGamePage() {
   const [result, setResult] = useState<{ winner: Color | "draw"; reason: string } | null>(null);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const [clock, setClock] = useState({ w: 0, b: 0 });
+  const [boardRev, setBoardRev] = useState(0);
   const gameRef = useRef<Chess>(new Chess());
   const finishedRef = useRef(false);
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
