@@ -208,7 +208,8 @@ function EmailCard() {
   }
 
   return (
-    <form onSubmit={save} className="panel max-w-xl space-y-4 p-5">
+    <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
+      <SectionHead title="Email" desc="Đổi địa chỉ đăng nhập, cần xác nhận qua liên kết." />
       <div className="space-y-2">
         <Label>Email hiện tại</Label>
         <Input value={user?.email ?? ""} disabled />
