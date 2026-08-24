@@ -18,10 +18,16 @@ export interface ClockState {
   b: number;
 }
 
+export interface GameSnapshot {
+  startFen: string;
+  finalFen: string;
+  moves: MoveRecord[];
+}
+
 export interface UseChessGameOptions {
   variant: VariantId;
   timeControl: TimeControl | null;
-  onGameEnd?: (result: GameResult) => void;
+  onGameEnd?: (result: GameResult, snapshot: GameSnapshot) => void;
 }
 
 export interface MoveRecord {
