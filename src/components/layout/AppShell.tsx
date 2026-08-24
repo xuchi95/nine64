@@ -20,6 +20,7 @@ const NAV = [
   { to: "/play", label: "Play" },
   { to: "/games", label: "My games" },
   { to: "/puzzles", label: "Puzzles" },
+  { to: "/drills", label: "Bài tập" },
   { to: "/insights", label: "Insights" },
   { to: "/analysis", label: "Analysis" },
   { to: "/settings", label: "Settings" },
