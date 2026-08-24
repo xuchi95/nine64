@@ -17,7 +17,10 @@ import { ChessBoard } from "@/components/chess/ChessBoard";
 import { EvalGraph } from "@/components/game/EvalGraph";
 import { MoveList } from "@/components/game/MoveList";
 import { CoachPanel } from "@/components/game/CoachPanel";
+import { VariationPanel } from "@/components/game/VariationPanel";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { APP } from "@/config/app";
 import type { Color } from "@/hooks/useChessGame";
 import { attachReview, formatEval, outcomeLabel, toPgn, useSavedGame } from "@/lib/history";
@@ -57,6 +60,7 @@ function GameDetail() {
   const [cursor, setCursor] = useState(-1);
   const [orientation, setOrientation] = useState<Color>("w");
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [deep, setDeep] = useState(false);
   const cancelRef = useRef<{ cancelled: boolean }>({ cancelled: false });
 
   useEffect(() => {
@@ -141,12 +145,13 @@ function GameDetail() {
         startFen: game.startFen,
         moves: game.moves,
         performance: settings.enginePerformance,
+        deep,
         onProgress: (done, total) => setProgress({ done, total }),
         signal: cancelRef.current,
       });
       attachReview(game.id, review);
       const created = addPuzzles(generatePuzzles({ ...game, review }));
-      toast.success("Review complete", {
+      toast.success(deep ? "Phân tích sâu hoàn tất" : "Review complete", {
         description:
           `Accuracy — White ${review.accuracy.w}%, Black ${review.accuracy.b}%` +
           (created > 0 ? ` · ${created} puzzle${created === 1 ? "" : "s"} added` : ""),
@@ -277,13 +282,30 @@ function GameDetail() {
                     </p>
                   </div>
                 </div>
+            <div className="mt-3 flex items-start justify-between gap-3 rounded-md bg-surface-2 p-3">
+              <div>
+                <Label htmlFor="deep-review" className="text-sm font-semibold">
+                  Phân tích sâu
+                </Label>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Engine tìm lâu hơn (~900ms/nước, 5 phương án) và lưu biến thể gợi ý chi tiết cho
+                  từng sai lầm. Chạy chậm hơn nhưng chính xác hơn.
+                </p>
+              </div>
+              <Switch
+                id="deep-review"
+                checked={deep}
+                disabled={progress !== null}
+                onCheckedChange={setDeep}
+              />
+            </div>
                 <Button
                   variant="outline"
                   className="mt-3 w-full"
                   disabled={progress !== null}
                   onClick={runReview}
                 >
-                  <Gauge className="size-4" /> Re-run review
+                  <Gauge className="size-4" /> {deep ? "Chạy phân tích sâu" : "Re-run review"}
                 </Button>
               </>
             ) : (
@@ -292,11 +314,30 @@ function GameDetail() {
                   Run an engine review to get an evaluation curve for every move plus accuracy for
                   both sides. Everything is computed on your device.
                 </p>
+            <div className="mt-3 flex items-start justify-between gap-3 rounded-md bg-surface-2 p-3">
+              <div>
+                <Label htmlFor="deep-review" className="text-sm font-semibold">
+                  Phân tích sâu
+                </Label>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Engine tìm lâu hơn (~900ms/nước, 5 phương án) và lưu biến thể gợi ý chi tiết cho
+                  từng sai lầm. Chạy chậm hơn nhưng chính xác hơn.
+                </p>
+              </div>
+              <Switch
+                id="deep-review"
+                checked={deep}
+                disabled={progress !== null}
+                onCheckedChange={setDeep}
+              />
+            </div>
                 <Button className="mt-3 w-full" disabled={progress !== null} onClick={runReview}>
                   <Gauge className="size-4" />
                   {progress
                     ? `Reviewing ${progress.done}/${progress.total}…`
-                    : "Run engine review"}
+                    : deep
+                      ? "Chạy phân tích sâu"
+                      : "Run engine review"}
                 </Button>
               </div>
             )}
@@ -306,6 +347,8 @@ function GameDetail() {
               </p>
             )}
           </div>
+
+          <VariationPanel game={game} onSelectMove={setCursor} />
 
           <CoachPanel game={game} onSelectMove={setCursor} />
 
