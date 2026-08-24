@@ -8,6 +8,9 @@ import {
   Loader2,
   Bell,
   ChevronDown,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  History,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { APP } from "@/config/app";
@@ -36,6 +39,12 @@ const MORE_NAV = [
   { to: "/progress", label: "Tiến bộ" },
   { to: "/insights", label: "Insights" },
   { to: "/analysis", label: "Analysis" },
+] as const;
+
+const PROFILE_MENU = [
+  { to: "/account", label: "Tài khoản & bảo mật", icon: ShieldCheck },
+  { to: "/games", label: "Ván đấu của tôi", icon: History },
+  { to: "/settings", label: "Cài đặt giao diện", icon: SettingsIcon },
 ] as const;
 
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
@@ -289,7 +298,7 @@ function AuthHeader() {
         <DropdownMenuSeparator />
         {PROFILE_MENU.map((item) => (
           <DropdownMenuItem key={item.to + item.label} asChild className="cursor-pointer rounded-lg px-3 py-2">
-            <Link to={item.to} search={item.search as never}>
+            <Link to={item.to}>
               <item.icon className="mr-2.5 size-4 text-muted-foreground" />
               <span className="flex-1">{item.label}</span>
             </Link>
