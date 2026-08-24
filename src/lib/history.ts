@@ -99,6 +99,19 @@ export function saveGame(game: Omit<SavedGame, "id" | "playedAt">): SavedGame {
   return record;
 }
 
+/** Merges games coming from the account archive, keeping local copies on conflict. */
+export function mergeGames(games: SavedGame[]) {
+  hydrateHistory();
+  const known = new Set(state.map((g) => g.id));
+  const extra = games.filter((g) => !known.has(g.id));
+  if (extra.length === 0) return;
+  state = [...state, ...extra]
+    .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())
+    .slice(0, MAX_GAMES);
+  persist();
+  emit();
+}
+
 export function attachReview(id: string, review: GameReview) {
   state = state.map((g) => (g.id === id ? { ...g, review } : g));
   persist();
