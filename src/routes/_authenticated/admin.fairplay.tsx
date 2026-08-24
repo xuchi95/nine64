@@ -1,13 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ShieldAlert, ShieldCheck, RefreshCw } from "lucide-react";
+import { ShieldAlert, ShieldCheck, RefreshCw, LockOpen, Clock } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { APP } from "@/config/app";
 import { hasRole } from "@/lib/auth.functions";
-import { getFairplayCase, listFairplayCases, resolveFairplayCase } from "@/lib/fairplay.functions";
+import {
+  getFairplayCase,
+  getFairplayMetrics,
+  listFairplayCases,
+  resolveFairplayCase,
+} from "@/lib/fairplay.functions";
+import { FairplayMetricsPanel } from "@/components/fairplay/FairplayMetricsPanel";
+import { formatRemaining, isLockActive, remainingLockMs } from "@/lib/fairplay/lockPolicy";
+import type { FairplayMetrics } from "@/lib/fairplay/metrics";
+import { Input } from "@/components/ui/input";
 import { ACTION_LABEL, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +45,9 @@ interface CaseRow {
   boosting_score: number;
   sandbagging_score: number;
   rating_locked: boolean;
+  lock_started_at: string | null;
+  lock_expires_at: string | null;
+  lock_hours: number;
   games_reviewed: number;
   reasons: unknown;
   updated_at: string;
@@ -74,23 +86,28 @@ function AdminFairplayPage() {
   const listFn = useServerFn(listFairplayCases);
   const caseFn = useServerFn(getFairplayCase);
   const resolveFn = useServerFn(resolveFairplayCase);
+  const metricsFn = useServerFn(getFairplayMetrics);
 
   const [admin, setAdmin] = useState<boolean | null>(null);
   const [rows, setRows] = useState<CaseRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<CaseDetail | null>(null);
   const [busy, setBusy] = useState(false);
+  const [metrics, setMetrics] = useState<FairplayMetrics | null>(null);
+  const [lockHours, setLockHours] = useState(72);
 
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      setRows((await listFn()) as CaseRow[]);
+      const [list, stats] = await Promise.all([listFn(), metricsFn()]);
+      setRows(list as CaseRow[]);
+      setMetrics(stats as FairplayMetrics);
     } catch {
       setRows([]);
     } finally {
       setBusy(false);
     }
-  }, [listFn]);
+  }, [listFn, metricsFn]);
 
   useEffect(() => {
     void (async () => {
@@ -116,12 +133,14 @@ function AdminFairplayPage() {
   }, [caseFn, selected]);
 
   const resolve = useCallback(
-    async (userId: string, decision: "clear" | "rating_hold") => {
-      await resolveFn({ data: { userId, decision } });
+    async (userId: string, decision: "clear" | "rating_hold" | "unlock") => {
+      await resolveFn({ data: { userId, decision, hours: lockHours } });
       await load();
     },
-    [load, resolveFn],
+    [load, lockHours, resolveFn],
   );
+
+  const selectedRow = rows.find((r) => r.user_id === selected) ?? null;
 
   if (admin === false) {
     return (
@@ -149,6 +168,12 @@ function AdminFairplayPage() {
             Làm mới
           </Button>
         </div>
+
+        {metrics && (
+          <div className="mt-6">
+            <FairplayMetricsPanel metrics={metrics} />
+          </div>
+        )}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_380px]">
           <Card>
@@ -182,6 +207,12 @@ function AdminFairplayPage() {
                       {row.boosting_score >= 60 ? " · dàn xếp" : ""}
                       {row.sandbagging_score >= 60 ? " · cố thua" : ""}
                     </span>
+                    {isLockActive(row) && (
+                      <span className="mt-0.5 flex items-center gap-1 text-xs text-destructive">
+                        <Clock className="size-3" />
+                        Khoá còn {formatRemaining(remainingLockMs(row.lock_expires_at))}
+                      </span>
+                    )}
                   </span>
                   <span className={cn("font-mono text-lg font-semibold", tone(row.score))}>
                     {row.score}
@@ -199,17 +230,46 @@ function AdminFairplayPage() {
               {!selected && <p className="text-muted-foreground">Chọn một hồ sơ để xem chi tiết.</p>}
               {selected && detail && (
                 <>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => void resolve(selected, "clear")}>
-                      Xoá cảnh báo
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => void resolve(selected, "rating_hold")}
-                    >
-                      Khoá xếp hạng
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-muted-foreground" htmlFor="lock-hours">
+                        Thời hạn khoá (giờ)
+                      </label>
+                      <Input
+                        id="lock-hours"
+                        type="number"
+                        min={1}
+                        max={720}
+                        value={lockHours}
+                        onChange={(e) => setLockHours(Number(e.target.value) || 1)}
+                        className="h-9 w-24 font-mono tabular-nums"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => void resolve(selected, "clear")}>
+                        Xoá cảnh báo
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => void resolve(selected, "rating_hold")}
+                      >
+                        Khoá {lockHours}h
+                      </Button>
+                      {selectedRow && isLockActive(selectedRow) && (
+                        <Button size="sm" onClick={() => void resolve(selected, "unlock")}>
+                          <LockOpen className="mr-2 size-4" />
+                          Mở khoá
+                        </Button>
+                      )}
+                    </div>
+                    {selectedRow && isLockActive(selectedRow) && (
+                      <p className="text-xs text-muted-foreground">
+                        Khoá tự động hết hạn sau{" "}
+                        {formatRemaining(remainingLockMs(selectedRow.lock_expires_at))}
+                        {selectedRow.lock_hours ? ` (đặt ${selectedRow.lock_hours} giờ)` : ""}.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
