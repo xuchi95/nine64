@@ -75,10 +75,34 @@ function PlayAi() {
   const game = useChessGame({
     variant: config.variant,
     timeControl: config.timeControl,
-    onGameEnd: (r) => {
+    onGameEnd: (r, snapshot) => {
       setShowResult(true);
       if (r.winner === "draw") playSound("draw");
       else playSound(r.winner === playerColor ? "victory" : "defeat");
+      if (snapshot.moves.length === 0) return;
+      const botName = `${personality.name} · Lv ${level.level}`;
+      const botSubtitle = `${level.title} · ${level.strength}`;
+      const saved = saveGame({
+        mode: "ai",
+        variant: config.variant,
+        variantName: VARIANTS.find((v) => v.id === config.variant)?.name ?? config.variant,
+        timeControl: config.timeControl?.label ?? "Unlimited",
+        startFen: snapshot.startFen,
+        finalFen: snapshot.finalFen,
+        moves: snapshot.moves,
+        result: r,
+        playerColor,
+        white: playerColor === "w" ? { name: "You" } : { name: botName, subtitle: botSubtitle },
+        black: playerColor === "b" ? { name: "You" } : { name: botName, subtitle: botSubtitle },
+        opening: detectOpening(snapshot.moves.map((m) => m.san))?.name ?? null,
+      });
+      toast.success("Game saved to your archive", {
+        description: "Open it for a move-by-move replay and engine review.",
+        action: {
+          label: "View",
+          onClick: () => void navigate({ to: "/games/$gameId", params: { gameId: saved.id } }),
+        },
+      });
     },
   });
 
