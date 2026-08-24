@@ -177,9 +177,9 @@ function NotificationBell() {
         <button
           type="button"
           aria-label="Notifications"
-          className="relative flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground"
+          className="relative flex size-10 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
         >
-          <Bell className="size-4" />
+          <Bell className="size-[18px]" />
           {unreadCount > 0 && (
             <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}
@@ -187,7 +187,8 @@ function NotificationBell() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 rounded-xl p-1.5">
+
         <div className="flex items-center justify-between px-2 py-1.5">
           <span className="text-sm font-medium">Notifications</span>
           {unreadCount > 0 && (
