@@ -27,6 +27,8 @@ import { normalizeResult, resultCodeFromWinner, resultLabel } from "@/lib/chess/
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
 import { buildPgn, shareUrl } from "@/lib/chess/share";
+import { FairplayBridge } from "@/components/game/FairplayBridge";
+import { useFairplayTelemetry } from "@/hooks/useFairplayTelemetry";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   head: () => ({
@@ -82,6 +84,18 @@ function OnlineGamePage() {
   }, [game, user]);
 
   const orientation: PieceColor = myColor ?? "w";
+  const gameLive = game?.status === "active";
+  const myTurnNow = Boolean(myColor) && gameLive && gameRef.current.turn() === myColor;
+  const fairplay = useFairplayTelemetry({
+    gameId,
+    enabled: Boolean(myColor) && gameLive,
+    myTurn: myTurnNow,
+    ply: moves.length,
+  });
+
+  useEffect(() => {
+    if (game?.status === "completed") void fairplay.flush();
+  }, [fairplay, game?.status]);
   const spec = useMemo(() => timeControlSpec(game?.time_control ?? "blitz5m"), [game?.time_control]);
   const result = useMemo(() => (game ? normalizeResult(game) : null), [game]);
   const resultView = useMemo(() => resultLabel(result, myColor), [result, myColor]);
@@ -618,6 +632,18 @@ function OnlineGamePage() {
             clock={clock}
             active={turn === myColor && live}
           />
+          {game.status === "completed" && (
+            <div className="mt-3">
+              <FairplayBridge
+                gameId={game.id}
+                initialFen={game.initial_fen}
+                moves={moves}
+                whiteId={game.white_id}
+                blackId={game.black_id}
+                runAnalysis={myColor === "w"}
+              />
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">

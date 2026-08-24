@@ -14,6 +14,180 @@ export type Database = {
   }
   public: {
     Tables: {
+      fairplay_actions: {
+        Row: {
+          action: string
+          automatic: boolean
+          created_at: string
+          decided_by: string | null
+          game_id: string | null
+          id: string
+          note: string | null
+          score: number
+          user_id: string
+        }
+        Insert: {
+          action: string
+          automatic?: boolean
+          created_at?: string
+          decided_by?: string | null
+          game_id?: string | null
+          id?: string
+          note?: string | null
+          score?: number
+          user_id: string
+        }
+        Update: {
+          action?: string
+          automatic?: boolean
+          created_at?: string
+          decided_by?: string | null
+          game_id?: string | null
+          id?: string
+          note?: string | null
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fairplay_actions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fairplay_reports: {
+        Row: {
+          action: string
+          confidence: number
+          contributions: Json
+          created_at: string
+          features: Json
+          game_id: string
+          id: string
+          model: string
+          probability: number
+          reasons: Json
+          score: number
+          user_id: string
+        }
+        Insert: {
+          action?: string
+          confidence?: number
+          contributions?: Json
+          created_at?: string
+          features?: Json
+          game_id: string
+          id?: string
+          model?: string
+          probability?: number
+          reasons?: Json
+          score?: number
+          user_id: string
+        }
+        Update: {
+          action?: string
+          confidence?: number
+          contributions?: Json
+          created_at?: string
+          features?: Json
+          game_id?: string
+          id?: string
+          model?: string
+          probability?: number
+          reasons?: Json
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fairplay_reports_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fairplay_signals: {
+        Row: {
+          client_meta: Json
+          created_at: string
+          game_id: string
+          id: string
+          turns: Json
+          user_id: string
+        }
+        Insert: {
+          client_meta?: Json
+          created_at?: string
+          game_id: string
+          id?: string
+          turns?: Json
+          user_id: string
+        }
+        Update: {
+          client_meta?: Json
+          created_at?: string
+          game_id?: string
+          id?: string
+          turns?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fairplay_signals_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fairplay_status: {
+        Row: {
+          action: string
+          boosting_score: number
+          games_reviewed: number
+          rating_locked: boolean
+          reasons: Json
+          sandbagging_score: number
+          score: number
+          sprt_decision: string
+          sprt_llr: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action?: string
+          boosting_score?: number
+          games_reviewed?: number
+          rating_locked?: boolean
+          reasons?: Json
+          sandbagging_score?: number
+          score?: number
+          sprt_decision?: string
+          sprt_llr?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          boosting_score?: number
+          games_reviewed?: number
+          rating_locked?: boolean
+          reasons?: Json
+          sandbagging_score?: number
+          score?: number
+          sprt_decision?: string
+          sprt_llr?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       game_fairplay: {
         Row: {
           created_at: string
@@ -116,6 +290,7 @@ export type Database = {
           id: string
           initial_fen: string
           last_move_at: string | null
+          rated: boolean
           result: string
           status: string
           time_control: string
@@ -136,6 +311,7 @@ export type Database = {
           id?: string
           initial_fen?: string
           last_move_at?: string | null
+          rated?: boolean
           result?: string
           status?: string
           time_control?: string
@@ -156,6 +332,7 @@ export type Database = {
           id?: string
           initial_fen?: string
           last_move_at?: string | null
+          rated?: boolean
           result?: string
           status?: string
           time_control?: string

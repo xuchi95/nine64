@@ -9,6 +9,8 @@ import { Piece } from "@/components/chess/Piece";
 import { resetSettings, updateSettings, useSettings, type Settings } from "@/lib/settings";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
+import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -28,6 +30,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const settings = useSettings();
+  const { user } = useAuth();
 
   return (
     <AppShell>
@@ -37,6 +40,13 @@ function SettingsPage() {
           Reset to defaults
         </Button>
       </div>
+
+      {user && (
+        <div className="mt-5">
+          <FairplayStatusCard />
+        </div>
+      )}
+
 
       <section className="panel mt-5 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
