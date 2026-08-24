@@ -291,3 +291,110 @@ export const getFairplayMetrics = createServerFn({ method: "GET" })
       })),
     );
   });
+
+/**
+ * Unified Fair Play audit trail: every automatic per-game verdict plus every
+ * enforcement/admin decision, newest first. Reasons are the general,
+ * player-safe strings — never raw detection signals.
+ */
+export const listFairplayDecisions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        userId: z.string().uuid().optional(),
+        gameId: z.string().uuid().optional(),
+        /** "all" | "verdict" (per-game scoring) | "action" (enforcement) */
+        kind: z.enum(["all", "verdict", "action"]).default("all"),
+        /** Only decisions at or above this suspicion score. */
+        minScore: z.number().int().min(0).max(100).default(0),
+        limit: z.number().int().min(20).max(500).default(200),
+      })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    let reportQuery = context.supabase
+      .from("fairplay_reports")
+      .select("id, user_id, game_id, score, probability, confidence, action, reasons, eval_ms, rating, created_at")
+      .gte("score", data.minScore)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    let actionQuery = context.supabase
+      .from("fairplay_actions")
+      .select("id, user_id, game_id, action, score, automatic, note, decided_by, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    if (data.userId) {
+      reportQuery = reportQuery.eq("user_id", data.userId);
+      actionQuery = actionQuery.eq("user_id", data.userId);
+    }
+    if (data.gameId) {
+      reportQuery = reportQuery.eq("game_id", data.gameId);
+      actionQuery = actionQuery.eq("game_id", data.gameId);
+    }
+
+    const [reports, actions] = await Promise.all([
+      data.kind === "action" ? Promise.resolve({ data: [] as never[] }) : reportQuery,
+      data.kind === "verdict" ? Promise.resolve({ data: [] as never[] }) : actionQuery,
+    ]);
+
+    const reportRows = reports.data ?? [];
+    const actionRows = actions.data ?? [];
+
+    const userIds = [
+      ...new Set([...reportRows.map((r) => r.user_id), ...actionRows.map((a) => a.user_id)]),
+    ];
+    const { data: profiles } = userIds.length
+      ? await context.supabase.from("profiles").select("id, display_name, rating").in("id", userIds)
+      : { data: [] };
+    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+    const asReasons = (value: unknown) =>
+      Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+
+    const entries = [
+      ...reportRows.map((r) => ({
+        id: `report:${r.id}`,
+        kind: "verdict" as const,
+        createdAt: r.created_at,
+        userId: r.user_id,
+        displayName: byId.get(r.user_id)?.display_name ?? "Người chơi",
+        rating: r.rating ?? byId.get(r.user_id)?.rating ?? null,
+        gameId: r.game_id,
+        action: r.action,
+        score: Number(r.score),
+        confidence: Number(r.confidence ?? 0),
+        probability: Number(r.probability ?? 0),
+        automatic: true,
+        evalMs: Number(r.eval_ms ?? 0),
+        reasons: asReasons(r.reasons),
+        note: null as string | null,
+      })),
+      ...actionRows.map((a) => ({
+        id: `action:${a.id}`,
+        kind: "action" as const,
+        createdAt: a.created_at,
+        userId: a.user_id,
+        displayName: byId.get(a.user_id)?.display_name ?? "Người chơi",
+        rating: byId.get(a.user_id)?.rating ?? null,
+        gameId: a.game_id,
+        action: a.action,
+        score: Number(a.score),
+        confidence: 1,
+        probability: 0,
+        automatic: a.automatic,
+        evalMs: 0,
+        reasons: [] as string[],
+        note: a.note,
+      })),
+    ].sort((x, y) => y.createdAt.localeCompare(x.createdAt));
+
+    return entries.slice(0, data.limit);
+  });

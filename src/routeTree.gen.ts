@@ -31,6 +31,7 @@ import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
 import { Route as AuthenticatedAdminFairplayRouteImport } from './routes/_authenticated/admin.fairplay'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
+import { Route as AuthenticatedAdminFairplayLogRouteImport } from './routes/_authenticated/admin.fairplay.log'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -142,6 +143,12 @@ const GamesOnlineGameIdRoute = GamesOnlineGameIdRouteImport.update({
   path: '/games/online/$gameId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminFairplayLogRoute =
+  AuthenticatedAdminFairplayLogRouteImport.update({
+    id: '/log',
+    path: '/log',
+    getParentRoute: () => AuthenticatedAdminFairplayRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -162,9 +169,10 @@ export interface FileRoutesByFullPath {
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
-  '/admin/fairplay': typeof AuthenticatedAdminFairplayRoute
+  '/admin/fairplay': typeof AuthenticatedAdminFairplayRouteWithChildren
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
+  '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -185,9 +193,10 @@ export interface FileRoutesByTo {
   '/games': typeof GamesIndexRoute
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
-  '/admin/fairplay': typeof AuthenticatedAdminFairplayRoute
+  '/admin/fairplay': typeof AuthenticatedAdminFairplayRouteWithChildren
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
+  '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -210,9 +219,10 @@ export interface FileRoutesById {
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
-  '/_authenticated/admin/fairplay': typeof AuthenticatedAdminFairplayRoute
+  '/_authenticated/admin/fairplay': typeof AuthenticatedAdminFairplayRouteWithChildren
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
+  '/_authenticated/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/admin/fairplay'
     | '/game/$gameId'
     | '/games/online/$gameId'
+    | '/admin/fairplay/log'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/admin/fairplay'
     | '/game/$gameId'
     | '/games/online/$gameId'
+    | '/admin/fairplay/log'
   id:
     | '__root__'
     | '/'
@@ -285,6 +297,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/fairplay'
     | '/_authenticated/game/$gameId'
     | '/games/online/$gameId'
+    | '/_authenticated/admin/fairplay/log'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -464,20 +477,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GamesOnlineGameIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/fairplay/log': {
+      id: '/_authenticated/admin/fairplay/log'
+      path: '/log'
+      fullPath: '/admin/fairplay/log'
+      preLoaderRoute: typeof AuthenticatedAdminFairplayLogRouteImport
+      parentRoute: typeof AuthenticatedAdminFairplayRoute
+    }
   }
 }
+
+interface AuthenticatedAdminFairplayRouteChildren {
+  AuthenticatedAdminFairplayLogRoute: typeof AuthenticatedAdminFairplayLogRoute
+}
+
+const AuthenticatedAdminFairplayRouteChildren: AuthenticatedAdminFairplayRouteChildren =
+  {
+    AuthenticatedAdminFairplayLogRoute: AuthenticatedAdminFairplayLogRoute,
+  }
+
+const AuthenticatedAdminFairplayRouteWithChildren =
+  AuthenticatedAdminFairplayRoute._addFileChildren(
+    AuthenticatedAdminFairplayRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedOnlineRoute: typeof AuthenticatedOnlineRoute
-  AuthenticatedAdminFairplayRoute: typeof AuthenticatedAdminFairplayRoute
+  AuthenticatedAdminFairplayRoute: typeof AuthenticatedAdminFairplayRouteWithChildren
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedOnlineRoute: AuthenticatedOnlineRoute,
-  AuthenticatedAdminFairplayRoute: AuthenticatedAdminFairplayRoute,
+  AuthenticatedAdminFairplayRoute: AuthenticatedAdminFairplayRouteWithChildren,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
 }
 
