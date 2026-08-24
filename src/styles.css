@@ -10,9 +10,9 @@
  */
 
 @theme inline {
-  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-mono: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -140,6 +140,8 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Tăng cỡ chữ toàn site (~16px -> 19px) */
+    font-size: 118.75%;
   }
 
   body {
@@ -149,12 +151,35 @@
     font-feature-settings: "ss01", "cv01";
   }
 
+  /* Một font duy nhất cho mọi phần tử, kể cả input/button/code/kbd */
+  body *,
+  button,
+  input,
+  select,
+  optgroup,
+  textarea,
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-sans);
+  }
+
   h1,
   h2,
   h3,
   h4 {
-    font-family: var(--font-display);
+    font-family: var(--font-sans);
     letter-spacing: -0.015em;
+  }
+
+  /* Giữ số thẳng cột ở những chỗ trước đây dùng font mono */
+  .font-mono,
+  code,
+  pre,
+  kbd,
+  samp {
+    font-variant-numeric: tabular-nums;
   }
 
   :focus-visible {
