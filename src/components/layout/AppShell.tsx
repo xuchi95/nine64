@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Moon,
   Sun,
@@ -11,6 +11,8 @@ import {
   Settings as SettingsIcon,
   ShieldCheck,
   History,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
