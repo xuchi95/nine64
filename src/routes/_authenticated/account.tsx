@@ -402,7 +402,7 @@ function MfaCard() {
   }
 
   return (
-    <div className="panel max-w-2xl space-y-5 p-5">
+    <div className="panel max-w-2xl space-y-5 p-6">
       <div className="flex flex-wrap items-center gap-3">
         <span
           className={
