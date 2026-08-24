@@ -144,15 +144,15 @@ function MobileNav() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label="Mở menu"
-          className="flex size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors active:bg-secondary lg:hidden"
-        >
-          <Menu className="size-5" />
-        </button>
-      </SheetTrigger>
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label="Mở menu"
+            className="flex size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors active:bg-secondary lg:hidden"
+          >
+            <Menu className="size-6" />
+          </button>
+        </SheetTrigger>
       <SheetContent
         ref={swipe.ref}
         side="left"
@@ -165,21 +165,21 @@ function MobileNav() {
           aria-hidden
           className="absolute right-2 top-1/2 h-20 w-1.5 -translate-y-1/2 rounded-full bg-border/80"
         />
-        <div className="flex items-center gap-4 border-b border-border/70 px-5 py-5">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-            <Crown className="size-6" />
+        <div className="flex items-center gap-4 border-b border-border/70 px-6 py-6">
+          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+            <Crown className="size-7" />
           </span>
-          <SheetTitle className="text-lg tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
+          <SheetTitle className="text-xl tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4">
+        <nav className="flex-1 overflow-y-auto p-5">
           <div className="flex flex-col gap-2">
             {MAIN_NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex min-h-14 items-center rounded-xl px-5 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
+                  "flex min-h-[3.75rem] items-center rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
                   isActive(item.to) && "bg-primary/15 text-primary",
                 )}
               >
@@ -188,7 +188,7 @@ function MobileNav() {
             ))}
           </div>
 
-          <p className="px-5 pb-2 pt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="px-6 pb-2.5 pt-7 text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Train
           </p>
           <div className="flex flex-col gap-2">
@@ -197,7 +197,7 @@ function MobileNav() {
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex min-h-14 items-center rounded-xl px-5 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                  "flex min-h-[3.75rem] items-center rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
                   isActive(item.to) && "bg-primary/15 text-primary",
                 )}
               >
