@@ -14,6 +14,7 @@ import { formatRating, isProvisional } from "@/lib/rating/glicko2";
 import { addPuzzles, gradePuzzle, hydrateLearn, useLearnState } from "@/lib/learn/store";
 import { generateFromLibrary, type Puzzle } from "@/lib/learn/puzzleGen";
 import { isDue, retrievability, sortByUrgency } from "@/lib/learn/fsrs";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/puzzles/")({
   head: () => ({
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/puzzles/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: PuzzlesPage,
 });
 

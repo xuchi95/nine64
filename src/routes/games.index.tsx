@@ -15,6 +15,7 @@ import {
 import { useOnlineGames, type OnlineGameDetail } from "@/hooks/useOnlineGames";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/games/")({
   head: () => ({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/games/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: ListSkeleton,
   component: GamesPage,
 });
 

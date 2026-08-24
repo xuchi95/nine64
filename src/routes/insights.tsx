@@ -9,6 +9,7 @@ import { buildOpeningTree, childRows, nodeAtPath, worstLine } from "@/lib/openin
 import { buildWeaknessProfile, recommendTraining } from "@/lib/insights/profile";
 import { hydrateLearn, useLearnState } from "@/lib/learn/store";
 import { LABEL_META, type MoveLabel } from "@/lib/analysis/classify";
+import { DashboardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/insights")({
   head: () => ({
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/insights")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: DashboardSkeleton,
   component: InsightsPage,
 });
 

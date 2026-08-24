@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bot, Users, LineChart, Swords, Globe, Trophy, Link2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
+import { GenericSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/play/")({
   head: () => ({
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/play/")({
       },
     ],
   }),
+  pendingComponent: GenericSkeleton,
   component: PlayHub,
 });
 

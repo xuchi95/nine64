@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/auth";
 import { reviewGame } from "@/lib/engine/review";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/games/online/$gameId")({
   head: () => ({
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/games/online/$gameId")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: OnlineGameDetail,
 });
 

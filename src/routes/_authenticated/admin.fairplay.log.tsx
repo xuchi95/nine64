@@ -20,6 +20,7 @@ import { hasRole } from "@/lib/auth.functions";
 import { listFairplayDecisions } from "@/lib/fairplay.functions";
 import { ACTION_LABEL, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/admin/fairplay/log")({
   head: () => ({
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/admin/fairplay/log")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: ListSkeleton,
   component: FairplayLogPage,
 });
 

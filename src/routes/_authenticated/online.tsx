@@ -9,6 +9,7 @@ import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { Loader2 } from "lucide-react";
+import { ListSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/online")({
   head: () => ({
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/online")({
       { property: "og:description", content: "Ranked realtime matchmaking on Nexus Chess." },
     ],
   }),
+  pendingComponent: ListSkeleton,
   component: OnlinePage,
 });
 

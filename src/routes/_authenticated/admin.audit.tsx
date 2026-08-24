@@ -21,6 +21,7 @@ import { APP } from "@/config/app";
 import { hasRole } from "@/lib/auth.functions";
 import { listAdminAuditLog, type AdminAuditRow } from "@/lib/admin.functions";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/admin/audit")({
   head: () => ({
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/admin/audit")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: ListSkeleton,
   component: AdminAuditPage,
 });
 
