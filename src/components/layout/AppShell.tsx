@@ -296,7 +296,7 @@ function NotificationBell() {
         <button
           type="button"
           aria-label="Notifications"
-          className="relative flex size-10 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          className="relative flex size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:size-10"
         >
           <Bell className="size-[18px]" />
           {unreadCount > 0 && (
