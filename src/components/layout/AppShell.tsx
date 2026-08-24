@@ -66,8 +66,8 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
           <MobileNav />
 
           <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 sm:size-10 lg:size-11">
-              <Crown className="size-[18px] sm:size-5 lg:size-6" />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 sm:size-11 lg:size-12">
+              <Crown className="size-5 sm:size-6" />
             </span>
             <span className="flex min-w-0 flex-col leading-none">
               <span className="truncate text-[13px] font-bold tracking-[0.14em] sm:text-base sm:tracking-[0.16em] lg:text-lg">
@@ -84,7 +84,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
               <Link
                 key={item.to}
                 to={item.to}
-                className="relative rounded-lg px-3.5 py-2 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground after:absolute after:inset-x-3.5 after:-bottom-[7px] after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity"
+                className="relative rounded-lg px-4 py-2.5 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground after:absolute after:inset-x-4 after:-bottom-[9px] after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity"
                 activeProps={{ className: "text-foreground after:opacity-100" }}
                 activeOptions={{ exact: item.to === "/" }}
               >
@@ -94,14 +94,14 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             <MoreNav />
           </nav>
 
-          <div className="flex shrink-0 items-center gap-1.5 justify-self-end sm:gap-2 lg:ml-auto">
+          <div className="flex shrink-0 items-center gap-2 justify-self-end sm:gap-2.5 lg:ml-auto">
             <button
               type="button"
               aria-label="Toggle colour mode"
               onClick={() =>
                 updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
               }
-              className="hidden size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground sm:flex lg:size-10"
+              className="hidden size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground sm:flex lg:size-11"
             >
               {settings.appearance === "dark" ? (
                 <Sun className="size-[18px]" />
@@ -115,7 +115,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
         </div>
         <PageBreadcrumb wide={wide} />
       </header>
-      <main className={cn("mx-auto w-full flex-1 px-4 py-6 sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
+      <main className={cn("mx-auto w-full flex-1 px-4 py-7 sm:px-6 sm:py-8 lg:py-10", wide ? "max-w-[1600px]" : "max-w-6xl")}>
         {children}
       </main>
       <footer className="border-t border-border/70 py-5 text-center text-xs text-muted-foreground">
