@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { hydrateHistory, listGames, mergeGames, type SavedGame } from "@/lib/history";
 
 /**
@@ -20,7 +21,7 @@ function toRow(userId: string, game: SavedGame) {
     client_id: game.id,
     played_at: game.playedAt,
     mode: game.mode,
-    payload: game as unknown as Record<string, unknown>,
+    payload: JSON.parse(JSON.stringify(game)) as Json,
   };
 }
 
