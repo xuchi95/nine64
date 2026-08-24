@@ -113,9 +113,9 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
 ];
 
 export function getBotLevel(level: number): BotLevel {
-  return BOT_LEVELS.find((l) => l.level === level) ?? BOT_LEVELS[7];
+  return BOT_LEVELS.find((l) => l.level === level) ?? BOT_LEVELS[7]!;
 }
 
 export function getPersonality(id: string): BotPersonality {
-  return BOT_PERSONALITIES.find((p) => p.id === id) ?? BOT_PERSONALITIES[0];
+  return BOT_PERSONALITIES.find((p) => p.id === id) ?? BOT_PERSONALITIES[0]!;
 }

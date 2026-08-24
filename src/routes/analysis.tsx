@@ -98,6 +98,7 @@ function Analysis() {
 
   return (
     <AppShell wide>
+      <h1 className="sr-only">Analysis board</h1>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="mx-auto w-full max-w-[720px]">
           <ChessBoard

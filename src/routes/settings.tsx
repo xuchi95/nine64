@@ -143,7 +143,7 @@ function SettingsPage() {
             max={100}
             step={5}
             value={[Math.round(settings.sfxVolume * 100)]}
-            onValueChange={([v]) => updateSettings({ sfxVolume: v / 100 })}
+            onValueChange={([v]) => updateSettings({ sfxVolume: (v ?? 60) / 100 })}
             onValueCommit={() => playSound("move")}
           />
         </div>

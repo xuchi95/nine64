@@ -152,7 +152,7 @@ function PlayAi() {
         return;
       }
 
-      const best = lines[0];
+      const best = lines[0]!;
       const cp = best.mateIn !== null ? (best.mateIn > 0 ? 1200 : -1200) : (best.cp ?? 0);
       setEngineInfo({
         depth: best.depth,
@@ -245,7 +245,7 @@ function PlayAi() {
               max={BOT_LEVELS.length}
               step={1}
               value={[config.level]}
-              onValueChange={([v]) => setConfig((c) => ({ ...c, level: v }))}
+              onValueChange={([v]) => setConfig((c) => ({ ...c, level: v ?? c.level }))}
             />
             <div className="mt-2 flex justify-between text-xs text-muted-foreground">
               <span>Beginner</span>

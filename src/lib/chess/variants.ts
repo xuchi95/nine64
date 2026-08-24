@@ -31,15 +31,18 @@ function shuffle960(): string {
 
   const lightSquares = [1, 3, 5, 7];
   const darkSquares = [0, 2, 4, 6];
-  slots[rand(lightSquares)] = "b";
-  slots[rand(darkSquares)] = "b";
-  slots[rand(empties())] = "q";
-  slots[rand(empties())] = "n";
-  slots[rand(empties())] = "n";
+  const put = (i: number, p: string) => {
+    slots[i] = p;
+  };
+  put(rand(lightSquares)!, "b");
+  put(rand(darkSquares)!, "b");
+  put(rand(empties())!, "q");
+  put(rand(empties())!, "n");
+  put(rand(empties())!, "n");
   const rest = empties();
-  slots[rest[0]] = "r";
-  slots[rest[1]] = "k";
-  slots[rest[2]] = "r";
+  put(rest[0]!, "r");
+  put(rest[1]!, "k");
+  put(rest[2]!, "r");
   return slots.join("");
 }
 

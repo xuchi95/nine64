@@ -216,7 +216,7 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       try {
         return gameRef.current
           .moves({ square: square as never, verbose: true })
-          .map((m) => (m as Move).to);
+          .map((m) => (m as Move).to as string);
       } catch {
         return [];
       }

@@ -161,11 +161,11 @@ export class StockfishEngine {
       const pvIndex = Number(/ multipv (\d+)/.exec(line)?.[1] ?? 1);
       const pvMatch = / pv (.+)$/.exec(line);
       if (!pvMatch) return;
-      const pv = pvMatch[1].trim().split(/\s+/);
+      const pv = (pvMatch[1] ?? "").trim().split(/\s+/);
       const cpMatch = / score cp (-?\d+)/.exec(line);
       const mateMatch = / score mate (-?\d+)/.exec(line);
       lines.set(pvIndex, {
-        move: pv[0],
+        move: pv[0]!,
         cp: cpMatch ? Number(cpMatch[1]) : null,
         mateIn: mateMatch ? Number(mateMatch[1]) : null,
         depth,
@@ -196,7 +196,7 @@ export class StockfishEngine {
     if (best && result[0] && result[0].move !== best) {
       const idx = result.findIndex((r) => r.move === best);
       if (idx > 0) {
-        const [hit] = result.splice(idx, 1);
+        const hit = result.splice(idx, 1)[0]!;
         result.unshift(hit);
       }
     }
@@ -251,9 +251,9 @@ export function pickMoveWithPersonality(
   level: BotLevel,
 ): string {
   if (lines.length === 0) return "";
-  if (level.level >= 13 || personality.evalTolerance === 0) return lines[0].move;
+  if (level.level >= 13 || personality.evalTolerance === 0) return lines[0]!.move;
 
-  const best = lines[0];
+  const best = lines[0]!;
   const bestScore = scoreOf(best);
   const acceptable = lines.filter((l) => {
     if (l.mateIn !== null && l.mateIn > 0) return true;
@@ -261,7 +261,7 @@ export function pickMoveWithPersonality(
   });
   if (best.mateIn !== null) return best.move;
   const pool = acceptable.length > 0 ? acceptable : [best];
-  return pool[Math.floor(Math.random() * pool.length)].move;
+  return pool[Math.floor(Math.random() * pool.length)]!.move;
 }
 
 function scoreOf(line: EngineLine): number {
