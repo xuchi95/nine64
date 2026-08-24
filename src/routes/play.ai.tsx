@@ -21,6 +21,9 @@ import {
 } from "@/lib/engine/stockfish";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
+import { saveGame } from "@/lib/history";
+import { detectOpening } from "@/lib/chess/openings";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/play/ai")({
