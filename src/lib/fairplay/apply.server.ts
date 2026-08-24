@@ -115,11 +115,53 @@ export async function refreshStatus(admin: Admin, userId: string) {
   });
   const collusion = detectCollusion(records);
 
-  const locked =
+  const shouldLock =
     sequential.decision === "assisted" ||
     peak >= THRESHOLDS.hold ||
     collusion.boostingScore >= 80 ||
     collusion.sandbaggingScore >= 80;
+
+  // Existing lock window + escalation history.
+  const [{ data: current }, { count: priorLocks }] = await Promise.all([
+    admin
+      .from("fairplay_status")
+      .select("rating_locked, lock_started_at, lock_expires_at, lock_hours")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    admin
+      .from("fairplay_actions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("action", "rating_hold")
+      .eq("automatic", true),
+  ]);
+
+  const nowMs = Date.now();
+  const activeLock = current ? isLockActive(current, nowMs) : false;
+  let lockStartedAt = activeLock ? current?.lock_started_at ?? null : null;
+  let lockExpiresAt = activeLock ? current?.lock_expires_at ?? null : null;
+  let lockHours = activeLock ? current?.lock_hours ?? 0 : 0;
+  let locked = activeLock;
+
+  if (shouldLock) {
+    const hours = lockHoursFor({
+      score: peak,
+      sprtDecision: sequential.decision,
+      boostingScore: collusion.boostingScore,
+      sandbaggingScore: collusion.sandbaggingScore,
+      priorLocks: priorLocks ?? 0,
+    });
+    if (hours > 0) {
+      const candidateExpiry = nowMs + hours * 3_600_000;
+      // Never shorten an active lock — only extend it.
+      if (!lockExpiresAt || new Date(lockExpiresAt).getTime() < candidateExpiry) {
+        lockExpiresAt = new Date(candidateExpiry).toISOString();
+        lockHours = hours;
+        lockStartedAt = lockStartedAt ?? new Date(nowMs).toISOString();
+      }
+      locked = true;
+    }
+  }
 
   const action = locked
     ? "rating_hold"
@@ -147,6 +189,9 @@ export async function refreshStatus(admin: Admin, userId: string) {
       boosting_score: collusion.boostingScore,
       sandbagging_score: collusion.sandbaggingScore,
       rating_locked: locked,
+      lock_started_at: locked ? lockStartedAt : null,
+      lock_expires_at: locked ? lockExpiresAt : null,
+      lock_hours: locked ? lockHours : 0,
       games_reviewed: list.length,
       reasons: JSON.parse(JSON.stringify(reasons)) as Database["public"]["Tables"]["fairplay_status"]["Row"]["reasons"],
       updated_at: new Date().toISOString(),
@@ -154,8 +199,18 @@ export async function refreshStatus(admin: Admin, userId: string) {
     { onConflict: "user_id" },
   );
 
-  return { action, locked, peak, sequential, collusion, reasons };
+  return {
+    action,
+    locked,
+    peak,
+    sequential,
+    collusion,
+    reasons,
+    lockExpiresAt: locked ? lockExpiresAt : null,
+    lockHours: locked ? lockHours : 0,
+  };
 }
+
 
 /** Enforce the automatic consequences of a verdict. */
 export async function enforce(
