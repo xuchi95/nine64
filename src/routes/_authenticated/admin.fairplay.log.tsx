@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -227,6 +228,7 @@ function FairplayLogPage() {
 
   return (
     <AppShell wide>
+      <AdminMfaGate>
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -375,6 +377,7 @@ function FairplayLogPage() {
           )}
         </div>
       </div>
+    </AdminMfaGate>
     </AppShell>
   );
 }
