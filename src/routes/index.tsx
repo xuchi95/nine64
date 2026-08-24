@@ -15,7 +15,6 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: APP.description },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:description", content: APP.description },
     ],
   }),
   component: Home,
@@ -140,7 +139,7 @@ function BoardGlyph() {
           return (
             <div
               key={i}
-              className={dark ? "bg-primary/10" : "bg-surface-1"}
+              className={dark ? "bg-primary/10" : "bg-surface"}
             />
           );
         })}
