@@ -29,7 +29,8 @@ export function pvToSan(fen: string, pv: string[], maxPlies = 8): string[] {
     const to = uci.slice(2, 4);
     const promotion = uci.length > 4 ? uci[4] : undefined;
     try {
-      const move = chess.move({ from, to, promotion });
+      const move = chess.move(promotion ? { from, to, promotion } : { from, to });
+
       if (!move) break;
       out.push(move.san);
     } catch {
