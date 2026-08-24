@@ -180,7 +180,7 @@ function Analysis() {
               onChange={(e) => setFenInput(e.target.value)}
               placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
             />
-            <Button variant="secondary" className="w-full" onClick={loadFen}>
+            <Button variant="secondary" className="w-full" onClick={handleLoadFen}>
               Load position
             </Button>
             {loadError && <p className="text-xs text-destructive">{loadError}</p>}
