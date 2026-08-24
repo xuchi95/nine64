@@ -188,12 +188,21 @@ export const getFairplayCase = createServerFn({ method: "GET" })
         .limit(20),
     ]);
 
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: "case_view",
+      targetUserId: data.userId,
+      detail: { score: status.data?.score ?? null, action: status.data?.action ?? null },
+    });
+
     return {
       status: status.data ?? null,
       reports: reports.data ?? [],
       actions: actions.data ?? [],
     };
   });
+
 
 export const resolveFairplayCase = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
