@@ -38,6 +38,60 @@ function timeControlToMs(timeControl: string): number {
   }
 }
 
+const STANDARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+function shuffleStrings(arr: string[]): string[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = a[i]!;
+    a[i] = a[j]!;
+    a[j] = tmp;
+  }
+  return a;
+}
+
+function generateChess960Fen(): string {
+  const lightSquares = [1, 3, 5, 7];
+  const darkSquares = [0, 2, 4, 6];
+  const b1 = lightSquares[Math.floor(Math.random() * lightSquares.length)]!;
+  const b2 = darkSquares[Math.floor(Math.random() * darkSquares.length)]!;
+
+  const remaining = [0, 1, 2, 3, 4, 5, 6, 7].filter((i) => i !== b1 && i !== b2);
+  let pieces: string[];
+  do {
+    pieces = shuffleStrings(
+      remaining.map((i) => {
+        if (i === 0 || i === 7) return "r";
+        if (i === 1 || i === 6) return "n";
+        if (i === 2 || i === 5) return "b";
+        if (i === 3) return "q";
+        return "k";
+      }),
+    );
+  } while (!isValid960BackRank(pieces));
+
+  const rank = new Array(8).fill("");
+  rank[b1] = "b";
+  rank[b2] = "b";
+  let idx = 0;
+  for (let i = 0; i < 8; i++) {
+    if (!rank[i]) rank[i] = pieces[idx++];
+  }
+  return `${rank.join("")}/pppppppp/8/8/8/8/PPPPPPPP/${rank.join("").toUpperCase()} w KQkq - 0 1`;
+}
+
+function isValid960BackRank(pieces: string[]): boolean {
+  const kingIndex = pieces.indexOf("k");
+  const rookLeft = pieces.indexOf("r");
+  const rookRight = pieces.lastIndexOf("r");
+  return kingIndex > rookLeft && kingIndex < rookRight;
+}
+
+function startingFenForVariant(variant: string): string {
+  return variant === "chess960" ? generateChess960Fen() : STANDARD_FEN;
+}
+
 export const joinQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => QUEUE_SCHEMA.parse(input))
@@ -136,6 +190,7 @@ export const tryMatch = createServerFn({ method: "POST" })
     const blackRating = whiteIsMe ? opponent.rating : entry.rating;
     const initialMs = timeControlToMs(entry.time_control);
 
+    const startFen = startingFenForVariant(entry.variant);
     const { data: game, error: gameError } = await supabaseAdmin
       .from("games")
       .insert({
@@ -146,14 +201,8 @@ export const tryMatch = createServerFn({ method: "POST" })
         variant: entry.variant,
         time_control: entry.time_control,
         status: "active",
-        initial_fen:
-          entry.variant === "chess960"
-            ? undefined
-            : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        current_fen:
-          entry.variant === "chess960"
-            ? undefined
-            : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        initial_fen: startFen,
+        current_fen: startFen,
         white_time_ms: initialMs,
         black_time_ms: initialMs,
       })

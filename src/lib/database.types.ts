@@ -76,7 +76,7 @@ export interface Notification {
   type: "match_found" | "move" | "game_over" | "system";
   title: string;
   body: string;
-  data: Record<string, unknown> | null;
+  data: Record<string, string | number | boolean | null> | null;
   read: boolean;
   created_at: string;
 }

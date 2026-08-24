@@ -51,11 +51,9 @@ function GamesPage() {
   const items: ListItem[] = useMemo(() => {
     const localItems: ListItem[] = localGames.map((g) => ({ kind: "local", game: g }));
     const onlineItems: ListItem[] = onlineGames.map((g) => ({ kind: "online", game: g as OnlineGameDetail }));
-    const all = [...localItems, ...onlineItems].sort((a, b) => {
-      const aDate = new Date(a.game.playedAt ?? (a.kind === "online" ? a.game.created_at : "")).getTime();
-      const bDate = new Date(b.game.playedAt ?? (b.kind === "online" ? b.game.created_at : "")).getTime();
-      return bDate - aDate;
-    });
+    const gameDate = (item: ListItem) =>
+      new Date(item.kind === "local" ? item.game.playedAt : item.game.created_at).getTime();
+    const all = [...localItems, ...onlineItems].sort((a, b) => gameDate(b) - gameDate(a));
     if (filter === "all") return all;
     return all.filter((item) =>
       filter === "online"
