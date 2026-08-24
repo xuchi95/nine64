@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -46,6 +47,11 @@ const AnalysisRoute = AnalysisRouteImport.update({
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
   '/insights': typeof InsightsRoute
+  '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
   '/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
   '/insights': typeof InsightsRoute
+  '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
   '/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/analysis': typeof AnalysisRoute
   '/insights': typeof InsightsRoute
+  '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analysis'
     | '/insights'
+    | '/progress'
     | '/settings'
     | '/online'
     | '/auth/callback'
@@ -212,6 +222,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analysis'
     | '/insights'
+    | '/progress'
     | '/settings'
     | '/online'
     | '/auth/callback'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/analysis'
     | '/insights'
+    | '/progress'
     | '/settings'
     | '/_authenticated/online'
     | '/auth/callback'
@@ -255,6 +267,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AnalysisRoute: typeof AnalysisRoute
   InsightsRoute: typeof InsightsRoute
+  ProgressRoute: typeof ProgressRoute
   SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
@@ -298,6 +311,13 @@ declare module '@tanstack/react-router' {
       path: '/insights'
       fullPath: '/insights'
       preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -426,6 +446,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AnalysisRoute: AnalysisRoute,
   InsightsRoute: InsightsRoute,
+  ProgressRoute: ProgressRoute,
   SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
