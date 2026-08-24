@@ -214,15 +214,7 @@ function StartBoard() {
           const file = i % 8;
           const dark = (rank + file) % 2 === 1;
           const piece =
-            rank === 0
-              ? BACK_RANK[file]!
-              : rank === 1
-                ? "♟"
-                : rank === 6
-                  ? "♙"
-                  : rank === 7
-                    ? (WHITE[BACK_RANK[file]!] ?? "")
-                    : null;
+            rank === 0 || rank === 7 ? BACK_RANK[file]! : rank === 1 || rank === 6 ? "♟" : null;
           const isWhitePiece = rank >= 6;
           return (
             <div
