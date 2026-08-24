@@ -306,10 +306,13 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
               asChild
               className={cn(
                 "cursor-pointer rounded-lg px-3.5 py-2.5",
-                isActive && "bg-secondary text-foreground",
+                isActive && "bg-primary/10 text-foreground",
               )}
             >
-              <Link to={item.to}>{item.label}</Link>
+              <Link to={item.to} className="flex items-center justify-between">
+                {item.label}
+                {isActive && <Check className="size-4 text-primary" />}
+              </Link>
             </DropdownMenuItem>
           );
         })}
