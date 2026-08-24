@@ -1,3 +1,4 @@
+import type { Variation } from "./variation";
 import type { MoveLabel } from "./classify";
 import type { Motif } from "./motifs";
 import type { GamePhase } from "./phase";
@@ -25,6 +26,10 @@ export interface PlyAnalysis {
   phase: GamePhase;
   /** Time spent on the move in ms, when known. */
   spentMs?: number | null;
+  /** Deep mode: engine variations for the position before this move. */
+  variations?: Variation[];
+  /** Deep mode: the mover's own move continued by the engine, in SAN. */
+  playedPvSan?: string[];
 }
 
 export interface DeepReviewSummary {
