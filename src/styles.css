@@ -260,9 +260,25 @@
   animation: nexus-indeterminate 1.1s ease-in-out infinite;
 }
 
+/* Skeletons fade in slightly late so quick navigations never flash them. */
+@keyframes nexus-skeleton-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.nexus-skeleton-fade {
+  animation: nexus-skeleton-fade 0.24s ease-out 0.06s both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nexus-page-enter,
-  .nexus-indeterminate {
+  .nexus-indeterminate,
+  .nexus-skeleton-fade {
     animation: none;
   }
 }
+

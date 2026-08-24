@@ -17,6 +17,7 @@ import { saveGame } from "@/lib/history";
 import { detectOpening } from "@/lib/chess/openings";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/play/local")({
   head: () => ({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/play/local")({
       },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: LocalGame,
 });
 

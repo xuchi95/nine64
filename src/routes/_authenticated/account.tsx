@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { APP } from "@/config/app";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { FormSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/account")({
   head: () => ({
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/account")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: FormSkeleton,
   component: AccountPage,
 });
 

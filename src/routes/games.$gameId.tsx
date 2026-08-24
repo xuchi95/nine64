@@ -28,6 +28,7 @@ import { reviewGame } from "@/lib/engine/review";
 import { generatePuzzles } from "@/lib/learn/puzzleGen";
 import { addPuzzles } from "@/lib/learn/store";
 import { useSettings } from "@/lib/settings";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/games/$gameId")({
   head: () => ({
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/games/$gameId")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: GameDetail,
 });
 

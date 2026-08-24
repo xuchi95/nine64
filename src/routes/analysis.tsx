@@ -11,6 +11,7 @@ import { APP } from "@/config/app";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { StockfishEngine, type EngineLine } from "@/lib/engine/stockfish";
 import { useSettings } from "@/lib/settings";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 const searchSchema = z.object({ fen: z.string().optional() });
 
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/analysis")({
       },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: Analysis,
 });
 

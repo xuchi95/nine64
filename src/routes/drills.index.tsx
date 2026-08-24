@@ -13,6 +13,7 @@ import {
   useDrillProgress,
   type Drill,
 } from "@/lib/learn/drills";
+import { ListSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/drills/")({
   head: () => ({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/drills/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: ListSkeleton,
   component: DrillsPage,
 });
 

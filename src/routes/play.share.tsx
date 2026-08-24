@@ -15,6 +15,7 @@ import { normalizeResult, resultLabel } from "@/lib/chess/gameResult";
 import { Copy, Link2, RotateCcw, FlipVertical2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/play/share")({
   validateSearch: (search: Record<string, unknown>): { g?: string } => {
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/play/share")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: SharePage,
 });
 

@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import { RoutePending } from "./components/layout/PageTransition";
+import { GenericSkeleton } from "./components/layout/PageSkeleton";
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
@@ -17,11 +17,12 @@ export const getRouter = () => {
     // Prefetch route code + loader data as soon as a link is hovered/touched.
     defaultPreload: "intent",
     defaultPreloadDelay: 40,
-    defaultPreloadStaleTime: 30_000,
-    // Avoid pending flashes on fast navigations, but keep long ones smooth.
-    defaultPendingComponent: RoutePending,
-    defaultPendingMs: 220,
-    defaultPendingMinMs: 320,
+    // Let TanStack Query own data freshness; the router only warms route code.
+    defaultPreloadStaleTime: 0,
+    // Skeleton instead of a blank frame; delayed so fast navigations never flash.
+    defaultPendingComponent: GenericSkeleton,
+    defaultPendingMs: 180,
+    defaultPendingMinMs: 300,
   });
 
   return router;

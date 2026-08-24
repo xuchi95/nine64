@@ -28,6 +28,7 @@ import {
 import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
 import { ACTION_LABEL, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/admin/fairplay")({
   head: () => ({
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/admin/fairplay")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: ListSkeleton,
   component: AdminFairplayPage,
 });
 

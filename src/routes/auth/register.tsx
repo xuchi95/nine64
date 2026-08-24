@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { FormSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/auth/register")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/auth/register")({
       { property: "og:description", content: "Create a Nexus Chess account." },
     ],
   }),
+  pendingComponent: FormSkeleton,
   component: RegisterPage,
 });
 

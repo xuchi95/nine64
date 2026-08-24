@@ -11,6 +11,7 @@ import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
+import { FormSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/settings")({
       { property: "og:description", content: "Board, pieces, sound and engine preferences." },
     ],
   }),
+  pendingComponent: FormSkeleton,
   component: SettingsPage,
 });
 

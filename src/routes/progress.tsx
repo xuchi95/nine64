@@ -13,6 +13,7 @@ import {
   type Bucket,
   type Granularity,
 } from "@/lib/insights/progress";
+import { DashboardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/progress")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  pendingComponent: DashboardSkeleton,
   component: ProgressPage,
 });
 

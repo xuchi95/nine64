@@ -25,6 +25,7 @@ import { saveGame } from "@/lib/history";
 import { detectOpening } from "@/lib/chess/openings";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/play/ai")({
   validateSearch: (search: Record<string, unknown>): { quick?: boolean } =>
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/play/ai")({
       },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: PlayAi,
 });
 

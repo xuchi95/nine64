@@ -29,6 +29,7 @@ import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal"
 import { buildPgn, shareUrl } from "@/lib/chess/share";
 import { FairplayBridge } from "@/components/game/FairplayBridge";
 import { useFairplayTelemetry } from "@/hooks/useFairplayTelemetry";
+import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   head: () => ({
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/_authenticated/game/$gameId")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  pendingComponent: BoardSkeleton,
   component: OnlineGamePage,
 });
 
