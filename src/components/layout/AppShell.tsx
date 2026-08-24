@@ -172,7 +172,7 @@ function MobileNav() {
           </div>
 
           <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-            Luyện tập
+            Train
           </p>
           <div className="flex flex-col gap-1">
             {MORE_NAV.map((item) => (
@@ -192,7 +192,7 @@ function MobileNav() {
           {user && (
             <>
               <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                Tài khoản
+                Account
               </p>
               <div className="flex flex-col gap-1">
                 {PROFILE_MENU.map((item) => (
