@@ -10,8 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
@@ -23,6 +28,10 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalysisRoute = AnalysisRouteImport.update({
   id: '/analysis',
   path: '/analysis',
@@ -31,6 +40,26 @@ const AnalysisRoute = AnalysisRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedOnlineRoute = AuthenticatedOnlineRouteImport.update({
+  id: '/online',
+  path: '/online',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesIndexRoute = GamesIndexRouteImport.update({
@@ -63,6 +92,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
   '/settings': typeof SettingsRoute
+  '/online': typeof AuthenticatedOnlineRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
@@ -73,6 +106,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
   '/settings': typeof SettingsRoute
+  '/online': typeof AuthenticatedOnlineRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
@@ -82,8 +119,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/analysis': typeof AnalysisRoute
   '/settings': typeof SettingsRoute
+  '/_authenticated/online': typeof AuthenticatedOnlineRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
@@ -96,6 +138,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analysis'
     | '/settings'
+    | '/online'
+    | '/auth/callback'
+    | '/auth/login'
+    | '/auth/register'
     | '/games/$gameId'
     | '/play/ai'
     | '/play/local'
@@ -106,6 +152,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analysis'
     | '/settings'
+    | '/online'
+    | '/auth/callback'
+    | '/auth/login'
+    | '/auth/register'
     | '/games/$gameId'
     | '/play/ai'
     | '/play/local'
@@ -114,8 +164,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/analysis'
     | '/settings'
+    | '/_authenticated/online'
+    | '/auth/callback'
+    | '/auth/login'
+    | '/auth/register'
     | '/games/$gameId'
     | '/play/ai'
     | '/play/local'
@@ -125,8 +180,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AnalysisRoute: typeof AnalysisRoute
   SettingsRoute: typeof SettingsRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
   GamesGameIdRoute: typeof GamesGameIdRoute
   PlayAiRoute: typeof PlayAiRoute
   PlayLocalRoute: typeof PlayLocalRoute
@@ -143,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analysis': {
       id: '/analysis'
       path: '/analysis'
@@ -155,6 +221,34 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/online': {
+      id: '/_authenticated/online'
+      path: '/online'
+      fullPath: '/online'
+      preLoaderRoute: typeof AuthenticatedOnlineRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/': {
@@ -195,10 +289,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedOnlineRoute: typeof AuthenticatedOnlineRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedOnlineRoute: AuthenticatedOnlineRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AnalysisRoute: AnalysisRoute,
   SettingsRoute: SettingsRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
   GamesGameIdRoute: GamesGameIdRoute,
   PlayAiRoute: PlayAiRoute,
   PlayLocalRoute: PlayLocalRoute,
