@@ -13,6 +13,7 @@ import {
   History,
   Home,
   ChevronRight,
+  Check,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
