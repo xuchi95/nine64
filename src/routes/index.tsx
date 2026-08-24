@@ -316,7 +316,7 @@ function StartBoard() {
           return (
             <div
               key={i}
-              className={`flex aspect-square items-center justify-center text-[clamp(1.2rem,4.2vw,2.15rem)] leading-none ${
+              className={`flex aspect-square items-center justify-center text-[clamp(1.6rem,5.8vw,2.85rem)] leading-none ${
                 dark ? "bg-primary/45" : "bg-primary/15"
               } ${isWhitePiece ? "text-foreground [text-shadow:0_1px_2px_var(--background)]" : "text-background"}`}
             >
