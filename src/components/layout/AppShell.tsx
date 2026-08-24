@@ -7,11 +7,12 @@ import {
   Loader2,
   Bell,
   ChevronDown,
+  Menu,
   Settings as SettingsIcon,
   ShieldCheck,
   History,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
 import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const MAIN_NAV = [
   { to: "/", label: "Home" },
