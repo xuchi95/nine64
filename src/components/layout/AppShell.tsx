@@ -368,11 +368,14 @@ function AuthHeader() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" className="h-10 px-3">
+        <Button asChild variant="ghost" className="hidden h-11 px-3 sm:inline-flex lg:h-10">
           <Link to="/auth/login">Sign in</Link>
         </Button>
-        <Button asChild className="h-10 px-4">
-          <Link to="/auth/register">Register</Link>
+        <Button asChild className="h-11 px-4 lg:h-10">
+          <Link to="/auth/register">
+            <span className="sm:hidden">Đăng nhập</span>
+            <span className="hidden sm:inline">Register</span>
+          </Link>
         </Button>
       </div>
     );
@@ -386,12 +389,12 @@ function AuthHeader() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex h-10 items-center gap-2.5 rounded-xl border border-border/80 bg-secondary/30 pl-1.5 pr-2.5 text-sm font-medium transition-colors hover:border-primary/40"
+          className="flex h-11 items-center gap-2 rounded-xl border border-border/80 bg-secondary/30 pl-1.5 pr-2 text-sm font-medium transition-colors hover:border-primary/40 lg:h-10 lg:gap-2.5 lg:pr-2.5"
         >
-          <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 font-mono text-[11px] font-bold text-primary-foreground">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-[11px] font-bold text-primary-foreground lg:size-7">
             {initials}
           </span>
-          <span className="hidden max-w-[130px] truncate sm:inline">{displayName}</span>
+          <span className="hidden max-w-[130px] truncate lg:inline">{displayName}</span>
           <ChevronDown className="size-3.5 opacity-60" />
         </button>
       </DropdownMenuTrigger>
