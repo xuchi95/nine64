@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { MoveRecord, GameResult, Color } from "@/hooks/useChessGame";
+import type { PlyAnalysis, DeepReviewSummary } from "@/lib/analysis/types";
+import type { FairplayReport } from "@/lib/fairplay/score";
 
 export interface GameReview {
   /** Centipawn evaluation (white POV) after each move; null when unavailable. */
@@ -8,7 +10,12 @@ export interface GameReview {
   startEval: number;
   accuracy: { w: number; b: number };
   reviewedAt: string;
+  /** Deep per-move analysis (classification, motifs, complexity). */
+  plies?: PlyAnalysis[];
+  summary?: DeepReviewSummary;
+  fairplay?: { w: FairplayReport; b: FairplayReport };
 }
+
 
 export interface SavedGame {
   id: string;
