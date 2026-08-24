@@ -64,11 +64,13 @@ export type Database = {
           confidence: number
           contributions: Json
           created_at: string
+          eval_ms: number
           features: Json
           game_id: string
           id: string
           model: string
           probability: number
+          rating: number
           reasons: Json
           score: number
           user_id: string
@@ -78,11 +80,13 @@ export type Database = {
           confidence?: number
           contributions?: Json
           created_at?: string
+          eval_ms?: number
           features?: Json
           game_id: string
           id?: string
           model?: string
           probability?: number
+          rating?: number
           reasons?: Json
           score?: number
           user_id: string
@@ -92,11 +96,13 @@ export type Database = {
           confidence?: number
           contributions?: Json
           created_at?: string
+          eval_ms?: number
           features?: Json
           game_id?: string
           id?: string
           model?: string
           probability?: number
+          rating?: number
           reasons?: Json
           score?: number
           user_id?: string
@@ -151,12 +157,17 @@ export type Database = {
           action: string
           boosting_score: number
           games_reviewed: number
+          lock_expires_at: string | null
+          lock_hours: number
+          lock_started_at: string | null
           rating_locked: boolean
           reasons: Json
           sandbagging_score: number
           score: number
           sprt_decision: string
           sprt_llr: number
+          unlocked_at: string | null
+          unlocked_by: string | null
           updated_at: string
           user_id: string
         }
@@ -164,12 +175,17 @@ export type Database = {
           action?: string
           boosting_score?: number
           games_reviewed?: number
+          lock_expires_at?: string | null
+          lock_hours?: number
+          lock_started_at?: string | null
           rating_locked?: boolean
           reasons?: Json
           sandbagging_score?: number
           score?: number
           sprt_decision?: string
           sprt_llr?: number
+          unlocked_at?: string | null
+          unlocked_by?: string | null
           updated_at?: string
           user_id: string
         }
@@ -177,12 +193,17 @@ export type Database = {
           action?: string
           boosting_score?: number
           games_reviewed?: number
+          lock_expires_at?: string | null
+          lock_hours?: number
+          lock_started_at?: string | null
           rating_locked?: boolean
           reasons?: Json
           sandbagging_score?: number
           score?: number
           sprt_decision?: string
           sprt_llr?: number
+          unlocked_at?: string | null
+          unlocked_by?: string | null
           updated_at?: string
           user_id?: string
         }
