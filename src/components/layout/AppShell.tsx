@@ -272,16 +272,16 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
         <button
           type="button"
           className={cn(
-            "flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground",
-            mobile && "shrink-0 px-3 py-1.5",
+            "flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground",
+            mobile && "shrink-0 px-3.5 py-2",
             active && "bg-primary/10 text-primary",
           )}
         >
           More
-          <ChevronDown className="size-3.5 opacity-70" />
+          <ChevronDown className="size-4 opacity-70" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48 rounded-xl p-1.5">
+      <DropdownMenuContent align="start" className="w-48 rounded-xl p-2">
         {MORE_NAV.map((item) => {
           const isActive = pathname.startsWith(item.to);
           return (
@@ -289,7 +289,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
               key={item.to}
               asChild
               className={cn(
-                "cursor-pointer rounded-lg px-3 py-2",
+                "cursor-pointer rounded-lg px-3.5 py-2.5",
                 isActive && "bg-secondary text-foreground",
               )}
             >
@@ -312,23 +312,23 @@ function NotificationBell() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative flex size-11 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:size-10"
-        >
-          <Bell className="size-[18px]" />
-          {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 rounded-xl p-1.5">
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label="Notifications"
+            className="relative flex size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:size-11"
+          >
+            <Bell className="size-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80 rounded-xl p-2">
 
-        <div className="flex items-center justify-between px-2 py-1.5">
+        <div className="flex items-center justify-between px-2.5 py-2">
           <span className="text-sm font-medium">Notifications</span>
           {unreadCount > 0 && (
             <button
@@ -342,14 +342,14 @@ function NotificationBell() {
         </div>
         <DropdownMenuSeparator />
         {notifications.length === 0 ? (
-          <div className="px-2 py-4 text-center text-sm text-muted-foreground">No notifications yet.</div>
+          <div className="px-2.5 py-4 text-center text-sm text-muted-foreground">No notifications yet.</div>
         ) : (
           <div className="max-h-80 overflow-y-auto">
             {notifications.slice(0, 20).map((n) => (
               <DropdownMenuItem
                 key={n.id}
                 className={cn(
-                  "cursor-pointer flex-col items-start gap-0.5 px-3 py-2",
+                  "cursor-pointer flex-col items-start gap-1 px-3.5 py-2.5",
                   !n.read && "bg-primary/5",
                 )}
                 onClick={() => {
