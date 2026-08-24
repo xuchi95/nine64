@@ -70,17 +70,20 @@ function GamesPage() {
         <div>
           <h1 className="text-2xl font-bold">My games</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {items.length} game{items.length === 1 ? "" : "s"} in your archive.
+            {items.length} game{items.length === 1 ? "" : "s"} in your archive.{" "}
+            {user
+              ? "Synced with your account."
+              : "Saved on this device only — sign in to sync them to your account."}
           </p>
         </div>
         {localGames.length > 0 && (
           <Button
             variant="outline"
             onClick={() => {
-              if (window.confirm("Delete every locally saved game? This cannot be undone.")) clearHistory();
+              if (window.confirm("Delete every saved bot / local game, on this device and in your account? This cannot be undone.")) clearHistory();
             }}
           >
-            <Trash2 className="size-4" /> Clear local archive
+            <Trash2 className="size-4" /> Clear archive
           </Button>
         )}
       </div>
