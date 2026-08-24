@@ -27,6 +27,7 @@ import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayLocalRouteImport } from './routes/play.local'
 import { Route as PlayShareRouteImport } from './routes/play.share'
 import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
+import { Route as AuthenticatedAdminFairplayRouteImport } from './routes/_authenticated/admin.fairplay'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
 
@@ -119,6 +120,12 @@ const PuzzlesIndexRoute = PuzzlesIndexRouteImport.update({
   path: '/puzzles/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminFairplayRoute =
+  AuthenticatedAdminFairplayRouteImport.update({
+    id: '/admin/fairplay',
+    path: '/admin/fairplay',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedGameGameIdRoute = AuthenticatedGameGameIdRouteImport.update({
   id: '/game/$gameId',
   path: '/game/$gameId',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
+  '/admin/fairplay': typeof AuthenticatedAdminFairplayRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
   '/games': typeof GamesIndexRoute
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
+  '/admin/fairplay': typeof AuthenticatedAdminFairplayRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
@@ -192,6 +201,7 @@ export interface FileRoutesById {
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
+  '/_authenticated/admin/fairplay': typeof AuthenticatedAdminFairplayRoute
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/games/'
     | '/play/'
     | '/puzzles/'
+    | '/admin/fairplay'
     | '/game/$gameId'
     | '/games/online/$gameId'
   fileRoutesByTo: FileRoutesByTo
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/games'
     | '/play'
     | '/puzzles'
+    | '/admin/fairplay'
     | '/game/$gameId'
     | '/games/online/$gameId'
   id:
@@ -258,6 +270,7 @@ export interface FileRouteTypes {
     | '/games/'
     | '/play/'
     | '/puzzles/'
+    | '/_authenticated/admin/fairplay'
     | '/_authenticated/game/$gameId'
     | '/games/online/$gameId'
   fileRoutesById: FileRoutesById
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PuzzlesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/fairplay': {
+      id: '/_authenticated/admin/fairplay'
+      path: '/admin/fairplay'
+      fullPath: '/admin/fairplay'
+      preLoaderRoute: typeof AuthenticatedAdminFairplayRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/game/$gameId': {
       id: '/_authenticated/game/$gameId'
       path: '/game/$gameId'
@@ -430,11 +450,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnlineRoute: typeof AuthenticatedOnlineRoute
+  AuthenticatedAdminFairplayRoute: typeof AuthenticatedAdminFairplayRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnlineRoute: AuthenticatedOnlineRoute,
+  AuthenticatedAdminFairplayRoute: AuthenticatedAdminFairplayRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
 }
 
