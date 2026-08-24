@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ShieldAlert, ShieldCheck, RefreshCw, LockOpen, Clock } from "lucide-react";
+import { ShieldAlert, ShieldCheck, RefreshCw, LockOpen, Clock, Search } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,15 @@ import { FairplayMetricsPanel } from "@/components/fairplay/FairplayMetricsPanel
 import { formatRemaining, isLockActive, remainingLockMs } from "@/lib/fairplay/lockPolicy";
 import type { FairplayMetrics } from "@/lib/fairplay/metrics";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
 import { ACTION_LABEL, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +104,11 @@ function AdminFairplayPage() {
   const [busy, setBusy] = useState(false);
   const [metrics, setMetrics] = useState<FairplayMetrics | null>(null);
   const [lockHours, setLockHours] = useState(72);
+  const [lockNote, setLockNote] = useState("");
+  const [query, setQuery] = useState("");
+  const [range, setRange] = useState<"24h" | "7d" | "30d" | "all">("all");
+  const [risk, setRisk] = useState<"all" | "high" | "medium" | "low">("all");
+  const [status, setStatus] = useState<"all" | "locked" | "flagged" | "clear">("all");
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -134,13 +148,33 @@ function AdminFairplayPage() {
 
   const resolve = useCallback(
     async (userId: string, decision: "clear" | "rating_hold" | "unlock") => {
-      await resolveFn({ data: { userId, decision, hours: lockHours } });
+      const note = lockNote.trim();
+      await resolveFn({
+        data: { userId, decision, hours: lockHours, ...(note ? { note } : {}) },
+      });
+      setLockNote("");
       await load();
+      setDetail((await caseFn({ data: { userId } })) as CaseDetail);
     },
-    [load, lockHours, resolveFn],
+    [caseFn, load, lockHours, lockNote, resolveFn],
   );
 
   const selectedRow = rows.find((r) => r.user_id === selected) ?? null;
+
+  const rangeMs =
+    range === "24h" ? 86_400_000 : range === "7d" ? 604_800_000 : range === "30d" ? 2_592_000_000 : null;
+  const needle = query.trim().toLowerCase();
+  const filtered = rows.filter((row) => {
+    if (needle && !`${row.displayName} ${row.user_id}`.toLowerCase().includes(needle)) return false;
+    if (rangeMs && Date.now() - new Date(row.updated_at).getTime() > rangeMs) return false;
+    if (risk === "high" && row.score < THRESHOLDS.hold) return false;
+    if (risk === "medium" && (row.score >= THRESHOLDS.hold || row.score < THRESHOLDS.unrated)) return false;
+    if (risk === "low" && row.score >= THRESHOLDS.unrated) return false;
+    if (status === "locked" && !isLockActive(row)) return false;
+    if (status === "flagged" && (isLockActive(row) || row.action === "none")) return false;
+    if (status === "clear" && (isLockActive(row) || row.action !== "none")) return false;
+    return true;
+  });
 
   if (admin === false) {
     return (
@@ -154,6 +188,7 @@ function AdminFairplayPage() {
 
   return (
     <AppShell wide>
+      <AdminMfaGate>
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between">
           <div>
@@ -183,13 +218,59 @@ function AdminFairplayPage() {
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_380px]">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Hồ sơ ({rows.length})</CardTitle>
+              <CardTitle className="text-base">
+                Hồ sơ ({filtered.length}/{rows.length})
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {rows.length === 0 && (
-                <p className="text-sm text-muted-foreground">Chưa có hồ sơ nào.</p>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="relative sm:col-span-2 lg:col-span-1">
+                  <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Tên hoặc ID người chơi"
+                    className="h-9 pl-8"
+                  />
+                </div>
+                <Select value={range} onValueChange={(v) => setRange(v as typeof range)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Thời gian" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24h">24 giờ qua</SelectItem>
+                    <SelectItem value="7d">7 ngày qua</SelectItem>
+                    <SelectItem value="30d">30 ngày qua</SelectItem>
+                    <SelectItem value="all">Mọi thời điểm</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={risk} onValueChange={(v) => setRisk(v as typeof risk)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Mức rủi ro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Mọi mức rủi ro</SelectItem>
+                    <SelectItem value="high">Cao (≥ {THRESHOLDS.hold})</SelectItem>
+                    <SelectItem value="medium">Trung bình ({THRESHOLDS.unrated}–{THRESHOLDS.hold - 1})</SelectItem>
+                    <SelectItem value="low">Thấp (&lt; {THRESHOLDS.unrated})</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Mọi trạng thái</SelectItem>
+                    <SelectItem value="locked">Đang khoá xếp hạng</SelectItem>
+                    <SelectItem value="flagged">Đang cảnh báo</SelectItem>
+                    <SelectItem value="clear">Đã sạch</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {filtered.length === 0 && (
+                <p className="text-sm text-muted-foreground">Không có hồ sơ khớp bộ lọc.</p>
               )}
-              {rows.map((row) => (
+              {filtered.map((row) => (
                 <button
                   key={row.user_id}
                   type="button"
@@ -250,6 +331,19 @@ function AdminFairplayPage() {
                         className="h-9 w-24 font-mono tabular-nums"
                       />
                     </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground" htmlFor="lock-note">
+                        Lý do xử lý (ghi vào lịch sử)
+                      </label>
+                      <Textarea
+                        id="lock-note"
+                        rows={2}
+                        maxLength={500}
+                        value={lockNote}
+                        onChange={(e) => setLockNote(e.target.value)}
+                        placeholder="Ví dụ: trùng khớp engine 92% trong 3 ván liên tiếp, nhịp thời gian bất thường."
+                      />
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="secondary" onClick={() => void resolve(selected, "clear")}>
                         Xoá cảnh báo
@@ -305,9 +399,12 @@ function AdminFairplayPage() {
                       <p className="mb-1 font-medium">Lịch sử xử lý</p>
                       <ul className="space-y-1 text-xs text-muted-foreground">
                         {detail.actions.map((a) => (
-                          <li key={a.id}>
-                            {new Date(a.created_at).toLocaleString("vi-VN")} · {a.action} ·{" "}
-                            {a.automatic ? "tự động" : "quản trị viên"}
+                          <li key={a.id} className="rounded border border-border/50 p-2">
+                            <span className="block">
+                              {new Date(a.created_at).toLocaleString("vi-VN")} · {a.action} ·{" "}
+                              {a.automatic ? "tự động" : "quản trị viên"}
+                            </span>
+                            {a.note && <span className="mt-1 block text-foreground">Lý do: {a.note}</span>}
                           </li>
                         ))}
                       </ul>
@@ -319,6 +416,7 @@ function AdminFairplayPage() {
           </Card>
         </div>
       </div>
+      </AdminMfaGate>
     </AppShell>
   );
 }
