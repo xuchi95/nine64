@@ -1,10 +1,11 @@
-import { Link } from "@tanstack/react-router";
-import { Moon, Sun, Crown, User, LogOut, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Moon, Sun, Crown, User, LogOut, Loader2, Bell } from "lucide-react";
 import type { ReactNode } from "react";
 import { APP } from "@/config/app";
 import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -65,6 +66,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
                 <Moon className="size-4" />
               )}
             </button>
+            <NotificationBell />
             <AuthHeader />
           </div>
         </div>
@@ -76,6 +78,76 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
         {APP.name} — {APP.tagline}
       </footer>
     </div>
+  );
+}
+
+function NotificationBell() {
+  const { user } = useAuth();
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const navigate = useNavigate();
+
+  if (!user) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Notifications"
+          className="relative flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Bell className="size-4" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <div className="flex items-center justify-between px-2 py-1.5">
+          <span className="text-sm font-medium">Notifications</span>
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              onClick={() => void markAllRead()}
+              className="text-xs text-primary hover:underline"
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
+        <DropdownMenuSeparator />
+        {notifications.length === 0 ? (
+          <div className="px-2 py-4 text-center text-sm text-muted-foreground">No notifications yet.</div>
+        ) : (
+          <div className="max-h-80 overflow-y-auto">
+            {notifications.slice(0, 20).map((n) => (
+              <DropdownMenuItem
+                key={n.id}
+                className={cn(
+                  "cursor-pointer flex-col items-start gap-0.5 px-3 py-2",
+                  !n.read && "bg-primary/5",
+                )}
+                onClick={() => {
+                  void markRead(n.id);
+                  const gameId = (n.data as { game_id?: string } | null)?.game_id;
+                  if (gameId) {
+                    void navigate({ to: "/game/$gameId", params: { gameId } });
+                  }
+                }}
+              >
+                <span className="text-sm font-medium">{n.title}</span>
+                <span className="text-xs text-muted-foreground">{n.body}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {new Date(n.created_at).toLocaleString()}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
