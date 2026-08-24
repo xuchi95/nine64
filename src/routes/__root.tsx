@@ -136,6 +136,8 @@ function RootComponent() {
         <SettingsBridge />
         <HistorySyncBridge />
         <RouteProgress />
+        <IdlePreloader />
+
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <PageTransition>
           <Outlet />
