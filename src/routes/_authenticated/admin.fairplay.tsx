@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ShieldAlert, ShieldCheck, RefreshCw, LockOpen, Clock } from "lucide-react";
@@ -163,10 +163,15 @@ function AdminFairplayPage() {
               không khoá tài khoản.
             </p>
           </div>
+          <div className="flex gap-2">
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/admin/fairplay/log">Nhật ký quyết định</Link>
+          </Button>
           <Button variant="secondary" size="sm" disabled={busy} onClick={() => void load()}>
             <RefreshCw className={cn("mr-2 size-4", busy && "animate-spin")} />
             Làm mới
           </Button>
+          </div>
         </div>
 
         {metrics && (

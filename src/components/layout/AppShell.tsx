@@ -452,6 +452,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/settings": "Settings",
   "/admin": "Admin",
   "/admin/fairplay": "Fair Play",
+  "/admin/fairplay/log": "Nhật ký",
 };
 
 function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
