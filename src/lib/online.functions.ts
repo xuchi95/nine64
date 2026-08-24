@@ -13,9 +13,24 @@ const MOVE_SCHEMA = z.object({
   san: z.string().min(1),
   uci: z.string().min(2),
   fen: z.string().min(10),
+  baseFen: z.string().min(10),
   whiteTimeMs: z.number().int().min(0),
   blackTimeMs: z.number().int().min(0),
 });
+
+export type MoveConflictReason = "stale_position" | "not_your_turn" | "game_over";
+
+export type MoveCommitResult = {
+  applied: boolean;
+  reason: "ok" | MoveConflictReason;
+  currentFen: string;
+  status: string;
+  result: string;
+  whiteTimeMs: number;
+  blackTimeMs: number;
+  ply: number;
+};
+
 
 const GAME_ID_SCHEMA = z.object({ gameId: z.string().uuid() });
 
