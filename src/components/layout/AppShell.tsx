@@ -433,3 +433,56 @@ function AuthHeader() {
   );
 
 }
+
+const ROUTE_LABELS: Record<string, string> = {
+  "/": "Home",
+  "/play": "Play",
+  "/play/ai": "vs Bot",
+  "/play/local": "Local",
+  "/play/share": "Share",
+  "/online": "Play online",
+  "/game": "Live game",
+  "/games": "My games",
+  "/puzzles": "Puzzles",
+  "/drills": "Bài tập",
+  "/progress": "Tiến bộ",
+  "/insights": "Insights",
+  "/analysis": "Analysis",
+  "/account": "Account",
+  "/settings": "Settings",
+  "/admin": "Admin",
+  "/admin/fairplay": "Fair Play",
+};
+
+function PageBreadcrumb() {
+  const { pathname } = useLocation();
+  const params = useParams({ strict: false });
+  const gameId = (params as { gameId?: string }).gameId;
+
+  if (pathname === "/") return null;
+
+  const exact = ROUTE_LABELS[pathname];
+  const parentKey = pathname.split("/").slice(0, -1).join("/") || "/";
+  const parentLabel = ROUTE_LABELS[parentKey] || ROUTE_LABELS[`/${pathname.split("/")[1]}`];
+
+  const currentLabel = exact || (gameId ? `Game ${gameId.slice(0, 6)}` : pathname.split("/").pop());
+
+  return (
+    <div className="border-t border-border/40 bg-secondary/20">
+      <div className={cn("mx-auto flex max-w-6xl items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground sm:px-6", "max-w-[1600px]" ? "" : "")}>
+        <Link to="/" className="flex items-center gap-1 hover:text-foreground">
+          <Home className="size-3" />
+          <span className="hidden sm:inline">Home</span>
+        </Link>
+        {parentLabel && parentKey !== "/" && (
+          <>
+            <ChevronRight className="size-3 opacity-50" />
+            <span className="hidden sm:inline">{parentLabel}</span>
+          </>
+        )}
+        <ChevronRight className="size-3 opacity-50" />
+        <span className="truncate font-medium text-foreground">{currentLabel}</span>
+      </div>
+    </div>
+  );
+}
