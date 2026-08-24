@@ -11,6 +11,8 @@ export interface GameReview {
   startEval: number;
   accuracy: { w: number; b: number };
   reviewedAt: string;
+  /** Which review pass produced this report. */
+  depth?: "quick" | "deep";
   /** Deep per-move analysis (classification, motifs, complexity). */
   plies?: PlyAnalysis[];
   summary?: DeepReviewSummary;

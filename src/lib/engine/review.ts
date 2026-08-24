@@ -11,6 +11,11 @@ import { see } from "@/lib/analysis/see";
 import { bookMovesFor } from "@/lib/chess/openings";
 import { computeSignals, fairplayReport } from "@/lib/fairplay/score";
 import type { PlyAnalysis } from "@/lib/analysis/types";
+import { pvToSan, type Variation } from "@/lib/analysis/variation";
+
+/** Win-percent loss from which deep mode attaches detailed variations. */
+const DEEP_LOSS_THRESHOLD = 3;
+const DEEP_LABELS = new Set(["inaccuracy", "mistake", "miss", "blunder"]);
 
 /** Mover-POV evaluation of a position, plus the engine's candidate moves. */
 interface PositionEval {
@@ -82,6 +87,8 @@ export interface ReviewOptions {
   moveTimeMs?: number;
   performance?: PerformanceMode;
   multiPv?: number;
+  /** Deep analysis: longer search, more candidate lines and stored variations. */
+  deep?: boolean;
   onProgress?: (done: number, total: number) => void;
   signal?: { cancelled: boolean };
 }
@@ -94,15 +101,19 @@ export interface ReviewOptions {
 export async function reviewGame({
   startFen,
   moves,
-  moveTimeMs = 260,
+  moveTimeMs,
   performance = "balanced",
-  multiPv = 4,
+  multiPv,
+  deep = false,
   onProgress,
   signal,
 }: ReviewOptions): Promise<GameReview> {
+  const searchTime = moveTimeMs ?? (deep ? 900 : 260);
+  const pvCount = multiPv ?? (deep ? 5 : 4);
   const engine = new StockfishEngine(performance);
   const positions = [startFen, ...moves.map((m) => m.fen)];
   const evals: (PositionEval | null)[] = [];
+  const linesAt: EngineLine[][] = [];
 
   try {
     await engine.init();
@@ -112,6 +123,7 @@ export async function reviewGame({
       const terminal = terminalEval(fen);
       if (terminal) {
         evals.push(terminal);
+        linesAt.push([]);
       } else {
         let legalMoves = 0;
         try {
@@ -122,13 +134,15 @@ export async function reviewGame({
         try {
           const lines = await engine.search({
             fen,
-            moveTimeMs,
-            multiPv,
+            moveTimeMs: searchTime,
+            multiPv: pvCount,
             skill: null,
             uciElo: null,
           });
+          linesAt.push(deep ? lines : []);
           evals.push(fromLines(fen, lines, legalMoves));
         } catch {
+          linesAt.push([]);
           evals.push(null);
         }
       }
@@ -138,6 +152,7 @@ export async function reviewGame({
     engine.destroy();
   }
   while (evals.length < positions.length) evals.push(null);
+  while (linesAt.length < positions.length) linesAt.push([]);
 
   /* ------------------------- derive per-ply analysis ------------------------ */
 
@@ -186,6 +201,34 @@ export async function reviewGame({
       mateIn: evalAfter ? (evalAfter.mateIn !== null ? -evalAfter.mateIn : null) : null,
     }).map((m) => m.motif);
 
+    let variations: Variation[] | undefined;
+    let playedPvSan: string[] | undefined;
+    if (
+      deep &&
+      (classification.loss >= DEEP_LOSS_THRESHOLD || DEEP_LABELS.has(classification.label))
+    ) {
+      const candidates = (linesAt[i] ?? []).slice(0, 3);
+      const mapped = candidates
+        .map((line): Variation => {
+          const pvSan = pvToSan(fenBefore, line.pv, 8);
+          return {
+            uci: line.move,
+            san: pvSan[0] ?? line.move,
+            pvSan,
+            cp: line.cp,
+            mateIn: line.mateIn,
+            depth: line.depth,
+          };
+        })
+        .filter((v) => v.pvSan.length > 0);
+      if (mapped.length > 0) variations = mapped;
+      const reply = linesAt[i + 1]?.[0];
+      if (reply) {
+        const continuation = pvToSan(fenAfter, reply.pv, 6);
+        playedPvSan = [move.san, ...continuation];
+      }
+    }
+
     plies.push({
       index: i,
       color: move.color,
@@ -204,6 +247,8 @@ export async function reviewGame({
       motifs,
       phase: detectPhase(fenAfter, Math.floor(i / 2) + 1),
       spentMs: null,
+      ...(variations ? { variations } : {}),
+      ...(playedPvSan ? { playedPvSan } : {}),
     });
   }
 
@@ -231,6 +276,7 @@ export async function reviewGame({
     startEval: evals[0]?.cpWhite ?? 0,
     accuracy: { w: accuracyFor("w"), b: accuracyFor("b") },
     reviewedAt: new Date().toISOString(),
+    depth: deep ? "deep" : "quick",
     plies,
     summary: {
       acpl,
