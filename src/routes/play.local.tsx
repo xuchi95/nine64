@@ -13,6 +13,9 @@ import { VARIANTS, type VariantId } from "@/config/variants";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
+import { saveGame } from "@/lib/history";
+import { detectOpening } from "@/lib/chess/openings";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/play/local")({
