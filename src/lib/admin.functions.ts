@@ -13,7 +13,7 @@ export interface AdminAuditRow {
   targetName: string | null;
   targetGameId: string | null;
   note: string | null;
-  detail: Record<string, unknown>;
+  detail: Record<string, string | number | boolean | null>;
 }
 
 /** Full admin activity trail: views and enforcement decisions, newest first. */
@@ -77,6 +77,6 @@ export const listAdminAuditLog = createServerFn({ method: "GET" })
       targetName: r.target_user_id ? (byId.get(r.target_user_id) ?? "Người chơi") : null,
       targetGameId: r.target_game_id,
       note: r.note,
-      detail: (r.detail ?? {}) as Record<string, unknown>,
+      detail: (r.detail ?? {}) as Record<string, string | number | boolean | null>,
     }));
   });

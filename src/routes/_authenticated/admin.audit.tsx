@@ -67,7 +67,7 @@ function ActionIcon({ action }: { action: string }) {
   return <Eye className="size-4 shrink-0 text-muted-foreground" />;
 }
 
-function detailText(detail: Record<string, unknown>): string | null {
+function detailText(detail: Record<string, string | number | boolean | null>): string | null {
   const parts: string[] = [];
   if (typeof detail["hours"] === "number") parts.push(`${detail["hours"]} giờ`);
   if (typeof detail["expiresAt"] === "string")
