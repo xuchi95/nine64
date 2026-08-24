@@ -10,6 +10,7 @@ import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getGame, getGameMoves, makeMove, finishGame } from "@/lib/online.functions";
+import type { MoveCommitResult } from "@/lib/online.functions";
 import { playSound } from "@/lib/sound";
 import type { Game, GameMove } from "@/lib/database.types";
 import type { Color } from "@/hooks/useChessGame";
@@ -248,6 +249,11 @@ function OnlineGamePage() {
     }, 100);
     return () => window.clearInterval(id);
   }, [game, boardRev]);
+
+  // Keep a ref of the live clock so conflict retries use fresh values
+  useEffect(() => {
+    clockRef.current = clock;
+  }, [clock]);
 
   const finishIfOver = useCallback(
     async (reason: string, winner: Color | "draw") => {
@@ -649,6 +655,13 @@ function OnlineGamePage() {
             syncing={syncing}
             onRefresh={() => void refresh({ showSpinner: true }).catch(() => undefined)}
           />
+
+          {conflict && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+              <span className="font-semibold">Move conflict handled: </span>
+              {conflict}
+            </div>
+          )}
 
           {live && (
             <div className="flex gap-2">
