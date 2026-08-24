@@ -454,7 +454,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/fairplay": "Fair Play",
 };
 
-function PageBreadcrumb({ wide }: { wide?: boolean }) {
+function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
   const { pathname } = useLocation();
   const params = useParams({ strict: false });
   const gameId = (params as { gameId?: string }).gameId;
