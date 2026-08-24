@@ -632,6 +632,18 @@ function OnlineGamePage() {
             clock={clock}
             active={turn === myColor && live}
           />
+          {game.status === "completed" && (
+            <div className="mt-3">
+              <FairplayBridge
+                gameId={game.id}
+                initialFen={game.initial_fen}
+                moves={moves}
+                whiteId={game.white_id}
+                blackId={game.black_id}
+                runAnalysis={myColor === "w"}
+              />
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
