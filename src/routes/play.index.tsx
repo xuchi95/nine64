@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bot, Users, LineChart, Swords, Globe, Trophy } from "lucide-react";
+import { Bot, Users, LineChart, Swords, Globe, Trophy, Link2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 
