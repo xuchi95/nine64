@@ -187,10 +187,15 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       setStarted(true);
       setFen(game.fen());
       setLastMove({ from: move.from, to: move.to });
-      setMoves((prev) => [
-        ...prev,
-        { san: move!.san, from: move!.from, to: move!.to, color: move!.color, fen: game.fen() },
-      ]);
+      const record: MoveRecord = {
+        san: move.san,
+        from: move.from,
+        to: move.to,
+        color: move.color,
+        fen: game.fen(),
+      };
+      movesRef.current = [...movesRef.current, record];
+      setMoves((prev) => [...prev, record]);
 
       const history = game.history();
       const r = toResult(game, variant, history);
