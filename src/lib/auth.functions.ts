@@ -31,14 +31,13 @@ export const updateProfile = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("profiles")
-      .update({
-        display_name: data.displayName,
-        avatar_url: data.avatarUrl || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", context.userId);
+    const update: Record<string, string | null> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (data.displayName !== undefined) update.display_name = data.displayName;
+    if (data.avatarUrl !== undefined) update.avatar_url = data.avatarUrl || null;
+
+    const { error } = await context.supabase.from("profiles").update(update).eq("id", context.userId);
 
     if (error) throw new Error(error.message);
     return { ok: true };
