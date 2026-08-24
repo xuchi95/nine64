@@ -139,6 +139,17 @@ function PlayAi() {
     playSound("matchFound");
   };
 
+  const { quick } = Route.useSearch();
+  const quickStarted = useRef(false);
+  useEffect(() => {
+    if (!quick || quickStarted.current) return;
+    quickStarted.current = true;
+    start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quick]);
+
+
+
   const applyPremove = useCallback(() => {
     if (!premove) return;
     const ok = game.legalTargets(premove.from).includes(premove.to);
