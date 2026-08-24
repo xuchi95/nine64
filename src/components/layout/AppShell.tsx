@@ -208,7 +208,7 @@ function MobileNav() {
 
           {user && (
             <>
-              <p className="px-5 pb-2 pt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="px-6 pb-2.5 pt-7 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Account
               </p>
               <div className="flex flex-col gap-2">
@@ -216,7 +216,7 @@ function MobileNav() {
                   <Link
                     key={item.to + item.label}
                     to={item.to}
-                    className="flex min-h-14 items-center gap-4 rounded-xl px-5 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
+                    className="flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
                   >
                     <item.icon className="size-5 shrink-0" />
                     {item.label}
@@ -227,7 +227,7 @@ function MobileNav() {
           )}
         </nav>
 
-        <div className="flex items-center gap-3 border-t border-border/70 p-4">
+        <div className="flex items-center gap-3 border-t border-border/70 p-5">
           <Button
             variant="outline"
             className="h-14 flex-1 justify-center gap-2 text-base"
