@@ -156,31 +156,30 @@ function MobileNav() {
       <SheetContent
         ref={swipe.ref}
         side="left"
-        className="flex w-[86vw] max-w-sm flex-col gap-0 p-0"
+        className="flex w-[88vw] max-w-sm flex-col gap-0 p-0"
         style={swipe.style}
         {...swipe.handlers}
       >
         {/* Drag affordance: vuốt sang trái để đóng menu */}
         <span
           aria-hidden
-          className="absolute right-1.5 top-1/2 h-16 w-1 -translate-y-1/2 rounded-full bg-border/70"
+          className="absolute right-2 top-1/2 h-20 w-1.5 -translate-y-1/2 rounded-full bg-border/80"
         />
-        <div className="flex items-center gap-3 border-b border-border/70 px-4 py-4">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-            <Crown className="size-5" />
+        <div className="flex items-center gap-4 border-b border-border/70 px-5 py-5">
+          <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+            <Crown className="size-6" />
           </span>
-          <SheetTitle className="text-base tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
+          <SheetTitle className="text-lg tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
         </div>
 
-
-        <nav className="flex-1 overflow-y-auto p-3">
-          <div className="flex flex-col gap-1">
+        <nav className="flex-1 overflow-y-auto p-4">
+          <div className="flex flex-col gap-2">
             {MAIN_NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex min-h-12 items-center rounded-xl px-4 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
+                  "flex min-h-14 items-center rounded-xl px-5 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
                   isActive(item.to) && "bg-primary/15 text-primary",
                 )}
               >
@@ -189,16 +188,16 @@ function MobileNav() {
             ))}
           </div>
 
-          <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+          <p className="px-5 pb-2 pt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Train
           </p>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             {MORE_NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex min-h-12 items-center rounded-xl px-4 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                  "flex min-h-14 items-center rounded-xl px-5 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
                   isActive(item.to) && "bg-primary/15 text-primary",
                 )}
               >
@@ -209,17 +208,17 @@ function MobileNav() {
 
           {user && (
             <>
-              <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="px-5 pb-2 pt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Account
               </p>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 {PROFILE_MENU.map((item) => (
                   <Link
                     key={item.to + item.label}
                     to={item.to}
-                    className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
+                    className="flex min-h-14 items-center gap-4 rounded-xl px-5 text-base font-medium text-muted-foreground transition-colors active:bg-secondary"
                   >
-                    <item.icon className="size-4 shrink-0" />
+                    <item.icon className="size-5 shrink-0" />
                     {item.label}
                   </Link>
                 ))}
@@ -228,31 +227,31 @@ function MobileNav() {
           )}
         </nav>
 
-        <div className="flex items-center gap-2 border-t border-border/70 p-3">
+        <div className="flex items-center gap-3 border-t border-border/70 p-4">
           <Button
             variant="outline"
-            className="h-12 flex-1 justify-center gap-2"
+            className="h-14 flex-1 justify-center gap-2 text-base"
             onClick={() =>
               updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
             }
           >
-            {settings.appearance === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {settings.appearance === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
             {settings.appearance === "dark" ? "Sáng" : "Tối"}
           </Button>
           {user ? (
             <Button
               variant="outline"
-              className="h-12 flex-1 justify-center gap-2 text-destructive"
+              className="h-14 flex-1 justify-center gap-2 text-base text-destructive"
               onClick={() => {
                 setOpen(false);
                 void signOut();
               }}
             >
-              <LogOut className="size-4" />
+              <LogOut className="size-5" />
               Đăng xuất
             </Button>
           ) : (
-            <Button asChild className="h-12 flex-1 justify-center">
+            <Button asChild className="h-14 flex-1 justify-center text-base">
               <Link to="/auth/login">Đăng nhập</Link>
             </Button>
           )}
