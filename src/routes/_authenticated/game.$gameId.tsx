@@ -244,6 +244,7 @@ function OnlineGamePage() {
       }
 
       const turnBefore = myColor;
+      const previousClock = clock;
       const nextClock = { ...clock };
       // Add increment for the side that just moved
       if (game.time_control.startsWith("rapid15m")) {
@@ -254,20 +255,6 @@ function OnlineGamePage() {
       setLastMove({ from: move.from, to: move.to });
       setClock(nextClock);
       playMoveSound(gameRef.current, move);
-      setMoves((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          game_id: game.id,
-          move_number: prev.length + 1,
-          san: move.san,
-          uci: `${from}${to}`,
-          fen: currentFen,
-          white_time_ms: nextClock.w,
-          black_time_ms: nextClock.b,
-          created_at: new Date().toISOString(),
-        },
-      ]);
 
       // Send to server in background
       makeMoveFn({
@@ -289,8 +276,10 @@ function OnlineGamePage() {
         })
         .catch((e: unknown) => {
           gameRef.current.undo();
+          setLastMove(null);
+          setClock(previousClock);
+          setBoardRev((v) => v + 1);
           setError(e instanceof Error ? e.message : "Move failed");
-          setFenFromGame();
         });
 
       return true;
