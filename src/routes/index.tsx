@@ -8,12 +8,20 @@ import {
   Play,
   Users,
   Link2,
+  Share2,
+  BarChart3,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 import { BOT_LEVELS, BOT_PERSONALITIES } from "@/config/bots";
 import { VARIANTS } from "@/config/variants";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,7 +39,8 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   return (
-    <AppShell>
+    <TooltipProvider delayDuration={200}>
+      <AppShell>
       {/* ── Hero: board left, promise right (chess.com rhythm, brass palette) ── */}
       <section className="grid items-center gap-10 py-6 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-16 lg:py-12">
         <div className="mx-auto w-full max-w-[420px]">
@@ -119,12 +128,20 @@ function Home() {
         visual={<OnlineVisual />}
       />
 
-      {/* ── Quick modes strip ── */}
+      {/* ── Quick modes strip: icon + sparkline, text in tooltip ── */}
       <section className="mt-14 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ModeTile to="/play/local" icon={<Users className="size-5" />} title="Local" meta="Pass & play" />
-        <ModeTile to="/play/share" icon={<Link2 className="size-5" />} title="Share link" meta="Turn by turn" />
-        <ModeTile to="/analysis" icon={<Target className="size-5" />} title="Analysis" meta="Free board" />
-        <ModeTile to="/games" icon={<LineChart className="size-5" />} title="My games" meta="Archive" />
+        <ModeTile to="/play/local" icon={<Users className="size-5" />} title="Local" tooltip="Pass &amp; play on one device">
+          <LocalSparkline />
+        </ModeTile>
+        <ModeTile to="/play/share" icon={<Share2 className="size-5" />} title="Share" tooltip="Sync moves turn-by-turn via link">
+          <ShareSparkline />
+        </ModeTile>
+        <ModeTile to="/analysis" icon={<BarChart3 className="size-5" />} title="Analysis" tooltip="Free board with engine eval">
+          <AnalysisSparkline />
+        </ModeTile>
+        <ModeTile to="/games" icon={<LineChart className="size-5" />} title="Games" tooltip="Review your archived games">
+          <GamesSparkline />
+        </ModeTile>
       </section>
 
       {/* ── Closing CTA ── */}
@@ -149,6 +166,7 @@ function Home() {
         </div>
       </section>
     </AppShell>
+    </TooltipProvider>
   );
 }
 
@@ -201,25 +219,81 @@ function ModeTile({
   to,
   icon,
   title,
-  meta,
+  tooltip,
+  children,
 }: {
   to: string;
   icon: React.ReactNode;
   title: string;
-  meta: string;
+  tooltip: string;
+  children: React.ReactNode;
 }) {
   return (
-    <Link to={to} className="panel flex items-center gap-4 p-5 transition-colors hover:border-primary/50">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block font-semibold">{title}</span>
-        <span className="block font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-          {meta}
-        </span>
-      </span>
-    </Link>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to={to}
+          className="panel group flex flex-col items-center gap-3 p-4 text-center transition-colors hover:border-primary/50"
+        >
+          <span className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">
+            {icon}
+          </span>
+          <span className="font-display text-sm font-semibold">{title}</span>
+          <div className="h-10 w-full">{children}</div>
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p dangerouslySetInnerHTML={{ __html: tooltip }} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function LocalSparkline() {
+  return (
+    <div className="flex h-full items-end justify-center gap-1">
+      <div className="w-2 rounded-t bg-primary/40" style={{ height: "45%" }} />
+      <div className="w-2 rounded-t bg-primary" style={{ height: "70%" }} />
+      <div className="w-2 rounded-t bg-primary/40" style={{ height: "45%" }} />
+    </div>
+  );
+}
+
+function ShareSparkline() {
+  return (
+    <div className="flex h-full items-center justify-center gap-0.5">
+      {Array.from({ length: 8 }, (_, i) => (
+        <div
+          key={i}
+          className={`w-1 rounded-full ${i % 2 === 0 ? "bg-primary" : "bg-primary/25"}`}
+          style={{ height: `${30 + (i % 3) * 22}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AnalysisSparkline() {
+  const points = [20, 45, 35, 60, 55, 80, 70, 90];
+  const path = points
+    .map((v, i) => `${i === 0 ? "M" : "L"}${(i / (points.length - 1)) * 100},${100 - v}`)
+    .join(" ");
+  return (
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
+      <path d={`${path} L100,100 L0,100 Z`} fill="var(--primary)" opacity="0.14" />
+      <path d={path} fill="none" stroke="var(--primary)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+function GamesSparkline() {
+  return (
+    <div className="flex h-full items-center justify-center gap-1">
+      <div className="h-3 w-3 rounded-sm bg-primary" />
+      <div className="h-5 w-3 rounded-sm bg-primary/60" />
+      <div className="h-2 w-3 rounded-sm bg-primary/30" />
+      <div className="h-4 w-3 rounded-sm bg-primary/80" />
+    </div>
   );
 }
 
