@@ -188,6 +188,7 @@ export const tryMatch = createServerFn({ method: "POST" })
     const blackRating = whiteIsMe ? opponent.rating : entry.rating;
     const initialMs = timeControlToMs(entry.time_control);
 
+    const startFen = startingFenForVariant(entry.variant);
     const { data: game, error: gameError } = await supabaseAdmin
       .from("games")
       .insert({
@@ -198,14 +199,8 @@ export const tryMatch = createServerFn({ method: "POST" })
         variant: entry.variant,
         time_control: entry.time_control,
         status: "active",
-        initial_fen:
-          entry.variant === "chess960"
-            ? undefined
-            : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        current_fen:
-          entry.variant === "chess960"
-            ? undefined
-            : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        initial_fen: startFen,
+        current_fen: startFen,
         white_time_ms: initialMs,
         black_time_ms: initialMs,
       })
