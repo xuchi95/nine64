@@ -42,7 +42,7 @@ export function RouteProgress() {
       style={{ opacity: visible ? 1 : 0, transition: "opacity 200ms ease" }}
     >
       <div
-        className="h-full bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
+        className="h-full bg-primary shadow-[0_0_12px_var(--primary)]"
         style={{
           width: `${progress}%`,
           transition: "width 220ms cubic-bezier(0.4, 0, 0.2, 1)",
