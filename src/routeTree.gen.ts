@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AnalysisRouteImport } from './routes/analysis'
+import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -23,6 +24,7 @@ import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayLocalRouteImport } from './routes/play.local'
 import { Route as PlayShareRouteImport } from './routes/play.share'
+import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
 
@@ -38,6 +40,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AnalysisRoute = AnalysisRouteImport.update({
   id: '/analysis',
   path: '/analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InsightsRoute = InsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -95,6 +102,11 @@ const PlayShareRoute = PlayShareRouteImport.update({
   path: '/play/share',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PuzzlesIndexRoute = PuzzlesIndexRouteImport.update({
+  id: '/puzzles/',
+  path: '/puzzles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedGameGameIdRoute = AuthenticatedGameGameIdRouteImport.update({
   id: '/game/$gameId',
   path: '/game/$gameId',
@@ -109,6 +121,7 @@ const GamesOnlineGameIdRoute = GamesOnlineGameIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
   '/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -120,12 +133,14 @@ export interface FileRoutesByFullPath {
   '/play/share': typeof PlayShareRoute
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
+  '/puzzles/': typeof PuzzlesIndexRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
   '/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -137,6 +152,7 @@ export interface FileRoutesByTo {
   '/play/share': typeof PlayShareRoute
   '/games': typeof GamesIndexRoute
   '/play': typeof PlayIndexRoute
+  '/puzzles': typeof PuzzlesIndexRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
@@ -145,6 +161,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/analysis': typeof AnalysisRoute
+  '/insights': typeof InsightsRoute
   '/settings': typeof SettingsRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -156,6 +173,7 @@ export interface FileRoutesById {
   '/play/share': typeof PlayShareRoute
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
+  '/puzzles/': typeof PuzzlesIndexRoute
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
@@ -164,6 +182,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/analysis'
+    | '/insights'
     | '/settings'
     | '/online'
     | '/auth/callback'
@@ -175,12 +194,14 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/games/'
     | '/play/'
+    | '/puzzles/'
     | '/game/$gameId'
     | '/games/online/$gameId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analysis'
+    | '/insights'
     | '/settings'
     | '/online'
     | '/auth/callback'
@@ -192,6 +213,7 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/games'
     | '/play'
+    | '/puzzles'
     | '/game/$gameId'
     | '/games/online/$gameId'
   id:
@@ -199,6 +221,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/analysis'
+    | '/insights'
     | '/settings'
     | '/_authenticated/online'
     | '/auth/callback'
@@ -210,6 +233,7 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/games/'
     | '/play/'
+    | '/puzzles/'
     | '/_authenticated/game/$gameId'
     | '/games/online/$gameId'
   fileRoutesById: FileRoutesById
@@ -218,6 +242,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AnalysisRoute: typeof AnalysisRoute
+  InsightsRoute: typeof InsightsRoute
   SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
@@ -228,6 +253,7 @@ export interface RootRouteChildren {
   PlayShareRoute: typeof PlayShareRoute
   GamesIndexRoute: typeof GamesIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
+  PuzzlesIndexRoute: typeof PuzzlesIndexRoute
   GamesOnlineGameIdRoute: typeof GamesOnlineGameIdRoute
 }
 
@@ -252,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/analysis'
       fullPath: '/analysis'
       preLoaderRoute: typeof AnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -331,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayShareRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/puzzles/': {
+      id: '/puzzles/'
+      path: '/puzzles'
+      fullPath: '/puzzles/'
+      preLoaderRoute: typeof PuzzlesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/game/$gameId': {
       id: '/_authenticated/game/$gameId'
       path: '/game/$gameId'
@@ -365,6 +405,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AnalysisRoute: AnalysisRoute,
+  InsightsRoute: InsightsRoute,
   SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
@@ -375,6 +416,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayShareRoute: PlayShareRoute,
   GamesIndexRoute: GamesIndexRoute,
   PlayIndexRoute: PlayIndexRoute,
+  PuzzlesIndexRoute: PuzzlesIndexRoute,
   GamesOnlineGameIdRoute: GamesOnlineGameIdRoute,
 }
 export const routeTree = rootRouteImport

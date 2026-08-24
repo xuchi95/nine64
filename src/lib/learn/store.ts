@@ -90,7 +90,7 @@ async function syncToCloud() {
       swing: p.swing,
       attempts: p.attempts,
       solved: p.solved,
-      srs: p.srs as unknown as Record<string, unknown>,
+      srs: p.srs as unknown as never,
     }));
     if (rows.length === 0) return;
     try {

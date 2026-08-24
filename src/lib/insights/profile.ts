@@ -82,11 +82,11 @@ export function buildWeaknessProfile(games: SavedGame[]): WeaknessProfile {
       const agg = phaseAgg.get(ply.phase) ?? { loss: 0, n: 0, blunders: 0 };
       agg.loss += ply.loss;
       agg.n += 1;
-      if (ply.label === "blunder" || ply.label === "missed_win") agg.blunders += 1;
+      if (ply.label === "miss") agg.blunders += 1;
       phaseAgg.set(ply.phase, agg);
 
       // Motifs present in the engine's better alternative that the player missed.
-      const missed = ply.label === "blunder" || ply.label === "mistake" || ply.label === "missed_win";
+      const missed = ply.label === "miss" || ply.label === "mistake";
       if (missed) {
         for (const motif of ply.motifs) {
           motifMiss.set(motif, (motifMiss.get(motif) ?? 0) + 1);
