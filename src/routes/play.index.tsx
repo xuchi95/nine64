@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bot, Users, LineChart, Swords, Globe, Trophy } from "lucide-react";
+import { Bot, Users, LineChart, Swords, Globe, Trophy, Link2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 
@@ -42,11 +42,18 @@ const AVAILABLE = [
     text: "Realtime matchmaking with Elo rating.",
   },
   {
+    to: "/play/share",
+    icon: Link2,
+    title: "Share by link / PGN",
+    text: "Correspondence play: sync each move via URL or PGN.",
+  },
+  {
     to: "/play/ai",
     icon: Swords,
     title: "Variants",
     text: "Chess960, Three-Check, King of the Hill and more.",
   },
+
   {
     to: "/analysis",
     icon: LineChart,
