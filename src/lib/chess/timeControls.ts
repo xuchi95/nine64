@@ -53,6 +53,6 @@ export function formatClock(ms: number): string {
 }
 
 export function formatDuration(ms: number): string {
-  const s = Math.max(0, Math.round(ms / 100) / 10;
+  const s = Math.max(0, Math.round(ms / 100) / 10);
   return `${s.toFixed(1)}s`;
 }
