@@ -176,26 +176,34 @@ export const tryMatch = createServerFn({ method: "POST" })
 
     const entry = myEntry as MatchmakingQueue;
 
-    // Find a waiting opponent with the same variant/time_control and similar rating (within 300)
-    const { data: opponents, error: oppError } = await supabaseAdmin
-      .from("matchmaking_queue")
-      .select("*")
-      .eq("status", "waiting")
-      .eq("variant", entry.variant)
-      .eq("time_control", entry.time_control)
-      .neq("user_id", context.userId)
-      .gte("rating", (entry.rating ?? 1200) - 300)
-      .lte("rating", (entry.rating ?? 1200) + 300)
-      .order("created_at", { ascending: true })
-      .limit(1);
+    // Priority matchmaking: closest rating + similar uncertainty, window widens
+    // with wait time, and rematches with the last two opponents are avoided.
+    const rpc = supabaseAdmin.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-    if (oppError) throw new Error(oppError.message);
+    const { data: matchId, error: matchError } = await rpc("find_match", {
+      _queue_id: entry.id,
+    });
 
-    if (!opponents || opponents.length === 0) {
+    if (matchError) throw new Error(matchError.message);
+    if (!matchId || typeof matchId !== "string") {
       return { game: null as Game | null };
     }
 
-    const opponent = opponents[0] as MatchmakingQueue;
+    const { data: opponentRow, error: oppError } = await supabaseAdmin
+      .from("matchmaking_queue")
+      .select("*")
+      .eq("id", matchId)
+      .eq("status", "waiting")
+      .maybeSingle();
+
+    if (oppError) throw new Error(oppError.message);
+    if (!opponentRow) return { game: null as Game | null };
+
+    const opponent = opponentRow as MatchmakingQueue;
+
 
     // Decide colors randomly
     const whiteIsMe = Math.random() < 0.5;
