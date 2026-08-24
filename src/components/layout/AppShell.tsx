@@ -31,7 +31,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur">
-        <div className={cn("mx-auto flex h-14 items-center gap-6 px-4", wide ? "max-w-[1600px]" : "max-w-6xl")}>
+        <div className={cn("mx-auto flex h-14 items-center gap-3 px-4 lg:gap-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
           <Link to="/" className="flex items-center gap-2">
             <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Crown className="size-4" />
@@ -40,7 +40,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
               {APP.name.toUpperCase()}
             </span>
           </Link>
-          <nav className="flex items-center gap-1 text-sm">
+          <nav className="hidden items-center gap-1 text-sm lg:flex">
             {NAV.map((item) => (
               <Link
                 key={item.to}
@@ -53,7 +53,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <button
               type="button"
               aria-label="Toggle colour mode"
@@ -72,6 +72,19 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             <AuthHeader />
           </div>
         </div>
+        <nav className="flex items-center gap-1 overflow-x-auto px-4 pb-2 text-sm [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+          {NAV.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="shrink-0 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              activeProps={{ className: "bg-secondary text-foreground" }}
+              activeOptions={{ exact: item.to === "/" }}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </header>
       <main className={cn("mx-auto w-full flex-1 px-4 py-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
         {children}
