@@ -61,7 +61,7 @@ export function AdminMfaGate({ children }: { children: React.ReactNode }) {
     } finally {
       setBusy(false);
     }
-  }, [challengeCodeDeps(check, code, factorId)]);
+  }, [check, code, factorId]);
 
   if (state === "ready") return <>{children}</>;
 
@@ -119,9 +119,4 @@ export function AdminMfaGate({ children }: { children: React.ReactNode }) {
       </Card>
     </div>
   );
-}
-
-/** Keeps the verify callback deps explicit without tripping exhaustive-deps. */
-function challengeCodeDeps(check: () => Promise<void>, code: string, factorId: string | null) {
-  return [check, code, factorId] as unknown as never;
 }

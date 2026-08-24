@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertFairplayAdmin } from "@/lib/fairplay/adminGuard.server";
 import { evaluateGame, loadTurns, upsertReport, refreshStatus, enforce } from "@/lib/fairplay/apply.server";
 
 const turnSchema = z.object({
@@ -129,11 +130,7 @@ export const getMyFairplayStatus = createServerFn({ method: "GET" })
 export const listFairplayCases = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertFairplayAdmin(context);
 
     const { data, error } = await context.supabase
       .from("fairplay_status")
@@ -161,11 +158,7 @@ export const getFairplayCase = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertFairplayAdmin(context);
 
     const [status, reports, actions] = await Promise.all([
       context.supabase
@@ -208,11 +201,7 @@ export const resolveFairplayCase = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertFairplayAdmin(context);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const now = new Date();
@@ -253,11 +242,7 @@ export const resolveFairplayCase = createServerFn({ method: "POST" })
 export const getFairplayMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertFairplayAdmin(context);
 
     const { computeFairplayMetrics } = await import("@/lib/fairplay/metrics");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -313,11 +298,7 @@ export const listFairplayDecisions = createServerFn({ method: "GET" })
       .parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertFairplayAdmin(context);
 
     let reportQuery = context.supabase
       .from("fairplay_reports")
