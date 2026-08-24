@@ -54,7 +54,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             </span>
           </Link>
           <nav className="hidden items-center gap-1 text-sm lg:flex">
-            {NAV.map((item) => (
+            {MAIN_NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -65,6 +65,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
                 {item.label}
               </Link>
             ))}
+            <MoreNav />
           </nav>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <button
@@ -86,7 +87,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
           </div>
         </div>
         <nav className="flex items-center gap-1 overflow-x-auto px-4 pb-2 text-sm [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
-          {NAV.map((item) => (
+          {MAIN_NAV.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -97,6 +98,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
               {item.label}
             </Link>
           ))}
+          <MoreNav mobile />
         </nav>
       </header>
       <main className={cn("mx-auto w-full flex-1 px-4 py-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
