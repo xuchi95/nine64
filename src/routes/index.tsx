@@ -8,12 +8,20 @@ import {
   Play,
   Users,
   Link2,
+  Share2,
+  BarChart3,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 import { BOT_LEVELS, BOT_PERSONALITIES } from "@/config/bots";
 import { VARIANTS } from "@/config/variants";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
