@@ -33,21 +33,21 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 const MAIN_NAV = [
   { to: "/", label: "Home" },
   { to: "/play", label: "Play" },
-  { to: "/games", label: "My games" },
+  { to: "/games", label: "Games" },
   { to: "/puzzles", label: "Puzzles" },
 ] as const;
 
 const MORE_NAV = [
-  { to: "/drills", label: "Bài tập" },
-  { to: "/progress", label: "Tiến bộ" },
+  { to: "/drills", label: "Drills" },
+  { to: "/progress", label: "Progress" },
   { to: "/insights", label: "Insights" },
   { to: "/analysis", label: "Analysis" },
 ] as const;
 
 const PROFILE_MENU = [
-  { to: "/account", label: "Tài khoản & bảo mật", icon: ShieldCheck },
-  { to: "/games", label: "Ván đấu của tôi", icon: History },
-  { to: "/settings", label: "Cài đặt giao diện", icon: SettingsIcon },
+  { to: "/account", label: "Account", icon: ShieldCheck },
+  { to: "/games", label: "Games", icon: History },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
