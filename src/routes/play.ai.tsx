@@ -27,6 +27,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/play/ai")({
+  validateSearch: (search: Record<string, unknown>): { quick?: boolean } =>
+    search["quick"] === "1" || search["quick"] === true ? { quick: true } : {},
+
   head: () => ({
     meta: [
       { title: `Play the engine — ${APP.name}` },
@@ -44,6 +47,7 @@ export const Route = createFileRoute("/play/ai")({
   }),
   component: PlayAi,
 });
+
 
 interface Config {
   level: number;
@@ -134,6 +138,17 @@ function PlayAi() {
     setPhase("playing");
     playSound("matchFound");
   };
+
+  const { quick } = Route.useSearch();
+  const quickStarted = useRef(false);
+  useEffect(() => {
+    if (!quick || quickStarted.current) return;
+    quickStarted.current = true;
+    start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quick]);
+
+
 
   const applyPremove = useCallback(() => {
     if (!premove) return;
