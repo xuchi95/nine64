@@ -129,7 +129,7 @@ export function FormSkeleton() {
   );
 }
 
-function SkeletonFrame({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
+function SkeletonFrame({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <AppShell wide={wide}>
       <div aria-busy="true" aria-live="polite" className="nexus-skeleton-fade space-y-6">
