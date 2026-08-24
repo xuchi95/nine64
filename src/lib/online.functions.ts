@@ -284,7 +284,7 @@ export const getGameMoves = createServerFn({ method: "GET" })
 export const makeMove = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => MOVE_SCHEMA.parse(input))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<MoveCommitResult> => {
     const supabase = context.supabase;
 
     const { data: game, error: gameError } = await supabase
@@ -296,47 +296,59 @@ export const makeMove = createServerFn({ method: "POST" })
     if (gameError || !game) throw new Error(gameError?.message || "Game not found");
 
     const isWhite = game.white_id === context.userId;
-    const fen = data.fen;
-    const isWhiteToMove = fen.split(" ")[1] === "w";
+    if (!isWhite && game.black_id !== context.userId) throw new Error("Not a player in this game");
 
-    // Validate turn
-    if (game.status !== "active") throw new Error("Game is not active");
-    if ((isWhite && !isWhiteToMove) || (!isWhite && isWhiteToMove)) {
-      throw new Error("Not your turn");
-    }
-
-    const { count, error: countError } = await supabase
-      .from("game_moves")
-      .select("*", { count: "exact", head: true })
-      .eq("game_id", data.gameId);
-
-    if (countError) throw new Error(countError.message);
-
-    const moveNumber = (count ?? 0) + 1;
-
-    const { error: moveError } = await supabase.from("game_moves").insert({
-      game_id: data.gameId,
-      move_number: moveNumber,
-      san: data.san,
-      uci: data.uci,
-      fen: data.fen,
-      white_time_ms: data.whiteTimeMs,
-      black_time_ms: data.blackTimeMs,
+    // Atomic, conflict-aware commit: the DB locks the game row, verifies the
+    // client's base position and assigns the ply number in one transaction.
+    const { data: raw, error: rpcError } = await supabase.rpc("commit_move", {
+      _game_id: data.gameId,
+      _base_fen: data.baseFen,
+      _san: data.san,
+      _uci: data.uci,
+      _fen: data.fen,
+      _white_time_ms: data.whiteTimeMs,
+      _black_time_ms: data.blackTimeMs,
     });
 
-    if (moveError) throw new Error(moveError.message);
+    if (rpcError) {
+      // Losing side of a unique-ply race: treat as a conflict, not a hard failure.
+      if (rpcError.code === "23505") {
+        const { data: fresh } = await supabase
+          .from("games")
+          .select("current_fen, status, result, white_time_ms, black_time_ms")
+          .eq("id", data.gameId)
+          .single();
+        const { count } = await supabase
+          .from("game_moves")
+          .select("*", { count: "exact", head: true })
+          .eq("game_id", data.gameId);
+        return {
+          applied: false,
+          reason: "stale_position",
+          currentFen: fresh?.current_fen ?? game.current_fen,
+          status: fresh?.status ?? game.status,
+          result: fresh?.result ?? game.result,
+          whiteTimeMs: fresh?.white_time_ms ?? game.white_time_ms,
+          blackTimeMs: fresh?.black_time_ms ?? game.black_time_ms,
+          ply: count ?? 0,
+        };
+      }
+      throw new Error(rpcError.message);
+    }
 
-    const { error: updateError } = await supabase
-      .from("games")
-      .update({
-        current_fen: data.fen,
-        white_time_ms: data.whiteTimeMs,
-        black_time_ms: data.blackTimeMs,
-        last_move_at: new Date().toISOString(),
-      })
-      .eq("id", data.gameId);
+    const payload = (raw ?? {}) as Record<string, unknown>;
+    const outcome: MoveCommitResult = {
+      applied: payload["applied"] === true,
+      reason: (payload["reason"] as MoveCommitResult["reason"]) ?? "stale_position",
+      currentFen: (payload["current_fen"] as string) ?? game.current_fen,
+      status: (payload["status"] as string) ?? game.status,
+      result: (payload["result"] as string) ?? game.result,
+      whiteTimeMs: Number(payload["white_time_ms"] ?? game.white_time_ms),
+      blackTimeMs: Number(payload["black_time_ms"] ?? game.black_time_ms),
+      ply: Number(payload["ply"] ?? 0),
+    };
 
-    if (updateError) throw new Error(updateError.message);
+    if (!outcome.applied) return outcome;
 
     // Notify opponent
     const opponentId = isWhite ? game.black_id : game.white_id;
@@ -348,8 +360,9 @@ export const makeMove = createServerFn({ method: "POST" })
       data: { game_id: data.gameId },
     });
 
-    return { ok: true, moveNumber };
+    return outcome;
   });
+
 
 export const finishGame = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
