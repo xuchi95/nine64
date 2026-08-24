@@ -86,7 +86,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
                 key={item.to}
                 to={item.to}
                 className="relative rounded-lg px-4 py-2.5 text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground after:absolute after:inset-x-4 after:-bottom-[9px] after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity"
-                activeProps={{ className: "text-foreground after:opacity-100" }}
+                activeProps={{ className: "bg-primary/10 text-foreground after:opacity-100" }}
                 activeOptions={{ exact: item.to === "/" }}
               >
                 {item.label}
