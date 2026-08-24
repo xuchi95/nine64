@@ -13,7 +13,8 @@ import { getGame, getGameMoves, makeMove, finishGame } from "@/lib/online.functi
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
 import type { Game, GameMove } from "@/lib/database.types";
-import type { Color, PieceColor } from "@/hooks/useChessGame";
+import type { Color } from "@/hooks/useChessGame";
+import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
 import { Flag, Hand } from "lucide-react";
 
