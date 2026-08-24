@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as GamesIndexRouteImport } from './routes/games.index'
+import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayLocalRouteImport } from './routes/play.local'
@@ -29,6 +31,16 @@ const AnalysisRoute = AnalysisRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesIndexRoute = GamesIndexRouteImport.update({
+  id: '/games/',
+  path: '/games/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesGameIdRoute = GamesGameIdRouteImport.update({
+  id: '/games/$gameId',
+  path: '/games/$gameId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayIndexRoute = PlayIndexRouteImport.update({
@@ -51,16 +63,20 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
   '/settings': typeof SettingsRoute
+  '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
+  '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
   '/settings': typeof SettingsRoute
+  '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
+  '/games': typeof GamesIndexRoute
   '/play': typeof PlayIndexRoute
 }
 export interface FileRoutesById {
@@ -68,23 +84,42 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
   '/settings': typeof SettingsRoute
+  '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/local': typeof PlayLocalRoute
+  '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/analysis' | '/settings' | '/play/ai' | '/play/local' | '/play/'
+    | '/'
+    | '/analysis'
+    | '/settings'
+    | '/games/$gameId'
+    | '/play/ai'
+    | '/play/local'
+    | '/games/'
+    | '/play/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analysis' | '/settings' | '/play/ai' | '/play/local' | '/play'
+  to:
+    | '/'
+    | '/analysis'
+    | '/settings'
+    | '/games/$gameId'
+    | '/play/ai'
+    | '/play/local'
+    | '/games'
+    | '/play'
   id:
     | '__root__'
     | '/'
     | '/analysis'
     | '/settings'
+    | '/games/$gameId'
     | '/play/ai'
     | '/play/local'
+    | '/games/'
     | '/play/'
   fileRoutesById: FileRoutesById
 }
@@ -92,8 +127,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalysisRoute: typeof AnalysisRoute
   SettingsRoute: typeof SettingsRoute
+  GamesGameIdRoute: typeof GamesGameIdRoute
   PlayAiRoute: typeof PlayAiRoute
   PlayLocalRoute: typeof PlayLocalRoute
+  GamesIndexRoute: typeof GamesIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
 }
 
@@ -118,6 +155,20 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/': {
+      id: '/games/'
+      path: '/games'
+      fullPath: '/games/'
+      preLoaderRoute: typeof GamesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/$gameId': {
+      id: '/games/$gameId'
+      path: '/games/$gameId'
+      fullPath: '/games/$gameId'
+      preLoaderRoute: typeof GamesGameIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/play/': {
@@ -148,8 +199,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalysisRoute: AnalysisRoute,
   SettingsRoute: SettingsRoute,
+  GamesGameIdRoute: GamesGameIdRoute,
   PlayAiRoute: PlayAiRoute,
   PlayLocalRoute: PlayLocalRoute,
+  GamesIndexRoute: GamesIndexRoute,
   PlayIndexRoute: PlayIndexRoute,
 }
 export const routeTree = rootRouteImport

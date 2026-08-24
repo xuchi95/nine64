@@ -18,10 +18,16 @@ export interface ClockState {
   b: number;
 }
 
+export interface GameSnapshot {
+  startFen: string;
+  finalFen: string;
+  moves: MoveRecord[];
+}
+
 export interface UseChessGameOptions {
   variant: VariantId;
   timeControl: TimeControl | null;
-  onGameEnd?: (result: GameResult) => void;
+  onGameEnd?: (result: GameResult, snapshot: GameSnapshot) => void;
 }
 
 export interface MoveRecord {
@@ -64,6 +70,9 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   const [started, setStarted] = useState(false);
   const resultRef = useRef<GameResult | null>(null);
   const lowTimeFlag = useRef<{ w: boolean; b: boolean }>({ w: false, b: false });
+  // Mirrors of state used to build a snapshot synchronously when the game ends.
+  const movesRef = useRef<MoveRecord[]>([]);
+  const startFenRef = useRef<string>(gameRef.current.fen());
 
   const reset = useCallback(() => {
     const rules = VARIANT_RULES[variant];
@@ -74,6 +83,8 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       game.reset();
     }
     gameRef.current = game;
+    startFenRef.current = game.fen();
+    movesRef.current = [];
     setFen(game.fen());
     setMoves([]);
     setResult(null);
@@ -94,6 +105,8 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
         return false;
       }
       gameRef.current = game;
+      startFenRef.current = game.fen();
+      movesRef.current = [];
       setFen(game.fen());
       setMoves([]);
       setResult(null);
@@ -116,7 +129,11 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       if (resultRef.current) return;
       resultRef.current = r;
       setResult(r);
-      onGameEnd?.(r);
+      onGameEnd?.(r, {
+        startFen: startFenRef.current,
+        finalFen: gameRef.current.fen(),
+        moves: [...movesRef.current],
+      });
     },
     [onGameEnd],
   );
@@ -170,10 +187,15 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       setStarted(true);
       setFen(game.fen());
       setLastMove({ from: move.from, to: move.to });
-      setMoves((prev) => [
-        ...prev,
-        { san: move!.san, from: move!.from, to: move!.to, color: move!.color, fen: game.fen() },
-      ]);
+      const record: MoveRecord = {
+        san: move.san,
+        from: move.from,
+        to: move.to,
+        color: move.color,
+        fen: game.fen(),
+      };
+      movesRef.current = [...movesRef.current, record];
+      setMoves((prev) => [...prev, record]);
 
       const history = game.history();
       const r = toResult(game, variant, history);

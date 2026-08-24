@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { hydrateSettings, useSettings } from "@/lib/settings";
+import { hydrateHistory } from "@/lib/history";
 import { configureSound } from "@/lib/sound";
 
 /**
@@ -11,6 +12,7 @@ export function SettingsBridge() {
 
   useEffect(() => {
     hydrateSettings();
+    hydrateHistory();
   }, []);
 
   useEffect(() => {

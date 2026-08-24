@@ -13,6 +13,9 @@ import { VARIANTS, type VariantId } from "@/config/variants";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
+import { saveGame } from "@/lib/history";
+import { detectOpening } from "@/lib/chess/openings";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/play/local")({
@@ -47,9 +50,30 @@ function LocalGame() {
   const game = useChessGame({
     variant,
     timeControl,
-    onGameEnd: (r) => {
+    onGameEnd: (r, snapshot) => {
       setShowResult(true);
       playSound(r.winner === "draw" ? "draw" : "victory");
+      if (snapshot.moves.length === 0) return;
+      const saved = saveGame({
+        mode: "local",
+        variant,
+        variantName: VARIANTS.find((v) => v.id === variant)?.name ?? variant,
+        timeControl: timeControl?.label ?? "Unlimited",
+        startFen: snapshot.startFen,
+        finalFen: snapshot.finalFen,
+        moves: snapshot.moves,
+        result: r,
+        playerColor: null,
+        white: { name: "White", subtitle: "Local player" },
+        black: { name: "Black", subtitle: "Local player" },
+        opening: detectOpening(snapshot.moves.map((m) => m.san))?.name ?? null,
+      });
+      toast.success("Game saved to your archive", {
+        action: {
+          label: "View",
+          onClick: () => void navigate({ to: "/games/$gameId", params: { gameId: saved.id } }),
+        },
+      });
     },
   });
 
