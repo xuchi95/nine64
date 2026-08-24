@@ -39,7 +39,8 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   return (
-    <AppShell>
+    <TooltipProvider delayDuration={200}>
+      <AppShell>
       {/* ── Hero: board left, promise right (chess.com rhythm, brass palette) ── */}
       <section className="grid items-center gap-10 py-6 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-16 lg:py-12">
         <div className="mx-auto w-full max-w-[420px]">
