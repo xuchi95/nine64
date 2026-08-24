@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Moon,
   Sun,
@@ -11,6 +11,8 @@ import {
   Settings as SettingsIcon,
   ShieldCheck,
   History,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
@@ -31,21 +33,21 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 const MAIN_NAV = [
   { to: "/", label: "Home" },
   { to: "/play", label: "Play" },
-  { to: "/games", label: "My games" },
+  { to: "/games", label: "Games" },
   { to: "/puzzles", label: "Puzzles" },
 ] as const;
 
 const MORE_NAV = [
-  { to: "/drills", label: "Bài tập" },
-  { to: "/progress", label: "Tiến bộ" },
+  { to: "/drills", label: "Drills" },
+  { to: "/progress", label: "Progress" },
   { to: "/insights", label: "Insights" },
   { to: "/analysis", label: "Analysis" },
 ] as const;
 
 const PROFILE_MENU = [
-  { to: "/account", label: "Tài khoản & bảo mật", icon: ShieldCheck },
-  { to: "/games", label: "Ván đấu của tôi", icon: History },
-  { to: "/settings", label: "Cài đặt giao diện", icon: SettingsIcon },
+  { to: "/account", label: "Account", icon: ShieldCheck },
+  { to: "/games", label: "Games", icon: History },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
@@ -110,6 +112,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             <AuthHeader />
           </div>
         </div>
+        <PageBreadcrumb wide={wide} />
       </header>
       <main className={cn("mx-auto w-full flex-1 px-4 py-6 sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
         {children}
@@ -169,7 +172,7 @@ function MobileNav() {
           </div>
 
           <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-            Luyện tập
+            Train
           </p>
           <div className="flex flex-col gap-1">
             {MORE_NAV.map((item) => (
@@ -189,7 +192,7 @@ function MobileNav() {
           {user && (
             <>
               <p className="px-4 pb-1 pt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                Tài khoản
+                Account
               </p>
               <div className="flex flex-col gap-1">
                 {PROFILE_MENU.map((item) => (
@@ -429,4 +432,57 @@ function AuthHeader() {
     </DropdownMenu>
   );
 
+}
+
+const ROUTE_LABELS: Record<string, string> = {
+  "/": "Home",
+  "/play": "Play",
+  "/play/ai": "vs Bot",
+  "/play/local": "Local",
+  "/play/share": "Share",
+  "/online": "Play online",
+  "/game": "Live game",
+  "/games": "My games",
+  "/puzzles": "Puzzles",
+  "/drills": "Bài tập",
+  "/progress": "Tiến bộ",
+  "/insights": "Insights",
+  "/analysis": "Analysis",
+  "/account": "Account",
+  "/settings": "Settings",
+  "/admin": "Admin",
+  "/admin/fairplay": "Fair Play",
+};
+
+function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
+  const { pathname } = useLocation();
+  const params = useParams({ strict: false });
+  const gameId = (params as { gameId?: string }).gameId;
+
+  if (pathname === "/") return null;
+
+  const exact = ROUTE_LABELS[pathname];
+  const parentKey = pathname.split("/").slice(0, -1).join("/") || "/";
+  const parentLabel = ROUTE_LABELS[parentKey] || ROUTE_LABELS[`/${pathname.split("/")[1]}`];
+
+  const currentLabel = exact || (gameId ? `Game ${gameId.slice(0, 6)}` : pathname.split("/").pop());
+
+  return (
+    <div className="border-t border-border/40 bg-secondary/20">
+      <div className={cn("mx-auto flex items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground sm:px-6", wide ? "max-w-[1600px]" : "max-w-6xl")}>
+        <Link to="/" className="flex items-center gap-1 hover:text-foreground">
+          <Home className="size-3" />
+          <span className="hidden sm:inline">Home</span>
+        </Link>
+        {parentLabel && parentKey !== "/" && (
+          <>
+            <ChevronRight className="size-3 opacity-50" />
+            <span className="hidden sm:inline">{parentLabel}</span>
+          </>
+        )}
+        <ChevronRight className="size-3 opacity-50" />
+        <span className="truncate font-medium text-foreground">{currentLabel}</span>
+      </div>
+    </div>
+  );
 }
