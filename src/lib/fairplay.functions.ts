@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertFairplayAdmin } from "@/lib/fairplay/adminGuard.server";
+import { assertFairplayAdmin } from "@/lib/fairplay/adminGuard";
 import { evaluateGame, loadTurns, upsertReport, refreshStatus, enforce } from "@/lib/fairplay/apply.server";
 
 const turnSchema = z.object({
