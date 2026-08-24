@@ -12,6 +12,7 @@ export function SettingsBridge() {
 
   useEffect(() => {
     hydrateSettings();
+    hydrateHistory();
   }, []);
 
   useEffect(() => {
