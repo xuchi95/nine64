@@ -13,7 +13,7 @@ interface GuardContext {
     rpc: (
       fn: "has_role",
       args: { _user_id: string; _role: "admin" },
-    ) => Promise<{ data: boolean | null; error: unknown }>;
+    ) => PromiseLike<{ data: boolean | null }>;
   };
   userId: string;
   claims: Record<string, unknown>;
