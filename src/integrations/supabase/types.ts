@@ -252,6 +252,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      commit_move: {
+        Args: {
+          _base_fen: string
+          _black_time_ms: number
+          _fen: string
+          _game_id: string
+          _san: string
+          _uci: string
+          _white_time_ms: number
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

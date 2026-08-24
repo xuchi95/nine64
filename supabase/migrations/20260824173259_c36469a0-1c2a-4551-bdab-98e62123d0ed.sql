@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.commit_move(uuid, text, text, text, text, integer, integer) FROM anon;
