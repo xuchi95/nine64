@@ -27,9 +27,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/play/ai")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    quick: search["quick"] === "1" || search["quick"] === true ? true : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { quick?: boolean } =>
+    search["quick"] === "1" || search["quick"] === true ? { quick: true } : {},
+
   head: () => ({
     meta: [
       { title: `Play the engine — ${APP.name}` },
