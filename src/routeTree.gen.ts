@@ -23,6 +23,7 @@ import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayLocalRouteImport } from './routes/play.local'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
+import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,6 +94,11 @@ const AuthenticatedGameGameIdRoute = AuthenticatedGameGameIdRouteImport.update({
   path: '/game/$gameId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const GamesOnlineGameIdRoute = GamesOnlineGameIdRouteImport.update({
+  id: '/games/online/$gameId',
+  path: '/games/online/$gameId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
+  '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/games': typeof GamesIndexRoute
   '/play': typeof PlayIndexRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
+  '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/games/': typeof GamesIndexRoute
   '/play/': typeof PlayIndexRoute
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
+  '/games/online/$gameId': typeof GamesOnlineGameIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/games/'
     | '/play/'
     | '/game/$gameId'
+    | '/games/online/$gameId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/games'
     | '/play'
     | '/game/$gameId'
+    | '/games/online/$gameId'
   id:
     | '__root__'
     | '/'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/games/'
     | '/play/'
     | '/_authenticated/game/$gameId'
+    | '/games/online/$gameId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   PlayLocalRoute: typeof PlayLocalRoute
   GamesIndexRoute: typeof GamesIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
+  GamesOnlineGameIdRoute: typeof GamesOnlineGameIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGameGameIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/games/online/$gameId': {
+      id: '/games/online/$gameId'
+      path: '/games/online/$gameId'
+      fullPath: '/games/online/$gameId'
+      preLoaderRoute: typeof GamesOnlineGameIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -334,6 +354,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayLocalRoute: PlayLocalRoute,
   GamesIndexRoute: GamesIndexRoute,
   PlayIndexRoute: PlayIndexRoute,
+  GamesOnlineGameIdRoute: GamesOnlineGameIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
