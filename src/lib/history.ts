@@ -36,6 +36,33 @@ export interface SavedGame {
   review?: GameReview;
 }
 
+async function syncUp(game: SavedGame) {
+  try {
+    const { pushGame } = await import("@/lib/historySync");
+    await pushGame(game);
+  } catch {
+    /* offline or signed out — local copy stays authoritative */
+  }
+}
+
+async function syncDelete(id: string) {
+  try {
+    const { removeGame } = await import("@/lib/historySync");
+    await removeGame(id);
+  } catch {
+    /* best effort */
+  }
+}
+
+async function syncClear() {
+  try {
+    const { removeAllGames } = await import("@/lib/historySync");
+    await removeAllGames();
+  } catch {
+    /* best effort */
+  }
+}
+
 const KEY = "nexus-chess.history.v1";
 const MAX_GAMES = 300;
 
@@ -96,6 +123,7 @@ export function saveGame(game: Omit<SavedGame, "id" | "playedAt">): SavedGame {
   state = [record, ...state].slice(0, MAX_GAMES);
   persist();
   emit();
+  void syncUp(record);
   return record;
 }
 
@@ -116,18 +144,22 @@ export function attachReview(id: string, review: GameReview) {
   state = state.map((g) => (g.id === id ? { ...g, review } : g));
   persist();
   emit();
+  const updated = state.find((g) => g.id === id);
+  if (updated) void syncUp(updated);
 }
 
 export function deleteGame(id: string) {
   state = state.filter((g) => g.id !== id);
   persist();
   emit();
+  void syncDelete(id);
 }
 
 export function clearHistory() {
   state = [];
   persist();
   emit();
+  void syncClear();
 }
 
 function subscribe(listener: () => void) {
