@@ -394,6 +394,7 @@ function NotificationBell() {
 }
 
 function AuthHeader() {
+  const { pathname } = useLocation();
   const { user, isLoading, signOut } = useAuth();
 
   if (isLoading) {
