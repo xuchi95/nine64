@@ -59,7 +59,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 shadow-[0_1px_0_0_hsl(var(--border)/0.35),0_8px_24px_-20px_rgb(0_0_0/0.6)] backdrop-blur-xl">
         <div
           className={cn(
-            "mx-auto grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 sm:h-16 sm:px-6 lg:flex lg:h-20 lg:gap-8",
+            "mx-auto grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 sm:h-[4.5rem] sm:px-6 lg:flex lg:h-[5.25rem] lg:gap-10 lg:px-8",
             wide ? "max-w-[1600px]" : "max-w-6xl",
           )}
         >
