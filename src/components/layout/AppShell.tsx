@@ -3,7 +3,6 @@ import {
   Moon,
   Sun,
   Crown,
-  User,
   LogOut,
   Loader2,
   Bell,
