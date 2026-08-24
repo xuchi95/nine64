@@ -388,10 +388,10 @@ function AuthHeader() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" className="hidden h-11 px-3 sm:inline-flex lg:h-10">
+        <Button asChild variant="ghost" className="hidden h-12 px-4 sm:inline-flex lg:h-11">
           <Link to="/auth/login">Sign in</Link>
         </Button>
-        <Button asChild className="h-11 px-4 lg:h-10">
+        <Button asChild className="h-12 px-4 lg:h-11">
           <Link to="/auth/register">
             <span className="sm:hidden">Đăng nhập</span>
             <span className="hidden sm:inline">Register</span>
@@ -409,18 +409,18 @@ function AuthHeader() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex h-11 items-center gap-2 rounded-xl border border-border/80 bg-secondary/30 pl-1.5 pr-2 text-sm font-medium transition-colors hover:border-primary/40 lg:h-10 lg:gap-2.5 lg:pr-2.5"
+          className="flex h-12 items-center gap-2 rounded-xl border border-border/80 bg-secondary/30 pl-2 pr-2.5 text-sm font-medium transition-colors hover:border-primary/40 lg:h-11 lg:gap-2.5 lg:pr-3"
         >
-          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-[11px] font-bold text-primary-foreground lg:size-7">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-xs font-bold text-primary-foreground lg:size-8">
             {initials}
           </span>
           <span className="hidden max-w-[130px] truncate lg:inline">{displayName}</span>
-          <ChevronDown className="size-3.5 opacity-60" />
+          <ChevronDown className="size-4 opacity-60" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 rounded-xl p-1.5">
-        <div className="flex items-center gap-3 rounded-lg bg-secondary/40 px-3 py-3">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 font-mono text-sm font-bold text-primary-foreground">
+      <DropdownMenuContent align="end" className="w-72 rounded-xl p-2">
+        <div className="flex items-center gap-3 rounded-lg bg-secondary/40 px-3.5 py-3.5">
+          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 font-mono text-sm font-bold text-primary-foreground">
             {initials}
           </span>
           <div className="min-w-0">
@@ -430,9 +430,9 @@ function AuthHeader() {
         </div>
         <DropdownMenuSeparator />
         {PROFILE_MENU.map((item) => (
-          <DropdownMenuItem key={item.to + item.label} asChild className="cursor-pointer rounded-lg px-3 py-2">
+          <DropdownMenuItem key={item.to + item.label} asChild className="cursor-pointer rounded-lg px-3.5 py-2.5">
             <Link to={item.to}>
-              <item.icon className="mr-2.5 size-4 text-muted-foreground" />
+              <item.icon className="mr-3 size-4 text-muted-foreground" />
               <span className="flex-1">{item.label}</span>
             </Link>
           </DropdownMenuItem>
@@ -440,9 +440,9 @@ function AuthHeader() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={signOut}
-          className="cursor-pointer rounded-lg px-3 py-2 text-destructive focus:text-destructive"
+          className="cursor-pointer rounded-lg px-3.5 py-2.5 text-destructive focus:text-destructive"
         >
-          <LogOut className="mr-2.5 size-4" />
+          <LogOut className="mr-3 size-4" />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -491,7 +491,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
     <div className="border-t border-border/40 bg-secondary/20">
       <div
         className={cn(
-          "mx-auto flex min-w-0 items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground sm:gap-1.5 sm:px-6",
+          "mx-auto flex min-w-0 items-center gap-1 px-4 py-2 text-xs text-muted-foreground sm:gap-1.5 sm:px-6",
           wide ? "max-w-[1600px]" : "max-w-6xl",
         )}
       >
