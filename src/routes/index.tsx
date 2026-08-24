@@ -232,14 +232,6 @@ function StartBoard() {
   );
 }
 
-const WHITE: Record<string, string> = {
-  "♜": "♖",
-  "♞": "♘",
-  "♝": "♗",
-  "♛": "♕",
-  "♚": "♔",
-};
-
 function BotsVisual() {
   const faces = BOT_PERSONALITIES.slice(0, 6);
   return (
@@ -271,10 +263,10 @@ function TilesVisual() {
       {tiles.map((t, i) => (
         <div
           key={t}
-          className={`flex aspect-square items-center justify-center rounded-xl border text-3xl transition-transform [transform:rotateX(48deg)_rotateZ(-42deg)] ${
+          className={`flex aspect-square items-center justify-center rounded-xl border text-4xl transition-transform [transform:rotateX(48deg)_rotateZ(-42deg)] ${
             i === 2
               ? "border-primary bg-primary/25 text-primary shadow-[0_0_24px_-4px_var(--primary)]"
-              : "border-border bg-surface-2 text-muted-foreground"
+              : "border-border bg-surface-2 text-foreground/70"
           }`}
         >
           {t}
