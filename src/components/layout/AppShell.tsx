@@ -104,9 +104,9 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
               className="hidden size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground sm:flex lg:size-11"
             >
               {settings.appearance === "dark" ? (
-                <Sun className="size-[18px]" />
+                <Sun className="size-5" />
               ) : (
-                <Moon className="size-[18px]" />
+                <Moon className="size-5" />
               )}
             </button>
             <NotificationBell />
