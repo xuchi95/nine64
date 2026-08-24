@@ -54,13 +54,13 @@ function shuffleStrings(arr: string[]): string[] {
 function generateChess960Fen(): string {
   const lightSquares = [1, 3, 5, 7];
   const darkSquares = [0, 2, 4, 6];
-  const b1 = lightSquares[Math.floor(Math.random() * lightSquares.length)];
-  const b2 = darkSquares[Math.floor(Math.random() * darkSquares.length)];
+  const b1 = lightSquares[Math.floor(Math.random() * lightSquares.length)]!;
+  const b2 = darkSquares[Math.floor(Math.random() * darkSquares.length)]!;
 
   const remaining = [0, 1, 2, 3, 4, 5, 6, 7].filter((i) => i !== b1 && i !== b2);
   let pieces: string[];
   do {
-    pieces = shuffle(
+    pieces = shuffleStrings(
       remaining.map((i) => {
         if (i === 0 || i === 7) return "r";
         if (i === 1 || i === 6) return "n";
