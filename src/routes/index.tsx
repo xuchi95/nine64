@@ -42,23 +42,23 @@ function Home() {
     <TooltipProvider delayDuration={200}>
       <AppShell>
       {/* ── Hero: board left, promise right (chess.com rhythm, brass palette) ── */}
-      <section className="grid items-center gap-10 py-6 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-16 lg:py-12">
-        <div className="mx-auto w-full max-w-[420px]">
+      <section className="grid items-center gap-8 py-6 md:grid-cols-[minmax(0,46%)_minmax(0,1fr)] md:gap-10 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-16 lg:py-12">
+        <div className="mx-auto w-full max-w-[min(420px,88vw)] md:mx-0">
           <StartBoard />
         </div>
 
-        <div className="text-center lg:text-left">
-          <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
+        <div className="min-w-0 text-center md:text-left">
+          <h1 className="font-display text-[clamp(1.9rem,7vw,2.25rem)] font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-4xl lg:text-5xl">
             Play Chess Online
             <br />
             <span className="text-primary">on a board built to win.</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-md text-base text-muted-foreground lg:mx-0">
+          <p className="mx-auto mt-4 max-w-md text-sm text-muted-foreground sm:text-base md:mx-0">
             Stockfish 18 in your browser, {BOT_LEVELS.length} bot levels, ranked online games and a
             review that actually teaches you.
           </p>
-          <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center lg:justify-start">
-            <Button asChild size="lg" className="h-14 px-10 text-base font-semibold">
+          <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center md:justify-start">
+            <Button asChild size="lg" className="h-14 px-8 text-base font-semibold sm:px-10">
               <Link to="/play/ai" search={{ quick: true }}>
                 <Play className="size-5" />
                 New game
@@ -81,13 +81,14 @@ function Home() {
             </Link>
           </p>
 
-          <dl className="mt-9 flex flex-wrap justify-center gap-8 lg:justify-start">
+          <dl className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-4 md:justify-start lg:mt-9">
             <Metric value={`${BOT_LEVELS.length}`} label="Bot levels" />
             <Metric value={`${BOT_PERSONALITIES.length}`} label="Personalities" />
             <Metric value={`${VARIANTS.length}`} label="Variants" />
           </dl>
         </div>
       </section>
+
 
       {/* ── Feature rows, alternating like chess.com's home scroll ── */}
       <FeatureRow
