@@ -185,7 +185,7 @@ function OnlineGamePage() {
   useEffect(() => {
     if (!game || game.status !== "active" || finishedRef.current) return;
     const id = window.setInterval(() => {
-      const turn = gameRef.current.turn() as Color;
+      const turn = gameRef.current.turn() as "w" | "b";
       setClock((prev) => ({ ...prev, [turn]: Math.max(0, prev[turn] - 100) }));
     }, 100);
     return () => window.clearInterval(id);
