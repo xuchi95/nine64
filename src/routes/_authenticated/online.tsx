@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
+import { useMatchmaking } from "@/hooks/useMatchmaking";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/online")({
   head: () => ({
@@ -36,9 +38,10 @@ const TIME_CONTROLS = [
 
 function OnlinePage() {
   const { user } = useAuth();
+  const { state, startSearch, stopSearch } = useMatchmaking();
   const [variant, setVariant] = useState("standard");
   const [timeControl, setTimeControl] = useState("blitz5m");
-  const [searching, setSearching] = useState(false);
+  const searching = state.kind === "searching";
 
   return (
     <AppShell>
@@ -56,7 +59,7 @@ function OnlinePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Variant</Label>
-                <Select value={variant} onValueChange={setVariant}>
+                <Select value={variant} onValueChange={setVariant} disabled={searching}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -71,7 +74,7 @@ function OnlinePage() {
               </div>
               <div className="space-y-2">
                 <Label>Time control</Label>
-                <Select value={timeControl} onValueChange={setTimeControl}>
+                <Select value={timeControl} onValueChange={setTimeControl} disabled={searching}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -86,14 +89,25 @@ function OnlinePage() {
               </div>
             </div>
 
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={searching}
-              onClick={() => setSearching(true)}
-            >
-              {searching ? "Searching for opponent…" : "Find opponent"}
-            </Button>
+            {searching ? (
+              <Button
+                className="w-full"
+                size="lg"
+                variant="secondary"
+                onClick={() => void stopSearch()}
+              >
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Cancel search
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => void startSearch(variant, timeControl)}
+              >
+                Find opponent
+              </Button>
+            )}
 
             {searching && (
               <p className="text-center text-sm text-muted-foreground">
