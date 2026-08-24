@@ -111,6 +111,49 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
   );
 }
 
+function MoreNav({ mobile }: { mobile?: boolean }) {
+  const { pathname } = useLocation();
+  const active = MORE_NAV.some((item) =>
+    item.to === "/" ? pathname === "/" : pathname.startsWith(item.to),
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex items-center gap-1 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+            mobile && "shrink-0",
+            active && "bg-secondary text-foreground",
+          )}
+        >
+          More
+          <ChevronDown className="size-3.5 opacity-70" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-44">
+        {MORE_NAV.map((item) => {
+          const isActive =
+            item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+          return (
+            <DropdownMenuItem
+              key={item.to}
+              asChild
+              className={cn(
+                "cursor-pointer",
+                isActive && "bg-secondary text-foreground",
+              )}
+            >
+              <Link to={item.to}>{item.label}</Link>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function NotificationBell() {
   const { user } = useAuth();
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
