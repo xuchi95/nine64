@@ -15,6 +15,7 @@ import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -59,6 +60,11 @@ const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOnlineRoute = AuthenticatedOnlineRouteImport.update({
   id: '/online',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/insights': typeof InsightsRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/insights': typeof InsightsRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/insights': typeof InsightsRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/progress'
     | '/settings'
+    | '/account'
     | '/online'
     | '/auth/callback'
     | '/auth/login'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/progress'
     | '/settings'
+    | '/account'
     | '/online'
     | '/auth/callback'
     | '/auth/login'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/progress'
     | '/settings'
+    | '/_authenticated/account'
     | '/_authenticated/online'
     | '/auth/callback'
     | '/auth/login'
@@ -339,6 +351,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/online': {
       id: '/_authenticated/online'
@@ -449,12 +468,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedOnlineRoute: typeof AuthenticatedOnlineRoute
   AuthenticatedAdminFairplayRoute: typeof AuthenticatedAdminFairplayRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedOnlineRoute: AuthenticatedOnlineRoute,
   AuthenticatedAdminFairplayRoute: AuthenticatedAdminFairplayRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,

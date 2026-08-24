@@ -30,6 +30,8 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
 
   const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
 
@@ -42,8 +44,87 @@ function LoginPage() {
       toast.error(error.message || "Sign in failed");
       return;
     }
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const factor = factors?.totp?.[0];
+      if (factor) {
+        setMfaFactorId(factor.id);
+        toast.info("Nhập mã xác thực 2 bước để hoàn tất đăng nhập.");
+        return;
+      }
+    }
     toast.success("Welcome back!");
     navigate({ to: redirectTo, replace: true });
+  }
+
+  async function handleMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId) return;
+    setLoading(true);
+    const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+    if (challenge.error || !challenge.data) {
+      setLoading(false);
+      toast.error(challenge.error?.message ?? "Không tạo được phiên xác thực.");
+      return;
+    }
+    const { error } = await supabase.auth.mfa.verify({
+      factorId: mfaFactorId,
+      challengeId: challenge.data.id,
+      code: mfaCode.trim(),
+    });
+    setLoading(false);
+    if (error) {
+      toast.error("Mã không đúng hoặc đã hết hạn.");
+      return;
+    }
+    toast.success("Welcome back!");
+    navigate({ to: redirectTo, replace: true });
+  }
+
+  if (mfaFactorId) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-md">
+          <form onSubmit={handleMfa} className="panel space-y-4 p-6 sm:p-8">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold">Xác thực hai bước</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Nhập mã 6 số từ ứng dụng xác thực của bạn.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mfa-code">Mã xác thực</Label>
+              <Input
+                id="mfa-code"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                inputMode="numeric"
+                autoFocus
+                placeholder="000000"
+                className="text-center font-mono text-lg tracking-[0.4em]"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
+              {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+              Verify
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                setMfaFactorId(null);
+                setMfaCode("");
+              }}
+            >
+              Huỷ
+            </Button>
+          </form>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
