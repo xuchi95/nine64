@@ -175,7 +175,7 @@ function AuthHeader() {
     );
   }
 
-  const displayName = user.user_metadata?.display_name || user.email || "Player";
+  const displayName = user.user_metadata?.["display_name"] || user.email || "Player";
 
   return (
     <DropdownMenu>
@@ -192,8 +192,8 @@ function AuthHeader() {
         <div className="px-2 pb-1.5 text-xs text-muted-foreground">{user.email}</div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/profile" className="cursor-pointer">
-            Profile
+          <Link to="/settings" className="cursor-pointer">
+            Settings
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
