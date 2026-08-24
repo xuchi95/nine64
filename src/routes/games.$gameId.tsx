@@ -16,6 +16,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { EvalGraph } from "@/components/game/EvalGraph";
 import { MoveList } from "@/components/game/MoveList";
+import { CoachPanel } from "@/components/game/CoachPanel";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
 import type { Color } from "@/hooks/useChessGame";
@@ -305,6 +306,8 @@ function GameDetail() {
               </p>
             )}
           </div>
+
+          <CoachPanel game={game} onSelectMove={setCursor} />
 
           <div className="panel flex max-h-[420px] flex-col overflow-hidden">
             <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
