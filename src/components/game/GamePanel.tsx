@@ -24,10 +24,10 @@ export function GamePanel({
 
       {title && (
         <header className="flex items-center justify-between gap-2 border-b border-border bg-surface-2/60 px-4 py-2 transition-colors duration-300 group-hover/panel:bg-surface-2">
-          <h2 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="text-2xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
             {title}
           </h2>
-          {meta && <span className="text-[0.68rem] font-medium text-muted-foreground">{meta}</span>}
+          {meta && <span className="text-2xs font-medium text-muted-foreground">{meta}</span>}
         </header>
       )}
       <div className={cn("min-h-0 flex-1", bodyClassName)}>{children}</div>
@@ -46,7 +46,7 @@ export function StatRow({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+      <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </span>
       <span
@@ -68,7 +68,7 @@ export function EvalBar({ score, label }: { score: number | null; label: string 
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <span className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           Evaluation
         </span>
         <span className="tabular text-xs font-bold text-primary">{label}</span>

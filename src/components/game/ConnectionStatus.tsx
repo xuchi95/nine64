@@ -64,7 +64,7 @@ export function ConnectionStatus({
       <div className="flex items-center justify-between gap-2">
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
+            "inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-2xs font-bold uppercase tracking-[0.12em]",
             copy.tone,
           )}
         >

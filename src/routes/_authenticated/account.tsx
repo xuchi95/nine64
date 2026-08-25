@@ -71,7 +71,7 @@ function AccountPage() {
             {initials}
           </span>
           <div className="min-w-0">
-            <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground">
               Tài khoản &amp; bảo mật
             </p>
             <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight sm:text-3xl">

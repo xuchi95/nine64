@@ -509,7 +509,7 @@ function PlayAi() {
             )}
             <Button
               variant="ghost"
-              className="w-full text-[0.7rem] font-bold uppercase tracking-[0.16em] text-muted-foreground"
+              className="w-full text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground"
               onClick={() => setPhase("setup")}
             >
               <RotateCcw className="size-4" /> New setup

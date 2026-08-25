@@ -186,11 +186,11 @@ function Analysis() {
             title="Engine lines"
             meta={
               lines.length > 0 ? (
-                <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[0.66rem] font-semibold text-primary">
+                <span className="rounded bg-surface-2 px-1.5 py-0.5 text-2xs font-semibold text-primary">
                   Depth {Math.max(...lines.map((l) => l.depth))}
                 </span>
               ) : analysing ? (
-                <span className="flex items-center gap-1.5 text-[0.66rem] font-semibold text-primary">
+                <span className="flex items-center gap-1.5 text-2xs font-semibold text-primary">
                   <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                   Searching
                 </span>
@@ -218,7 +218,7 @@ function Analysis() {
                     >
                       <span
                         className={cn(
-                          "tabular mt-px min-w-[3rem] rounded px-1.5 py-0.5 text-center text-[0.68rem] font-bold",
+                          "tabular mt-px min-w-[3rem] rounded px-1.5 py-0.5 text-center text-2xs font-bold",
                           i === 0
                             ? "bg-primary text-primary-foreground"
                             : "bg-surface-2 text-muted-foreground",
@@ -243,12 +243,12 @@ function Analysis() {
             title="Eval trend"
             meta={
               scanning ? (
-                <span className="flex items-center gap-1.5 text-[0.66rem] font-semibold text-primary">
+                <span className="flex items-center gap-1.5 text-2xs font-semibold text-primary">
                   <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                   {scanProgress}%
                 </span>
               ) : trend.length > 0 ? (
-                <span className="tabular rounded bg-surface-2 px-1.5 py-0.5 text-[0.66rem] font-semibold text-primary">
+                <span className="tabular rounded bg-surface-2 px-1.5 py-0.5 text-2xs font-semibold text-primary">
                   {(() => {
                     const last = [...trend].reverse().find((v) => v !== null) ?? 0;
                     return `${last >= 0 ? "+" : ""}${(last / 100).toFixed(2)}`;
@@ -308,12 +308,12 @@ function Analysis() {
                 <button
                   type="button"
                   onClick={() => navigator.clipboard?.writeText(game.fen)}
-                  className="flex items-center gap-1 rounded px-1 py-0.5 text-[0.66rem] font-semibold text-muted-foreground transition-colors hover:text-primary"
+                  className="flex items-center gap-1 rounded px-1 py-0.5 text-2xs font-semibold text-muted-foreground transition-colors hover:text-primary"
                 >
                   <Copy className="size-3" /> Copy
                 </button>
               </div>
-              <code className="tabular block break-all rounded-md border border-border bg-surface-2 p-2 text-[0.7rem] leading-tight text-muted-foreground">
+              <code className="tabular block break-all rounded-md border border-border bg-surface-2 p-2 text-xs leading-tight text-muted-foreground">
                 {game.fen}
               </code>
             </div>

@@ -39,7 +39,7 @@ export function MoveList({
     <div className="max-h-full overflow-y-auto">
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-10 bg-surface">
-          <tr className="text-left text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">
+          <tr className="text-left text-2xs uppercase tracking-[0.16em] text-muted-foreground">
             <th className="w-10 px-3 py-1.5 font-semibold">#</th>
             <th className="px-3 py-1.5 font-semibold">White</th>
             <th className="px-3 py-1.5 font-semibold">Black</th>
@@ -81,7 +81,7 @@ function MoveCell({
       type="button"
       onClick={() => onSelect?.(index)}
       className={cn(
-        "tabular w-full rounded px-2 py-1 text-left text-[0.82rem] font-semibold transition-colors hover:bg-secondary",
+        "tabular w-full rounded px-2 py-1 text-left text-sm font-semibold transition-colors hover:bg-secondary",
         active && "bg-primary/15 text-primary",
       )}
     >

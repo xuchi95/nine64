@@ -70,7 +70,7 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                 >
                   {e.color === "w" ? "W" : "B"}
                 </span>
-                <span className="tabular flex-1 text-[0.82rem] font-semibold">{e.san}</span>
+                <span className="tabular flex-1 text-sm font-semibold">{e.san}</span>
                 {e.spentMs != null && (
                   <span className="tabular text-xs text-muted-foreground">
                     {formatDuration(e.spentMs)}
@@ -81,7 +81,7 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                     {formatClock(e.clockMs)}
                   </span>
                 )}
-                {e.pending && <span className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-warning">
+                {e.pending && <span className="text-2xs font-bold uppercase tracking-[0.12em] text-warning">
                     sending
                   </span>}
               </li>

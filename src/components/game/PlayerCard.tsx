@@ -57,12 +57,12 @@ export function PlayerCard({
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold leading-tight">{player.name}</span>
           {player.isBot && (
-            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.14em] text-primary">
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-2xs font-bold uppercase tracking-[0.14em] text-primary">
               Bot
             </span>
           )}
         </div>
-        <div className="mt-0.5 truncate text-[0.72rem] font-medium text-muted-foreground">
+        <div className="mt-0.5 truncate text-xs font-medium text-muted-foreground">
           {thinking ? (
             <span className="text-primary">Thinking…</span>
           ) : active ? (
