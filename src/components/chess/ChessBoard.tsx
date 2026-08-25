@@ -390,16 +390,21 @@ export function ChessBoard(props: ChessBoardProps) {
           return (
             <div
               key={`ghost-${g.key}`}
-              className="animate-nexus-capture pointer-events-none absolute z-10"
+              className="pointer-events-none absolute z-10"
               style={{
                 width: squareSize,
                 height: squareSize,
                 transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
-                animationDuration: `${Math.max(140, transitionMs)}ms`,
               }}
             >
-              <Piece type={g.type} color={g.color} set={pieceSet} size={squareSize} />
+              <div
+                className="animate-nexus-capture"
+                style={{ animationDuration: `${Math.max(140, transitionMs)}ms` }}
+              >
+                <Piece type={g.type} color={g.color} set={pieceSet} size={squareSize} />
+              </div>
             </div>
+
           );
         })}
 
