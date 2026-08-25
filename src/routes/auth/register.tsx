@@ -12,14 +12,15 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth/register")({
   head: () => ({
     meta: [
-      { title: `Create account — ${APP.name}` },
-      { name: "description", content: "Create a Nine64 account to play online, track your rating and review your games." },
-      { property: "og:title", content: `Create account — ${APP.name}` },
-      { property: "og:description", content: "Create a Nine64 account." },
+      { title: `Tạo tài khoản — ${APP.name}` },
+      { name: "description", content: "Tạo tài khoản Nine64 để chơi trực tuyến, theo dõi điểm rating và xem lại ván đấu của bạn." },
+      { property: "og:title", content: `Tạo tài khoản — ${APP.name}` },
+      { property: "og:description", content: "Tạo tài khoản Nine64." },
     ],
   }),
   pendingComponent: FormSkeleton,
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/auth/register")({
 });
 
 function RegisterPage() {
+  const { t } = useT();
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth/register" }) as { redirect?: string };
   const [displayName, setDisplayName] = useState("");
@@ -53,16 +55,16 @@ function RegisterPage() {
     setLoading(false);
 
     if (error) {
-      toast.error(error.message || "Sign up failed");
+      toast.error(error.message || t("study.register.signUpFailed"));
       return;
     }
 
     if (data.user?.identities?.length === 0) {
-      toast.error("An account with this email already exists.");
+      toast.error(t("study.register.accountExists"));
       return;
     }
 
-    toast.success("Account created. Welcome to Nine64!");
+    toast.success(t("study.register.accountCreated"));
     navigate({ to: redirectTo, replace: true });
   }
 
@@ -70,16 +72,16 @@ function RegisterPage() {
     <AuthModal>
       <div className="text-center">
         <BrandMark className="mx-auto mb-4 size-14" />
-        <h1 className="text-2xl font-bold">Create account</h1>
+        <h1 className="text-2xl font-bold">{t("study.register.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Join {APP.name} and start playing online
+          {t("study.register.subtitle", { app: APP.name })}
         </p>
       </div>
 
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display name</Label>
+              <Label htmlFor="displayName">{t("study.register.displayName")}</Label>
               <Input
                 id="displayName"
                 type="text"
@@ -92,7 +94,7 @@ function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("study.register.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -105,7 +107,7 @@ function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("study.register.password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -127,18 +129,18 @@ function RegisterPage() {
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+              <p className="text-xs text-muted-foreground">{t("study.register.passwordHint")}</p>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Create account
+              {t("study.register.createAccount")}
             </Button>
           </form>
 
           <div className="mt-4 flex items-center gap-2">
             <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">or</span>
+            <span className="text-xs text-muted-foreground">{t("study.register.or")}</span>
             <Separator className="flex-1" />
           </div>
 
@@ -153,22 +155,22 @@ function RegisterPage() {
               });
               setLoading(false);
               if (result.error) {
-                toast.error(result.error.message || "Google sign in failed");
+                toast.error(result.error.message || t("study.register.googleFailed"));
               }
             }}
             disabled={loading}
           >
-            Continue with Google
+            {t("study.register.continueWithGoogle")}
           </Button>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            {t("study.register.haveAccount")}{" "}
             <Link
               to="/auth/login"
               search={{ redirect: redirectTo }}
               className="text-primary hover:underline"
             >
-              Sign in
+              {t("study.register.signIn")}
             </Link>
           </p>
     </AuthModal>
