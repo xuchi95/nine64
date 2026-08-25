@@ -34,6 +34,13 @@ const LABEL_SEVERITY: Record<string, MistakeSeverity> = {
   blunder: "critical",
 };
 
+/** Archive entries can carry unknown/legacy severities — never index blindly. */
+function safeSeverity(value: unknown): MistakeSeverity {
+  return typeof value === "string" && value in SEVERITY_META
+    ? (value as MistakeSeverity)
+    : "moderate";
+}
+
 function severityFromLoss(loss: number): MistakeSeverity {
   if (loss >= 25) return "critical";
   if (loss >= 15) return "serious";
@@ -47,11 +54,12 @@ function moveLabelFor(ply: number): string {
 }
 
 function gameLabel(game: SavedGame): string {
-  return `${game.white.name} – ${game.black.name}`;
+  return `${game.white?.name ?? "?"} – ${game.black?.name ?? "?"}`;
 }
 
-function themeNames(motifs: string[]): string[] {
-  return motifs
+function themeNames(motifs: unknown): string[] {
+  if (!Array.isArray(motifs)) return [];
+  return (motifs as string[])
     .map((m) => (MOTIF_LABEL as Record<string, string | undefined>)[m] ?? m)
     .slice(0, 3);
 }
@@ -88,14 +96,19 @@ function taskFor(drill: {
 export function buildDrills(games: SavedGame[], limit = 40): Drill[] {
   const drills: Drill[] = [];
 
-  for (const game of games) {
+  for (const game of Array.isArray(games) ? games : []) {
+    if (!game || typeof game !== "object") continue;
     const label = gameLabel(game);
     const coachSide = game.coach?.side ?? game.playerColor ?? "w";
 
     // 1) Coach-detected mistakes — richest wording.
     const coachPlies = new Set<number>();
-    for (const mistake of game.coach?.mistakes ?? []) {
-      const ply = (mistake.moveNumber - 1) * 2 + (coachSide === "b" ? 1 : 0);
+    for (const mistake of Array.isArray(game.coach?.mistakes) ? game.coach.mistakes : []) {
+      const severity = safeSeverity(mistake?.severity);
+      const moveNumber = Number.isFinite(Number(mistake?.moveNumber))
+        ? Number(mistake.moveNumber)
+        : 1;
+      const ply = Math.max(0, (moveNumber - 1) * 2 + (coachSide === "b" ? 1 : 0));
       coachPlies.add(ply);
       const plyInfo = game.review?.plies?.[ply];
       drills.push({
@@ -105,26 +118,27 @@ export function buildDrills(games: SavedGame[], limit = 40): Drill[] {
         playedAt: game.playedAt,
         ply,
         moveLabel: moveLabelFor(ply),
-        san: mistake.san || (plyInfo?.san ?? null),
-        severity: mistake.severity,
-        title: mistake.title,
-        problem: mistake.whatHappened,
-        task: mistake.betterPlan || taskFor({
-          severity: mistake.severity,
+        san: mistake?.san || (plyInfo?.san ?? null),
+        severity,
+        title: mistake?.title ?? "Sai lầm cần xem lại",
+        problem: mistake?.whatHappened ?? "",
+        task: mistake?.betterPlan || taskFor({
+          severity,
           themes: themeNames(plyInfo?.motifs ?? []),
           moveLabel: moveLabelFor(ply),
-          san: mistake.san,
+          san: mistake?.san ?? null,
         }),
-        loss: plyInfo ? plyInfo.loss : null,
+        loss: typeof plyInfo?.loss === "number" ? plyInfo.loss : null,
         themes: themeNames(plyInfo?.motifs ?? []),
       });
     }
 
     // 2) Engine-review mistakes for the player's own moves.
-    for (const ply of game.review?.plies ?? []) {
+    for (const ply of Array.isArray(game.review?.plies) ? game.review.plies : []) {
+      if (!ply) continue;
       if (game.playerColor && ply.color !== game.playerColor) continue;
       if (coachPlies.has(ply.index)) continue;
-      const severity = LABEL_SEVERITY[ply.label] ?? severityFromLoss(ply.loss);
+      const severity = LABEL_SEVERITY[ply.label] ?? severityFromLoss(Number(ply.loss) || 0);
       if (severity === "basic" && ply.loss < 8) continue;
       const themes = themeNames(ply.motifs ?? []);
       const moveLabel = moveLabelFor(ply.index);
@@ -148,7 +162,7 @@ export function buildDrills(games: SavedGame[], limit = 40): Drill[] {
     }
 
     // 3) Coach's own suggested exercises.
-    (game.coach?.drills ?? []).forEach((text, i) => {
+    (Array.isArray(game.coach?.drills) ? game.coach.drills : []).forEach((text, i) => {
       drills.push({
         id: `${game.id}:advice-${i}`,
         gameId: game.id,
@@ -169,7 +183,9 @@ export function buildDrills(games: SavedGame[], limit = 40): Drill[] {
 
   return drills
     .sort((a, b) => {
-      const bySeverity = SEVERITY_META[b.severity].order - SEVERITY_META[a.severity].order;
+      const bySeverity =
+        SEVERITY_META[safeSeverity(b.severity)].order -
+        SEVERITY_META[safeSeverity(a.severity)].order;
       if (bySeverity !== 0) return bySeverity;
       const byLoss = (b.loss ?? 0) - (a.loss ?? 0);
       if (byLoss !== 0) return byLoss;
