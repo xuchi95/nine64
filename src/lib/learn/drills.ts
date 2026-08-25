@@ -54,11 +54,12 @@ function moveLabelFor(ply: number): string {
 }
 
 function gameLabel(game: SavedGame): string {
-  return `${game.white.name} – ${game.black.name}`;
+  return `${game.white?.name ?? "?"} – ${game.black?.name ?? "?"}`;
 }
 
-function themeNames(motifs: string[]): string[] {
-  return motifs
+function themeNames(motifs: unknown): string[] {
+  if (!Array.isArray(motifs)) return [];
+  return (motifs as string[])
     .map((m) => (MOTIF_LABEL as Record<string, string | undefined>)[m] ?? m)
     .slice(0, 3);
 }
