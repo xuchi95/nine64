@@ -265,6 +265,7 @@ export function ChessBoard(props: ChessBoardProps) {
 
 
   useEffect(() => {
+    const prevIds = new Set(trackedRef.current.map((p) => p.id));
     const { result, movedIds, removed } = trackPieces(trackedRef.current, pieces);
     trackedRef.current = result;
     setTracked(result);
@@ -272,6 +273,7 @@ export function ChessBoard(props: ChessBoardProps) {
 
     let clearTravel: number | undefined;
     let clearGhost: number | undefined;
+    let clearPromo: number | undefined;
     if (movedIds.length) {
       setTravelling(new Set(movedIds));
       clearTravel = window.setTimeout(() => setTravelling(new Set()), transitionMs + 60);
@@ -284,6 +286,18 @@ export function ChessBoard(props: ChessBoardProps) {
     // shards burst there instead of on the arrival square (d6).
     const mover = props.turn === "w" ? "b" : "w";
     const captured = removed.filter((p) => p.color !== mover);
+    const promotedPawn = removed.find((p) => p.color === mover && p.type === "p");
+    // The freshly created piece that replaced the pawn on the last rank.
+    const promotedPiece = promotedPawn
+      ? result.find(
+          (p) =>
+            !prevIds.has(p.id) &&
+            p.color === mover &&
+            p.type !== "p" &&
+            p.square[1] === (mover === "w" ? "8" : "1"),
+        )
+      : undefined;
+
     // A legal move can only ever remove one enemy piece; anything larger is a
     // position reset (new game, jumping through history) and must not shatter.
     if (captured.length === 1) {
@@ -292,19 +306,37 @@ export function ChessBoard(props: ChessBoardProps) {
       const keys = new Set(batch.map((b) => b.key));
       // Fires on the same frame the shatter animation starts, so audio and
       // visuals land together.
-      if (settings.shatterSound) playShatter();
+      if (settings.shatterSound) playShatter(!!promotedPiece);
       clearGhost = window.setTimeout(
         () => setGhosts((g) => g.filter((x) => !keys.has(x.key))),
         Math.max(transitionMs + 120, 500),
       );
 
     }
+
+    // Capture *and* promotion: the shards of the captured piece are pulled
+    // back in and reforged into the new piece rising on the last rank.
+    if (promotedPiece) {
+      const key = ++ghostCounter;
+      setPromoBurst({
+        key,
+        square: promotedPiece.square,
+        color: promotedPiece.color,
+        type: promotedPiece.type,
+      });
+      clearPromo = window.setTimeout(
+        () => setPromoBurst((p) => (p && p.key === key ? null : p)),
+        700,
+      );
+    }
     return () => {
       if (clearTravel) window.clearTimeout(clearTravel);
       if (clearGhost) window.clearTimeout(clearGhost);
+      if (clearPromo) window.clearTimeout(clearPromo);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pieces, transitionMs]);
+
 
 
   useEffect(() => {
