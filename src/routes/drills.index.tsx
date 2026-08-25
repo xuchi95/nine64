@@ -14,25 +14,16 @@ import {
   type Drill,
 } from "@/lib/learn/drills";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/drills/")({
-  head: () => ({
-    meta: [
-      { title: `Bài tập theo lỗi của bạn — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Danh sách bài tập được tạo từ những sai lầm trầm trọng nhất trong các ván của bạn, có thể đánh dấu đã luyện xong.",
-      },
-      { property: "og:title", content: `Bài tập theo lỗi của bạn — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Luyện đúng chỗ bạn hay sai: bài tập sinh từ lỗi trầm trọng nhất của bạn.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/drills",
+      title: `Bài tập theo lỗi của bạn — ${APP.name}`,
+      description:
+        "Bài tập sinh từ những sai lầm trầm trọng nhất trong các ván của bạn, có thể đánh dấu đã luyện xong.",
+    }),
   pendingComponent: ListSkeleton,
   errorComponent: DrillsError,
   component: DrillsPage,

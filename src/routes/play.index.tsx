@@ -3,23 +3,16 @@ import { Bot, Users, LineChart, Swords, Globe, Trophy, Link2 } from "lucide-reac
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/play/")({
-  head: () => ({
-    meta: [
-      { title: `Play — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Choose how to play: Stockfish engine levels, local two-player, variants, or the analysis board.",
-      },
-      { property: "og:title", content: `Play — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Engine matches, local play and variants on the Nine64 board.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/play",
+      title: `Chơi cờ — ${APP.name}`,
+      description:
+        "Chọn cách chơi trên Nine64: đấu engine Stockfish 15 mức, chơi 2 người trên một máy, biến thể cờ hoặc bàn phân tích.",
+    }),
   pendingComponent: GenericSkeleton,
   component: PlayHub,
 });

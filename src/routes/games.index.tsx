@@ -16,26 +16,17 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import { pageHead } from "@/lib/seo";
 
 
 export const Route = createFileRoute("/games/")({
-  head: () => ({
-    meta: [
-      { title: `My games — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Every game you finish on Nine64 is saved: browse results, openings, accuracy and full move lists.",
-      },
-      { property: "og:title", content: `My games — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Your saved chess games with results, openings and engine accuracy.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/games",
+      title: `Ván đấu của tôi — ${APP.name}`,
+      description:
+        "Mọi ván bạn hoàn thành trên Nine64 đều được lưu: kết quả, khai cuộc, độ chính xác và toàn bộ danh sách nước đi.",
+    }),
   pendingComponent: ListSkeleton,
   component: GamesPage,
 });
