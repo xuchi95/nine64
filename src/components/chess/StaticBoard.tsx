@@ -28,7 +28,10 @@ function usePixelSnappedBoard() {
     if (available <= 0) return;
     const dpr = window.devicePixelRatio || 1;
     const unit = 8 / dpr; // css px granularity that keeps 8 squares pixel-aligned
-    const next = Math.max(unit, Math.floor(available / unit) * unit);
+    // The 1px frame is inside the border-box, so snap the *inner* grid width.
+    const border = 2;
+    const inner = Math.max(unit, Math.floor((available - border) / unit) * unit);
+    const next = inner + border;
     if (Math.abs(applied.current - next) < 0.01) return;
     applied.current = next;
     node.style.width = `${next}px`;
