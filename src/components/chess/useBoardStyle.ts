@@ -1,4 +1,8 @@
-import { updateSettings, useSettings } from "@/lib/settings";
+import {
+  DEFAULT_SETTINGS,
+  updateSettings,
+  useSettings,
+} from "@/lib/settings";
 import {
   getBoardTheme,
   getPieceSet,
@@ -35,6 +39,7 @@ export function useBoardStyle() {
     selectBoardTheme,
     selectPieceSet,
     setStyleAuto,
+    restoreDefaults,
   };
 }
 
@@ -51,4 +56,14 @@ export function selectPieceSet(id: string) {
 /** Toggle both auto-follow flags at once (manual mode = false). */
 export function setStyleAuto(auto: boolean) {
   updateSettings({ boardThemeAuto: auto, pieceSetAuto: auto });
+}
+
+/** Restore factory board/piece defaults and re-enable light/dark auto-matching. */
+export function restoreDefaults() {
+  updateSettings({
+    boardTheme: DEFAULT_SETTINGS.boardTheme,
+    pieceSet: DEFAULT_SETTINGS.pieceSet,
+    boardThemeAuto: true,
+    pieceSetAuto: true,
+  });
 }
