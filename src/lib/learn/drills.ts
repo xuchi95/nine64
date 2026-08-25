@@ -34,6 +34,13 @@ const LABEL_SEVERITY: Record<string, MistakeSeverity> = {
   blunder: "critical",
 };
 
+/** Archive entries can carry unknown/legacy severities — never index blindly. */
+function safeSeverity(value: unknown): MistakeSeverity {
+  return typeof value === "string" && value in SEVERITY_META
+    ? (value as MistakeSeverity)
+    : "moderate";
+}
+
 function severityFromLoss(loss: number): MistakeSeverity {
   if (loss >= 25) return "critical";
   if (loss >= 15) return "serious";
