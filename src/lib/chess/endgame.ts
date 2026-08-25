@@ -354,11 +354,11 @@ export function pvToSan(fen: string, pv: string[], limit = 10): string[] {
   try {
     const chess = new Chess(fen);
     for (const uci of pv.slice(0, limit)) {
-      const move = chess.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        promotion: uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined,
-      });
+      const move = chess.move(
+        uci.length > 4
+          ? { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4]! }
+          : { from: uci.slice(0, 2), to: uci.slice(2, 4) },
+      );
       if (!move) break;
       out.push(move.san);
     }
@@ -384,11 +384,11 @@ export function pvToArrows(fen: string, pv: string[], depth = 4): LineArrow[] {
     for (let i = 0; i < Math.min(depth, pv.length); i++) {
       const uci = pv[i]!;
       const side = chess.turn();
-      const move = chess.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        promotion: uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined,
-      });
+      const move = chess.move(
+        uci.length > 4
+          ? { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4]! }
+          : { from: uci.slice(0, 2), to: uci.slice(2, 4) },
+      );
       if (!move) break;
       out.push({ from: move.from, to: move.to, ply: i, side });
     }
