@@ -113,6 +113,11 @@ export function applyAppearance(mode: AppearanceMode, animate = false) {
 }
 
 export function updateSettings(patch: Partial<Settings>) {
+  // Make sure we have already read any persisted settings before writing,
+  // otherwise this call could overwrite the user's saved settings with defaults.
+  if (!hydrated && typeof window !== "undefined") {
+    hydrateSettings();
+  }
   state = { ...state, ...patch };
   if (typeof window !== "undefined") {
     try {
