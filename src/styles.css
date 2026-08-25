@@ -207,8 +207,62 @@
   code,
   pre,
   kbd,
-  samp {
+  samp,
+  th,
+  td,
+  legend,
+  fieldset,
+  label,
+  [role="button"],
+  [role="menuitem"],
+  [role="option"],
+  [role="tab"],
+  [cmdk-input] {
     font-family: var(--font-sans);
+  }
+
+  /* Control mặc định bám thang chữ chung (button, form, table, pagination). */
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="menuitem"],
+  [role="option"],
+  [role="tab"] {
+    font-size: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+  }
+
+  input,
+  textarea,
+  select {
+    font-weight: 450;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    font-weight: 450;
+    letter-spacing: 0.006em;
+  }
+
+  label,
+  th {
+    font-weight: 600;
+    letter-spacing: 0.004em;
+  }
+
+  table {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-variant-numeric: tabular-nums;
+  }
+
+  nav[role="navigation"][aria-label="pagination"] {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-variant-numeric: tabular-nums;
   }
 
   /* Nine64 headline voice: tight, heavy, quiet — giống wordmark. */
@@ -216,7 +270,8 @@
   h2,
   h3,
   h4,
-  h5 {
+  h5,
+  h6 {
     font-family: var(--font-sans);
     font-weight: 700;
     line-height: 1.18;
@@ -256,11 +311,10 @@
     letter-spacing: -0.005em;
   }
 
-  small,
-  .text-xs,
-  .text-\[11px\] {
+  small {
     letter-spacing: 0.012em;
   }
+
 
   :focus-visible {
     outline: 2px solid var(--color-ring);
