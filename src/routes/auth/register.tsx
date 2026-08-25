@@ -71,6 +71,7 @@ function RegisterPage() {
       <div className="mx-auto max-w-md">
         <div className="panel p-6 sm:p-8">
           <div className="text-center">
+            <BrandMark className="mx-auto mb-4 size-14" />
             <h1 className="text-2xl font-bold">Create account</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Join {APP.name} and start playing online
