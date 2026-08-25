@@ -3,6 +3,8 @@
  * works offline. Every cue in the game maps to a short, tasteful tone shape.
  */
 export type SoundName =
+  | "select"
+  | "deselect"
   | "move"
   | "capture"
   | "castle"
@@ -27,6 +29,10 @@ interface Tone {
 }
 
 const RECIPES: Record<SoundName, Tone[]> = {
+  // Rất khẽ: cảm giác "nhấc quân" — một tap ngắn, âm lượng thấp.
+  select: [{ freq: 540, dur: 0.035, type: "sine", gain: 0.16 }],
+  // Đặt quân xuống / bỏ chọn — trầm hơn và nhẹ hơn nữa.
+  deselect: [{ freq: 300, dur: 0.03, type: "sine", gain: 0.1 }],
   move: [{ freq: 320, dur: 0.06, type: "triangle", gain: 0.5 }],
   capture: [
     { freq: 190, dur: 0.08, type: "square", gain: 0.35 },
