@@ -334,6 +334,11 @@ export function ChessBoard(props: ChessBoardProps) {
 
         {tracked.map((piece) => {
           const isDragged = dragging?.id === piece.id;
+          const isGlowing =
+            isDragged ||
+            selected === piece.square ||
+            hoveredSquare === piece.square ||
+            focusedSquare === piece.square;
           const pos = squareToXY(piece.square);
           const x = isDragged ? dragging!.x - squareSize / 2 : pos.x;
           const y = isDragged ? dragging!.y - squareSize / 2 : pos.y;
@@ -349,7 +354,13 @@ export function ChessBoard(props: ChessBoardProps) {
                 willChange: "transform",
               }}
             >
-              <Piece type={piece.type} color={piece.color} set={pieceSet} size={squareSize} />
+              <Piece
+                type={piece.type}
+                color={piece.color}
+                set={pieceSet}
+                size={squareSize}
+                glow={isGlowing}
+              />
             </div>
           );
         })}
