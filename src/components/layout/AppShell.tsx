@@ -187,12 +187,11 @@ function MobileNav() {
           aria-hidden
           className="absolute right-2 top-1/2 h-20 w-1.5 -translate-y-1/2 rounded-full bg-border/80"
         />
-        <div className="flex items-center gap-4 border-b border-border/70 px-6 py-6">
-          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-            <Crown className="size-7" />
-          </span>
-          <SheetTitle className="text-xl tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
+        <div className="flex items-center border-b border-border/70 px-6 py-6">
+          <BrandLogo className="h-10" />
+          <SheetTitle className="sr-only">{APP.name}</SheetTitle>
         </div>
+
 
         <nav
           ref={navRef}
