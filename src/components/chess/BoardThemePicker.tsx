@@ -7,7 +7,6 @@ import {
   type BoardTheme,
   type PieceSet,
 } from "@/lib/chess/themes";
-import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_PIECES = [
