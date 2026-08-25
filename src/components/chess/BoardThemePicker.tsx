@@ -1,4 +1,4 @@
-import { Check, Info } from "lucide-react";
+import { Check, Info, RotateCcw } from "lucide-react";
 import { Piece } from "@/components/chess/Piece";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import {
@@ -54,6 +54,7 @@ export function BoardThemePicker({ className }: { className?: string }) {
     selectBoardTheme,
     selectPieceSet,
     setStyleAuto,
+    restoreDefaults,
   } = useBoardStyle();
 
   return (
@@ -70,7 +71,7 @@ export function BoardThemePicker({ className }: { className?: string }) {
         </p>
       </div>
 
-      {anyAuto && (
+      {anyAuto ? (
         <div className="mt-4 flex items-start justify-between gap-3 rounded-lg border border-primary/30 bg-primary/10 p-3 sm:p-4">
           <div className="flex items-start gap-2.5">
             <Info className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -88,6 +89,20 @@ export function BoardThemePicker({ className }: { className?: string }) {
             className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Manual
+          </button>
+        </div>
+      ) : (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-2 p-3 sm:p-4">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Themes are pinned manually. Restore defaults to follow light/dark mode again.
+          </p>
+          <button
+            type="button"
+            onClick={restoreDefaults}
+            className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface-1 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            <RotateCcw className="size-3.5" />
+            Restore defaults
           </button>
         </div>
       )}
