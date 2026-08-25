@@ -35,11 +35,27 @@ interface TrackedPiece extends BoardPiece {
   id: number;
 }
 
-let idCounter = 0;
+interface Ghost extends BoardPiece {
+  id: number;
+  key: number;
+}
 
-function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackedPiece[] {
+let idCounter = 0;
+let ghostCounter = 0;
+
+interface TrackResult {
+  result: TrackedPiece[];
+  /** ids of pieces that changed square in this update (animate the travel) */
+  movedIds: number[];
+  /** pieces that left the board (animate the capture) */
+  removed: TrackedPiece[];
+}
+
+function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackResult {
   const remaining = [...prev];
   const result: TrackedPiece[] = [];
+  const movedIds: number[] = [];
+  const prevSquares = new Map(prev.map((p) => [p.id, p.square]));
   const takeExact = (p: BoardPiece): TrackedPiece | null => {
     const i = remaining.findIndex(
       (r) => r.square === p.square && r.type === p.type && r.color === p.color,
@@ -61,10 +77,13 @@ function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackedPiece[] {
   }
   for (const p of pending) {
     const similar = takeSimilar(p);
-    result.push({ ...p, id: similar ? similar.id : ++idCounter });
+    const id = similar ? similar.id : ++idCounter;
+    if (similar && prevSquares.get(id) !== p.square) movedIds.push(id);
+    result.push({ ...p, id });
   }
-  return result;
+  return { result, movedIds, removed: remaining };
 }
+
 
 export function ChessBoard(props: ChessBoardProps) {
   const {
@@ -96,12 +115,43 @@ export function ChessBoard(props: ChessBoardProps) {
   const [promotion, setPromotion] = useState<{ from: string; to: string } | null>(null);
   const [tracked, setTracked] = useState<TrackedPiece[]>([]);
   const trackedRef = useRef<TrackedPiece[]>([]);
+  /** ids currently travelling — get a lift + elevated stacking while in flight */
+  const [travelling, setTravelling] = useState<Set<number>>(() => new Set());
+  /** captured pieces kept on screen for a short fade-out */
+  const [ghosts, setGhosts] = useState<Ghost[]>([]);
+
+  const transitionMs = settings.animations ? settings.animationMs : 0;
+
 
   useEffect(() => {
-    const next = trackPieces(trackedRef.current, pieces);
-    trackedRef.current = next;
-    setTracked(next);
-  }, [pieces]);
+    const { result, movedIds, removed } = trackPieces(trackedRef.current, pieces);
+    trackedRef.current = result;
+    setTracked(result);
+    if (!transitionMs) return;
+
+    let clearTravel: number | undefined;
+    let clearGhost: number | undefined;
+    if (movedIds.length) {
+      setTravelling(new Set(movedIds));
+      clearTravel = window.setTimeout(() => setTravelling(new Set()), transitionMs + 60);
+    }
+
+    if (removed.length) {
+      const batch = removed.map((p) => ({ ...p, key: ++ghostCounter }));
+      setGhosts((g) => [...g, ...batch]);
+      const keys = new Set(batch.map((b) => b.key));
+      clearGhost = window.setTimeout(
+        () => setGhosts((g) => g.filter((x) => !keys.has(x.key))),
+        transitionMs + 120,
+      );
+    }
+    return () => {
+      if (clearTravel) window.clearTimeout(clearTravel);
+      if (clearGhost) window.clearTimeout(clearGhost);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pieces, transitionMs]);
+
 
   useEffect(() => {
     const el = containerRef.current;
@@ -220,7 +270,9 @@ export function ChessBoard(props: ChessBoardProps) {
     setSelected(null);
   };
 
-  const transitionMs = settings.animations ? settings.animationMs : 0;
+  // Spring-like travel curve: quick launch, tiny settle at the target square.
+  const travelEase = "cubic-bezier(0.22, 1.16, 0.32, 1)";
+
 
   return (
     <div className="w-full">
@@ -332,8 +384,33 @@ export function ChessBoard(props: ChessBoardProps) {
           }),
         )}
 
+        {/* captured pieces fade out in place instead of vanishing on the frame */}
+        {ghosts.map((g) => {
+          const pos = squareToXY(g.square);
+          return (
+            <div
+              key={`ghost-${g.key}`}
+              className="pointer-events-none absolute z-10"
+              style={{
+                width: squareSize,
+                height: squareSize,
+                transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+              }}
+            >
+              <div
+                className="animate-nexus-capture"
+                style={{ animationDuration: `${Math.max(140, transitionMs)}ms` }}
+              >
+                <Piece type={g.type} color={g.color} set={pieceSet} size={squareSize} />
+              </div>
+            </div>
+
+          );
+        })}
+
         {tracked.map((piece) => {
           const isDragged = dragging?.id === piece.id;
+          const isTravelling = !isDragged && travelling.has(piece.id);
           const isGlowing =
             isDragged ||
             selected === piece.square ||
@@ -345,25 +422,43 @@ export function ChessBoard(props: ChessBoardProps) {
           return (
             <div
               key={piece.id}
-              className={cn("pointer-events-none absolute", isDragged && "z-30")}
+              className={cn(
+                "pointer-events-none absolute",
+                isDragged ? "z-30" : isTravelling ? "z-20" : undefined,
+              )}
               style={{
                 width: squareSize,
                 height: squareSize,
-                transform: `translate3d(${x}px, ${y}px, 0)${isDragged ? " scale(1.08)" : ""}`,
-                transition: isDragged ? "none" : `transform ${transitionMs}ms cubic-bezier(0.2,0.8,0.3,1)`,
-                willChange: "transform",
+                // Only transform/opacity animate here, so the whole move stays
+                // on the compositor and holds a full frame budget (>60FPS).
+                transform: `translate3d(${x}px, ${y}px, 0)`,
+                transition: isDragged ? "none" : `transform ${transitionMs}ms ${travelEase}`,
+                willChange: isDragged || isTravelling ? "transform" : "auto",
+                backfaceVisibility: "hidden",
               }}
             >
-              <Piece
-                type={piece.type}
-                color={piece.color}
-                set={pieceSet}
-                size={squareSize}
-                glow={isGlowing}
-              />
+              <div
+                style={{
+                  transform: isDragged
+                    ? "scale(1.1) translateZ(0)"
+                    : isTravelling
+                      ? "scale(1.06) translateZ(0)"
+                      : "scale(1) translateZ(0)",
+                  transition: `transform ${Math.max(90, Math.round(transitionMs * 0.6))}ms ease-out`,
+                }}
+              >
+                <Piece
+                  type={piece.type}
+                  color={piece.color}
+                  set={pieceSet}
+                  size={squareSize}
+                  glow={isGlowing}
+                />
+              </div>
             </div>
           );
         })}
+
 
         {promotion && (
           <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/65 backdrop-blur-[2px]">
