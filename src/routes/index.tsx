@@ -19,16 +19,53 @@ import { Button } from "@/components/ui/button";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { StaticBoard, START_PIECES } from "@/components/chess/StaticBoard";
-import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  head: () =>
-    pageHead({
-      path: "/",
-      title: `${APP.name} — Chơi cờ vua online miễn phí`,
-      description:
-        "Nine64: chơi cờ với engine Stockfish, đấu online xếp hạng Glicko-2, phân tích từng nước đi và luyện tập theo lỗi của chính bạn.",
-    }), 0.5px, transparent 0.5px)",
+  head: () => ({
+    meta: [
+      { title: `${APP.name} — Play Chess Online, Free` },
+      { name: "description", content: APP.description },
+      { property: "og:site_name", content: APP.name },
+      { property: "og:locale", content: "en_US" },
+      { property: "og:title", content: `${APP.name} — Play Chess Online, Free` },
+      { property: "og:description", content: APP.description },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://nexchess.lovable.app/" },
+      {
+        property: "og:image",
+        content: "https://nexchess.lovable.app/og-nine64-dark.png",
+      },
+      { property: "og:image:secure_url", content: "https://nexchess.lovable.app/og-nine64-dark.png" },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: `${APP.name} — pixel 64 chessboard logo` },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: `${APP.name} — Play Chess Online, Free` },
+      { name: "twitter:description", content: APP.description },
+      {
+        name: "twitter:image",
+        content: "https://nexchess.lovable.app/og-nine64-dark.png",
+      },
+      { name: "twitter:image:alt", content: `${APP.name} — pixel 64 chessboard logo` },
+    ],
+    links: [{ rel: "canonical", href: "https://nexchess.lovable.app/" }],
+  }),
+  pendingComponent: GenericSkeleton,
+  component: Home,
+});
+
+function Home() {
+  return (
+    <AppShell>
+      <div className="relative">
+        {/* Architectural dot-grid: brass on graphite, sits behind everything */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-8 h-[320px] opacity-[0.18] [mask-image:linear-gradient(to_bottom,black,transparent)] sm:h-[560px]"
+          style={{
+            backgroundImage:
+              "radial-gradient(var(--primary) 0.5px, transparent 0.5px)",
             backgroundSize: "24px 24px",
           }}
         />

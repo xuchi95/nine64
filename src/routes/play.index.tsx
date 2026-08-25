@@ -3,16 +3,79 @@ import { Bot, Users, LineChart, Swords, Globe, Trophy, Link2 } from "lucide-reac
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
-import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/play/")({
-  head: () =>
-    pageHead({
-      path: "/play",
-      title: `Chơi cờ — ${APP.name}`,
-      description:
-        "Chọn cách chơi trên Nine64: đấu engine Stockfish 15 mức, chơi 2 người trên một máy, biến thể cờ hoặc bàn phân tích.",
-    }), => (
+  head: () => ({
+    meta: [
+      { title: `Play — ${APP.name}` },
+      {
+        name: "description",
+        content:
+          "Choose how to play: Stockfish engine levels, local two-player, variants, or the analysis board.",
+      },
+      { property: "og:title", content: `Play — ${APP.name}` },
+      {
+        property: "og:description",
+        content: "Engine matches, local play and variants on the Nine64 board.",
+      },
+    ],
+  }),
+  pendingComponent: GenericSkeleton,
+  component: PlayHub,
+});
+
+const AVAILABLE = [
+  {
+    to: "/play/ai",
+    icon: Bot,
+    title: "Play AI",
+    text: "15 levels, 7 personalities, human-like pacing.",
+  },
+  {
+    to: "/play/local",
+    icon: Users,
+    title: "Local game",
+    text: "Two players, one device, real clocks.",
+  },
+  {
+    to: "/online",
+    icon: Globe,
+    title: "Online & ranked",
+    text: "Realtime matchmaking with Elo rating.",
+  },
+  {
+    to: "/play/share",
+    icon: Link2,
+    title: "Share by link / PGN",
+    text: "Correspondence play: sync each move via URL or PGN.",
+  },
+  {
+    to: "/play/ai",
+    icon: Swords,
+    title: "Variants",
+    text: "Chess960, Three-Check, King of the Hill and more.",
+  },
+
+  {
+    to: "/analysis",
+    icon: LineChart,
+    title: "Analysis board",
+    text: "Free board with engine evaluation on demand.",
+  },
+] as const;
+
+const SOON = [{ icon: Trophy, title: "Tournaments", text: "Arenas, brackets and leaderboards." }] as const;
+
+function PlayHub() {
+  return (
+    <AppShell>
+      <h1 className="text-2xl font-bold">Play</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Everything below is live and fully playable offline.
+      </p>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        {AVAILABLE.map((card) => (
           <Link
             key={card.title}
             to={card.to}
