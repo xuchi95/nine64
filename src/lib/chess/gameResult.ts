@@ -1,3 +1,5 @@
+import { translate as t } from "@/lib/i18n";
+
 export type ResultCode = "1-0" | "0-1" | "1/2-1/2" | "*";
 export type ResultWinner = "w" | "b" | "draw";
 
@@ -20,10 +22,13 @@ export function normalizeResult(input: {
 }): NormalizedResult | null {
   const code = input.result ?? "*";
   if (code === "*" || !code) return null;
-  if (code === "1/2-1/2") return { code, winner: "draw", reason: input.end_reason || "Draw" };
-  if (code === "1-0") return { code, winner: "w", reason: input.end_reason || "White wins" };
-  if (code === "0-1") return { code, winner: "b", reason: input.end_reason || "Black wins" };
-  return { code: "*", winner: "draw", reason: input.end_reason || "Game over" };
+  if (code === "1/2-1/2")
+    return { code, winner: "draw", reason: input.end_reason || t("game.result.reasonDraw") };
+  if (code === "1-0")
+    return { code, winner: "w", reason: input.end_reason || t("game.result.reasonWhiteWins") };
+  if (code === "0-1")
+    return { code, winner: "b", reason: input.end_reason || t("game.result.reasonBlackWins") };
+  return { code: "*", winner: "draw", reason: input.end_reason || t("game.result.reasonGameOver") };
 }
 
 /** Perspective label shared by every screen. */
@@ -31,15 +36,15 @@ export function resultLabel(
   result: NormalizedResult | null,
   myColor: "w" | "b" | null,
 ): { title: string; tone: "win" | "loss" | "draw" | "live" } {
-  if (!result) return { title: "In progress", tone: "live" };
-  if (result.winner === "draw") return { title: "Draw", tone: "draw" };
+  if (!result) return { title: t("game.result.inProgress"), tone: "live" };
+  if (result.winner === "draw") return { title: t("game.result.draw"), tone: "draw" };
   if (!myColor) {
     return {
-      title: result.winner === "w" ? "White wins" : "Black wins",
+      title: result.winner === "w" ? t("game.result.whiteWins") : t("game.result.blackWins"),
       tone: "draw",
     };
   }
   return result.winner === myColor
-    ? { title: "You won", tone: "win" }
-    : { title: "You lost", tone: "loss" };
+    ? { title: t("game.result.youWon"), tone: "win" }
+    : { title: t("game.result.youLost"), tone: "loss" };
 }

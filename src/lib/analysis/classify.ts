@@ -1,5 +1,6 @@
 import { winLoss, moveAccuracyFromLoss } from "./winrate";
 import { accuracyWeight } from "./complexity";
+import { translate as t } from "@/lib/i18n";
 
 export type MoveLabel =
   | "brilliant"
@@ -13,17 +14,17 @@ export type MoveLabel =
   | "miss"
   | "blunder";
 
-export const LABEL_META: Record<MoveLabel, { title: string; tone: string; symbol: string }> = {
-  brilliant: { title: "Brilliant", tone: "text-accent", symbol: "!!" },
-  great: { title: "Great", tone: "text-primary", symbol: "!" },
-  best: { title: "Best", tone: "text-primary", symbol: "★" },
-  excellent: { title: "Excellent", tone: "text-primary/80", symbol: "" },
-  good: { title: "Good", tone: "text-muted-foreground", symbol: "" },
-  book: { title: "Book", tone: "text-muted-foreground", symbol: "▤" },
-  inaccuracy: { title: "Inaccuracy", tone: "text-warning", symbol: "?!" },
-  mistake: { title: "Mistake", tone: "text-warning", symbol: "?" },
-  miss: { title: "Missed win", tone: "text-destructive", symbol: "×" },
-  blunder: { title: "Blunder", tone: "text-destructive", symbol: "??" },
+export const LABEL_META: Record<MoveLabel, { readonly title: string; tone: string; symbol: string }> = {
+  brilliant: { get title() { return t("game.moveLabel.brilliant"); }, tone: "text-accent", symbol: "!!" },
+  great: { get title() { return t("game.moveLabel.great"); }, tone: "text-primary", symbol: "!" },
+  best: { get title() { return t("game.moveLabel.best"); }, tone: "text-primary", symbol: "★" },
+  excellent: { get title() { return t("game.moveLabel.excellent"); }, tone: "text-primary/80", symbol: "" },
+  good: { get title() { return t("game.moveLabel.good"); }, tone: "text-muted-foreground", symbol: "" },
+  book: { get title() { return t("game.moveLabel.book"); }, tone: "text-muted-foreground", symbol: "▤" },
+  inaccuracy: { get title() { return t("game.moveLabel.inaccuracy"); }, tone: "text-warning", symbol: "?!" },
+  mistake: { get title() { return t("game.moveLabel.mistake"); }, tone: "text-warning", symbol: "?" },
+  miss: { get title() { return t("game.moveLabel.miss"); }, tone: "text-destructive", symbol: "×" },
+  blunder: { get title() { return t("game.moveLabel.blunder"); }, tone: "text-destructive", symbol: "??" },
 };
 
 export interface ClassifyInput {
