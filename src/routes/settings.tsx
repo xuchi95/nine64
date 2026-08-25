@@ -143,6 +143,22 @@ function SettingsPage() {
             }}
           />
         </div>
+        <div className="flex items-center justify-between">
+          <div className="pr-4">
+            <p className="text-sm font-medium">Capture shatter sound</p>
+            <p className="text-xs text-muted-foreground">
+              Layered glass-shatter cue synced with the capture animation.
+            </p>
+          </div>
+          <Switch
+            checked={settings.shatterSound}
+            disabled={!settings.soundEnabled}
+            onCheckedChange={(v) => {
+              updateSettings({ shatterSound: v });
+              if (v) playShatter();
+            }}
+          />
+        </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-sm">
             <span>Effects volume</span>
