@@ -3,7 +3,7 @@ import { Piece, type PieceColor, type PieceType } from "./Piece";
 import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
-import { playSound } from "@/lib/sound";
+import { playSound, playShatter } from "@/lib/sound";
 import { findCheckAttacks, squaresBetween } from "@/lib/chess/checkGeometry";
 
 
