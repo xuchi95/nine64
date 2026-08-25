@@ -33,7 +33,24 @@ export interface EndgameInfo {
   techniqueKeys: string[];
   /** total non-king material in centipawn-ish units, used for phase detection */
   materialValue: number;
+  /** total pieces on the board (kings included), the second phase criterion */
+  pieceCount: number;
 }
+
+/**
+ * Published thresholds so the UI can explain *why* a position was classified
+ * this way instead of showing an opaque label.
+ */
+export const PHASE_THRESHOLDS = {
+  /** endgame when material <= this, or pieceCount <= endgamePieces */
+  endgameMaterial: 2000,
+  endgamePieces: 6,
+  /** middlegame when material <= this (otherwise opening) */
+  middlegameMaterial: 4600,
+} as const;
+
+/** A line counts as winning at or above this centipawn edge (or on any forced mate). */
+export const WINNING_CP_THRESHOLD = 150;
 
 const VALUE: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 const ORDER = ["q", "r", "b", "n", "p"] as const;
@@ -92,8 +109,9 @@ function readSides(chess: Chess): { w: Side; b: Side } {
 }
 
 function phaseOf(total: number, pieceCount: number): GamePhase {
-  if (total <= 2000 || pieceCount <= 6) return "endgame";
-  if (total <= 4600) return "middlegame";
+  if (total <= PHASE_THRESHOLDS.endgameMaterial || pieceCount <= PHASE_THRESHOLDS.endgamePieces)
+    return "endgame";
+  if (total <= PHASE_THRESHOLDS.middlegameMaterial) return "middlegame";
   return "opening";
 }
 
@@ -195,6 +213,7 @@ export function recognizeEndgame(fen: string): EndgameInfo | null {
     theoretical: false,
     techniqueKeys: [],
     materialValue,
+    pieceCount,
   };
 
   if (phase !== "endgame") return base;
@@ -401,5 +420,5 @@ export function pvToArrows(fen: string, pv: string[], depth = 4): LineArrow[] {
 /** Is this evaluation decisive enough to call "a winning line"? */
 export function isWinningScore(cp: number | null, mateIn: number | null): boolean {
   if (mateIn !== null) return mateIn > 0;
-  return (cp ?? 0) >= 150;
+  return (cp ?? 0) >= WINNING_CP_THRESHOLD;
 }
