@@ -639,7 +639,7 @@ export function ChessBoard(props: ChessBoardProps) {
                 markerHeight="4"
                 orient="auto-start-reverse"
               >
-                <path d="M0,0 L10,5 L0,10 z" fill="rgba(90,230,150,0.95)" />
+                <path d="M0,0 L10,5 L0,10 z" fill={cb ? "rgba(90,180,255,0.98)" : "rgba(90,230,150,0.95)"} />
               </marker>
             </defs>
             {defences.map((d) => {
@@ -653,10 +653,10 @@ export function ChessBoard(props: ChessBoardProps) {
                   y1={from.y + half}
                   x2={to.x + half}
                   y2={to.y + half}
-                  stroke="rgba(90,230,150,0.8)"
+                  stroke={cb ? "rgba(90,180,255,0.9)" : "rgba(90,230,150,0.8)"}
                   strokeWidth={Math.max(2, squareSize * 0.045)}
                   strokeLinecap="round"
-                  strokeDasharray={`${squareSize * 0.14} ${squareSize * 0.1}`}
+                  strokeDasharray={cb ? `${squareSize * 0.05} ${squareSize * 0.12}` : `${squareSize * 0.14} ${squareSize * 0.1}`}
                   markerEnd="url(#nexus-defend-arrow)"
                 />
               );
