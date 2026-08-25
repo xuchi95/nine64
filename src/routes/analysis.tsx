@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { ChevronLeft, ChevronRight, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Play, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
+import { GamePanel } from "@/components/game/GamePanel";
+import { gameLabelClass } from "@/components/game/GameLayout";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { APP } from "@/config/app";
