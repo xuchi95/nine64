@@ -52,6 +52,24 @@ const PROFILE_MENU = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
+/** Normalise a URL path: no trailing slash, always leading slash. */
+function normalizePath(path: string) {
+  const clean = path.split("?")[0]?.split("#")[0] ?? "/";
+  const trimmed = clean.replace(/\/+$/, "");
+  return trimmed === "" ? "/" : trimmed;
+}
+
+/**
+ * Segment-aware active match so `/game/123` never lights up `/games`,
+ * and deep links / refreshes resolve the same state as client navigation.
+ */
+function isRouteActive(pathname: string, to: string) {
+  const current = normalizePath(pathname);
+  const target = normalizePath(to);
+  if (target === "/") return current === "/";
+  return current === target || current.startsWith(`${target}/`);
+}
+
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
   const settings = useSettings();
 
@@ -141,7 +159,7 @@ function MobileNav() {
     setOpen(false);
   }, [pathname]);
 
-  const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
+  const isActive = (to: string) => isRouteActive(pathname, to);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -280,7 +298,7 @@ function MobileNav() {
 
 function MoreNav({ mobile }: { mobile?: boolean }) {
   const { pathname } = useLocation();
-  const active = MORE_NAV.some((item) => pathname.startsWith(item.to));
+  const active = MORE_NAV.some((item) => isRouteActive(pathname, item.to));
 
   return (
     <DropdownMenu>
@@ -299,7 +317,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48 rounded-xl p-2">
         {MORE_NAV.map((item) => {
-          const isActive = pathname.startsWith(item.to);
+          const isActive = isRouteActive(pathname, item.to);
           return (
             <DropdownMenuItem
               key={item.to}
@@ -450,7 +468,7 @@ function AuthHeader() {
         </div>
         <DropdownMenuSeparator />
         {PROFILE_MENU.map((item) => {
-          const active = pathname === item.to || pathname.startsWith(item.to);
+          const active = isRouteActive(pathname, item.to);
           return (
             <DropdownMenuItem
               key={item.to + item.label}
@@ -508,7 +526,8 @@ const ROUTE_LABELS: Record<string, string> = {
 };
 
 function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const pathname = normalizePath(location.pathname);
   const params = useParams({ strict: false });
   const gameId = (params as { gameId?: string }).gameId;
 
