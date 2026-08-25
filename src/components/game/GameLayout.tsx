@@ -21,13 +21,14 @@ export function GameLayout({
   right: ReactNode;
 }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
-      <div className="order-2 space-y-3 lg:order-1">{left}</div>
-      <div className="order-1 lg:order-2">
+    <div className="grid w-full max-w-full gap-4 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
+      <div className="order-2 min-w-0 space-y-3 lg:order-1">{left}</div>
+      <div className="order-1 min-w-0 lg:order-2">
         <div className="mx-auto w-full max-w-[720px] space-y-3">{board}</div>
       </div>
-      <div className="order-3 space-y-3 lg:order-3">{right}</div>
+      <div className="order-3 min-w-0 space-y-3 lg:order-3">{right}</div>
     </div>
+
   );
 }
 
