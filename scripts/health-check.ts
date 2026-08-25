@@ -66,61 +66,16 @@ const AUTO_FIX_RULES: Rule[] = [
     "createServerFn uses .inputValidator(), not .validator()",
     [[/(createServerFn\([^)]*\)\s*(?:\r?\n\s*)?)\.validator\(/g, "$1.inputValidator("]],
   ),
-  {
-    id: "react-namespace-types",
-    why: "The React.* type namespace is not global — import the type instead",
-    fix: (source) => {
-      // A namespace import makes React.* types valid — leave those files alone.
-      if (/import\s+(\*\s+as\s+React|React[,{\s])/.test(source)) return null;
-      const NAMES = [
-        "ReactNode",
-        "ReactElement",
-        "CSSProperties",
-        "PropsWithChildren",
-        "ComponentProps",
-        "FormEvent",
-        "ChangeEvent",
-        "KeyboardEvent",
-        "MouseEvent",
-        "RefObject",
-        "Dispatch",
-        "SetStateAction",
-      ];
-      const used = NAMES.filter((name) =>
-        new RegExp(`\\bReact\\.${name}\\b`).test(source),
-      );
-      if (used.length === 0) return null;
-
-      let next = source;
-      for (const name of used) {
-        next = next.replace(new RegExp(`\\bReact\\.${name}\\b`, "g"), name);
-      }
-
-      // Merge the needed type imports into an existing `from "react"` import.
-      const importRe = /import\s+(type\s+)?\{([^}]*)\}\s+from\s+["']react["'];?/;
-      const match = next.match(importRe);
-      if (match) {
-        const existing = match[2]
-          .split(",")
-          .map((part) => part.trim())
-          .filter(Boolean);
-        const merged = [...new Set([...existing, ...used.map((n) => `type ${n}`)])];
-        next = next.replace(
-          importRe,
-          `import {${merged.length > 3 ? "\n  " : " "}${merged.join(
-            merged.length > 3 ? ",\n  " : ", ",
-          )}${merged.length > 3 ? ",\n" : " "}} from "react";`,
-        );
-      } else {
-        next = `import type { ${used.join(", ")} } from "react";\n${next}`;
-      }
-      return next;
-    },
-  },
 ];
 
 /** Patterns we never rewrite automatically, but always report. */
 const WARN_RULES: Array<{ id: string; pattern: RegExp; why: string }> = [
+  {
+    id: "react-namespace-types",
+    pattern:
+      /(?<!import\s\*\sas\s)\bReact\.(ReactNode|ReactElement|CSSProperties|PropsWithChildren|FormEvent|ChangeEvent)\b/,
+    why: "Prefer importing the type from 'react' — the React.* namespace breaks once the namespace import is dropped",
+  },
   {
     id: "react-router-dom",
     pattern: /from ["']react-router-dom["']/,
