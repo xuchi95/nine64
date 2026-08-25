@@ -88,6 +88,8 @@ export function ChessBoard(props: ChessBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(480);
   const [selected, setSelected] = useState<string | null>(null);
+  const [hoveredSquare, setHoveredSquare] = useState<string | null>(null);
+  const [focusedSquare, setFocusedSquare] = useState<string | null>(null);
   const [dragging, setDragging] = useState<{ id: number; from: string; x: number; y: number } | null>(
     null,
   );

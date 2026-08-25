@@ -10,6 +10,8 @@ interface Props {
   set: PieceSet;
   size: number;
   className?: string;
+  /** Highlight the piece (hover/focus/selected) with a glow and lift effect. */
+  glow?: boolean;
 }
 
 /**
