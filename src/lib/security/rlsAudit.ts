@@ -88,12 +88,12 @@ async function send(payload: {
   try {
     await supabase.rpc("log_security_event", {
       _kind: payload.kind,
-      _resource: payload.resource ?? undefined,
-      _operation: payload.operation ?? undefined,
-      _error_code: payload.errorCode ?? undefined,
-      _message: payload.message ?? undefined,
-      _path: typeof window === "undefined" ? undefined : window.location.pathname,
-      _user_agent: typeof navigator === "undefined" ? undefined : navigator.userAgent,
+      _resource: payload.resource ?? "",
+      _operation: payload.operation ?? "",
+      _error_code: payload.errorCode ?? "",
+      _message: payload.message ?? "",
+      _path: typeof window === "undefined" ? "" : window.location.pathname,
+      _user_agent: typeof navigator === "undefined" ? "" : navigator.userAgent,
       _detail: (payload.detail ?? {}) as never,
     });
   } catch {
