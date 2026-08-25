@@ -147,6 +147,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function LocalGameRow({ game }: { game: SavedGame }) {
   const { t } = useT();
+  const moveCount = Array.isArray(game.moves) ? game.moves.length : 0;
   const label = outcomeLabel(game);
   const labelText =
     label === "Win"
@@ -173,7 +174,7 @@ function LocalGameRow({ game }: { game: SavedGame }) {
           {game.white.name} <span className="text-muted-foreground">{t("play.games.vsBadge")}</span> {game.black.name}
         </p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {game.variantName} · {game.timeControl} · {t("play.games.movesCount", { n: game.moves.length })} ·{" "}
+          {game.variantName} · {game.timeControl} · {t("play.games.movesCount", { n: moveCount })} ·{" "}
           {game.opening ?? t("play.games.unknownOpening")} · {new Date(game.playedAt).toLocaleString()}
         </p>
       </Link>
@@ -196,6 +197,7 @@ function OnlineGameRow({ game }: { game: OnlineGameDetail }) {
   const { user } = useAuth();
   const isWhite = game.white_id === user?.id;
   const opponentId = isWhite ? game.black_id : game.white_id;
+  const moveCount = Array.isArray(game.moves) ? game.moves.length : 0;
   const opponentName = t("play.games.opponentName", { id: opponentId.slice(0, 6) });
   const myName = user?.email?.split("@")[0] ?? t("play.games.you");
   const whiteName = isWhite ? myName : opponentName;
@@ -225,7 +227,7 @@ function OnlineGameRow({ game }: { game: OnlineGameDetail }) {
           {whiteName} <span className="text-muted-foreground">{t("play.games.vsBadge")}</span> {blackName}
         </p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {game.variant} · {game.time_control} · {t("play.games.movesCount", { n: game.moves.length })} ·{" "}
+          {game.variant} · {game.time_control} · {t("play.games.movesCount", { n: moveCount })} ·{" "}
           {new Date(game.created_at).toLocaleString()}
         </p>
       </Link>
