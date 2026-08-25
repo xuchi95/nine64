@@ -203,7 +203,10 @@ function MobileNav() {
           <SheetTitle className="text-xl tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-5">
+        <nav
+          ref={navRef}
+          className="flex-1 overflow-y-auto overscroll-contain scroll-smooth p-5 [-webkit-overflow-scrolling:touch]"
+        >
           <div className="flex flex-col gap-2">
             {MAIN_NAV.map((item) => {
               const active = isActive(item.to);
@@ -211,8 +214,9 @@ function MobileNav() {
                 <Link
                   key={item.to}
                   to={item.to}
+                  data-active={active ? "true" : undefined}
                   className={cn(
-                    "flex min-h-[3.75rem] items-center justify-between rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
+                    "flex min-h-[3.75rem] scroll-mt-6 items-center justify-between rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
                     active && "bg-primary/15 text-primary",
                   )}
                 >
@@ -233,8 +237,9 @@ function MobileNav() {
                 <Link
                   key={item.to}
                   to={item.to}
+                  data-active={active ? "true" : undefined}
                   className={cn(
-                    "flex min-h-[3.75rem] items-center justify-between rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                    "flex min-h-[3.75rem] scroll-mt-6 items-center justify-between rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
                     active && "bg-primary/15 text-primary",
                   )}
                 >
@@ -257,8 +262,9 @@ function MobileNav() {
                     <Link
                       key={item.to + item.label}
                       to={item.to}
+                      data-active={active ? "true" : undefined}
                       className={cn(
-                        "flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                        "flex min-h-[3.75rem] scroll-mt-6 items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
                         active && "bg-primary/15 text-primary",
                       )}
                     >
@@ -272,6 +278,7 @@ function MobileNav() {
             </>
           )}
         </nav>
+
 
         <div className="flex items-center gap-3 border-t border-border/70 p-5">
           <Button
