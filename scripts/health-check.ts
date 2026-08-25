@@ -70,6 +70,8 @@ const AUTO_FIX_RULES: Rule[] = [
     id: "react-namespace-types",
     why: "The React.* type namespace is not global — import the type instead",
     fix: (source) => {
+      // A namespace import makes React.* types valid — leave those files alone.
+      if (/import\s+(\*\s+as\s+React|React[,{\s])/.test(source)) return null;
       const NAMES = [
         "ReactNode",
         "ReactElement",
