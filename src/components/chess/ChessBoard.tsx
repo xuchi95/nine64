@@ -33,7 +33,14 @@ export interface ChessBoardProps {
   turn: PieceColor;
 }
 
-import { FILES, RANKS, isDarkSquare, squareSurface } from "./boardSurface";
+import {
+  FILES,
+  PIECE_SCALE,
+  RANKS,
+  isDarkSquare,
+  pieceBoxStyle,
+  squareSurface,
+} from "./boardSurface";
 
 interface TrackedPiece extends BoardPiece {
   id: number;
