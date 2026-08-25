@@ -129,12 +129,13 @@ export function ChessBoard(props: ChessBoardProps) {
     setTracked(result);
     if (!transitionMs) return;
 
+    let clearTravel: number | undefined;
+    let clearGhost: number | undefined;
     if (movedIds.length) {
       setTravelling(new Set(movedIds));
-      const t = window.setTimeout(() => setTravelling(new Set()), transitionMs + 60);
-      var clearTravel: number | undefined = t;
+      clearTravel = window.setTimeout(() => setTravelling(new Set()), transitionMs + 60);
     }
-    let clearGhost: number | undefined;
+
     if (removed.length) {
       const batch = removed.map((p) => ({ ...p, key: ++ghostCounter }));
       setGhosts((g) => [...g, ...batch]);
