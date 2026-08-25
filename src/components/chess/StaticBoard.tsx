@@ -141,8 +141,9 @@ export const StaticBoard = memo(function StaticBoard({
   const ref = usePixelSnappedBoard();
   const frame = getBoardTheme(boardTheme).frame;
   const style = useMemo(
-    // `contain` keeps resize work inside the board instead of the page layout.
-    () => ({ border: `1px solid ${frame}`, contain: "layout paint" as const }),
+    // `contain: layout` limits resize reflow to the board without affecting
+    // paint (paint containment clipped the board's outer shadow).
+    () => ({ border: `1px solid ${frame}`, contain: "layout" as const }),
     [frame],
   );
 
