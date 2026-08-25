@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { ChevronLeft, ChevronRight, Copy, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, LineChart, Play, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
+import { EvalGraph } from "@/components/game/EvalGraph";
 import { GamePanel } from "@/components/game/GamePanel";
 import { gameLabelClass } from "@/components/game/GameLayout";
 import { cn } from "@/lib/utils";
@@ -47,9 +48,13 @@ function Analysis() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [analysing, setAnalysing] = useState(false);
   const [lines, setLines] = useState<EngineLine[]>([]);
+  const [trend, setTrend] = useState<(number | null)[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
   const engineRef = useRef<StockfishEngine | null>(null);
 
   const game = useChessGame({ variant: "standard", timeControl: null });
+
 
   useEffect(() => {
     const engine = new StockfishEngine(settings.enginePerformance);
@@ -95,11 +100,43 @@ function Analysis() {
     }
   };
 
+  const scanTrend = async () => {
+    const engine = engineRef.current;
+    if (!engine || game.moves.length === 0 || scanning) return;
+    setScanning(true);
+    setScanProgress(0);
+    const out: (number | null)[] = [];
+    try {
+      for (let i = 0; i < game.moves.length; i++) {
+        const fen = game.moves[i]!.fen;
+        const res = await engine.search({ fen, moveTimeMs: 350, multiPv: 1, skill: null, uciElo: null });
+        const best = res[0];
+        const cpMover = best
+          ? best.mateIn !== null
+            ? best.mateIn > 0
+              ? 10000
+              : -10000
+            : (best.cp ?? 0)
+          : null;
+        const blackToMove = fen.split(" ")[1] === "b";
+        out.push(cpMover === null ? null : blackToMove ? -cpMover : cpMover);
+        setTrend([...out]);
+        setScanProgress(Math.round(((i + 1) / game.moves.length) * 100));
+      }
+    } catch (e) {
+      setLoadError((e as Error).message);
+    } finally {
+      setScanning(false);
+    }
+  };
+
   const handleLoadFen = () => {
     setLines([]);
+    setTrend([]);
     if (game.loadFen(fenInput.trim())) setLoadError(null);
     else setLoadError("Invalid FEN.");
   };
+
 
   return (
     <AppShell wide>
@@ -113,6 +150,7 @@ function Analysis() {
             canMoveFrom={canMoveFrom}
             onMove={(from, to, promo) => {
               setLines([]);
+              setTrend([]);
               return game.makeMove(from, to, promo);
             }}
             needsPromotion={game.needsPromotion}
@@ -131,8 +169,10 @@ function Analysis() {
               onClick={() => {
                 game.reset();
                 setLines([]);
+                setTrend([]);
               }}
             >
+
               <RotateCcw className="size-4" /> Reset
             </Button>
             <Button onClick={analyse} disabled={analysing}>
@@ -198,6 +238,49 @@ function Analysis() {
               </ul>
             )}
           </GamePanel>
+
+          <GamePanel
+            title="Eval trend"
+            meta={
+              scanning ? (
+                <span className="flex items-center gap-1.5 text-[0.66rem] font-semibold text-primary">
+                  <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                  {scanProgress}%
+                </span>
+              ) : trend.length > 0 ? (
+                <span className="tabular rounded bg-surface-2 px-1.5 py-0.5 text-[0.66rem] font-semibold text-primary">
+                  {(() => {
+                    const last = [...trend].reverse().find((v) => v !== null) ?? 0;
+                    return `${last >= 0 ? "+" : ""}${(last / 100).toFixed(2)}`;
+                  })()}
+                </span>
+              ) : null
+            }
+            bodyClassName="flex flex-col gap-3 p-3"
+          >
+            {trend.length > 0 ? (
+              <EvalGraph
+                startEval={0}
+                evals={trend}
+                activeIndex={trend.length - 1}
+              />
+            ) : (
+              <p className="px-1 py-3 text-center text-xs text-muted-foreground">
+                {game.moves.length === 0
+                  ? "Đi vài nước rồi quét để xem xu hướng tốt/xấu."
+                  : "Quét eval để vẽ biểu đồ đường theo từng nước."}
+              </p>
+            )}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={scanTrend}
+              disabled={scanning || game.moves.length === 0}
+            >
+              <LineChart className="size-4" /> {scanning ? "Đang quét…" : "Quét eval từng nước"}
+            </Button>
+          </GamePanel>
+
 
           <GamePanel
             title="Moves"
