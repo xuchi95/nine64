@@ -131,16 +131,20 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
       <footer className="border-t border-border/70 py-5 text-center text-xs text-muted-foreground">
         <p>{APP.name} — {APP.tagline}</p>
         <p className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-2xs">
-          Built by{" "}
-          <a
-            href="https://www.facebook.com/chinhxuan95/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Nguyễn Xuân Chính
-          </a>
-          <span aria-hidden className="text-border">|</span>
+          {CREDIT.enabled && (
+            <>
+              {CREDIT.prefix}{" "}
+              <a
+                href={CREDIT.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {CREDIT.name}
+              </a>
+              <span aria-hidden className="text-border">|</span>
+            </>
+          )}
           <Link to="/privacy" className="hover:text-foreground hover:underline">
             Chính sách bảo mật
           </Link>
@@ -149,6 +153,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             Điều khoản sử dụng
           </Link>
         </p>
+
       </footer>
     </div>
   );
