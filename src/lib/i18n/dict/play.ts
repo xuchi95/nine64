@@ -276,7 +276,7 @@ export default {
     "play.bots.personality.atlas.name": "Atlas",
     "play.bots.personality.atlas.blurb": "Lối chơi thế trận. Xây dựng chậm rãi, trừng phạt sơ hở.",
     "play.bots.personality.viper.name": "Viper",
-    "play.bots.personality.viper.blurb": "Thiên hướng tấn công. Truy đuổi vua đối phương ngay từ đầu.",
+    "play.bots.personality.viper.blurb": "Thiên hướng tấn công. Truy đuổi Vua đối phương ngay từ đầu.",
     "play.bots.personality.fortress.name": "Fortress",
     "play.bots.personality.fortress.blurb": "Chuyên gia phòng thủ. Đưa ván cờ về thế cờ tàn có lợi.",
     "play.bots.personality.gambit.name": "Gambit",

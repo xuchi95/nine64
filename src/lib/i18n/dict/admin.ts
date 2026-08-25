@@ -95,7 +95,7 @@ export default {
     "admin.fairplay.selectCase": "Chọn một hồ sơ để xem chi tiết.",
     "admin.fairplay.lockHoursLabel": "Thời hạn khoá (giờ)",
     "admin.fairplay.reasonLabel": "Lý do xử lý (ghi vào lịch sử)",
-    "admin.fairplay.reasonPlaceholder": "Ví dụ: trùng khớp engine 92% trong 3 ván liên tiếp, nhịp thời gian bất thường.",
+    "admin.fairplay.reasonPlaceholder": "Ví dụ: trùng khớp với máy 92% trong 3 ván liên tiếp, nhịp thời gian bất thường.",
     "admin.fairplay.clearWarning": "Xoá cảnh báo",
     "admin.fairplay.lockFor": "Khoá {hours}h",
     "admin.fairplay.unlock": "Mở khoá",
