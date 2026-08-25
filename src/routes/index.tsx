@@ -23,8 +23,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
-import { Piece, type PieceType, type PieceColor } from "@/components/chess/Piece";
-import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
+import { resolveBoardThemeId, resolvePieceSetId } from "@/lib/chess/themes";
+import { StaticBoard, START_PIECES } from "@/components/chess/StaticBoard";
 import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
@@ -323,76 +323,17 @@ function GamesSparkline() {
   );
 }
 
-/* ── Visuals: same SVG pieces + board theme as the real game board ───────── */
-
-const BACK_RANK: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
-
-/** Hero board follows light/dark by swapping to the matching theme variant. */
-const DARK_VARIANT: Record<string, string> = {
-  walnut: "night",
-  heritage: "ember",
-  amber: "ember",
-  marble: "slate",
-  blue: "midnight",
-  slate: "midnight",
-};
-const LIGHT_VARIANT: Record<string, string> = {
-  night: "walnut",
-  ember: "heritage",
-  midnight: "blue",
-};
-const DARK_SET: Record<string, string> = { classic: "nocturne", heritage: "nocturne" };
-const LIGHT_SET: Record<string, string> = { nocturne: "classic" };
+/* ── Visuals: shares the real board surface via <StaticBoard /> ─────────── */
 
 function StartBoard() {
   const settings = useSettings();
-  const isNight = settings.appearance === "dark";
-  const themeId = isNight
-    ? (DARK_VARIANT[settings.boardTheme] ?? settings.boardTheme)
-    : (LIGHT_VARIANT[settings.boardTheme] ?? settings.boardTheme);
-  const setId = isNight
-    ? (DARK_SET[settings.pieceSet] ?? settings.pieceSet)
-    : (LIGHT_SET[settings.pieceSet] ?? settings.pieceSet);
-  const theme = getBoardTheme(themeId);
-  const pieceSet = getPieceSet(setId);
-
+  const mode = settings.appearance === "dark" ? "dark" : "light";
   return (
-    <div
-      className="overflow-hidden rounded-xl shadow-2xl"
-      style={{ border: `1px solid ${theme.frame}` }}
-    >
-
-      <div className="grid grid-cols-8">
-        {Array.from({ length: 64 }, (_, i) => {
-          const rank = i >> 3;
-          const file = i % 8;
-          // same parity rule as ChessBoard (a8 is light)
-          const isDark = (file + (8 - rank)) % 2 === 0;
-          const type: PieceType | null =
-            rank === 0 || rank === 7 ? BACK_RANK[file]! : rank === 1 || rank === 6 ? "p" : null;
-          const color: PieceColor = rank >= 6 ? "w" : "b";
-          return (
-            <div
-              key={i}
-              className="relative aspect-square"
-              style={{
-                backgroundColor: isDark ? theme.dark : theme.light,
-                backgroundImage: isDark
-                  ? "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(0,0,0,0.14) 55%, rgba(0,0,0,0.22))"
-                  : "linear-gradient(135deg, rgba(255,255,255,0.30), rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.10))",
-                boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.08)",
-              }}
-            >
-              {type && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Piece type={type} color={color} set={pieceSet} size={100} className="h-full w-full" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <StaticBoard
+      pieces={START_PIECES}
+      boardTheme={resolveBoardThemeId(settings.boardTheme, mode)}
+      pieceSet={resolvePieceSetId(settings.pieceSet, mode)}
+    />
   );
 }
 
