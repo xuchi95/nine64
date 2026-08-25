@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Moon, Sun } from "lucide-react";
+import { useSettings, updateSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,7 +28,10 @@ export function GameLayout({
       <div className="order-1 lg:order-2">
         <div className="mx-auto w-full max-w-[720px] space-y-3">{board}</div>
       </div>
-      <div className="order-3 space-y-4">{right}</div>
+      <div className="order-3 space-y-3 lg:order-3">
+        <GameThemeToggle />
+        {right}
+      </div>
     </div>
   );
 }
@@ -92,6 +97,54 @@ export function GameNotice({
       )}
     >
       {children}
+    </div>
+  );
+}
+
+/** In-game appearance switch (dark / light) shared by every play surface. */
+export function GameThemeToggle({ className }: { className?: string }) {
+  const settings = useSettings();
+  const isDark = settings.appearance === "dark";
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-md border border-border bg-surface-2/60 px-2.5 py-1.5",
+        className,
+      )}
+    >
+      <span className={gameLabelClass}>Giao diện</span>
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          aria-pressed={isDark}
+          onClick={() => updateSettings({ appearance: "dark" })}
+          className={cn(
+            "flex size-7 items-center justify-center rounded transition-colors",
+            isDark
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:bg-surface hover:text-foreground",
+          )}
+          title="Chế độ tối"
+        >
+          <Moon className="size-4" />
+          <span className="sr-only">Chế độ tối</span>
+        </button>
+        <button
+          type="button"
+          aria-pressed={!isDark}
+          onClick={() => updateSettings({ appearance: "light" })}
+          className={cn(
+            "flex size-7 items-center justify-center rounded transition-colors",
+            !isDark
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:bg-surface hover:text-foreground",
+          )}
+          title="Chế độ sáng"
+        >
+          <Sun className="size-4" />
+          <span className="sr-only">Chế độ sáng</span>
+        </button>
+      </div>
     </div>
   );
 }
