@@ -161,6 +161,10 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             Cookie
           </Link>
           <span aria-hidden className="text-border">|</span>
+          <Link to="/contact" className="hover:text-foreground hover:underline">
+            Liên hệ
+          </Link>
+          <span aria-hidden className="text-border">|</span>
           <button
             type="button"
             onClick={resetCookieConsent}
