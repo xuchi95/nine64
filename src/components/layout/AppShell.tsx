@@ -52,6 +52,24 @@ const PROFILE_MENU = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
+/** Normalise a URL path: no trailing slash, always leading slash. */
+function normalizePath(path: string) {
+  const clean = path.split("?")[0]?.split("#")[0] ?? "/";
+  const trimmed = clean.replace(/\/+$/, "");
+  return trimmed === "" ? "/" : trimmed;
+}
+
+/**
+ * Segment-aware active match so `/game/123` never lights up `/games`,
+ * and deep links / refreshes resolve the same state as client navigation.
+ */
+function isRouteActive(pathname: string, to: string) {
+  const current = normalizePath(pathname);
+  const target = normalizePath(to);
+  if (target === "/") return current === "/";
+  return current === target || current.startsWith(`${target}/`);
+}
+
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
   const settings = useSettings();
 
