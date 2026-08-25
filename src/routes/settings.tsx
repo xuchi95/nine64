@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { APP } from "@/config/app";
-import { BOARD_THEMES, PIECE_SETS, getBoardTheme, getPieceSet } from "@/lib/chess/themes";
+import { BOARD_THEMES, PIECE_SETS } from "@/lib/chess/themes";
 import { Piece } from "@/components/chess/Piece";
 import { resetSettings, updateSettings, useSettings, type Settings } from "@/lib/settings";
 import { playSound, playShatter } from "@/lib/sound";
