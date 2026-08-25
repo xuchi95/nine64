@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate, useParams } from "@tanstack/react-route
 import {
   Moon,
   Sun,
-  Crown,
   LogOut,
   Loader2,
   Bell,
@@ -30,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useSwipeToClose } from "@/hooks/useSwipeToClose";
 
 const MAIN_NAV = [
@@ -84,19 +84,10 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
         >
           <MobileNav />
 
-          <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 sm:size-11 lg:size-12">
-              <Crown className="size-5 sm:size-6" />
-            </span>
-            <span className="flex min-w-0 flex-col leading-none">
-              <span className="truncate text-[13px] font-bold tracking-[0.14em] sm:text-base sm:tracking-[0.16em] lg:text-lg">
-                {APP.name.toUpperCase()}
-              </span>
-              <span className="mt-1 hidden text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:block">
-                {APP.tagline}
-              </span>
-            </span>
+          <Link to="/" className="group flex min-w-0 items-center">
+            <BrandLogo className="h-9 transition-transform group-hover:scale-105 sm:h-10 lg:h-12" />
           </Link>
+
 
           <nav className="hidden items-center gap-1 text-sm font-medium lg:flex">
             {MAIN_NAV.map((item) => (
@@ -196,12 +187,11 @@ function MobileNav() {
           aria-hidden
           className="absolute right-2 top-1/2 h-20 w-1.5 -translate-y-1/2 rounded-full bg-border/80"
         />
-        <div className="flex items-center gap-4 border-b border-border/70 px-6 py-6">
-          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-            <Crown className="size-7" />
-          </span>
-          <SheetTitle className="text-xl tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
+        <div className="flex items-center border-b border-border/70 px-6 py-6">
+          <BrandLogo className="h-10" />
+          <SheetTitle className="sr-only">{APP.name}</SheetTitle>
         </div>
+
 
         <nav
           ref={navRef}
