@@ -61,7 +61,7 @@ function SettingsPage() {
             <button
               key={t.id}
               type="button"
-              onClick={() => updateSettings({ boardTheme: t.id, boardThemeAuto: false })}
+              onClick={() => boardStyle.selectBoardTheme(t.id)}
               className={cn(
                 "rounded-md border p-2 transition-colors",
                 boardStyle.theme.id === t.id ? "border-primary" : "border-border hover:border-primary/40",
@@ -92,7 +92,7 @@ function SettingsPage() {
             <button
               key={set.id}
               type="button"
-              onClick={() => updateSettings({ pieceSet: set.id, pieceSetAuto: false })}
+              onClick={() => boardStyle.selectPieceSet(set.id)}
               className={cn(
                 "flex flex-col items-center rounded-md border p-2 transition-colors",
                 boardStyle.pieceSet.id === set.id ? "border-primary" : "border-border hover:border-primary/40",

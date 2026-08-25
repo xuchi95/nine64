@@ -1,4 +1,4 @@
-import { useSettings } from "@/lib/settings";
+import { updateSettings, useSettings } from "@/lib/settings";
 import {
   getBoardTheme,
   getPieceSet,
@@ -28,5 +28,27 @@ export function useBoardStyle() {
     pieceSetId,
     theme: getBoardTheme(boardThemeId),
     pieceSet: getPieceSet(pieceSetId),
+    boardThemeAuto: settings.boardThemeAuto,
+    pieceSetAuto: settings.pieceSetAuto,
+    anyAuto: settings.boardThemeAuto || settings.pieceSetAuto,
+    /** Manual selection helpers — the only supported way to change board style. */
+    selectBoardTheme,
+    selectPieceSet,
+    setStyleAuto,
   };
+}
+
+/** Pick a board theme by hand; pins it so light/dark swaps cannot override it. */
+export function selectBoardTheme(id: string) {
+  updateSettings({ boardTheme: id, boardThemeAuto: false });
+}
+
+/** Pick a piece set by hand; pins it so light/dark swaps cannot override it. */
+export function selectPieceSet(id: string) {
+  updateSettings({ pieceSet: id, pieceSetAuto: false });
+}
+
+/** Toggle both auto-follow flags at once (manual mode = false). */
+export function setStyleAuto(auto: boolean) {
+  updateSettings({ boardThemeAuto: auto, pieceSetAuto: auto });
 }
