@@ -1,6 +1,7 @@
 import { describe, expect, it, afterEach, beforeAll } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { ChessBoard, type BoardPiece } from "./ChessBoard";
+import { PIECE_SCALE, squareToIndex } from "./boardSurface";
 import { StaticBoard, START_PIECES } from "./StaticBoard";
 import { FILES, RANKS } from "./boardSurface";
 import {
@@ -152,6 +153,27 @@ describe("hero board matches the real board", () => {
     expect(hero.container.querySelector(".grid")!.className).toContain("grid-cols-8");
     hero.container.querySelectorAll("svg").forEach((svg) => {
       expect(svg.getAttribute("viewBox")).toBeTruthy();
+    });
+  });
+
+  it("places pieces with the same transform pipeline as the real board", () => {
+    const real = renderReal(START_PIECES, theme, set);
+    const realBox = real.container.querySelector<HTMLElement>('[data-square="e1"]')!;
+    expect(realBox.style.transform).toMatch(/^translate3d\(/);
+    expect((realBox.firstElementChild as HTMLElement).style.transform).toBe(PIECE_SCALE.idle);
+    cleanup();
+
+    const hero = renderHero(theme, set);
+    const boxes = hero.container.querySelectorAll<HTMLElement>("[data-square]");
+    expect(boxes.length).toBe(START_PIECES.length);
+    boxes.forEach((box) => {
+      const sq = box.dataset["square"]!;
+      const { col, row } = squareToIndex(sq, "w");
+      expect(box.style.transform, sq).toBe(`translate3d(${col * 100}%, ${row * 100}%, 0)`);
+      expect(box.style.width).toBe("12.5%");
+      expect(box.style.height).toBe("12.5%");
+      expect(box.style.position).toBe("absolute");
+      expect((box.firstElementChild as HTMLElement).style.transform).toBe(PIECE_SCALE.idle);
     });
   });
 });
