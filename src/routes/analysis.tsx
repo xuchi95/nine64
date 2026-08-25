@@ -149,6 +149,7 @@ function Analysis() {
             canMoveFrom={canMoveFrom}
             onMove={(from, to, promo) => {
               setLines([]);
+              setTrend([]);
               return game.makeMove(from, to, promo);
             }}
             needsPromotion={game.needsPromotion}
@@ -167,8 +168,10 @@ function Analysis() {
               onClick={() => {
                 game.reset();
                 setLines([]);
+                setTrend([]);
               }}
             >
+
               <RotateCcw className="size-4" /> Reset
             </Button>
             <Button onClick={analyse} disabled={analysing}>
