@@ -268,8 +268,17 @@ export function ChessBoard(props: ChessBoardProps) {
       clearTravel = window.setTimeout(() => setTravelling(new Set()), transitionMs + 60);
     }
 
-    if (removed.length) {
-      const batch = removed.map((p) => ({ ...p, key: ++ghostCounter }));
+    // The side that just moved is the opposite of the side to move now. A
+    // removed piece of that colour is a promoted pawn (it morphs into the new
+    // piece), never a capture — only enemy pieces shatter. En passant works
+    // naturally here: the captured pawn keeps its own square (d5), so the
+    // shards burst there instead of on the arrival square (d6).
+    const mover = props.turn === "w" ? "b" : "w";
+    const captured = removed.filter((p) => p.color !== mover);
+    // A legal move can only ever remove one enemy piece; anything larger is a
+    // position reset (new game, jumping through history) and must not shatter.
+    if (captured.length === 1) {
+      const batch = captured.map((p) => ({ ...p, key: ++ghostCounter }));
       setGhosts((g) => [...g, ...batch]);
       const keys = new Set(batch.map((b) => b.key));
       // Fires on the same frame the shatter animation starts, so audio and
