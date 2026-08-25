@@ -30,11 +30,19 @@ export function StaticBoard({
   const ranks = orientation === "w" ? RANKS : [...RANKS].reverse();
   const bySquare = new Map(pieces.map((p) => [p.square, p]));
 
+  const { ref, snappedWidth } = usePixelSnappedBoard();
+
   return (
     <div
+      ref={ref}
       data-static-board=""
       className={cn("overflow-hidden rounded-xl shadow-2xl", className)}
-      style={{ border: `1px solid ${theme.frame}` }}
+      style={{
+        border: `1px solid ${theme.frame}`,
+        // Snap to a whole number of device pixels per square so square seams
+        // and piece strokes land on the pixel grid instead of being resampled.
+        ...(snappedWidth ? { width: snappedWidth, marginInline: "auto" } : null),
+      }}
       aria-hidden
     >
       <div className="grid grid-cols-8">
