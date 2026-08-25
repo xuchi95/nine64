@@ -237,3 +237,33 @@ export function getBoardTheme(id: string): BoardTheme {
 export function getPieceSet(id: string): PieceSet {
   return PIECE_SETS.find((p) => p.id === id) ?? PIECE_SETS[0]!;
 }
+
+/* ── Light/dark variants ────────────────────────────────────────────────── */
+
+const DARK_VARIANT: Record<string, string> = {
+  walnut: "night",
+  heritage: "ember",
+  amber: "ember",
+  marble: "slate",
+  blue: "midnight",
+  slate: "midnight",
+};
+const LIGHT_VARIANT: Record<string, string> = {
+  night: "walnut",
+  ember: "heritage",
+  midnight: "blue",
+};
+const DARK_SET: Record<string, string> = { classic: "nocturne", heritage: "nocturne" };
+const LIGHT_SET: Record<string, string> = { nocturne: "classic" };
+
+/** Board theme id matching the current appearance mode. */
+export function resolveBoardThemeId(id: string, mode: "light" | "dark"): string {
+  const map = mode === "dark" ? DARK_VARIANT : LIGHT_VARIANT;
+  return map[id] ?? id;
+}
+
+/** Piece set id matching the current appearance mode. */
+export function resolvePieceSetId(id: string, mode: "light" | "dark"): string {
+  const map = mode === "dark" ? DARK_SET : LIGHT_SET;
+  return map[id] ?? id;
+}
