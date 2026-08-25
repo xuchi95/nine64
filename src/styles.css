@@ -315,6 +315,37 @@
     text-wrap: pretty;
   }
 
+  /* Không để chuỗi dài (URL, PGN, tên user) làm vỡ layout mobile. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  li,
+  td,
+  th,
+  label,
+  button,
+  a {
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 640px) {
+    h1,
+    h2,
+    h3 {
+      text-wrap: balance;
+      letter-spacing: -0.018em;
+    }
+
+    body {
+      line-height: 1.55;
+    }
+  }
+
+
   /* Giữ số thẳng cột ở những chỗ trước đây dùng font mono */
   .font-mono,
   code,
