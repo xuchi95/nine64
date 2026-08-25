@@ -62,14 +62,20 @@ function Analysis() {
   const game = useChessGame({ variant: "standard", timeControl: null });
 
 
+  /** Lazily (re)create the worker so a failed/late boot never leaves the page inert. */
+  const getEngine = useCallback(() => {
+    if (!engineRef.current) {
+      engineRef.current = new StockfishEngine(settings.enginePerformance);
+    }
+    return engineRef.current;
+  }, [settings.enginePerformance]);
+
   useEffect(() => {
-    const engine = new StockfishEngine(settings.enginePerformance);
-    engineRef.current = engine;
     return () => {
-      engine.destroy();
+      engineRef.current?.destroy();
       engineRef.current = null;
     };
-  }, [settings.enginePerformance]);
+  }, []);
 
   useEffect(() => {
     if (!initialFen) return;
@@ -109,8 +115,8 @@ function Analysis() {
   const endgame = useMemo(() => recognizeEndgame(game.fen), [game.fen]);
 
   const analyse = async () => {
-    const engine = engineRef.current;
-    if (!engine || terminal) return;
+    const engine = getEngine();
+    if (terminal) return;
     setAnalysing(true);
     try {
       const result = await engine.search({
@@ -142,8 +148,8 @@ function Analysis() {
 
 
   const scanTrend = async () => {
-    const engine = engineRef.current;
-    if (!engine || game.moves.length === 0 || scanning || analysing) return;
+    const engine = getEngine();
+    if (game.moves.length === 0 || scanning || analysing) return;
     setScanning(true);
     setScanProgress(0);
     const out: (number | null)[] = [];
