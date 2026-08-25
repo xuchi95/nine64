@@ -34,27 +34,47 @@ export function PlayerCard({
   return (
     <div
       className={cn(
-        "panel flex items-center gap-3 p-3 transition-colors",
-        active && "border-primary/50",
+        "panel relative flex items-center gap-3 overflow-hidden p-3.5 pl-4 transition-colors",
+        active && "border-primary/70 bg-primary/[0.04]",
       )}
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-2 text-muted-foreground">
-        {player.isBot ? <Bot className="size-4" /> : <User className="size-4" />}
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-y-0 left-0 w-[3px] transition-colors",
+          active ? "bg-primary" : "bg-transparent",
+        )}
+      />
+      <div
+        className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-md border transition-colors",
+          active
+            ? "border-primary/40 bg-primary/15 text-primary"
+            : "border-border bg-surface-2 text-muted-foreground",
+        )}
+      >
+        {player.isBot ? <Bot className="size-5" /> : <User className="size-5" />}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold">{player.name}</span>
+          <span className="truncate text-sm font-semibold leading-tight">{player.name}</span>
           {player.isBot && (
-            <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-accent">
-              BOT
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.14em] text-primary">
+              Bot
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate">{thinking ? "Thinking…" : player.subtitle}</span>
+        <div className="mt-0.5 truncate text-[0.72rem] font-medium text-muted-foreground">
+          {thinking ? (
+            <span className="text-primary">Thinking…</span>
+          ) : active ? (
+            <span className="text-primary">To move</span>
+          ) : (
+            player.subtitle
+          )}
         </div>
         {captured.length > 0 && (
-          <div className="mt-1 flex items-center gap-0.5">
+          <div className="mt-1.5 flex flex-wrap items-center gap-px opacity-80">
             {captured.map((c) =>
               Array.from({ length: c.count }).map((_, i) => (
                 <Piece
@@ -62,7 +82,7 @@ export function PlayerCard({
                   type={c.type as PieceType}
                   color={opponentColor}
                   set={set}
-                  size={16}
+                  size={15}
                 />
               )),
             )}
