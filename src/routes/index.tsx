@@ -31,19 +31,19 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: "https://nexchess.lovable.app/" },
       {
         property: "og:image",
-        content: "https://nexchess.lovable.app/og-nexus-chess-dark.png",
+        content: "https://nexchess.lovable.app/og-nine64-dark.png",
       },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: `${APP.name} logo` },
       {
         property: "og:image",
-        content: "https://nexchess.lovable.app/og-nexus-chess-light.png",
+        content: "https://nexchess.lovable.app/og-nine64-light.png",
       },
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:image",
-        content: "https://nexchess.lovable.app/og-nexus-chess-dark.png",
+        content: "https://nexchess.lovable.app/og-nine64-dark.png",
       },
       { name: "twitter:image:alt", content: `${APP.name} logo` },
     ],
