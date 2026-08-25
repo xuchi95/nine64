@@ -476,6 +476,50 @@ export function ChessBoard(props: ChessBoardProps) {
           }),
         )}
 
+        {/* attack lines: from every checking piece to the king */}
+        {checkAttacks.length > 0 && (
+          <svg
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-20"
+            width={squareSize * 8}
+            height={squareSize * 8}
+          >
+            <defs>
+              <marker
+                id="nexus-check-arrow"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="4"
+                markerHeight="4"
+                orient="auto-start-reverse"
+              >
+                <path d="M0,0 L10,5 L0,10 z" fill="rgba(255,120,60,0.9)" />
+              </marker>
+            </defs>
+            {checkAttacks.map((a) => {
+              const from = squareToXY(a.from);
+              const to = squareToXY(a.to);
+              const half = squareSize / 2;
+              return (
+                <line
+                  key={`atk-${a.from}-${a.to}`}
+                  x1={from.x + half}
+                  y1={from.y + half}
+                  x2={to.x + half}
+                  y2={to.y + half}
+                  stroke="rgba(255,120,60,0.85)"
+                  strokeWidth={Math.max(2, squareSize * 0.05)}
+                  strokeLinecap="round"
+                  strokeDasharray={`${squareSize * 0.18} ${squareSize * 0.12}`}
+                  markerEnd="url(#nexus-check-arrow)"
+                />
+              );
+            })}
+          </svg>
+        )}
+
+
         {/* captured pieces fade out in place instead of vanishing on the frame */}
         {ghosts.map((g) => {
           const pos = squareToXY(g.square);
