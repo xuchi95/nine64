@@ -15,6 +15,8 @@ import { useOnlineGames, type OnlineGameDetail } from "@/hooks/useOnlineGames";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+
 
 export const Route = createFileRoute("/games/")({
   head: () => ({
@@ -107,8 +109,11 @@ function GamesPage() {
         ))}
       </div>
 
+      <BoardThemePicker className="mt-5" />
+
       {onlineLoading && (
         <p className="mt-4 text-sm text-muted-foreground">Loading online games…</p>
+
       )}
 
       {items.length === 0 && !onlineLoading ? (
