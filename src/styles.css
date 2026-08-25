@@ -569,8 +569,46 @@ html.theme-anim *::after {
     fill 300ms ease,
     stroke 300ms ease,
     box-shadow 300ms ease,
-    outline-color 300ms ease !important;
+    outline-color 300ms ease,
+    stop-color 300ms ease,
+    flood-color 300ms ease,
+    lighting-color 300ms ease,
+    fill-opacity 300ms ease,
+    stroke-opacity 300ms ease,
+    text-decoration-color 300ms ease,
+    caret-color 300ms ease,
+    filter 300ms ease,
+    backdrop-filter 300ms ease !important;
   transition-delay: 0s !important;
+}
+
+/* SVG gradient stops / filter primitives are not descendants that inherit the
+   rule above in every engine — target them explicitly so board + piece layers
+   cross-fade instead of snapping. */
+html.theme-anim stop,
+html.theme-anim feFlood,
+html.theme-anim feDropShadow,
+html.theme-anim linearGradient stop,
+html.theme-anim radialGradient stop {
+  transition:
+    stop-color 300ms ease,
+    stop-opacity 300ms ease,
+    flood-color 300ms ease,
+    flood-opacity 300ms ease !important;
+}
+
+/* Canvas can't cross-fade its pixels: fade the whole layer instead. */
+html.theme-anim canvas {
+  transition: opacity 300ms ease !important;
+}
+
+/* Never interfere with effects that are already animating (captures,
+   promotions, check pulses) — they keep their own timing. */
+html.theme-anim [class*="animate-nexus-"],
+html.theme-anim [class*="animate-nexus-"] *,
+html.theme-anim [data-no-theme-fade],
+html.theme-anim [data-no-theme-fade] * {
+  transition: none !important;
 }
 
 /* Keep interactive/scroll behaviour stable while the colours cross-fade. */
@@ -578,6 +616,7 @@ html.theme-anim,
 html.theme-anim body {
   overflow-anchor: none;
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   html.theme-anim,
