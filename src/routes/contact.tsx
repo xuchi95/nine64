@@ -49,7 +49,7 @@ function ContactPage() {
   const submit = useServerFn(submitContactRequest);
 
   const [form, setForm] = useState({
-    name: (user?.user_metadata?.full_name as string) ?? "",
+    name: (user?.user_metadata?.["full_name"] as string) ?? "",
     email: user?.email ?? "",
     requestType: "support",
     subject: "",
