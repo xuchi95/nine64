@@ -772,26 +772,48 @@ function PlayerBar({
   active: boolean;
 }) {
   const ms = color === "w" ? clock.w : clock.b;
+  const low = ms <= 10_000;
   return (
     <div
       className={cn(
-        "flex items-center justify-between rounded-md border border-border/70 bg-surface-1 px-3 py-2",
-        active && "ring-1 ring-primary/50",
+        "panel relative flex items-center justify-between overflow-hidden px-4 py-3 transition-colors",
+        active && "border-primary/70 bg-primary/[0.04]",
       )}
     >
-      <div className="flex items-center gap-2">
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-y-0 left-0 w-[3px] transition-colors",
+          active ? "bg-primary" : "bg-transparent",
+        )}
+      />
+      <div className="flex min-w-0 items-center gap-2.5">
         <span
           className={cn(
-            "flex size-5 items-center justify-center rounded-full text-[10px] font-bold",
-            color === "w" ? "bg-white text-black" : "bg-black text-white ring-1 ring-white/20",
+            "flex size-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold",
+            color === "w"
+              ? "border-border bg-foreground text-background"
+              : "border-border bg-surface-2 text-foreground",
           )}
         >
           {color === "w" ? "W" : "B"}
         </span>
-        <span className="font-medium">{name}</span>
-        <span className="text-xs text-muted-foreground">({rating})</span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold leading-tight">{name}</p>
+          <p className="text-[0.7rem] font-medium text-muted-foreground">
+            {active ? <span className="text-primary">To move</span> : `Rating ${rating}`}
+          </p>
+        </div>
       </div>
-      <span className={cn("font-mono text-lg tabular-nums", ms <= 10_000 && "text-destructive")}>
+      <span
+        className={cn(
+          "tabular rounded-md border px-3 py-1.5 text-xl font-bold leading-none tracking-tight transition-colors",
+          active
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-surface-2 text-muted-foreground",
+          low && active && "animate-pulse border-destructive bg-destructive text-destructive-foreground",
+        )}
+      >
         {formatClock(ms)}
       </span>
     </div>
