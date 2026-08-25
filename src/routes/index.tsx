@@ -358,7 +358,7 @@ function StartBoard() {
 
   return (
     <div
-      className="board-fade overflow-hidden rounded-xl shadow-2xl"
+      className="overflow-hidden rounded-xl shadow-2xl"
       style={{ border: `1px solid ${theme.frame}` }}
     >
 
