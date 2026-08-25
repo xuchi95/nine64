@@ -251,8 +251,9 @@ export function ChessBoard(props: ChessBoardProps) {
       const keys = new Set(batch.map((b) => b.key));
       clearGhost = window.setTimeout(
         () => setGhosts((g) => g.filter((x) => !keys.has(x.key))),
-        transitionMs + 120,
+        Math.max(transitionMs + 120, 500),
       );
+
     }
     return () => {
       if (clearTravel) window.clearTimeout(clearTravel);
