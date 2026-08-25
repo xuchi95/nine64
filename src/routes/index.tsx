@@ -320,7 +320,12 @@ function StartBoard() {
               key={i}
               className={`flex aspect-square items-center justify-center text-[clamp(1.6rem,5.8vw,2.85rem)] leading-none ${
                 dark ? "bg-primary/45" : "bg-primary/15"
-              } ${isWhitePiece ? "text-foreground [text-shadow:0_1px_2px_var(--background)]" : "text-background"}`}
+              } ${
+                isWhitePiece
+                  ? "text-foreground [text-shadow:0_1px_2px_color-mix(in_oklab,var(--background)_75%,transparent)]"
+                  : // Quân đen: viền sáng quanh glyph để nổi bật trên ô đồng/vàng
+                    "text-background [text-shadow:0_0_1px_color-mix(in_oklab,var(--foreground)_85%,transparent),0_0_3px_color-mix(in_oklab,var(--foreground)_45%,transparent),0_1px_0_color-mix(in_oklab,var(--foreground)_60%,transparent)]"
+              }`}
             >
               {piece}
             </div>
@@ -330,6 +335,7 @@ function StartBoard() {
     </div>
   );
 }
+
 
 function BotsVisual() {
   const faces = BOT_PERSONALITIES.slice(0, 6);
