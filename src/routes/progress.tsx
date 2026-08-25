@@ -14,104 +14,16 @@ import {
   type Granularity,
 } from "@/lib/insights/progress";
 import { DashboardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/progress")({
-  head: () => ({
-    meta: [
-      { title: `Tiến bộ theo thời gian — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Theo dõi tiến bộ của bạn qua từng tuần: lỗi nào giảm, % mất cơ hội mỗi nước và thời gian suy nghĩ cải thiện ra sao.",
-      },
-      { property: "og:title", content: `Tiến bộ theo thời gian — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Đồ thị % mất cơ hội, số lỗi theo mức độ và nhịp suy nghĩ qua từng giai đoạn.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  pendingComponent: DashboardSkeleton,
-  component: ProgressPage,
-});
-
-const SEVERITIES: MistakeSeverity[] = ["basic", "moderate", "serious", "critical"];
-
-function fmt(value: number | null, digits = 1, suffix = ""): string {
-  if (value === null || !Number.isFinite(value)) return "–";
-  return `${value.toFixed(digits)}${suffix}`;
-}
-
-/** Lower is better for loss/mistakes; higher is better for accuracy. */
-function DeltaBadge({ change, lowerIsBetter, unit }: { change: number | null; lowerIsBetter: boolean; unit: string }) {
-  if (change === null || Math.abs(change) < 0.05) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <ArrowRight className="size-3" /> chưa đổi
-      </span>
-    );
-  }
-  const improved = lowerIsBetter ? change < 0 : change > 0;
-  const Icon = change < 0 ? ArrowDownRight : ArrowUpRight;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs font-semibold ${
-        improved ? "text-success" : "text-destructive"
-      }`}
-    >
-      <Icon className="size-3" />
-      <span className="tabular">
-        {change > 0 ? "+" : ""}
-        {change.toFixed(1)}
-        {unit}
-      </span>
-    </span>
-  );
-}
-
-function KpiCard({
-  title,
-  hint,
-  value,
-  change,
-  lowerIsBetter,
-  unit,
-}: {
-  title: string;
-  hint: string;
-  value: string;
-  change: number | null;
-  lowerIsBetter: boolean;
-  unit: string;
-}) {
-  return (
-    <div className="panel p-4">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
-      <p className="tabular mt-2 font-display text-2xl font-bold">{value}</p>
-      <div className="mt-1 flex items-center gap-2">
-        <DeltaBadge change={change} lowerIsBetter={lowerIsBetter} unit={unit} />
-        <span className="text-xs text-muted-foreground">so với giai đoạn trước</span>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
-    </div>
-  );
-}
-
-function TrendChart({
-  buckets,
-  pick,
-  unit,
-  lowerIsBetter,
-}: {
-  buckets: Bucket[];
-  pick: (b: Bucket) => number | null;
-  unit: string;
-  lowerIsBetter: boolean;
-}) {
-  const rows = buckets
-    .map((b) => ({ label: b.label, value: pick(b) }))
+  head: () =>
+    pageHead({
+      path: "/progress",
+      title: `Tiến bộ theo thời gian — ${APP.name}`,
+      description:
+        "Theo dõi tiến bộ qua từng tuần: lỗi nào giảm, % mất cơ hội mỗi nước và nhịp suy nghĩ cải thiện ra sao.",
+    }), }))
     .filter((r): r is { label: string; value: number } => typeof r.value === "number");
   if (rows.length === 0) {
     return <p className="text-sm text-muted-foreground">Chưa có dữ liệu cho chỉ số này.</p>;

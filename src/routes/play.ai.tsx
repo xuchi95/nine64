@@ -28,75 +28,19 @@ import { detectOpening } from "@/lib/chess/openings";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/play/ai")({
   validateSearch: (search: Record<string, unknown>): { quick?: boolean } =>
     search["quick"] === "1" || search["quick"] === true ? { quick: true } : {},
 
-  head: () => ({
-    meta: [
-      { title: `Play the engine — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Face Stockfish across fifteen calibrated levels, from Beginner to Engine Max, with human-like thinking time and bot personalities.",
-      },
-      { property: "og:title", content: `Play the engine — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Fifteen engine levels, seven personalities, running fully in your browser.",
-      },
-    ],
-  }),
-  pendingComponent: BoardSkeleton,
-  component: PlayAi,
-});
-
-
-interface Config {
-  level: number;
-  personality: string;
-  color: Color | "random";
-  variant: VariantId;
-  timeControl: TimeControl | null;
-}
-
-function PlayAi() {
-  const navigate = useNavigate();
-  const settings = useSettings();
-  const [config, setConfig] = useState<Config>({
-    level: 8,
-    personality: "atlas",
-    color: "w",
-    variant: "standard",
-    timeControl: null,
-  });
-  const [phase, setPhase] = useState<"setup" | "playing">("setup");
-  const [playerColor, setPlayerColor] = useState<Color>("w");
-  const [thinking, setThinking] = useState(false);
-  const [engineInfo, setEngineInfo] = useState<{ depth: number; eval: string } | null>(null);
-  const [engineError, setEngineError] = useState<string | null>(null);
-  const [premove, setPremove] = useState<{ from: string; to: string } | null>(null);
-  const [showResult, setShowResult] = useState(false);
-
-  const level = getBotLevel(config.level);
-  const personality = getPersonality(config.personality);
-  const botColor: Color = playerColor === "w" ? "b" : "w";
-
-  const game = useChessGame({
-    variant: config.variant,
-    timeControl: config.timeControl,
-    onGameEnd: (r, snapshot) => {
-      setShowResult(true);
-      if (r.winner === "draw") playSound("draw");
-      else playSound(r.winner === playerColor ? "victory" : "defeat");
-      if (snapshot.moves.length === 0) return;
-      const botName = `${personality.name} · Lv ${level.level}`;
-      const botSubtitle = `${level.title} · ${level.strength}`;
-      const saved = saveGame({
-        mode: "ai",
-        variant: config.variant,
-        variantName: VARIANTS.find((v) => v.id === config.variant)?.name ?? config.variant,
+  head: () =>
+    pageHead({
+      path: "/play/ai",
+      title: `Đấu với engine — ${APP.name}`,
+      description:
+        "Đối đầu Stockfish qua 15 mức được hiệu chỉnh, 7 tính cách bot và nhịp suy nghĩ giống người thật — chạy ngay trong trình duyệt.",
+    }),?.name ?? config.variant,
         timeControl: config.timeControl?.label ?? "Unlimited",
         startFen: snapshot.startFen,
         finalFen: snapshot.finalFen,

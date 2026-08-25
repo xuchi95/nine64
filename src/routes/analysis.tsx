@@ -16,59 +16,19 @@ import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { StockfishEngine, type EngineLine } from "@/lib/engine/stockfish";
 import { useSettings } from "@/lib/settings";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 const searchSchema = z.object({ fen: z.string().optional() });
 
 export const Route = createFileRoute("/analysis")({
   validateSearch: searchSchema,
-  head: () => ({
-    meta: [
-      { title: `Analysis board — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Explore any position on the Nine64 analysis board and ask Stockfish for the best continuation.",
-      },
-      { property: "og:title", content: `Analysis board — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Free board with local Stockfish evaluation and principal variation.",
-      },
-    ],
-  }),
-  pendingComponent: BoardSkeleton,
-  component: Analysis,
-});
-
-function Analysis() {
-  const { fen: initialFen } = Route.useSearch();
-  const settings = useSettings();
-  const [orientation, setOrientation] = useState<Color>("w");
-  const [fenInput, setFenInput] = useState(initialFen ?? "");
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [analysing, setAnalysing] = useState(false);
-  const [lines, setLines] = useState<EngineLine[]>([]);
-  const [trend, setTrend] = useState<(number | null)[]>([]);
-  const [scanning, setScanning] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
-  const engineRef = useRef<StockfishEngine | null>(null);
-
-  const game = useChessGame({ variant: "standard", timeControl: null });
-
-
-  useEffect(() => {
-    const engine = new StockfishEngine(settings.enginePerformance);
-    engineRef.current = engine;
-    return () => {
-      engine.destroy();
-      engineRef.current = null;
-    };
-  }, [settings.enginePerformance]);
-
-  useEffect(() => {
-    if (!initialFen) return;
-    setFenInput(initialFen);
-    if (!game.loadFen(initialFen)) setLoadError("That position could not be loaded.");
+  head: () =>
+    pageHead({
+      path: "/analysis",
+      title: `Bàn phân tích — ${APP.name}`,
+      description:
+        "Dựng bất kỳ thế cờ nào trên bàn phân tích Nine64 và để Stockfish chỉ ra nước đi tốt nhất cùng biến chính.",
+    }),) setLoadError("That position could not be loaded.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFen]);
 

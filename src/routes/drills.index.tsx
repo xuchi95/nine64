@@ -14,82 +14,16 @@ import {
   type Drill,
 } from "@/lib/learn/drills";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/drills/")({
-  head: () => ({
-    meta: [
-      { title: `Bài tập theo lỗi của bạn — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Danh sách bài tập được tạo từ những sai lầm trầm trọng nhất trong các ván của bạn, có thể đánh dấu đã luyện xong.",
-      },
-      { property: "og:title", content: `Bài tập theo lỗi của bạn — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Luyện đúng chỗ bạn hay sai: bài tập sinh từ lỗi trầm trọng nhất của bạn.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  pendingComponent: ListSkeleton,
-  errorComponent: DrillsError,
-  component: DrillsPage,
-});
-
-function DrillsError({ reset }: { error: Error; reset: () => void }) {
-  return (
-    <AppShell>
-      <div className="panel mt-4 p-6 text-center">
-        <h1 className="font-display text-xl font-bold">Không tải được trang bài tập</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Có một ván trong kho lưu trữ khiến danh sách bài tập lỗi. Thử tải lại, hoặc mở lại từ
-          trang ván của tôi.
-        </p>
-        <div className="mt-4 flex justify-center gap-2">
-          <Button onClick={() => reset()}>Thử lại</Button>
-          <Button variant="outline" asChild>
-            <Link to="/games">Ván của tôi</Link>
-          </Button>
-        </div>
-      </div>
-    </AppShell>
-  );
-}
-
-type Filter = "todo" | "done" | "all";
-
-function DrillsPage() {
-  const games = useGameHistory();
-  const done = useDrillProgress();
-  const [filter, setFilter] = useState<Filter>("todo");
-
-  const drills = useMemo(() => {
-    try {
-      return buildDrills(games);
-    } catch {
-      return [];
-    }
-  }, [games]);
-  const completed = drills.filter((d) => done[d.id]).length;
-  const shown = drills.filter((d) =>
-    filter === "all" ? true : filter === "done" ? !!done[d.id] : !done[d.id],
-  );
-  const percent = drills.length === 0 ? 0 : Math.round((completed / drills.length) * 100);
-
-  return (
-    <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Bài tập của bạn</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Sinh tự động từ những lỗi trầm trọng nhất trong các ván đã phân tích. Đánh dấu khi bạn
-            luyện xong.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {(["todo", "done", "all"] as Filter[]).map((f) => (
+  head: () =>
+    pageHead({
+      path: "/drills",
+      title: `Bài tập theo lỗi của bạn — ${APP.name}`,
+      description:
+        "Bài tập sinh từ những sai lầm trầm trọng nhất trong các ván của bạn, có thể đánh dấu đã luyện xong.",
+    }), => (
             <Button
               key={f}
               size="sm"

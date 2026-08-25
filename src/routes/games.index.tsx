@@ -16,43 +16,17 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+import { pageHead } from "@/lib/seo";
 
 
 export const Route = createFileRoute("/games/")({
-  head: () => ({
-    meta: [
-      { title: `My games — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Every game you finish on Nine64 is saved: browse results, openings, accuracy and full move lists.",
-      },
-      { property: "og:title", content: `My games — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Your saved chess games with results, openings and engine accuracy.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  pendingComponent: ListSkeleton,
-  component: GamesPage,
-});
-
-type Filter = "all" | "ai" | "local" | "online";
-type ListItem =
-  | { kind: "local"; game: SavedGame }
-  | { kind: "online"; game: OnlineGameDetail };
-
-function GamesPage() {
-  const { user } = useAuth();
-  const localGames = useGameHistory();
-  const { games: onlineGames, loading: onlineLoading } = useOnlineGames();
-  const [filter, setFilter] = useState<Filter>("all");
-
-  const items: ListItem[] = useMemo(() => {
-    const localItems: ListItem[] = localGames.map((g) => ({ kind: "local", game: g }));
+  head: () =>
+    pageHead({
+      path: "/games",
+      title: `Ván đấu của tôi — ${APP.name}`,
+      description:
+        "Mọi ván bạn hoàn thành trên Nine64 đều được lưu: kết quả, khai cuộc, độ chính xác và toàn bộ danh sách nước đi.",
+    }), => ({ kind: "local", game: g }));
     const onlineItems: ListItem[] = onlineGames.map((g) => ({ kind: "online", game: g as OnlineGameDetail }));
     const gameDate = (item: ListItem) =>
       new Date(item.kind === "local" ? item.game.playedAt : item.game.created_at).getTime();

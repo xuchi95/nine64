@@ -20,48 +20,16 @@ import { detectOpening } from "@/lib/chess/openings";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/play/local")({
-  head: () => ({
-    meta: [
-      { title: `Local two player — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Pass-and-play chess on a single device with real clocks, board flipping and full rule validation.",
-      },
-      { property: "og:title", content: `Local two player — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Two players, one board, complete FIDE rules and clocks.",
-      },
-    ],
-  }),
-  pendingComponent: BoardSkeleton,
-  component: LocalGame,
-});
-
-function LocalGame() {
-  const navigate = useNavigate();
-  const settings = useSettings();
-  const [variant, setVariant] = useState<VariantId>("standard");
-  const [timeControl, setTimeControl] = useState<TimeControl | null>(null);
-  const [phase, setPhase] = useState<"setup" | "playing">("setup");
-  const [orientation, setOrientation] = useState<Color>("w");
-  const [autoFlip, setAutoFlip] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-
-  const game = useChessGame({
-    variant,
-    timeControl,
-    onGameEnd: (r, snapshot) => {
-      setShowResult(true);
-      playSound(r.winner === "draw" ? "draw" : "victory");
-      if (snapshot.moves.length === 0) return;
-      const saved = saveGame({
-        mode: "local",
-        variant,
-        variantName: VARIANTS.find((v) => v.id === variant)?.name ?? variant,
+  head: () =>
+    pageHead({
+      path: "/play/local",
+      title: `Chơi 2 người trên một máy — ${APP.name}`,
+      description:
+        "Cờ vua pass-and-play trên cùng một thiết bị: đồng hồ thật, xoay bàn cờ và đầy đủ luật FIDE.",
+    }),?.name ?? variant,
         timeControl: timeControl?.label ?? "Unlimited",
         startFen: snapshot.startFen,
         finalFen: snapshot.finalFen,
