@@ -590,7 +590,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
         <ChevronRight className="size-3 shrink-0 opacity-50" />
         <span
           aria-current="page"
-          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary"
+          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary sm:px-2 sm:text-xs"
         >
           {currentLabel}
         </span>
