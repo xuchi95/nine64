@@ -20,7 +20,10 @@ type MatchmakingState =
   | { kind: "idle" }
   | { kind: "searching"; queueId: string }
   | { kind: "found"; gameId: string; opponent: MatchOpponent | null; deadline: number }
+  | { kind: "accepting"; gameId: string; opponent: MatchOpponent | null; deadline: number }
   | { kind: "matched"; gameId: string };
+
+const PENDING_KEY = "nine64.pendingMatch";
 
 export function useMatchmaking() {
   const { user } = useAuth();
@@ -32,6 +35,7 @@ export function useMatchmaking() {
   const pollingRef = useRef<number | null>(null);
   const pollCountRef = useRef(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const acceptingRef = useRef(false);
 
   const cleanup = useCallback(() => {
     if (pollingRef.current) {
@@ -82,6 +86,7 @@ export function useMatchmaking() {
   /** A match exists: stop searching and ask the player to accept or decline. */
   const presentMatch = useCallback(
     async (gameId: string, via: "realtime" | "rpc") => {
+      if (acceptingRef.current) return;
       cleanup();
       playSound("matchFound");
       setState({
@@ -219,13 +224,52 @@ export function useMatchmaking() {
     setState({ kind: "idle" });
   }, [cleanup, leaveFn]);
 
-  const acceptMatch = useCallback(() => {
-    if (state.kind !== "found") return;
+  /**
+   * Chốt ván rồi mới chuyển trang: dừng mọi tiến trình tìm kiếm, xác nhận ván
+   * đọc được (retry khi mạng/realtime chậm), và luôn điều hướng dù xác nhận lỗi.
+   */
+  const acceptMatch = useCallback(async () => {
+    if (state.kind !== "found" || acceptingRef.current) return;
     const gameId = state.gameId;
+    acceptingRef.current = true;
+    cleanup();
+    setState({ kind: "accepting", gameId, opponent: state.opponent, deadline: state.deadline });
+    try {
+      window.sessionStorage.setItem(PENDING_KEY, gameId);
+    } catch {
+      /* storage bị chặn: bỏ qua */
+    }
+    logMmEvent("info", "navigate", "Đã đồng ý, đang chốt ván", { gameId });
+
+    let confirmed = false;
+    for (let attempt = 1; attempt <= 3 && !confirmed; attempt += 1) {
+      try {
+        const { data, error } = await supabase
+          .from("games")
+          .select("id, status")
+          .eq("id", gameId)
+          .maybeSingle();
+        if (!error && data?.id) confirmed = true;
+        else if (error) logMmEvent("warn", "rpc", `Chốt ván lần ${attempt} lỗi`, errorDetail(error));
+      } catch (e) {
+        logMmEvent("warn", "rpc", `Chốt ván lần ${attempt} thất bại`, errorDetail(e));
+      }
+      if (!confirmed && attempt < 3) await new Promise((r) => window.setTimeout(r, 400 * attempt));
+    }
+
+    logMmEvent(confirmed ? "info" : "warn", "navigate", confirmed
+      ? "Ván đã sẵn sàng, vào bàn"
+      : "Chưa xác nhận được ván, vẫn vào bàn để trang ván tự tải lại", { gameId });
+
     setState({ kind: "matched", gameId });
-    logMmEvent("info", "navigate", "Đã đồng ý vào ván", { gameId });
-    void navigate({ to: "/game/$gameId", params: { gameId } });
-  }, [navigate, state]);
+    acceptingRef.current = false;
+    await navigate({ to: "/game/$gameId", params: { gameId } });
+    try {
+      window.sessionStorage.removeItem(PENDING_KEY);
+    } catch {
+      /* bỏ qua */
+    }
+  }, [cleanup, navigate, state]);
 
   const declineMatch = useCallback(async () => {
     if (state.kind !== "found") return;
