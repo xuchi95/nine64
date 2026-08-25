@@ -66,6 +66,7 @@ export interface MatchmakingQueue {
   variant: string;
   time_control: TimeControl;
   status: QueueStatus;
+  matched_game_id: string | null;
   created_at: string;
   updated_at: string;
 }
