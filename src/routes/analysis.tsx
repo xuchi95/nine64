@@ -99,11 +99,43 @@ function Analysis() {
     }
   };
 
+  const scanTrend = async () => {
+    const engine = engineRef.current;
+    if (!engine || game.moves.length === 0 || scanning) return;
+    setScanning(true);
+    setScanProgress(0);
+    const out: (number | null)[] = [];
+    try {
+      for (let i = 0; i < game.moves.length; i++) {
+        const fen = game.moves[i]!.fen;
+        const res = await engine.search({ fen, moveTimeMs: 350, multiPv: 1, skill: null, uciElo: null });
+        const best = res[0];
+        const cpMover = best
+          ? best.mateIn !== null
+            ? best.mateIn > 0
+              ? 10000
+              : -10000
+            : (best.cp ?? 0)
+          : null;
+        const blackToMove = fen.split(" ")[1] === "b";
+        out.push(cpMover === null ? null : blackToMove ? -cpMover : cpMover);
+        setTrend([...out]);
+        setScanProgress(Math.round(((i + 1) / game.moves.length) * 100));
+      }
+    } catch (e) {
+      setLoadError((e as Error).message);
+    } finally {
+      setScanning(false);
+    }
+  };
+
   const handleLoadFen = () => {
     setLines([]);
+    setTrend([]);
     if (game.loadFen(fenInput.trim())) setLoadError(null);
     else setLoadError("Invalid FEN.");
   };
+
 
   return (
     <AppShell wide>
