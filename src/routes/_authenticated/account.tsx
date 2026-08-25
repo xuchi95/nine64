@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   KeyRound,
@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   Smartphone,
   Trash2,
+  Upload,
   User,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -21,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { APP } from "@/config/app";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { removeAvatar, uploadAvatar, useAvatarUrl } from "@/lib/avatar";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/account")({
