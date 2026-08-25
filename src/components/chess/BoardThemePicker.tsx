@@ -64,6 +64,30 @@ export function BoardThemePicker({ className }: { className?: string }) {
         </p>
       </div>
 
+      {anyAuto && (
+        <div className="mt-4 flex items-start justify-between gap-3 rounded-lg border border-primary/30 bg-primary/10 p-3 sm:p-4">
+          <div className="flex items-start gap-2.5">
+            <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-sm leading-relaxed text-foreground">
+              {settings.boardThemeAuto && settings.pieceSetAuto
+                ? "Board and piece themes are currently auto-matched to your light/dark mode."
+                : settings.boardThemeAuto
+                  ? "Board theme is currently auto-matched to your light/dark mode."
+                  : "Piece set is currently auto-matched to your light/dark mode."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              updateSettings({ boardThemeAuto: false, pieceSetAuto: false })
+            }
+            className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Manual
+          </button>
+        </div>
+      )}
+
       <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Boards
       </p>
