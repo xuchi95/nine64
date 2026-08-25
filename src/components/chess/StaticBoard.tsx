@@ -1,8 +1,56 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Piece, type PieceColor, type PieceType } from "./Piece";
 import { FILES, RANKS, isDarkSquare, squareSurface } from "./boardSurface";
 import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { cn } from "@/lib/utils";
 import type { BoardPiece } from "./ChessBoard";
+
+/**
+ * Measures the board's available width and rounds it down to a size where each
+ * of the 8 squares is a whole number of device pixels. Prevents the blurry
+ * half-pixel seams and off-by-a-pixel piece placement seen on HiDPI screens.
+ */
+function usePixelSnappedBoard() {
+  const el = useRef<HTMLDivElement | null>(null);
+  const [snappedWidth, setSnappedWidth] = useState<number | null>(null);
+
+  const measure = useCallback(() => {
+    const node = el.current;
+    const parent = node?.parentElement;
+    if (!node || !parent) return;
+    const dpr = window.devicePixelRatio || 1;
+    const available = parent.getBoundingClientRect().width;
+    if (available <= 0) return;
+    const unit = 8 / dpr; // css px granularity that keeps 8 squares pixel-aligned
+    const next = Math.max(unit, Math.floor(available / unit) * unit);
+    setSnappedWidth((prev) => (prev !== null && Math.abs(prev - next) < 0.01 ? prev : next));
+  }, []);
+
+  const ref = useCallback(
+    (node: HTMLDivElement | null) => {
+      el.current = node;
+      measure();
+    },
+    [measure],
+  );
+
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return;
+    const parent = el.current?.parentElement;
+    if (!parent) return;
+    const ro = new ResizeObserver(() => requestAnimationFrame(measure));
+    ro.observe(parent);
+    const onDpr = () => measure();
+    window.addEventListener("resize", onDpr);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", onDpr);
+    };
+  }, [measure]);
+
+  return { ref, snappedWidth };
+}
+
 
 export interface StaticBoardProps {
   pieces: BoardPiece[];
