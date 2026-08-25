@@ -56,6 +56,17 @@ interface TrackResult {
   removed: TrackedPiece[];
 }
 
+/** Chebyshev distance between two algebraic squares. */
+function squareDistance(a: string, b: string): number {
+  const fa = a.charCodeAt(0);
+  const ra = a.charCodeAt(1);
+  const fb = b.charCodeAt(0);
+  const rb = b.charCodeAt(1);
+  return Math.max(Math.abs(fa - fb), Math.abs(ra - rb));
+}
+
+
+
 function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackResult {
   const remaining = [...prev];
   const result: TrackedPiece[] = [];
@@ -68,11 +79,23 @@ function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackResult {
     if (i === -1) return null;
     return remaining.splice(i, 1)[0] ?? null;
   };
+  // Pick the closest same-type piece so a pawn appearing on d6 is matched with
+  // the pawn that was on e5 (en passant) rather than an unrelated pawn.
   const takeSimilar = (p: BoardPiece): TrackedPiece | null => {
-    const i = remaining.findIndex((r) => r.type === p.type && r.color === p.color);
-    if (i === -1) return null;
-    return remaining.splice(i, 1)[0] ?? null;
+    let best = -1;
+    let bestDist = Infinity;
+    remaining.forEach((r, i) => {
+      if (r.type !== p.type || r.color !== p.color) return;
+      const d = squareDistance(r.square, p.square);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    });
+    if (best === -1) return null;
+    return remaining.splice(best, 1)[0] ?? null;
   };
+
 
   const pending: BoardPiece[] = [];
   for (const p of next) {
@@ -245,8 +268,17 @@ export function ChessBoard(props: ChessBoardProps) {
       clearTravel = window.setTimeout(() => setTravelling(new Set()), transitionMs + 60);
     }
 
-    if (removed.length) {
-      const batch = removed.map((p) => ({ ...p, key: ++ghostCounter }));
+    // The side that just moved is the opposite of the side to move now. A
+    // removed piece of that colour is a promoted pawn (it morphs into the new
+    // piece), never a capture — only enemy pieces shatter. En passant works
+    // naturally here: the captured pawn keeps its own square (d5), so the
+    // shards burst there instead of on the arrival square (d6).
+    const mover = props.turn === "w" ? "b" : "w";
+    const captured = removed.filter((p) => p.color !== mover);
+    // A legal move can only ever remove one enemy piece; anything larger is a
+    // position reset (new game, jumping through history) and must not shatter.
+    if (captured.length === 1) {
+      const batch = captured.map((p) => ({ ...p, key: ++ghostCounter }));
       setGhosts((g) => [...g, ...batch]);
       const keys = new Set(batch.map((b) => b.key));
       // Fires on the same frame the shatter animation starts, so audio and
