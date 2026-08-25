@@ -411,18 +411,22 @@ function PlayAi() {
             clockEnabled={!!config.timeControl}
             captured={game.captured[botColor]}
           />
-          <div className="panel space-y-2 p-4 text-sm">
-            <Row label="Variant" value={VARIANTS.find((v) => v.id === config.variant)!.name} />
-            <Row label="Opening" value={game.opening?.name ?? "—"} />
-            <Row label="Engine depth" value={engineInfo ? String(engineInfo.depth) : "—"} />
-            <Row label="Evaluation" value={engineInfo?.eval ?? "—"} />
+          <GamePanel title="Game status" bodyClassName="space-y-3.5 p-4">
+            <StatRow label="Variant" value={VARIANTS.find((v) => v.id === config.variant)!.name} />
+            <StatRow label="Opening" value={game.opening?.name ?? "—"} />
+            <StatRow label="Engine depth" value={engineInfo ? String(engineInfo.depth) : "—"} mono />
+            <EvalBar
+              score={engineInfo?.eval ? Number.parseFloat(engineInfo.eval) || 0 : null}
+              label={engineInfo?.eval ?? "—"}
+            />
             {capability && (
-              <Row
+              <StatRow
                 label="Engine setup"
                 value={`${capability.threads}T · ${capability.hashMb}MB${capability.threaded ? "" : " · single"}`}
+                mono
               />
             )}
-          </div>
+          </GamePanel>
           {engineError && (
             <div className="panel border-destructive/60 p-4 text-sm text-destructive">
               Engine unavailable: {engineError}
