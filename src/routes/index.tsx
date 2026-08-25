@@ -1,31 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Bot,
-  Target,
   LineChart,
   Globe,
   GraduationCap,
   Play,
   Users,
-  Link2,
   Share2,
   BarChart3,
+  ChevronRight,
+  Swords,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 import { BOT_LEVELS, BOT_PERSONALITIES } from "@/config/bots";
 import { VARIANTS } from "@/config/variants";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { StaticBoard, START_PIECES } from "@/components/chess/StaticBoard";
-import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,8 +29,6 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: APP.description },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://nexchess.lovable.app/" },
-      // Dark card first (used by every crawler); light card offered as an
-      // alternate for clients that pick a variant by theme.
       {
         property: "og:image",
         content: "https://nexchess.lovable.app/og-nexus-chess-dark.png",
@@ -64,180 +55,241 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   return (
-    <TooltipProvider delayDuration={200}>
-      <AppShell>
-      {/* ── Hero: board left, promise right (chess.com rhythm, brass palette) ── */}
-      <section className="grid items-center gap-8 py-6 md:grid-cols-[minmax(0,50%)_minmax(0,1fr)] md:gap-10 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-16 lg:py-12">
-        <div className="mx-auto w-full max-w-[min(520px,92vw)] md:mx-0">
-          <StartBoard />
-        </div>
+    <AppShell>
+      <div className="relative">
+        {/* Architectural dot-grid: brass on graphite, sits behind everything */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-8 h-[560px] opacity-[0.18] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+          style={{
+            backgroundImage:
+              "radial-gradient(var(--primary) 0.5px, transparent 0.5px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
 
-        <div className="min-w-0 text-center md:text-left">
-          <h1 className="font-display text-[clamp(1.9rem,7vw,2.25rem)] font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-4xl lg:text-5xl">
-            Play Chess Online
-            <br />
-            <span className="text-primary">on a board built to win.</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-sm text-muted-foreground sm:text-base md:mx-0">
-            Stockfish 18 in your browser, {BOT_LEVELS.length} bot levels, ranked online games and a
-            review that actually teaches you.
-          </p>
-          <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center md:justify-start">
-            <Button asChild size="lg" className="h-14 px-8 text-base font-semibold sm:px-10">
-              <Link to="/play/ai" search={{ quick: true }}>
-                <Play className="size-5" />
-                New game
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary" className="h-14 px-8 text-base">
-              <Link to="/online">
-                <Users className="size-5" />
-                Play online
-              </Link>
-            </Button>
-          </div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            <Link to="/play/ai" className="underline underline-offset-4 hover:text-primary">
-              Custom setup
-            </Link>{" "}
-            ·{" "}
-            <Link to="/play/local" className="underline underline-offset-4 hover:text-primary">
-              Pass &amp; play
-            </Link>
-          </p>
-
-          <dl className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-4 md:justify-start lg:mt-9">
-            <Metric value={`${BOT_LEVELS.length}`} label="Bot levels" />
-            <Metric value={`${BOT_PERSONALITIES.length}`} label="Personalities" />
-            <Metric value={`${VARIANTS.length}`} label="Variants" />
-          </dl>
-        </div>
-      </section>
-
-
-      {/* ── Feature rows, alternating like chess.com's home scroll ── */}
-      <FeatureRow
-        icon={<Bot className="size-4" />}
-        title="Play Chess Bots"
-        text={`Face ${BOT_PERSONALITIES.length} personalities across ${BOT_LEVELS.length} strength tiers — each one thinks with human-like pacing.`}
-        cta="Challenge a bot"
-        to="/play/ai"
-        visual={<BotsVisual />}
-      />
-
-      <FeatureRow
-        reverse
-        icon={<GraduationCap className="size-4" />}
-        title="Improve With Your Own Puzzles"
-        text="Every review turns your real mistakes into trainable positions, scheduled by spaced repetition."
-        cta="Solve a puzzle"
-        to="/puzzles"
-        visual={<TilesVisual />}
-      />
-
-      <FeatureRow
-        icon={<LineChart className="size-4" />}
-        title="Review Every Move"
-        text="Brilliant, great, blunder — plus eval curve, accuracy, tactical motifs and phase-by-phase weakness."
-        cta="Open insights"
-        to="/insights"
-        visual={<EvalVisual />}
-      />
-
-      <FeatureRow
-        reverse
-        icon={<Globe className="size-4" />}
-        title="Ranked Online Matches"
-        text="Glicko-2 rating, priority matchmaking and realtime clocks with a fallback sync that never desyncs the board."
-        cta="Find a match"
-        to="/online"
-        visual={<OnlineVisual />}
-      />
-
-      {/* ── Quick modes strip: icon + sparkline, text in tooltip ── */}
-      <section className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4 lg:mt-14">
-        <ModeTile to="/play/local" icon={<Users className="size-5" />} title="Local" tooltip="Pass &amp; play on one device">
-          <LocalSparkline />
-        </ModeTile>
-        <ModeTile to="/play/share" icon={<Share2 className="size-5" />} title="Share" tooltip="Sync moves turn-by-turn via link">
-          <ShareSparkline />
-        </ModeTile>
-        <ModeTile to="/analysis" icon={<BarChart3 className="size-5" />} title="Analysis" tooltip="Free board with engine eval">
-          <AnalysisSparkline />
-        </ModeTile>
-        <ModeTile to="/games" icon={<LineChart className="size-5" />} title="Games" tooltip="Review your archived games">
-          <GamesSparkline />
-        </ModeTile>
-      </section>
-
-      {/* ── Closing CTA ── */}
-      <section className="panel mt-12 mb-4 overflow-hidden px-4 py-10 text-center sm:px-8 sm:py-12 lg:mt-14 lg:px-12">
-        <div className="mx-auto max-w-xl">
-          <h2 className="font-display text-[clamp(1.5rem,6vw,1.875rem)] font-bold tracking-tight sm:text-3xl">Your next game is one click away</h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            No download. Offline-ready board. {APP.tagline}
-          </p>
-          <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-13 px-8 text-base font-semibold sm:px-10">
-              <Link to="/play/ai" search={{ quick: true }}>
-                <Play className="size-5" />
-                New game
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary" className="h-13 px-8 text-base">
-              <Link to="/online">Play online</Link>
-            </Button>
+        {/* ── Hero ─────────────────────────────────────────────────────── */}
+        <section className="relative grid items-center gap-10 py-6 md:grid-cols-[minmax(0,48%)_minmax(0,1fr)] lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-16 lg:py-12">
+          <div className="relative mx-auto w-full max-w-[min(520px,92vw)] md:mx-0">
+            <div
+              aria-hidden
+              className="absolute -inset-2 bg-primary/20 opacity-50 blur-2xl"
+            />
+            <div className="relative">
+              <StartBoard />
+            </div>
+            {/* Architect's corner brackets */}
+            <span
+              aria-hidden
+              className="absolute -right-2 -top-2 size-10 border-r-2 border-t-2 border-primary/40"
+            />
+            <span
+              aria-hidden
+              className="absolute -bottom-2 -left-2 size-10 border-b-2 border-l-2 border-primary/40"
+            />
           </div>
 
-        </div>
-      </section>
+          <div className="min-w-0">
+            <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-primary">
+              Stockfish 18 · in-browser
+            </p>
+            <h1 className="mt-4 font-display text-[clamp(2rem,7vw,2.5rem)] font-extrabold leading-[1.03] tracking-tight sm:text-5xl md:text-4xl lg:text-[3.25rem]">
+              Play Chess Online
+              <br />
+              <span className="text-primary">on a board built to win.</span>
+            </h1>
+            <p className="mt-4 max-w-md text-sm text-muted-foreground sm:text-base">
+              {BOT_LEVELS.length} bot levels, ranked online games and a review that
+              actually teaches you.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button
+                asChild
+                size="lg"
+                className="h-14 rounded-sm px-8 font-display text-sm font-extrabold uppercase tracking-[0.16em] shadow-[4px_4px_0_color-mix(in_oklab,var(--primary)_45%,black)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_color-mix(in_oklab,var(--primary)_45%,black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+              >
+                <Link to="/play/ai" search={{ quick: true }}>
+                  <Play className="size-5" />
+                  New game
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-14 rounded-sm border-primary px-8 font-display text-sm font-extrabold uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
+              >
+                <Link to="/online">
+                  <Users className="size-5" />
+                  Play online
+                </Link>
+              </Button>
+            </div>
+
+            <p className="mt-4 text-sm text-muted-foreground">
+              <Link
+                to="/play/ai"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Custom setup
+              </Link>{" "}
+              ·{" "}
+              <Link
+                to="/play/local"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Pass &amp; play
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        {/* ── Stats rail ───────────────────────────────────────────────── */}
+        <section className="relative mt-6 flex items-stretch justify-between border-y border-border bg-surface-2/60 px-2 py-5 sm:px-8">
+          <Metric value={`${BOT_LEVELS.length}`} label="Bot levels" />
+          <span aria-hidden className="w-px bg-border" />
+          <Metric
+            value={`${BOT_PERSONALITIES.length}`.padStart(2, "0")}
+            label="Personalities"
+          />
+          <span aria-hidden className="w-px bg-border" />
+          <Metric
+            value={`${VARIANTS.length}`.padStart(2, "0")}
+            label="Variants"
+          />
+        </section>
+
+        {/* ── Feature rules ────────────────────────────────────────────── */}
+        <section className="relative mt-12 space-y-1">
+          <FeatureRule
+            to="/play/ai"
+            icon={<Bot className="size-5" />}
+            title="Bots & Personalities"
+            text={`${BOT_PERSONALITIES.length} personalities across ${BOT_LEVELS.length} strength tiers, each with human-like pacing.`}
+            accent
+          />
+          <FeatureRule
+            to="/puzzles"
+            icon={<GraduationCap className="size-5" />}
+            title="Tactical Puzzles"
+            text="Your real mistakes become trainable positions, scheduled by spaced repetition."
+          />
+          <FeatureRule
+            to="/insights"
+            icon={<LineChart className="size-5" />}
+            title="Review & Insights"
+            text="Brilliant to blunder, eval curve, accuracy and phase-by-phase weakness."
+          />
+          <FeatureRule
+            to="/online"
+            icon={<Globe className="size-5" />}
+            title="Online Ranked"
+            text="Glicko-2 rating, priority matchmaking and realtime clocks that never desync."
+          />
+        </section>
+
+        {/* ── Mode grid ────────────────────────────────────────────────── */}
+        <section className="relative mt-12">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+            Quick modes
+          </h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <ModeTile to="/play/local" icon={<Users className="size-6" />} title="Local" />
+            <ModeTile to="/play/share" icon={<Share2 className="size-6" />} title="Share" />
+            <ModeTile to="/analysis" icon={<BarChart3 className="size-6" />} title="Analysis" />
+            <ModeTile to="/games" icon={<LineChart className="size-6" />} title="Games" />
+          </div>
+        </section>
+
+        {/* ── Closing CTA ──────────────────────────────────────────────── */}
+        <section className="relative mb-4 mt-12 overflow-hidden border border-border bg-surface-2/60 px-5 py-10 sm:px-10 sm:py-12">
+          <span
+            aria-hidden
+            className="absolute left-0 top-0 h-full w-1 bg-primary"
+          />
+          <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-display text-[clamp(1.5rem,6vw,1.875rem)] font-extrabold tracking-tight sm:text-3xl">
+                Your next game is one click away
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                No download. Offline-ready board. {APP.tagline}
+              </p>
+            </div>
+            <div className="flex w-full flex-col gap-3 sm:flex-row md:w-auto">
+              <Button
+                asChild
+                size="lg"
+                className="h-13 rounded-sm px-8 font-display text-sm font-extrabold uppercase tracking-[0.16em] shadow-[4px_4px_0_color-mix(in_oklab,var(--primary)_45%,black)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_color-mix(in_oklab,var(--primary)_45%,black)]"
+              >
+                <Link to="/play/ai" search={{ quick: true }}>
+                  <Swords className="size-5" />
+                  New game
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-13 rounded-sm border-primary px-8 font-display text-sm font-extrabold uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
+              >
+                <Link to="/online">Play online</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      </div>
     </AppShell>
-    </TooltipProvider>
   );
 }
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <div>
-      <dd className="font-mono text-2xl font-bold text-primary">{value}</dd>
-      <dt className="mt-0.5 text-[11px] uppercase tracking-widest text-muted-foreground">{label}</dt>
+    <div className="flex-1 text-center">
+      <dd className="font-mono text-2xl font-bold tabular-nums text-foreground">
+        {value}
+      </dd>
+      <dt className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </dt>
     </div>
   );
 }
 
-function FeatureRow({
+function FeatureRule({
+  to,
   icon,
   title,
   text,
-  cta,
-  to,
-  visual,
-  reverse,
+  accent,
 }: {
+  to: string;
   icon: React.ReactNode;
   title: string;
   text: string;
-  cta: string;
-  to: string;
-  visual: React.ReactNode;
-  reverse?: boolean;
+  accent?: boolean;
 }) {
   return (
-    <section className="grid items-center gap-8 border-t border-border py-10 md:grid-cols-2 md:gap-10 md:py-12 lg:gap-16 lg:py-16">
-      <div className={`min-w-0 ${reverse ? "md:order-2" : ""}`}>
-        <h2 className="font-display text-[clamp(1.55rem,6vw,1.875rem)] font-bold leading-tight tracking-tight sm:text-3xl lg:text-[2.1rem]">
+    <Link
+      to={to}
+      className={`group flex items-center gap-4 border-l-2 py-5 pl-5 pr-3 transition-colors hover:bg-surface-2/50 ${
+        accent ? "border-primary" : "border-border hover:border-primary/60"
+      }`}
+    >
+      <span className="flex size-11 shrink-0 items-center justify-center bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-lg font-bold leading-snug">
           {title}
-        </h2>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{text}</p>
-        <Button asChild variant="secondary" size="lg" className="mt-6">
-          <Link to={to}>
-            <span className="text-primary">{icon}</span>
-            {cta}
-          </Link>
-        </Button>
-      </div>
-      <div className={`flex min-w-0 justify-center ${reverse ? "md:order-1" : ""}`}>{visual}</div>
-    </section>
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
+          {text}
+        </span>
+      </span>
+      <ChevronRight className="size-5 shrink-0 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-primary" />
+    </Link>
   );
 }
 
@@ -245,197 +297,35 @@ function ModeTile({
   to,
   icon,
   title,
-  tooltip,
-  children,
 }: {
   to: string;
   icon: React.ReactNode;
   title: string;
-  tooltip: string;
-  children: React.ReactNode;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={to}
-          className="panel group flex flex-col items-center gap-3 p-4 text-center transition-colors hover:border-primary/50"
-        >
-          <span className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">
-            {icon}
-          </span>
-          <span className="font-display text-sm font-semibold">{title}</span>
-          <div className="h-10 w-full">{children}</div>
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        <p dangerouslySetInnerHTML={{ __html: tooltip }} />
-      </TooltipContent>
-    </Tooltip>
+    <Link
+      to={to}
+      className="group flex flex-col items-center justify-center gap-2.5 border border-border bg-surface-2/50 p-5 text-center transition-colors hover:border-primary"
+    >
+      <span className="text-muted-foreground transition-colors group-hover:text-primary">
+        {icon}
+      </span>
+      <span className="font-display text-[11px] font-bold uppercase tracking-wider">
+        {title}
+      </span>
+    </Link>
   );
 }
 
-function LocalSparkline() {
-  return (
-    <div className="flex h-full items-end justify-center gap-1">
-      <div className="w-2 rounded-t bg-primary/40" style={{ height: "45%" }} />
-      <div className="w-2 rounded-t bg-primary" style={{ height: "70%" }} />
-      <div className="w-2 rounded-t bg-primary/40" style={{ height: "45%" }} />
-    </div>
-  );
-}
-
-function ShareSparkline() {
-  return (
-    <div className="flex h-full items-center justify-center gap-0.5">
-      {Array.from({ length: 8 }, (_, i) => (
-        <div
-          key={i}
-          className={`w-1 rounded-full ${i % 2 === 0 ? "bg-primary" : "bg-primary/25"}`}
-          style={{ height: `${30 + (i % 3) * 22}%` }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function AnalysisSparkline() {
-  const points = [20, 45, 35, 60, 55, 80, 70, 90];
-  const path = points
-    .map((v, i) => `${i === 0 ? "M" : "L"}${(i / (points.length - 1)) * 100},${100 - v}`)
-    .join(" ");
-  return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-      <path d={`${path} L100,100 L0,100 Z`} fill="var(--primary)" opacity="0.14" />
-      <path d={path} fill="none" stroke="var(--primary)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
-
-function GamesSparkline() {
-  return (
-    <div className="flex h-full items-center justify-center gap-1">
-      <div className="h-3 w-3 rounded-sm bg-primary" />
-      <div className="h-5 w-3 rounded-sm bg-primary/60" />
-      <div className="h-2 w-3 rounded-sm bg-primary/30" />
-      <div className="h-4 w-3 rounded-sm bg-primary/80" />
-    </div>
-  );
-}
-
-/* ── Visuals: shares the real board surface via <StaticBoard /> ─────────── */
+/* ── Hero board: shares the real board surface via <StaticBoard /> ─────── */
 
 function StartBoard() {
   const { boardThemeId, pieceSetId } = useBoardStyle();
-  return <StaticBoard pieces={START_PIECES} boardTheme={boardThemeId} pieceSet={pieceSetId} />;
-}
-
-
-
-function BotsVisual() {
-  const faces = BOT_PERSONALITIES.slice(0, 6);
   return (
-    <div className="grid w-full max-w-sm grid-cols-3 gap-2 sm:gap-3">
-      {faces.map((p, i) => (
-        <div
-          key={p.id}
-          className={`panel flex aspect-square flex-col items-center justify-center gap-1.5 p-2 text-center ${
-            i === 1 ? "border-primary/70 shadow-[0_0_0_1px_var(--primary)]" : ""
-          }`}
-        >
-          <span className="flex size-10 items-center justify-center rounded-full bg-primary/15 font-display text-lg font-bold text-primary">
-            {p.name[0]}
-          </span>
-          <span className="text-[11px] font-semibold">{p.name}</span>
-          <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-            lvl {(i + 2) * 2}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TilesVisual() {
-  const tiles = ["♟", "♞", "♝", "♜", "♛", "♚"];
-  return (
-    <div className="grid w-full max-w-[18rem] grid-cols-3 gap-2 sm:max-w-sm sm:gap-3 [perspective:900px]">
-      {tiles.map((t, i) => (
-        <div
-          key={t}
-          className={`flex aspect-square items-center justify-center rounded-xl border text-4xl transition-transform [transform:rotateX(48deg)_rotateZ(-42deg)] ${
-            i === 2
-              ? "border-primary bg-primary/25 text-primary shadow-[0_0_24px_-4px_var(--primary)]"
-              : "border-border bg-surface-2 text-foreground/70"
-          }`}
-        >
-          {t}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function EvalVisual() {
-  const points = [50, 54, 48, 61, 58, 72, 66, 84, 78, 91, 70, 88];
-  const path = points
-    .map((v, i) => `${i === 0 ? "M" : "L"}${(i / (points.length - 1)) * 100},${100 - v}`)
-    .join(" ");
-  return (
-    <div className="panel w-full max-w-md p-4 sm:p-5">
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
-        <span>Eval curve</span>
-        <span className="font-mono text-primary">92% accuracy</span>
-      </div>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="mt-3 h-32 w-full">
-        <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" strokeWidth="0.4" className="text-border" />
-        <path d={`${path} L100,100 L0,100 Z`} fill="var(--primary)" opacity="0.14" />
-        <path d={path} fill="none" stroke="var(--primary)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
-      </svg>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {[
-          ["Brilliant", "bg-primary/20 text-primary"],
-          ["Great", "bg-surface-2 text-foreground"],
-          ["Blunder", "bg-destructive/20 text-destructive"],
-        ].map(([label, cls]) => (
-          <span key={label} className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider ${cls}`}>
-            {label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function OnlineVisual() {
-  return (
-    <div className="panel w-full max-w-md p-4 sm:p-5">
-      {[
-        { name: "You", rating: 1842, clock: "4:58", active: true },
-        { name: "Opponent", rating: 1867, clock: "5:00", active: false },
-      ].map((p) => (
-        <div
-          key={p.name}
-          className={`flex items-center gap-3 rounded-lg border p-3 ${
-            p.active ? "border-primary/60 bg-primary/10" : "border-border bg-surface-2"
-          } ${p.name === "Opponent" ? "mt-3" : ""}`}
-        >
-          <span className="flex size-9 items-center justify-center rounded-full bg-primary/15 font-display font-bold text-primary">
-            {p.name[0]}
-          </span>
-          <span className="min-w-0">
-            <span className="block text-sm font-semibold">{p.name}</span>
-            <span className="block font-mono text-[11px] text-muted-foreground">{p.rating} · Glicko-2</span>
-          </span>
-          <span className="ml-auto font-mono text-xl font-bold tabular-nums">{p.clock}</span>
-        </div>
-      ))}
-      <div className="mt-4 flex items-center justify-between rounded-lg border border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-        <span>Realtime</span>
-        <span className="flex items-center gap-2 text-primary">
-          <span className="size-2 animate-pulse rounded-full bg-primary" /> connected
-        </span>
-      </div>
-    </div>
+    <StaticBoard
+      pieces={START_PIECES}
+      boardTheme={boardThemeId}
+      pieceSet={pieceSetId}
+    />
   );
 }
