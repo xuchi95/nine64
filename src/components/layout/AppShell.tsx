@@ -298,7 +298,7 @@ function MobileNav() {
 
 function MoreNav({ mobile }: { mobile?: boolean }) {
   const { pathname } = useLocation();
-  const active = MORE_NAV.some((item) => pathname.startsWith(item.to));
+  const active = MORE_NAV.some((item) => isRouteActive(pathname, item.to));
 
   return (
     <DropdownMenu>
