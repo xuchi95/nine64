@@ -88,6 +88,8 @@ export function ChessBoard(props: ChessBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(480);
   const [selected, setSelected] = useState<string | null>(null);
+  const [hoveredSquare, setHoveredSquare] = useState<string | null>(null);
+  const [focusedSquare, setFocusedSquare] = useState<string | null>(null);
   const [dragging, setDragging] = useState<{ id: number; from: string; x: number; y: number } | null>(
     null,
   );
@@ -262,6 +264,10 @@ export function ChessBoard(props: ChessBoardProps) {
                 }}
 
                 onPointerDown={(e) => handlePointerDown(e, square)}
+                onMouseEnter={() => setHoveredSquare(square)}
+                onMouseLeave={() => setHoveredSquare(null)}
+                onFocus={() => setFocusedSquare(square)}
+                onBlur={() => setFocusedSquare(null)}
               >
                 {isLast && (
                   <span
@@ -328,6 +334,11 @@ export function ChessBoard(props: ChessBoardProps) {
 
         {tracked.map((piece) => {
           const isDragged = dragging?.id === piece.id;
+          const isGlowing =
+            isDragged ||
+            selected === piece.square ||
+            hoveredSquare === piece.square ||
+            focusedSquare === piece.square;
           const pos = squareToXY(piece.square);
           const x = isDragged ? dragging!.x - squareSize / 2 : pos.x;
           const y = isDragged ? dragging!.y - squareSize / 2 : pos.y;
@@ -343,7 +354,13 @@ export function ChessBoard(props: ChessBoardProps) {
                 willChange: "transform",
               }}
             >
-              <Piece type={piece.type} color={piece.color} set={pieceSet} size={squareSize} />
+              <Piece
+                type={piece.type}
+                color={piece.color}
+                set={pieceSet}
+                size={squareSize}
+                glow={isGlowing}
+              />
             </div>
           );
         })}
