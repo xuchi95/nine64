@@ -829,6 +829,83 @@ export function ChessBoard(props: ChessBoardProps) {
           );
         })}
 
+        {/* Capture + promotion: shards gather, a beam lifts and the new piece
+            is reforged on the last rank. */}
+        {promoBurst && (() => {
+          const pos = squareToXY(promoBurst.square);
+          const accent = promoBurst.color === "w" ? "rgba(255,224,168," : "rgba(126,196,255,";
+          return (
+            <div
+              key={`promo-${promoBurst.key}`}
+              className="pointer-events-none absolute z-30"
+              style={{
+                width: squareSize,
+                height: squareSize,
+                transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+              }}
+            >
+              <span
+                aria-hidden
+                className="animate-nexus-promote-beam absolute"
+                style={{
+                  left: squareSize * 0.3,
+                  top: -squareSize * 0.45,
+                  width: squareSize * 0.4,
+                  height: squareSize * 1.45,
+                  background: `linear-gradient(to top, ${accent}0.75) 0%, ${accent}0.28) 45%, transparent 100%)`,
+                  filter: "blur(2px)",
+                }}
+              />
+              <span
+                aria-hidden
+                className="animate-nexus-promote-ring absolute rounded-full"
+                style={{
+                  inset: squareSize * 0.05,
+                  border: `${Math.max(2, squareSize * 0.045)}px solid ${accent}0.95)`,
+                  boxShadow: `0 0 ${squareSize * 0.3}px ${accent}0.6)`,
+                }}
+              />
+              {Array.from({ length: 12 }).map((_, i) => {
+                const angle = (i / 12) * Math.PI * 2 + (promoBurst.key % 5) * 0.3;
+                const dist = squareSize * (0.6 + ((i * 29) % 9) / 26);
+                const w = Math.max(2, squareSize * (i % 3 === 0 ? 0.1 : 0.065));
+                const h = Math.max(2, squareSize * (i % 2 === 0 ? 0.05 : 0.075));
+                return (
+                  <span
+                    key={i}
+                    aria-hidden
+                    className="animate-nexus-promote-gather absolute"
+                    style={
+                      {
+                        left: squareSize / 2 - w / 2,
+                        top: squareSize / 2 - h / 2,
+                        width: w,
+                        height: h,
+                        background: `linear-gradient(90deg, ${accent}0.95), ${accent}0.3))`,
+                        clipPath: "polygon(0 40%, 60% 0, 100% 55%, 45% 100%)",
+                        animationDelay: `${(i % 4) * 24}ms`,
+                        "--gx": `${Math.cos(angle) * dist}px`,
+                        "--gy": `${Math.sin(angle) * dist}px`,
+                        "--gr": `${(i % 2 === 0 ? 1 : -1) * (120 + i * 18)}deg`,
+                      } as React.CSSProperties
+                    }
+                  />
+                );
+              })}
+              <div className="animate-nexus-promote-rise">
+                <Piece
+                  type={promoBurst.type as BoardPiece["type"]}
+                  color={promoBurst.color}
+                  set={pieceSet}
+                  size={squareSize}
+                />
+              </div>
+            </div>
+          );
+        })()}
+
+
+
 
         {tracked.map((piece) => {
           const isDragged = dragging?.id === piece.id;
