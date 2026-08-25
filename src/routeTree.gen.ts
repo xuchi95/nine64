@@ -15,6 +15,7 @@ import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as OpeningsRouteImport } from './routes/openings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -66,6 +67,11 @@ const CookiePolicyRoute = CookiePolicyRouteImport.update({
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OpeningsRoute = OpeningsRouteImport.update({
+  id: '/openings',
+  path: '/openings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
   '/insights': typeof InsightsRoute
+  '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
   '/insights': typeof InsightsRoute
+  '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
   '/insights': typeof InsightsRoute
+  '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookie-policy'
     | '/insights'
+    | '/openings'
     | '/privacy'
     | '/progress'
     | '/settings'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookie-policy'
     | '/insights'
+    | '/openings'
     | '/privacy'
     | '/progress'
     | '/settings'
@@ -348,6 +359,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookie-policy'
     | '/insights'
+    | '/openings'
     | '/privacy'
     | '/progress'
     | '/settings'
@@ -380,6 +392,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CookiePolicyRoute: typeof CookiePolicyRoute
   InsightsRoute: typeof InsightsRoute
+  OpeningsRoute: typeof OpeningsRoute
   PrivacyRoute: typeof PrivacyRoute
   ProgressRoute: typeof ProgressRoute
   SettingsRoute: typeof SettingsRoute
@@ -440,6 +453,13 @@ declare module '@tanstack/react-router' {
       path: '/insights'
       fullPath: '/insights'
       preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/openings': {
+      id: '/openings'
+      path: '/openings'
+      fullPath: '/openings'
+      preLoaderRoute: typeof OpeningsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -648,6 +668,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CookiePolicyRoute: CookiePolicyRoute,
   InsightsRoute: InsightsRoute,
+  OpeningsRoute: OpeningsRoute,
   PrivacyRoute: PrivacyRoute,
   ProgressRoute: ProgressRoute,
   SettingsRoute: SettingsRoute,
