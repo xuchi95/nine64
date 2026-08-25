@@ -155,9 +155,21 @@ function MobileNav() {
     onClose: () => setOpen(false),
   });
 
+  const navRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  // Khi mở drawer: cuộn tới mục đang active để luôn nhìn thấy vị trí hiện tại.
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => {
+      const el = navRef.current?.querySelector<HTMLElement>('[data-active="true"]');
+      el?.scrollIntoView({ block: "center", behavior: "auto" });
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
   const isActive = (to: string) => isRouteActive(pathname, to);
 
