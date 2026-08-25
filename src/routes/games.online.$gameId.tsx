@@ -63,7 +63,8 @@ function OnlineGameDetail() {
 
   const moves = useMemo(() => {
     if (!game) return [];
-    return game.moves.map((m) => ({
+    const gameMoves = Array.isArray(game.moves) ? game.moves : [];
+    return gameMoves.map((m) => ({
       san: m.san,
       from: m.uci.slice(0, 2),
       to: m.uci.slice(2, 4),
@@ -351,7 +352,7 @@ function OnlineGameDetail() {
             <Row label={t("play.detail.mode")} value={t("play.onlineDetail.modeOnline")} />
             <Row label={t("play.detail.variant")} value={game.variant} />
             <Row label={t("play.detail.timeControl")} value={game.time_control} />
-            <Row label={t("play.detail.movesLabel")} value={String(game.moves.length)} />
+            <Row label={t("play.detail.movesLabel")} value={String(moves.length)} />
             <Row label={t("play.detail.played")} value={new Date(game.created_at).toLocaleString()} />
           </div>
         </div>
