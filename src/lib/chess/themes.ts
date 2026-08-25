@@ -80,7 +80,52 @@ export const BOARD_THEMES: BoardTheme[] = [
     coord: "rgba(226, 234, 250, 0.6)",
     frame: "#151a26",
   },
+  {
+    id: "night",
+    name: "Night",
+    light: "#3c4250",
+    dark: "#1b1f27",
+    lastMove: "rgba(247, 199, 90, 0.3)",
+    selected: "rgba(247, 199, 90, 0.44)",
+    hint: "rgba(236, 240, 248, 0.34)",
+    coord: "rgba(226, 232, 244, 0.55)",
+    frame: "#0d1015",
+  },
+  {
+    id: "heritage",
+    name: "Heritage",
+    light: "#f0e2c4",
+    dark: "#8a5a34",
+    lastMove: "rgba(226, 170, 74, 0.45)",
+    selected: "rgba(226, 170, 74, 0.6)",
+    hint: "rgba(52, 33, 16, 0.34)",
+    coord: "rgba(52, 33, 16, 0.6)",
+    frame: "#4a3018",
+  },
+  {
+    id: "amber",
+    name: "Amber",
+    light: "#f6e0b0",
+    dark: "#b07a2c",
+    lastMove: "rgba(255, 226, 150, 0.5)",
+    selected: "rgba(255, 226, 150, 0.62)",
+    hint: "rgba(60, 38, 10, 0.3)",
+    coord: "rgba(60, 38, 10, 0.6)",
+    frame: "#5c3d12",
+  },
+  {
+    id: "ember",
+    name: "Ember",
+    light: "#4a3b34",
+    dark: "#26191a",
+    lastMove: "rgba(255, 140, 80, 0.34)",
+    selected: "rgba(255, 160, 100, 0.5)",
+    hint: "rgba(255, 224, 200, 0.32)",
+    coord: "rgba(255, 226, 206, 0.6)",
+    frame: "#170f10",
+  },
 ];
+
 
 export interface PieceSet {
   id: string;
