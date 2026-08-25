@@ -25,9 +25,11 @@ interface Props {
  * each piece set restyles fill, stroke weight and depth.
  */
 export function Piece({ type, color, set, size, className }: Props) {
-  const fill = color === "w" ? set.lightFill : set.darkFill;
-  const stroke = color === "w" ? set.lightStroke : set.darkStroke;
-  const strokeWidth = set.stroke * 100;
+  const isDark = color === "b";
+  const fill = isDark ? set.darkFill : set.lightFill;
+  const stroke = isDark ? set.darkStroke : set.lightStroke;
+  // Quân đen cần viền sáng dày hơn để không bị chìm vào ô cờ tối/nâu.
+  const strokeWidth = set.stroke * 100 * (isDark ? 1.6 : 1);
 
   return (
     <svg
@@ -56,7 +58,11 @@ export function Piece({ type, color, set, size, className }: Props) {
         style={{
           fontFamily:
             "'Noto Sans Symbols 2','Segoe UI Symbol','Apple Symbols','DejaVu Sans',sans-serif",
-          filter: set.shadow ? "drop-shadow(0 1px 1px rgba(0,0,0,0.35))" : undefined,
+          filter: isDark
+            ? "drop-shadow(0 0 1.5px rgba(255,255,255,0.55)) drop-shadow(0 1px 1px rgba(0,0,0,0.45))"
+            : set.shadow
+              ? "drop-shadow(0 1px 1px rgba(0,0,0,0.35))"
+              : undefined,
         }}
       >
         {GLYPHS[type]}
@@ -64,6 +70,7 @@ export function Piece({ type, color, set, size, className }: Props) {
     </svg>
   );
 }
+
 
 export const PIECE_NAMES: Record<PieceType, string> = {
   p: "Pawn",
