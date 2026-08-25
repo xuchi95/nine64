@@ -7,7 +7,7 @@ import { APP } from "@/config/app";
 import { BOARD_THEMES, PIECE_SETS, getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { Piece } from "@/components/chess/Piece";
 import { resetSettings, updateSettings, useSettings, type Settings } from "@/lib/settings";
-import { playSound } from "@/lib/sound";
+import { playSound, playShatter } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
@@ -140,6 +140,22 @@ function SettingsPage() {
             onCheckedChange={(v) => {
               updateSettings({ soundEnabled: v });
               if (v) playSound("notification");
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="pr-4">
+            <p className="text-sm font-medium">Capture shatter sound</p>
+            <p className="text-xs text-muted-foreground">
+              Layered glass-shatter cue synced with the capture animation.
+            </p>
+          </div>
+          <Switch
+            checked={settings.shatterSound}
+            disabled={!settings.soundEnabled}
+            onCheckedChange={(v) => {
+              updateSettings({ shatterSound: v });
+              if (v) playShatter();
             }}
           />
         </div>

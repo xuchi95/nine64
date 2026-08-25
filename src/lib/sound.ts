@@ -127,3 +127,82 @@ export function playSound(name: SoundName) {
     osc.stop(start + tone.dur + 0.03);
   }
 }
+
+/**
+ * "Nexus Shatter" — layered capture sound designed to land in sync with the
+ * on-board shatter animation: a low impact thud, an expanding shockwave sweep
+ * and a spray of crystalline shard pings over a short filtered noise burst.
+ */
+export function playShatter() {
+  if (!enabled || volume <= 0) return;
+  const audio = getCtx();
+  if (!audio) return;
+  const now = audio.currentTime;
+
+  const master = audio.createGain();
+  master.gain.setValueAtTime(volume, now);
+  master.connect(audio.destination);
+
+  // 1. Impact thud (the piece being struck).
+  const thud = audio.createOscillator();
+  const thudGain = audio.createGain();
+  thud.type = "sine";
+  thud.frequency.setValueAtTime(180, now);
+  thud.frequency.exponentialRampToValueAtTime(52, now + 0.18);
+  thudGain.gain.setValueAtTime(0.0001, now);
+  thudGain.gain.exponentialRampToValueAtTime(0.5, now + 0.008);
+  thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+  thud.connect(thudGain).connect(master);
+  thud.start(now);
+  thud.stop(now + 0.24);
+
+  // 2. Shockwave sweep (matches the expanding ring).
+  const sweep = audio.createOscillator();
+  const sweepGain = audio.createGain();
+  sweep.type = "sawtooth";
+  sweep.frequency.setValueAtTime(900, now + 0.01);
+  sweep.frequency.exponentialRampToValueAtTime(240, now + 0.16);
+  sweepGain.gain.setValueAtTime(0.0001, now + 0.01);
+  sweepGain.gain.exponentialRampToValueAtTime(0.12, now + 0.03);
+  sweepGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+  sweep.connect(sweepGain).connect(master);
+  sweep.start(now + 0.01);
+  sweep.stop(now + 0.2);
+
+  // 3. Glass noise burst (the fracture itself).
+  const len = Math.floor(audio.sampleRate * 0.26);
+  const buffer = audio.createBuffer(1, len, audio.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4);
+  }
+  const noise = audio.createBufferSource();
+  noise.buffer = buffer;
+  const hp = audio.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.setValueAtTime(1400, now);
+  hp.frequency.exponentialRampToValueAtTime(3600, now + 0.2);
+  const noiseGain = audio.createGain();
+  noiseGain.gain.setValueAtTime(0.22, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+  noise.connect(hp).connect(noiseGain).connect(master);
+  noise.start(now);
+
+  // 4. Shard pings flying outwards, staggered like the visual shards.
+  const shards = [1560, 1980, 2430, 2870, 3320, 3900];
+  shards.forEach((freq, i) => {
+    const osc = audio.createOscillator();
+    const g = audio.createGain();
+    const start = now + 0.02 + i * 0.022;
+    const dur = 0.12 + (i % 3) * 0.05;
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, start);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.72, start + dur);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(0.075 / (1 + i * 0.3), start + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(g).connect(master);
+    osc.start(start);
+    osc.stop(start + dur + 0.02);
+  });
+}

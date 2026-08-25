@@ -11,6 +11,7 @@ export interface Settings {
   animations: boolean;
   animationMs: number;
   soundEnabled: boolean;
+  shatterSound: boolean;
   sfxVolume: number;
   autoQueen: boolean;
   premove: boolean;
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: Settings = {
   animations: true,
   animationMs: 160,
   soundEnabled: true,
+  shatterSound: true,
   sfxVolume: 0.6,
   autoQueen: false,
   premove: true,
