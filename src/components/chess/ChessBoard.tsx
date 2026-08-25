@@ -349,10 +349,11 @@ export function ChessBoard(props: ChessBoardProps) {
                 )}
                 {isCheck && (
                   <span
-                    className="absolute inset-0"
+                    className="animate-nexus-check-pulse absolute inset-0"
                     style={{
                       background:
                         "radial-gradient(circle, rgba(220,60,50,0.85) 8%, rgba(220,60,50,0.25) 55%, transparent 72%)",
+                      boxShadow: "inset 0 0 0 2px rgba(255,90,80,0.9)",
                     }}
                   />
                 )}
