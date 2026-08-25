@@ -342,16 +342,50 @@ export function ChessBoard(props: ChessBoardProps) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width;
-      if (w) setSize(w);
-    });
+
+    let raf = 0;
+    let last = 0;
+
+    /** Snap to a whole pixel so the 8x8 grid never lands on sub-pixel seams. */
+    const apply = (raw: number) => {
+      if (!raw) return;
+      const next = Math.round(raw);
+      // Ignore sub-pixel churn (scrollbar/zoom/theme repaint) that would
+      // otherwise re-render the whole board and look like a layout jump.
+      if (Math.abs(next - last) < 1) return;
+      last = next;
+      setSize(next);
+    };
+
+    const measure = () => {
+      raf = 0;
+      const node = containerRef.current;
+      if (node) apply(node.getBoundingClientRect().width);
+    };
+
+    const schedule = () => {
+      // Never resize mid theme cross-fade: geometry is frozen there.
+      if (document.documentElement.classList.contains("theme-anim")) return;
+      if (raf) return;
+      raf = window.requestAnimationFrame(measure);
+    };
+
+    const observer = new ResizeObserver(schedule);
     observer.observe(el);
-    setSize(el.getBoundingClientRect().width);
-    return () => observer.disconnect();
+    window.addEventListener("resize", schedule);
+    window.addEventListener("orientationchange", schedule);
+    apply(el.getBoundingClientRect().width);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("orientationchange", schedule);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
   const squareSize = size / 8;
+
 
   const files = orientation === "w" ? FILES : [...FILES].reverse();
   const ranks = orientation === "w" ? RANKS : [...RANKS].reverse();
