@@ -514,11 +514,17 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
 
   if (pathname === "/") return null;
 
-  const exact = ROUTE_LABELS[pathname];
-  const parentKey = pathname.split("/").slice(0, -1).join("/") || "/";
-  const parentLabel = ROUTE_LABELS[parentKey] || ROUTE_LABELS[`/${pathname.split("/")[1]}`];
+  const segments = pathname.split("/").filter(Boolean);
 
-  const currentLabel = exact || (gameId ? `Game ${gameId.slice(0, 6)}` : pathname.split("/").pop() || "");
+  // Build every ancestor crumb that has a known label and is a real route.
+  const crumbs = segments.slice(0, -1).map((_, index) => {
+    const to = "/" + segments.slice(0, index + 1).join("/");
+    return { to, label: ROUTE_LABELS[to] };
+  }).filter((c): c is { to: string; label: string } => Boolean(c.label));
+
+  const currentLabel =
+    ROUTE_LABELS[pathname] ||
+    (gameId ? `Game ${gameId.slice(0, 6)}` : segments[segments.length - 1] || "");
 
   return (
     <div className="border-t border-border/40 bg-secondary/20">
@@ -528,21 +534,30 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
           wide ? "max-w-[1600px]" : "max-w-6xl",
         )}
       >
-        <Link to="/" className="flex shrink-0 items-center gap-1 hover:text-foreground">
+        <Link to="/" className="flex shrink-0 items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-secondary/60 hover:text-foreground">
           <Home className="size-3" />
           <span className="hidden sm:inline">Home</span>
         </Link>
-        {parentLabel && parentKey !== "/" && (
-          <>
+        {crumbs.map((crumb) => (
+          <span key={crumb.to} className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-1.5">
             <ChevronRight className="size-3 shrink-0 opacity-50" />
-            <span className="hidden max-w-[100px] truncate sm:inline md:max-w-[180px]">{parentLabel}</span>
-          </>
-        )}
+            <Link
+              to={crumb.to}
+              className="hidden max-w-[100px] truncate rounded-md px-1.5 py-0.5 transition-colors hover:bg-secondary/60 hover:text-foreground sm:inline-block md:max-w-[180px]"
+            >
+              {crumb.label}
+            </Link>
+          </span>
+        ))}
         <ChevronRight className="size-3 shrink-0 opacity-50" />
-        <span className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+        <span
+          aria-current="page"
+          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary"
+        >
           {currentLabel}
         </span>
       </div>
     </div>
   );
 }
+
