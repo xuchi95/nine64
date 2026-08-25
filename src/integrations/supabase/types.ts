@@ -689,6 +689,48 @@ export type Database = {
         }
         Relationships: []
       }
+      security_events: {
+        Row: {
+          created_at: string
+          detail: Json
+          error_code: string | null
+          id: string
+          kind: string
+          message: string | null
+          operation: string | null
+          path: string | null
+          resource: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          error_code?: string | null
+          id?: string
+          kind: string
+          message?: string | null
+          operation?: string | null
+          path?: string | null
+          resource?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          error_code?: string | null
+          id?: string
+          kind?: string
+          message?: string | null
+          operation?: string | null
+          path?: string | null
+          resource?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -746,6 +788,30 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          _detail?: Json
+          _error_code?: string
+          _kind: string
+          _message?: string
+          _operation?: string
+          _path?: string
+          _resource?: string
+          _user_agent?: string
+        }
+        Returns: undefined
+      }
+      security_probe_alerts: {
+        Args: { _threshold?: number; _window_minutes?: number }
+        Returns: {
+          events: number
+          first_seen: string
+          kinds: string[]
+          last_seen: string
+          resources: number
+          user_id: string
+        }[]
       }
       update_ratings_after_game: {
         Args: { _game_id: string }

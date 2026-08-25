@@ -576,6 +576,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/fairplay": "Fair Play",
   "/admin/fairplay/log": "Nhật ký",
   "/admin/audit": "Audit log",
+  "/admin/security": "Truy cập bị chặn",
 
 };
 
