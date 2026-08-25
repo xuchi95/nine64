@@ -468,7 +468,7 @@ function AuthHeader() {
         </div>
         <DropdownMenuSeparator />
         {PROFILE_MENU.map((item) => {
-          const active = pathname === item.to || pathname.startsWith(item.to);
+          const active = isRouteActive(pathname, item.to);
           return (
             <DropdownMenuItem
               key={item.to + item.label}
