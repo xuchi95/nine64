@@ -44,7 +44,7 @@ export function MatchFoundDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onDecline()}>
-      <DialogContent className="max-w-md overflow-hidden border-brass/40 p-0" showCloseButton={false}>
+      <DialogContent className="max-w-md overflow-hidden border-brass/40 p-0">
         <div className="border-b border-brass/25 bg-brass/10 px-6 py-4">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Swords className="size-5 text-brass" />
