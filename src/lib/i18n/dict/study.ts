@@ -331,7 +331,7 @@ export default {
     "study.drillsLib.taskCritical": "Mở {where} trong bàn phân tích, tự tìm nước tốt hơn trong 2 phút rồi so với máy{themeSuffix}.",
     "study.drillsLib.taskCriticalTheme": "; ôn lại chủ đề \"{theme}\"",
     "study.drillsLib.taskSerious": "Thực hiện lại {where} 3 lần liên tiếp không gợi ý, nêu kế hoạch trước khi đi{themeSuffix}.",
-    "study.drillsLib.taskSeriousTheme": " (tập trung "{theme}")"{theme}\")",
+    "study.drillsLib.taskSeriousTheme": " (tập trung \"{theme}\")",
     "study.drillsLib.taskModerate": "Kiểm tra lại {where}: liệt kê mọi nước ăn quân hoặc chiếu trước khi đi.",
     "study.drillsLib.taskBasic": "Xem lại {where} và ghi chú nguyên nhân chọn sai.",
     "study.drillsLib.wherePosition": "thế cờ này",
