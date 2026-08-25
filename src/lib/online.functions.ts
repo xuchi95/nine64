@@ -106,17 +106,24 @@ export const tryMatch = createServerFn({ method: "POST" })
 
     const entry = myEntry as MatchmakingQueue;
 
+    // Heartbeat this browser tab's search. The database matcher ignores stale
+    // waiting rows so abandoned tabs cannot absorb fresh players into phantom games.
+    const { error: heartbeatError } = await supabase
+      .from("matchmaking_queue")
+      .update({ status: "waiting" })
+      .eq("id", entry.id)
+      .eq("user_id", context.userId)
+      .eq("status", "waiting");
+
+    if (heartbeatError) throw new Error(heartbeatError.message);
+
     // Match creation must be atomic across two queue rows, one game row and two
     // notifications. The server validates the caller first, then invokes the
     // service-only RPC so the database can lock both queue rows consistently.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const startFen = startingFenForVariant(entry.variant);
-    const adminRpc = supabaseAdmin.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-    const { data: gameId, error: matchError } = await adminRpc("create_online_match", {
+    const { data: gameId, error: matchError } = await supabaseAdmin.rpc("create_online_match", {
       _queue_id: entry.id,
       _user_id: context.userId,
       _initial_fen: startFen,
@@ -281,11 +288,7 @@ export const finishGame = createServerFn({ method: "POST" })
     const draw = data.result === "1/2-1/2";
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const adminRpc = supabaseAdmin.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ error: { message: string } | null }>;
-    const { error: ratingError } = await adminRpc("apply_glicko2", { _game_id: data.gameId });
+    const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", { _game_id: data.gameId });
     if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
 
 
