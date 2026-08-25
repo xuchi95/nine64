@@ -56,7 +56,35 @@ function Analysis() {
   const [scanProgress, setScanProgress] = useState(0);
   const [activeLine, setActiveLine] = useState(0);
   const [showArrows, setShowArrows] = useState(true);
+  /** When off, the engine never auto-draws arrows so you can guess first. */
+  const [autoHighlight, setAutoHighlight] = useState(true);
   const engineRef = useRef<StockfishEngine | null>(null);
+
+  // Remember the preference across visits.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("nine64.analysis.autoHighlight");
+      if (saved === "0") {
+        setAutoHighlight(false);
+        setShowArrows(false);
+      }
+    } catch {
+      /* private mode */
+    }
+  }, []);
+
+  const toggleAutoHighlight = useCallback(() => {
+    setAutoHighlight((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem("nine64.analysis.autoHighlight", next ? "1" : "0");
+      } catch {
+        /* private mode */
+      }
+      setShowArrows(next);
+      return next;
+    });
+  }, []);
 
 
   const game = useChessGame({ variant: "standard", timeControl: null });
@@ -130,7 +158,7 @@ function Analysis() {
       // Auto-highlight: jump to the first decisive line, else the top line.
       const winIndex = result.findIndex((l) => isWinningScore(l.cp, l.mateIn));
       setActiveLine(winIndex >= 0 ? winIndex : 0);
-      setShowArrows(true);
+      setShowArrows(autoHighlight);
     } catch (e) {
       setLoadError((e as Error).message);
     } finally {
@@ -312,7 +340,9 @@ function Analysis() {
                   <span className="text-2xs text-muted-foreground">
                     {arrows.length > 0
                       ? t("study.analysis.highlightOn")
-                      : t("study.analysis.pickLineHint")}
+                      : showArrows
+                        ? t("study.analysis.pickLineHint")
+                        : t("study.analysis.arrowsOff")}
                   </span>
                   <Button
                     size="sm"
