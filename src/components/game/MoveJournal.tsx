@@ -62,7 +62,7 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                 </span>
                 <span
                   className={cn(
-                    "flex size-4 items-center justify-center rounded-full text-[9px] font-bold",
+                    "flex size-4 items-center justify-center rounded-full text-2xs font-bold",
                     e.color === "w"
                       ? "bg-foreground text-background"
                       : "bg-surface-2 text-foreground ring-1 ring-border",

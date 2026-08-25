@@ -181,7 +181,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
             </Section>
           )}
 
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-2xs text-muted-foreground">
             Bình luận do AI tạo từ dữ liệu engine của ván này — dùng như góc nhìn huấn luyện, không
             phải chân lý tuyệt đối.
           </p>

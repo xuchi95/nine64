@@ -104,7 +104,7 @@ function PlayHub() {
             <span>
               <span className="flex items-center gap-2 font-semibold">
                 {card.title}
-                <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span className="rounded bg-secondary px-1.5 py-0.5 text-2xs uppercase tracking-wider text-muted-foreground">
                   Soon
                 </span>
               </span>
