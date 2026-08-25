@@ -461,7 +461,9 @@ export function ChessBoard(props: ChessBoardProps) {
                     style={{
                       background:
                         "radial-gradient(circle, rgba(255,176,60,0.55) 20%, rgba(255,150,40,0.18) 62%, transparent 78%)",
-                      boxShadow: "inset 0 0 0 2px rgba(255,190,80,0.95)",
+                      boxShadow: cb
+                        ? "inset 0 0 0 3px rgba(255,190,80,1)"
+                        : "inset 0 0 0 2px rgba(255,190,80,0.95)",
                     }}
                   />
                 )}
@@ -469,14 +471,20 @@ export function ChessBoard(props: ChessBoardProps) {
                   <span
                     aria-hidden
                     className="absolute inset-0"
-                    style={{ backgroundColor: "rgba(255,140,70,0.16)" }}
+                    style={{
+                      backgroundColor: "rgba(255,140,70,0.16)",
+                      backgroundImage: cb ? stripes("rgba(255,150,60,0.55)", 45) : undefined,
+                    }}
                   />
                 )}
                 {defencePathSquares.has(square) && (
                   <span
                     aria-hidden
                     className="absolute inset-0"
-                    style={{ backgroundColor: "rgba(80,220,140,0.14)" }}
+                    style={{
+                      backgroundColor: cb ? "rgba(70,170,255,0.16)" : "rgba(80,220,140,0.14)",
+                      backgroundImage: cb ? stripes("rgba(70,170,255,0.55)", -45) : undefined,
+                    }}
                   />
                 )}
                 {defenderSquares.has(square) && (
@@ -484,9 +492,26 @@ export function ChessBoard(props: ChessBoardProps) {
                     aria-hidden
                     className="animate-nexus-check-pulse absolute inset-0"
                     style={{
+                      background: cb
+                        ? "radial-gradient(circle, rgba(70,170,255,0.42) 22%, rgba(70,170,255,0.14) 62%, transparent 78%)"
+                        : "radial-gradient(circle, rgba(70,220,140,0.42) 22%, rgba(70,220,140,0.14) 62%, transparent 78%)",
+                      boxShadow: cb
+                        ? "inset 0 0 0 3px rgba(120,190,255,1)"
+                        : "inset 0 0 0 2px rgba(110,240,170,0.9)",
+                    }}
+                  />
+                )}
+                {escapeSquares.has(square) && !isCheck && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{
                       background:
-                        "radial-gradient(circle, rgba(70,220,140,0.42) 22%, rgba(70,220,140,0.14) 62%, transparent 78%)",
-                      boxShadow: "inset 0 0 0 2px rgba(110,240,170,0.9)",
+                        "radial-gradient(circle, rgba(120,235,255,0.34) 24%, rgba(120,235,255,0.12) 62%, transparent 80%)",
+                      boxShadow: "inset 0 0 0 2px rgba(150,240,255,0.9)",
+                      backgroundImage: cb
+                        ? stripes("rgba(150,240,255,0.5)", 90)
+                        : undefined,
                     }}
                   />
                 )}
@@ -496,10 +521,39 @@ export function ChessBoard(props: ChessBoardProps) {
                     style={{
                       background:
                         "radial-gradient(circle, rgba(220,60,50,0.85) 8%, rgba(220,60,50,0.25) 55%, transparent 72%)",
-                      boxShadow: "inset 0 0 0 2px rgba(255,90,80,0.9)",
+                      boxShadow: cb
+                        ? "inset 0 0 0 3px rgba(255,90,80,1)"
+                        : "inset 0 0 0 2px rgba(255,90,80,0.9)",
                     }}
                   />
                 )}
+                {cb &&
+                  (() => {
+                    const glyph = isCheck
+                      ? "!"
+                      : attackerSquares.has(square)
+                        ? "\u2715"
+                        : defenderSquares.has(square)
+                          ? "\u2714"
+                          : escapeSquares.has(square)
+                            ? "\u2192"
+                            : null;
+                    if (!glyph) return null;
+                    return (
+                      <span
+                        aria-hidden
+                        className="absolute right-[2px] top-[2px] flex items-center justify-center rounded-full bg-black/75 font-bold leading-none text-white"
+                        style={{
+                          width: Math.max(14, squareSize * 0.3),
+                          height: Math.max(14, squareSize * 0.3),
+                          fontSize: Math.max(9, squareSize * 0.18),
+                        }}
+                      >
+                        {glyph}
+                      </span>
+                    );
+                  })()}
+
 
                 {settings.showLegalMoves && isTarget && !isCapture && (
                   <span
