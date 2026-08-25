@@ -23,7 +23,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
-import { Piece, type PieceType, type PieceColor } from "@/components/chess/Piece";
 import { resolveBoardThemeId, resolvePieceSetId } from "@/lib/chess/themes";
 import { StaticBoard, START_PIECES } from "@/components/chess/StaticBoard";
 import { useSettings } from "@/lib/settings";
