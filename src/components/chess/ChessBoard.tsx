@@ -120,8 +120,8 @@ export function ChessBoard(props: ChessBoardProps) {
   /** captured pieces kept on screen for a short fade-out */
   const [ghosts, setGhosts] = useState<Ghost[]>([]);
 
-  const animOn = settings.animations;
-  const transitionMs = animOn ? settings.animationMs : 0;
+  const transitionMs = settings.animations ? settings.animationMs : 0;
+
 
   useEffect(() => {
     const { result, movedIds, removed } = trackPieces(trackedRef.current, pieces);
