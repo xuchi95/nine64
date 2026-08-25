@@ -1,4 +1,4 @@
-/* Nexus Chess service worker: offline app shell + engine caching. */
+/* Nine64 service worker: offline app shell + engine caching. */
 const CACHE = "nexus-chess-v1";
 const SHELL = ["/", "/play", "/play/ai", "/play/local", "/analysis", "/manifest.webmanifest"];
 

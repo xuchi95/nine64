@@ -2,11 +2,11 @@
  * Central app configuration. Rename the platform in one place.
  */
 export const APP = {
-  name: "Nexus Chess",
-  shortName: "Nexus",
+  name: "Nine64",
+  shortName: "Nine64",
   tagline: "Play. Analyse. Ascend.",
   description:
-    "Nexus Chess is a premium 2D chess platform: play the Stockfish-powered engine, local matches, and study every move with instant analysis.",
+    "Nine64 is a premium 2D chess platform: play the Stockfish-powered engine, local matches, and study every move with instant analysis.",
 } as const;
 
 export type TimeCategory = "Bullet" | "Blitz" | "Rapid" | "Classical";

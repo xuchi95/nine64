@@ -21,7 +21,7 @@ export const Route = createFileRoute("/settings")({
       {
         name: "description",
         content:
-          "Tune board themes, piece sets, sound, animations and engine performance for Nexus Chess.",
+          "Tune board themes, piece sets, sound, animations and engine performance for Nine64.",
       },
       { property: "og:title", content: `Settings — ${APP.name}` },
       { property: "og:description", content: "Board, pieces, sound and engine preferences." },

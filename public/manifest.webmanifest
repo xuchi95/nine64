@@ -1,6 +1,6 @@
 {
-  "name": "Nexus Chess",
-  "short_name": "Nexus",
+  "name": "Nine64",
+  "short_name": "Nine64",
   "description": "Premium 2D chess platform with a Stockfish engine, variants and analysis.",
   "start_url": "/",
   "scope": "/",
