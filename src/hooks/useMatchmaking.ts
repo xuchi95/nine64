@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { joinQueue, leaveQueue, tryMatch } from "@/lib/online.functions";
+import { declineMatch as declineMatchFn, joinQueue, leaveQueue, tryMatch } from "@/lib/online.functions";
 import { useAuth } from "@/lib/auth";
 import { playSound } from "@/lib/sound";
 import { errorDetail, logMmEvent } from "@/lib/matchmaking/diagnostics";
@@ -31,11 +31,13 @@ export function useMatchmaking() {
   const joinFn = useServerFn(joinQueue);
   const leaveFn = useServerFn(leaveQueue);
   const matchFn = useServerFn(tryMatch);
+  const declineFn = useServerFn(declineMatchFn);
   const [state, setState] = useState<MatchmakingState>({ kind: "idle" });
   const pollingRef = useRef<number | null>(null);
   const pollCountRef = useRef(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const acceptingRef = useRef(false);
+  const searchConfigRef = useRef<{ variant: string; timeControl: string } | null>(null);
 
   const cleanup = useCallback(() => {
     if (pollingRef.current) {
@@ -140,6 +142,7 @@ export function useMatchmaking() {
   const startSearch = useCallback(
     async (variant: string, timeControl: string) => {
       if (!user) return;
+      searchConfigRef.current = { variant, timeControl };
       cleanup();
       setState({ kind: "idle" });
       pollCountRef.current = 0;
