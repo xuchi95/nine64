@@ -217,7 +217,10 @@
     letter-spacing: 0.001em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    max-width: 100%;
   }
+
 
   /* Một font duy nhất cho mọi phần tử, kể cả input/button/code/kbd */
   body *,
