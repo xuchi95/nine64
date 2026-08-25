@@ -111,6 +111,13 @@ export function Piece({ type, color, set, size, className }: Props) {
             <circle cx="50" cy="15.5" r="4" />
           </>
         )}
+        {type === "k" && (
+          <>
+            <circle cx="28.5" cy="46" r="3.6" />
+            <circle cx="71.5" cy="46" r="3.6" />
+          </>
+        )}
+
       </g>
 
       {/* engraved detail lines — brass-cut accents */}
