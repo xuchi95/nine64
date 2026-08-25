@@ -417,6 +417,37 @@ function Analysis() {
                     {t(`study.endgame.verdict.${endgame.verdict}`)}
                   </p>
                 </div>
+                <div className="space-y-1.5 rounded-md border border-border/70 bg-surface-2/50 p-2">
+                  <span className={gameLabelClass}>{t("study.endgame.why")}</span>
+                  <p className="text-2xs leading-relaxed text-muted-foreground">
+                    {t("study.endgame.whyPhase", {
+                      material: endgame.materialValue,
+                      pieces: endgame.pieceCount,
+                      maxMaterial: PHASE_THRESHOLDS.endgameMaterial,
+                      maxPieces: PHASE_THRESHOLDS.endgamePieces,
+                      midMaterial: PHASE_THRESHOLDS.middlegameMaterial,
+                    })}
+                  </p>
+                  <p className="text-2xs leading-relaxed text-muted-foreground">
+                    {endgame.theoretical
+                      ? t("study.endgame.whyClassBook", {
+                          name: t(`study.endgame.class.${endgame.classKey}`),
+                          signature: endgame.signature,
+                        })
+                      : t("study.endgame.whyClassHeuristic", {
+                          name: t(`study.endgame.class.${endgame.classKey}`),
+                          signature: endgame.signature,
+                          cp: WINNING_CP_THRESHOLD,
+                        })}
+                  </p>
+                  <p className="text-2xs leading-relaxed text-muted-foreground">
+                    {t("study.endgame.whyWinning", {
+                      cp: WINNING_CP_THRESHOLD,
+                      pawns: (WINNING_CP_THRESHOLD / 100).toFixed(1),
+                    })}
+                  </p>
+                </div>
+
                 {endgame.isEndgame && endgame.techniqueKeys.length > 0 && (
                   <div className="space-y-1">
                     <span className={gameLabelClass}>{t("study.endgame.technique")}</span>
