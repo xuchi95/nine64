@@ -133,7 +133,7 @@ export function playSound(name: SoundName) {
  * on-board shatter animation: a low impact thud, an expanding shockwave sweep
  * and a spray of crystalline shard pings over a short filtered noise burst.
  */
-export function playShatter() {
+export function playShatter(promotion = false) {
   if (!enabled || volume <= 0) return;
   const audio = getCtx();
   if (!audio) return;
@@ -205,4 +205,36 @@ export function playShatter() {
     osc.start(start);
     osc.stop(start + dur + 0.02);
   });
+
+  // Promotion: the shards are "reforged" — a bright ascending arpeggio that
+  // resolves as the new piece finishes rising on the board.
+  if (promotion) {
+    const notes = [523, 659, 784, 1046, 1319];
+    notes.forEach((freq, i) => {
+      const osc = audio.createOscillator();
+      const g = audio.createGain();
+      const start = now + 0.16 + i * 0.065;
+      const dur = i === notes.length - 1 ? 0.42 : 0.16;
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, start);
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.16, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(g).connect(master);
+      osc.start(start);
+      osc.stop(start + dur + 0.03);
+    });
+    // Warm shimmer underneath the arpeggio.
+    const shimmer = audio.createOscillator();
+    const shimmerGain = audio.createGain();
+    shimmer.type = "sine";
+    shimmer.frequency.setValueAtTime(261, now + 0.16);
+    shimmer.frequency.exponentialRampToValueAtTime(523, now + 0.6);
+    shimmerGain.gain.setValueAtTime(0.0001, now + 0.16);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.1, now + 0.26);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.72);
+    shimmer.connect(shimmerGain).connect(master);
+    shimmer.start(now + 0.16);
+    shimmer.stop(now + 0.76);
+  }
 }
