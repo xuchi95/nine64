@@ -526,7 +526,8 @@ const ROUTE_LABELS: Record<string, string> = {
 };
 
 function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const pathname = normalizePath(location.pathname);
   const params = useParams({ strict: false });
   const gameId = (params as { gameId?: string }).gameId;
 
