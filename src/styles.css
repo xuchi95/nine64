@@ -185,6 +185,20 @@
     font-size: 118.75%;
   }
 
+  /* Mobile: hạ nhẹ root size để chữ không bị chật/ngắt dòng xấu. */
+  @media (max-width: 640px) {
+    html {
+      font-size: 106.25%;
+    }
+  }
+
+  @media (max-width: 380px) {
+    html {
+      font-size: 100%;
+    }
+  }
+
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
