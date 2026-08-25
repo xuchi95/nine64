@@ -36,29 +36,33 @@ GEOMETRY_JS = """
 () => {
   const dpr = window.devicePixelRatio;
   const board = document.querySelector('[data-static-board]');
-  const cells = [...board.querySelectorAll('[data-square]')];
-  let maxSnap = 0, maxCenter = 0, pieces = 0;
+  const cells = [...board.querySelectorAll('[data-cell]')];
+  const boxes = [...board.querySelectorAll('[data-square]')];
+  let maxSnap = 0, maxCenter = 0;
   const frac = (v) => Math.abs(v - Math.round(v));
+  const rectOf = new Map();
   for (const cell of cells) {
     const r = cell.getBoundingClientRect();
+    rectOf.set(cell.dataset.cell, r);
     maxSnap = Math.max(maxSnap, frac(r.width * dpr), frac(r.height * dpr),
                        frac(r.left * dpr), frac(r.top * dpr));
-    const svg = cell.querySelector('svg');
-    if (svg) {
-      pieces++;
-      const s = svg.getBoundingClientRect();
-      maxCenter = Math.max(
-        maxCenter,
-        Math.abs((s.left + s.width / 2) - (r.left + r.width / 2)) * dpr,
-        Math.abs((s.top + s.height / 2) - (r.top + r.height / 2)) * dpr,
-      );
-    }
+  }
+  for (const box of boxes) {
+    const r = rectOf.get(box.dataset.square);
+    const svg = box.querySelector('svg');
+    if (!r || !svg) continue;
+    const s = svg.getBoundingClientRect();
+    maxCenter = Math.max(
+      maxCenter,
+      Math.abs((s.left + s.width / 2) - (r.left + r.width / 2)) * dpr,
+      Math.abs((s.top + s.height / 2) - (r.top + r.height / 2)) * dpr,
+    );
   }
   const b = board.getBoundingClientRect();
   return {
     dpr,
     cells: cells.length,
-    pieces,
+    pieces: boxes.length,
     boardWidthDevicePx: Math.round(b.width * dpr * 100) / 100,
     maxSquareSnapDevicePx: Math.round(maxSnap * 1000) / 1000,
     maxPieceOffsetDevicePx: Math.round(maxCenter * 1000) / 1000,
