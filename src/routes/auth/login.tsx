@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
-import { AppShell } from "@/components/layout/AppShell";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,60 +87,55 @@ function LoginPage() {
 
   if (mfaFactorId) {
     return (
-      <AppShell>
-        <div className="mx-auto max-w-md">
-          <form onSubmit={handleMfa} className="panel space-y-4 p-6 sm:p-8">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold">Xác thực hai bước</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Nhập mã 6 số từ ứng dụng xác thực của bạn.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mfa-code">Mã xác thực</Label>
-              <Input
-                id="mfa-code"
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                inputMode="numeric"
-                autoFocus
-                placeholder="000000"
-                className="text-center font-mono text-lg tracking-[0.4em]"
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
-              {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Verify
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                setMfaFactorId(null);
-                setMfaCode("");
-              }}
-            >
-              Huỷ
-            </Button>
-          </form>
-        </div>
-      </AppShell>
+      <AuthModal>
+        <form onSubmit={handleMfa} className="space-y-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Xác thực hai bước</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Nhập mã 6 số từ ứng dụng xác thực của bạn.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="mfa-code">Mã xác thực</Label>
+            <Input
+              id="mfa-code"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoFocus
+              placeholder="000000"
+              className="text-center font-mono text-lg tracking-[0.4em]"
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
+            {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            Verify
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              setMfaFactorId(null);
+              setMfaCode("");
+            }}
+          >
+            Huỷ
+          </Button>
+        </form>
+      </AuthModal>
     );
   }
 
   return (
-    <AppShell>
-      <div className="mx-auto max-w-md">
-        <div className="panel p-6 sm:p-8">
-          <div className="text-center">
-            <BrandMark className="mx-auto mb-4 size-14" />
-            <h1 className="text-2xl font-bold">Sign in</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Welcome back to {APP.name}
-            </p>
-          </div>
+    <AuthModal>
+      <div className="text-center">
+        <BrandMark className="mx-auto mb-4 size-14" />
+        <h1 className="text-2xl font-bold">Sign in</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Welcome back to {APP.name}</p>
+      </div>
+
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-2">
@@ -221,8 +216,7 @@ function LoginPage() {
               Create one
             </Link>
           </p>
-        </div>
-      </div>
-    </AppShell>
+    </AuthModal>
   );
 }
+
