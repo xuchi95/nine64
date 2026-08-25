@@ -152,6 +152,35 @@ export function ChessBoard(props: ChessBoardProps) {
     [checkAttacks],
   );
 
+  /**
+   * Defenders: pieces of the side to move that can legally capture a checking
+   * piece, plus the path they would travel. Only meaningful on interactive
+   * boards where `legalTargets` is a real rules query.
+   */
+  const defences = useMemo(() => {
+    if (!interactive || !checkSquare || checkAttacks.length === 0) return [];
+    const out: { from: string; to: string; path: string[] }[] = [];
+    for (const attack of checkAttacks) {
+      for (const p of pieces) {
+        if (p.color !== props.turn) continue;
+        if (p.square === attack.from) continue;
+        if (!legalTargets(p.square).includes(attack.from)) continue;
+        out.push({
+          from: p.square,
+          to: attack.from,
+          path: squaresBetween(p.square, attack.from),
+        });
+      }
+    }
+    return out;
+  }, [interactive, checkSquare, checkAttacks, pieces, props.turn, legalTargets]);
+
+  const defenderSquares = useMemo(() => new Set(defences.map((d) => d.from)), [defences]);
+  const defencePathSquares = useMemo(
+    () => new Set(defences.flatMap((d) => d.path)),
+    [defences],
+  );
+
 
   /**
    * Checkmate = the side to move is in check and has no legal target anywhere.
