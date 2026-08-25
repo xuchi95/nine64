@@ -134,7 +134,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="vi" className="dark">
       <head>
         {/* Applies the persisted colour mode before first paint: no light/dark flash on reload. */}
         <script
