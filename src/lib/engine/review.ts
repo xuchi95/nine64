@@ -2,7 +2,13 @@ import { Chess } from "chess.js";
 import { StockfishEngine, type PerformanceMode, type EngineLine } from "@/lib/engine/stockfish";
 import type { GameReview } from "@/lib/history";
 import type { MoveRecord } from "@/hooks/useChessGame";
-import { cpToWinPercent, MATE_CP, ratingFromAcpl, weightedAccuracy } from "@/lib/analysis/winrate";
+import {
+  cpToWinPercent,
+  MATE_CP,
+  MAX_CP_LOSS,
+  ratingFromAcpl,
+  weightedAccuracy,
+} from "@/lib/analysis/winrate";
 import { positionComplexity } from "@/lib/analysis/complexity";
 import { classifyMove, summarizeLabels, type MoveLabel } from "@/lib/analysis/classify";
 import { detectMotifs } from "@/lib/analysis/motifs";
@@ -186,7 +192,7 @@ export async function reviewGame({
     const cpLoss =
       cpBest === null || cpAfterMover === null
         ? null
-        : Math.min(1000, Math.max(0, Math.round(cpBest - -cpAfterMover)));
+        : Math.min(MAX_CP_LOSS, Math.max(0, Math.round(cpBest - -cpAfterMover)));
     const uci = `${move.from}${move.to}`;
     const isBestMove = !!evalBefore?.bestUci && evalBefore.bestUci.slice(0, 4) === uci;
     const seeValue = see(fenBefore, move.from, move.to);

@@ -39,12 +39,16 @@ export function weightedAccuracy(samples: { accuracy: number; weight: number }[]
   return Math.round((mean * 0.85 + worst * 0.15) * 10) / 10;
 }
 
+/** Per-move centipawn loss is capped so one resignation-level swing cannot
+ * dominate the average the way raw mate scores would. */
+export const MAX_CP_LOSS = 300;
+
 /**
- * Estimated performance rating from average centipawn loss.
- * Logistic fit: ACPL 5 → ~2700, ACPL 30 → ~2000, ACPL 100 → ~1000.
+ * Estimated performance rating from average centipawn loss (capped per move).
+ * Fit: ACPL 6 → ~2900, 20 → ~2130, 40 → ~1690, 80 → ~1240, 150 → ~840.
  */
 export function ratingFromAcpl(acpl: number): number {
-  const a = Math.max(1, acpl);
-  const est = 3100 - 760 * Math.log(a);
+  const a = Math.max(3, acpl);
+  const est = 2900 - 640 * Math.log(a / 6);
   return Math.max(400, Math.min(2900, Math.round(est / 10) * 10));
 }

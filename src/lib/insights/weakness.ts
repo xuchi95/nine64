@@ -2,7 +2,7 @@ import type { SavedGame } from "@/lib/history";
 import type { PlyAnalysis } from "@/lib/analysis/types";
 import type { GamePhase } from "@/lib/analysis/phase";
 import type { Motif } from "@/lib/analysis/motifs";
-import { ratingFromAcpl } from "@/lib/analysis/winrate";
+import { MAX_CP_LOSS, ratingFromAcpl } from "@/lib/analysis/winrate";
 
 export interface WeaknessBucket {
   key: string;
@@ -83,7 +83,7 @@ export function buildWeaknessProfile(games: SavedGame[]): WeaknessProfile {
   const avgCpLoss =
     all.length === 0
       ? 0
-      : all.reduce((a, p) => a + (p.cpLoss ?? p.loss * 8), 0) / all.length;
+      : all.reduce((a, p) => a + Math.min(MAX_CP_LOSS, p.cpLoss ?? p.loss * 8), 0) / all.length;
 
   const withData = phases.filter((p) => p.moves >= 5);
   const weakest =
