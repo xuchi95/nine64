@@ -79,7 +79,7 @@ export function buildCoachDigest(game: SavedGame, side: "w" | "b"): CoachDigest 
     opponentName: side === "w" ? game.black.name : game.white.name,
     outcome:
       game.result.winner === "draw"
-        ? `hòa (${game.result.reason})`
+        ? `hoà (${game.result.reason})`
         : game.result.winner === side
           ? `thắng (${game.result.reason})`
           : `thua (${game.result.reason})`,
