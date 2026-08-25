@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/online")({
 function OnlinePage() {
   const { t } = useT();
   const { user } = useAuth();
-  const { state, startSearch, stopSearch } = useMatchmaking();
+  const { state, startSearch, stopSearch, acceptMatch, declineMatch } = useMatchmaking();
   const [variant, setVariant] = useState("standard");
   const [timeControl, setTimeControl] = useState("blitz5m");
   const searching = state.kind === "searching";
