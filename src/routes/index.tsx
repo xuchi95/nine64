@@ -60,7 +60,7 @@ function Home() {
         {/* Architectural dot-grid: brass on graphite, sits behind everything */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-8 h-[560px] opacity-[0.18] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+          className="pointer-events-none absolute inset-x-0 -top-8 h-[320px] opacity-[0.18] [mask-image:linear-gradient(to_bottom,black,transparent)] sm:h-[560px]"
           style={{
             backgroundImage:
               "radial-gradient(var(--primary) 0.5px, transparent 0.5px)",
@@ -71,11 +71,18 @@ function Home() {
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <section className="relative grid items-center gap-10 py-6 md:grid-cols-[minmax(0,48%)_minmax(0,1fr)] lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-16 lg:py-12">
           <div className="relative mx-auto w-full max-w-[min(520px,92vw)] md:mx-0">
+            {/* Halo: a radial gradient instead of a blurred layer — no filter
+                pass on mobile, and it never repaints while scrolling. */}
             <div
               aria-hidden
-              className="absolute -inset-2 bg-primary/20 opacity-50 blur-2xl"
+              className="pointer-events-none absolute -inset-2 hidden md:block"
+              style={{
+                background:
+                  "radial-gradient(closest-side, color-mix(in oklab, var(--primary) 22%, transparent), transparent 100%)",
+              }}
             />
-            <div className="relative">
+            {/* Square box reserved up-front so the board can never shift layout. */}
+            <div className="relative aspect-square w-full">
               <StartBoard />
             </div>
             {/* Architect's corner brackets */}
@@ -161,7 +168,7 @@ function Home() {
         </section>
 
         {/* ── Feature rules ────────────────────────────────────────────── */}
-        <section className="relative mt-12 space-y-1">
+        <section className="relative mt-12 space-y-1 [contain-intrinsic-size:auto_460px] [content-visibility:auto]">
           <FeatureRule
             to="/play/ai"
             icon={<Bot className="size-5" />}
@@ -190,7 +197,7 @@ function Home() {
         </section>
 
         {/* ── Mode grid ────────────────────────────────────────────────── */}
-        <section className="relative mt-12">
+        <section className="relative mt-12 [contain-intrinsic-size:auto_220px] [content-visibility:auto]">
           <h2 className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
             Quick modes
           </h2>
@@ -203,7 +210,7 @@ function Home() {
         </section>
 
         {/* ── Closing CTA ──────────────────────────────────────────────── */}
-        <section className="relative mb-4 mt-12 overflow-hidden border border-border bg-surface-2/60 px-5 py-10 sm:px-10 sm:py-12">
+        <section className="relative mb-4 mt-12 overflow-hidden border border-border bg-surface-2/60 px-5 py-10 [contain-intrinsic-size:auto_320px] [content-visibility:auto] sm:px-10 sm:py-12">
           <span
             aria-hidden
             className="absolute left-0 top-0 h-full w-1 bg-primary"
@@ -326,6 +333,7 @@ function StartBoard() {
       pieces={START_PIECES}
       boardTheme={boardThemeId}
       pieceSet={pieceSetId}
+      className="shadow-lg sm:shadow-2xl"
     />
   );
 }
