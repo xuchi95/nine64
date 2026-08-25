@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
-import { resolveBoardThemeId, resolvePieceSetId } from "@/lib/chess/themes";
+import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { StaticBoard, START_PIECES } from "@/components/chess/StaticBoard";
 import { useSettings } from "@/lib/settings";
 
@@ -326,15 +326,8 @@ function GamesSparkline() {
 /* ── Visuals: shares the real board surface via <StaticBoard /> ─────────── */
 
 function StartBoard() {
-  const settings = useSettings();
-  const mode = settings.appearance === "dark" ? "dark" : "light";
-  return (
-    <StaticBoard
-      pieces={START_PIECES}
-      boardTheme={resolveBoardThemeId(settings.boardTheme, mode)}
-      pieceSet={resolvePieceSetId(settings.pieceSet, mode)}
-    />
-  );
+  const { boardThemeId, pieceSetId } = useBoardStyle();
+  return <StaticBoard pieces={START_PIECES} boardTheme={boardThemeId} pieceSet={pieceSetId} />;
 }
 
 

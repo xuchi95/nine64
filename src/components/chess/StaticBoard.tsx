@@ -32,6 +32,7 @@ export function StaticBoard({
 
   return (
     <div
+      data-static-board=""
       className={cn("overflow-hidden rounded-xl shadow-2xl", className)}
       style={{ border: `1px solid ${theme.frame}` }}
       aria-hidden
@@ -44,6 +45,7 @@ export function StaticBoard({
             return (
               <div
                 key={square}
+                data-square={square}
                 className="relative aspect-square"
                 style={squareSurface(theme, isDarkSquare(file, rank))}
               >
