@@ -27,6 +27,11 @@ export default {
     "study.endgame.assessment": "Đánh giá thế trận",
     "study.endgame.technique": "Kỹ thuật cần nắm",
     "study.endgame.notEndgameHint": "Thế cờ chưa vào tàn cuộc — nhận diện sẽ hiện khi lực còn mỏng.",
+    "study.endgame.why": "Vì sao nhận diện như vậy",
+    "study.endgame.whyPhase": "Giai đoạn: tổng lực (không tính Vua) {material} cp, còn {pieces} quân trên bàn. Xếp vào tàn cuộc khi tổng lực ≤ {maxMaterial} cp hoặc còn ≤ {maxPieces} quân; ≤ {midMaterial} cp là trung cuộc.",
+    "study.endgame.whyClassBook": "Dạng \u201C{name}\u201D khớp mẫu tương quan lực {signature}, nên kết luận là chuẩn sách vở — chỉ dựa trên lực còn lại, không phụ thuộc đánh giá của máy.",
+    "study.endgame.whyClassHeuristic": "Dạng \u201C{name}\u201D suy ra từ tương quan lực {signature}. Chênh lệch lực dưới {cp} cp được coi là cân bằng, cần tính biến cụ thể.",
+    "study.endgame.whyWinning": "Tiêu chí biến thắng: máy tìm ra chiếu hết bắt buộc, hoặc ưu thế ≥ {cp} cp (\u2248 {pawns} Tốt) ở độ sâu đang phân tích. Chỉ những biến đạt ngưỡng này mới được gắn nhãn và tự tô mũi tên.",
 
     "study.endgame.verdict.white-wins": "Trắng thắng với lối chơi chính xác",
     "study.endgame.verdict.black-wins": "Đen thắng với lối chơi chính xác",
@@ -102,6 +107,11 @@ export default {
     "study.endgame.assessment": "Assessment",
     "study.endgame.technique": "Technique",
     "study.endgame.notEndgameHint": "Not an endgame yet — recognition appears once material thins out.",
+    "study.endgame.why": "Why this classification",
+    "study.endgame.whyPhase": "Phase: total non-king material {material} cp with {pieces} pieces left. Endgame when material \u2264 {maxMaterial} cp or \u2264 {maxPieces} pieces; \u2264 {midMaterial} cp counts as middlegame.",
+    "study.endgame.whyClassBook": "The \u201C{name}\u201D pattern matches the material signature {signature}, so the verdict is book-certain \u2014 derived from material alone, not from engine eval.",
+    "study.endgame.whyClassHeuristic": "The \u201C{name}\u201D pattern is inferred from the material signature {signature}. A material gap under {cp} cp is treated as balanced and needs concrete calculation.",
+    "study.endgame.whyWinning": "Winning-line criteria: the engine finds a forced mate, or an edge \u2265 {cp} cp (\u2248 {pawns} pawns) at the current depth. Only lines meeting that bar get the badge and auto-drawn arrows.",
 
     "study.endgame.verdict.white-wins": "White wins with correct play",
     "study.endgame.verdict.black-wins": "Black wins with correct play",
