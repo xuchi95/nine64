@@ -68,12 +68,48 @@ export function hydrateSettings() {
   emit();
 }
 
-export function applyAppearance(mode: AppearanceMode) {
-  if (typeof document === "undefined") return;
+let themeAnimTimer: ReturnType<typeof setTimeout> | null = null;
+
+function setAppearanceClasses(mode: AppearanceMode) {
   const root = document.documentElement;
   root.classList.toggle("light", mode === "light");
   root.classList.toggle("dark", mode === "dark");
   root.style.colorScheme = mode;
+}
+
+/**
+ * Applies the colour mode. When the mode actually changes we enable a short
+ * global colour-only transition (`theme-anim`) so background, text, borders and
+ * shadows cross-fade instead of snapping — no flash, no layout shift.
+ */
+export function applyAppearance(mode: AppearanceMode, animate = false) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  const current = root.classList.contains("light") ? "light" : "dark";
+  if (current === mode) {
+    setAppearanceClasses(mode);
+    return;
+  }
+
+  const reduced =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+  if (!animate || reduced) {
+    setAppearanceClasses(mode);
+    return;
+  }
+
+  root.classList.add("theme-anim");
+  if (themeAnimTimer) clearTimeout(themeAnimTimer);
+  // Let the browser paint the transition-enabling class before swapping tokens.
+  requestAnimationFrame(() => {
+    setAppearanceClasses(mode);
+    themeAnimTimer = setTimeout(() => {
+      root.classList.remove("theme-anim");
+      themeAnimTimer = null;
+    }, 420);
+  });
 }
 
 export function updateSettings(patch: Partial<Settings>) {
@@ -84,7 +120,7 @@ export function updateSettings(patch: Partial<Settings>) {
     } catch {
       /* storage unavailable — settings stay in memory for this session */
     }
-    if (patch.appearance) applyAppearance(patch.appearance);
+    if (patch.appearance) applyAppearance(patch.appearance, true);
   }
   emit();
 }

@@ -550,3 +550,40 @@
     opacity: 1;
   }
 }
+
+/* ---------------------------------------------------------------
+   Smooth light/dark switching.
+   `theme-anim` is added to <html> only for the duration of a mode
+   change, so colours cross-fade without any layout shift and without
+   slowing down normal interactions.
+---------------------------------------------------------------- */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color 300ms ease,
+    background-image 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    fill 300ms ease,
+    stroke 300ms ease,
+    box-shadow 300ms ease,
+    outline-color 300ms ease !important;
+  transition-delay: 0s !important;
+}
+
+/* Keep interactive/scroll behaviour stable while the colours cross-fade. */
+html.theme-anim,
+html.theme-anim body {
+  overflow-anchor: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-anim,
+  html.theme-anim *,
+  html.theme-anim *::before,
+  html.theme-anim *::after {
+    transition: none !important;
+  }
+}

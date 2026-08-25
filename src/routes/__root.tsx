@@ -147,6 +147,12 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark">
       <head>
+        {/* Applies the persisted colour mode before first paint: no light/dark flash on reload. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem("nexus-chess.settings.v1");var m=s?(JSON.parse(s)||{}).appearance:null;if(m!=="light"&&m!=="dark")m="dark";var r=document.documentElement;r.classList.toggle("light",m==="light");r.classList.toggle("dark",m==="dark");r.style.colorScheme=m;}catch(e){}})();`,
+          }}
+        />
         <HeadContent />
       </head>
       <body>
