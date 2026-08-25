@@ -108,19 +108,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
       // Favicon + touch icons swap with the OS colour scheme.
-      {
-        rel: "icon",
-        type: "image/svg+xml",
-        href: "/favicon-light.svg",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        rel: "icon",
-        type: "image/svg+xml",
-        href: "/favicon.svg",
-        media: "(prefers-color-scheme: dark)",
-      },
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+
       {
         rel: "apple-touch-icon",
         sizes: "180x180",
