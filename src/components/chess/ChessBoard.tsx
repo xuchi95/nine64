@@ -477,6 +477,8 @@ export function ChessBoard(props: ChessBoardProps) {
     <div className="w-full">
       <div
         ref={containerRef}
+        data-board-root=""
+
         role="grid"
         aria-label="Chess board"
         className="relative aspect-square w-full touch-none select-none overflow-hidden rounded-md ring-1 ring-black/40"

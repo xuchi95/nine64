@@ -15,10 +15,13 @@ export function GamePanel({
   bodyClassName?: string;
 }) {
   return (
-    <section className={cn(
+    <section
+      data-game-panel=""
+      className={cn(
         "panel group/panel flex flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-300 ease-out hover:-translate-y-[1px] hover:border-primary/30 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none",
         className,
       )}>
+
       {title && (
         <header className="flex items-center justify-between gap-2 border-b border-border bg-surface-2/60 px-4 py-2 transition-colors duration-300 group-hover/panel:bg-surface-2">
           <h2 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
