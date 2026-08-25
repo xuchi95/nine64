@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piece, type PieceColor, type PieceType } from "./Piece";
-import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
+import { useBoardStyle } from "./useBoardStyle";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { playSound, playShatter } from "@/lib/sound";
@@ -129,8 +129,7 @@ export function ChessBoard(props: ChessBoardProps) {
   } = props;
 
   const settings = useSettings();
-  const theme = getBoardTheme(settings.boardTheme);
-  const pieceSet = getPieceSet(settings.pieceSet);
+  const { theme, pieceSet } = useBoardStyle();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(480);
@@ -952,6 +951,7 @@ export function ChessBoard(props: ChessBoardProps) {
           return (
             <div
               key={piece.id}
+              data-square={piece.square}
               className={cn(
                 "pointer-events-none absolute",
                 isDragged ? "z-30" : isTravelling ? "z-20" : undefined,
