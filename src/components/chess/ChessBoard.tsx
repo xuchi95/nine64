@@ -148,6 +148,15 @@ export function ChessBoard(props: ChessBoardProps) {
   const [travelling, setTravelling] = useState<Set<number>>(() => new Set());
   /** captured pieces kept on screen for a short fade-out */
   const [ghosts, setGhosts] = useState<Ghost[]>([]);
+  /** promotion-by-capture flourish: shards gather into the new piece */
+  const [promoBurst, setPromoBurst] = useState<{
+    key: number;
+    square: string;
+    color: "w" | "b";
+    type: string;
+  } | null>(null);
+
+
 
   const transitionMs = settings.animations ? settings.animationMs : 0;
 
