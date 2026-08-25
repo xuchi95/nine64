@@ -4,6 +4,7 @@ import { Cpu, Flag, Handshake, RefreshCw, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
+import { GamePanel, StatRow, EvalBar } from "@/components/game/GamePanel";
 import { PlayerCard } from "@/components/game/PlayerCard";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
@@ -411,18 +412,22 @@ function PlayAi() {
             clockEnabled={!!config.timeControl}
             captured={game.captured[botColor]}
           />
-          <div className="panel space-y-2 p-4 text-sm">
-            <Row label="Variant" value={VARIANTS.find((v) => v.id === config.variant)!.name} />
-            <Row label="Opening" value={game.opening?.name ?? "—"} />
-            <Row label="Engine depth" value={engineInfo ? String(engineInfo.depth) : "—"} />
-            <Row label="Evaluation" value={engineInfo?.eval ?? "—"} />
+          <GamePanel title="Game status" bodyClassName="space-y-3.5 p-4">
+            <StatRow label="Variant" value={VARIANTS.find((v) => v.id === config.variant)!.name} />
+            <StatRow label="Opening" value={game.opening?.name ?? "—"} />
+            <StatRow label="Engine depth" value={engineInfo ? String(engineInfo.depth) : "—"} mono />
+            <EvalBar
+              score={engineInfo?.eval ? Number.parseFloat(engineInfo.eval) || 0 : null}
+              label={engineInfo?.eval ?? "—"}
+            />
             {capability && (
-              <Row
+              <StatRow
                 label="Engine setup"
                 value={`${capability.threads}T · ${capability.hashMb}MB${capability.threaded ? "" : " · single"}`}
+                mono
               />
             )}
-          </div>
+          </GamePanel>
           {engineError && (
             <div className="panel border-destructive/60 p-4 text-sm text-destructive">
               Engine unavailable: {engineError}
@@ -450,17 +455,19 @@ function PlayAi() {
           </div>
         </div>
 
-        <div className="order-3 space-y-3">
-          <div className="panel flex max-h-[420px] flex-col overflow-hidden">
-            <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Moves
-            </div>
+        <div className="order-3 space-y-4">
+          <GamePanel
+            title="Notation"
+            meta={game.moves.length > 0 ? `Move ${Math.ceil(game.moves.length / 2)}` : undefined}
+            className="max-h-[420px]"
+            bodyClassName="overflow-hidden"
+          >
             <MoveList moves={game.moves} />
-          </div>
-          <div className="panel space-y-2 p-3">
+          </GamePanel>
+          <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <Button
-                variant="secondary"
+                variant="outline"
                 onClick={() => {
                   if (!settings.confirmResign || window.confirm("Resign this game?")) {
                     game.resign(playerColor);
@@ -471,31 +478,36 @@ function PlayAi() {
                 <Flag className="size-4" /> Resign
               </Button>
               <Button
-                variant="secondary"
+                variant="outline"
                 onClick={() => game.declareDraw("Agreement")}
                 disabled={!!game.result}
               >
                 <Handshake className="size-4" /> Draw
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  game.reset();
-                  setPremove(null);
-                  setShowResult(false);
-                }}
-              >
-                <RefreshCw className="size-4" /> Rematch
-              </Button>
-              <Button variant="outline" onClick={() => setPhase("setup")}>
-                <RotateCcw className="size-4" /> New setup
-              </Button>
             </div>
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => {
+                game.reset();
+                setPremove(null);
+                setShowResult(false);
+              }}
+            >
+              <RefreshCw className="size-4" /> Rematch
+            </Button>
             {game.result && (
-              <Button className="w-full" onClick={() => setShowResult(true)}>
+              <Button variant="secondary" className="w-full" onClick={() => setShowResult(true)}>
                 View result
               </Button>
             )}
+            <Button
+              variant="ghost"
+              className="w-full text-[0.7rem] font-bold uppercase tracking-[0.16em] text-muted-foreground"
+              onClick={() => setPhase("setup")}
+            >
+              <RotateCcw className="size-4" /> New setup
+            </Button>
           </div>
         </div>
       </div>
@@ -520,11 +532,3 @@ function PlayAi() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="truncate text-sm font-medium">{value}</span>
-    </div>
-  );
-}

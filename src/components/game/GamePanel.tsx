@@ -1,0 +1,79 @@
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+
+export function GamePanel({
+  title,
+  meta,
+  children,
+  className,
+  bodyClassName,
+}: {
+  title?: string;
+  meta?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+}) {
+  return (
+    <section className={cn("panel flex flex-col overflow-hidden", className)}>
+      {title && (
+        <header className="flex items-center justify-between gap-2 border-b border-border bg-surface-2/60 px-4 py-2">
+          <h2 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            {title}
+          </h2>
+          {meta && <span className="text-[0.68rem] font-medium text-muted-foreground">{meta}</span>}
+        </header>
+      )}
+      <div className={cn("min-h-0 flex-1", bodyClassName)}>{children}</div>
+    </section>
+  );
+}
+
+export function StatRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "max-w-[62%] truncate text-right text-sm font-semibold text-foreground",
+          mono && "tabular",
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/** Horizontal eval bar. `score` in pawns, positive = white better. */
+export function EvalBar({ score, label }: { score: number | null; label: string }) {
+  const clamped = score === null ? 0 : Math.max(-6, Math.min(6, score));
+  const pct = score === null ? 50 : 50 + (clamped / 6) * 50;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Evaluation
+        </span>
+        <span className="tabular text-xs font-bold text-primary">{label}</span>
+      </div>
+      <div className="relative h-2 w-full overflow-hidden rounded-full border border-border/60 bg-surface-2">
+        <div
+          className="h-full bg-primary transition-[width] duration-500"
+          style={{ width: `${pct}%` }}
+        />
+        <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border" />
+      </div>
+    </div>
+  );
+}

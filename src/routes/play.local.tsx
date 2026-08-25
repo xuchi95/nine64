@@ -4,6 +4,7 @@ import { Flag, Handshake, RefreshCw, FlipVertical2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
+import { GamePanel, StatRow } from "@/components/game/GamePanel";
 import { PlayerCard } from "@/components/game/PlayerCard";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
@@ -169,12 +170,11 @@ function LocalGame() {
             clockEnabled={!!timeControl}
             captured={game.captured.b}
           />
-          <div className="panel p-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground">Opening</span>
-              <span className="truncate font-medium">{game.opening?.name ?? "—"}</span>
-            </div>
-          </div>
+          <GamePanel title="Game status" bodyClassName="space-y-3.5 p-4">
+            <StatRow label="Variant" value={VARIANTS.find((v) => v.id === variant)?.name ?? "Standard"} />
+            <StatRow label="Opening" value={game.opening?.name ?? "—"} />
+            <StatRow label="Moves" value={String(game.moves.length)} mono />
+          </GamePanel>
         </div>
 
         <div className="order-1 lg:order-2">
@@ -195,16 +195,18 @@ function LocalGame() {
           </div>
         </div>
 
-        <div className="order-3 space-y-3">
-          <div className="panel flex max-h-[420px] flex-col overflow-hidden">
-            <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Moves
-            </div>
+        <div className="order-3 space-y-4">
+          <GamePanel
+            title="Notation"
+            meta={game.moves.length > 0 ? `Move ${Math.ceil(game.moves.length / 2)}` : undefined}
+            className="max-h-[420px]"
+            bodyClassName="overflow-hidden"
+          >
             <MoveList moves={game.moves} />
-          </div>
-          <div className="panel grid grid-cols-2 gap-2 p-3">
+          </GamePanel>
+          <div className="grid grid-cols-2 gap-2">
             <Button
-              variant="secondary"
+              variant="outline"
               disabled={!!game.result}
               onClick={() => {
                 if (!settings.confirmResign || window.confirm(`Resign as ${game.turn === "w" ? "White" : "Black"}?`)) {
@@ -214,7 +216,7 @@ function LocalGame() {
             >
               <Flag className="size-4" /> Resign
             </Button>
-            <Button variant="secondary" disabled={!!game.result} onClick={() => game.declareDraw()}>
+            <Button variant="outline" disabled={!!game.result} onClick={() => game.declareDraw()}>
               <Handshake className="size-4" /> Draw
             </Button>
             <Button

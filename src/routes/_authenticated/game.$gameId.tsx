@@ -619,7 +619,7 @@ function OnlineGamePage() {
             clock={clock}
             active={turn !== myColor && live}
           />
-          <div className="mt-2">
+          <div className="my-3">
             <ChessBoard
               pieces={pieces}
               orientation={orientation}
@@ -658,12 +658,12 @@ function OnlineGamePage() {
         <div className="space-y-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
+              <span className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 {game.variant} · {formatTimeControl(game.time_control)}
               </span>
               <span
                 className={cn(
-                  "rounded px-2 py-0.5 text-xs font-medium",
+                  "rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
                   live && "bg-emerald-500/15 text-emerald-400",
                   !live && resultView.tone === "win" && "bg-emerald-500/15 text-emerald-400",
                   !live && resultView.tone === "loss" && "bg-destructive/15 text-destructive",
@@ -699,12 +699,12 @@ function OnlineGamePage() {
           )}
 
           {live && (
-            <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1 gap-2" onClick={() => void offerDraw()}>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => void offerDraw()}>
                 <Hand className="size-4" />
                 Draw
               </Button>
-              <Button variant="destructive" className="flex-1 gap-2" onClick={() => void resign()}>
+              <Button variant="outline" className="gap-2" onClick={() => void resign()}>
                 <Flag className="size-4" />
                 Resign
               </Button>
@@ -716,14 +716,14 @@ function OnlineGamePage() {
           </Card>
 
           <Card className="space-y-2 p-4">
-            <h3 className="text-sm font-semibold">Share this game</h3>
+            <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">Share this game</h3>
             <p className="text-xs text-muted-foreground">
               Copy the PGN, or send a turn-by-turn link your opponent can open on another device.
             </p>
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="secondary"
+                variant="outline"
                 className="flex-1 gap-2"
                 onClick={() => void copy(pgn, "PGN")}
               >
@@ -732,7 +732,7 @@ function OnlineGamePage() {
               </Button>
               <Button
                 size="sm"
-                variant="secondary"
+                variant="outline"
                 className="flex-1 gap-2"
                 onClick={() =>
                   void copy(
@@ -772,26 +772,48 @@ function PlayerBar({
   active: boolean;
 }) {
   const ms = color === "w" ? clock.w : clock.b;
+  const low = ms <= 10_000;
   return (
     <div
       className={cn(
-        "flex items-center justify-between rounded-md border border-border/70 bg-surface-1 px-3 py-2",
-        active && "ring-1 ring-primary/50",
+        "panel relative flex items-center justify-between overflow-hidden px-4 py-3 transition-colors",
+        active && "border-primary/70 bg-primary/[0.04]",
       )}
     >
-      <div className="flex items-center gap-2">
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-y-0 left-0 w-[3px] transition-colors",
+          active ? "bg-primary" : "bg-transparent",
+        )}
+      />
+      <div className="flex min-w-0 items-center gap-2.5">
         <span
           className={cn(
-            "flex size-5 items-center justify-center rounded-full text-[10px] font-bold",
-            color === "w" ? "bg-white text-black" : "bg-black text-white ring-1 ring-white/20",
+            "flex size-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold",
+            color === "w"
+              ? "border-border bg-foreground text-background"
+              : "border-border bg-surface-2 text-foreground",
           )}
         >
           {color === "w" ? "W" : "B"}
         </span>
-        <span className="font-medium">{name}</span>
-        <span className="text-xs text-muted-foreground">({rating})</span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold leading-tight">{name}</p>
+          <p className="text-[0.7rem] font-medium text-muted-foreground">
+            {active ? <span className="text-primary">To move</span> : `Rating ${rating}`}
+          </p>
+        </div>
       </div>
-      <span className={cn("font-mono text-lg tabular-nums", ms <= 10_000 && "text-destructive")}>
+      <span
+        className={cn(
+          "tabular rounded-md border px-3 py-1.5 text-xl font-bold leading-none tracking-tight transition-colors",
+          active
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-surface-2 text-muted-foreground",
+          low && active && "animate-pulse border-destructive bg-destructive text-destructive-foreground",
+        )}
+      >
         {formatClock(ms)}
       </span>
     </div>
