@@ -317,7 +317,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48 rounded-xl p-2">
         {MORE_NAV.map((item) => {
-          const isActive = pathname.startsWith(item.to);
+          const isActive = isRouteActive(pathname, item.to);
           return (
             <DropdownMenuItem
               key={item.to}
