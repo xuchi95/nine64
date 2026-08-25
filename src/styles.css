@@ -232,32 +232,97 @@
   animation: nexus-shake 0.3s ease-in-out;
 }
 
-/* Captured piece: compositor-only fade + shrink, no layout or paint churn. */
+/* Captured piece: "Nexus Shatter" — flash, fracture, spin out. */
 @keyframes nexus-capture {
   0% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
   }
-  40% {
-    opacity: 0.7;
-    transform: scale(0.9) rotate(-4deg);
+  18% {
+    opacity: 1;
+    transform: scale(1.16) rotate(3deg);
+    filter: brightness(2.4) saturate(0.4);
+  }
+  45% {
+    opacity: 0.75;
+    transform: scale(0.86) rotate(-9deg);
+    filter: brightness(1.3) blur(0.6px);
   }
   100% {
     opacity: 0;
-    transform: scale(0.6) rotate(-8deg);
+    transform: scale(0.42) rotate(-26deg);
+    filter: brightness(1) blur(3px);
   }
 }
 
 .animate-nexus-capture {
-  animation: nexus-capture 180ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  animation: nexus-capture 320ms cubic-bezier(0.32, 0.94, 0.36, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* Shockwave ring pushed out from the impact square. */
+@keyframes nexus-shockwave {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.25);
+  }
+  60% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+.animate-nexus-shockwave {
+  animation: nexus-shockwave 420ms cubic-bezier(0.16, 0.84, 0.24, 1) forwards;
   will-change: transform, opacity;
 }
 
+/* Flying shards: each shard carries its own --sx/--sy vector. */
+@keyframes nexus-shard {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--sx), var(--sy), 0) scale(0.3) rotate(var(--sr));
+  }
+}
+
+.animate-nexus-shard {
+  animation: nexus-shard 380ms cubic-bezier(0.22, 0.9, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Impact flash on the destination square. */
+@keyframes nexus-impact {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+.animate-nexus-impact {
+  animation: nexus-impact 300ms ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-nexus-capture {
+  .animate-nexus-capture,
+  .animate-nexus-shockwave,
+  .animate-nexus-shard,
+  .animate-nexus-impact {
     animation-duration: 1ms;
   }
 }
+
 
 
 @keyframes nexus-page-enter {
