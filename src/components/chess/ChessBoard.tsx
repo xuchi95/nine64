@@ -249,6 +249,9 @@ export function ChessBoard(props: ChessBoardProps) {
       const batch = removed.map((p) => ({ ...p, key: ++ghostCounter }));
       setGhosts((g) => [...g, ...batch]);
       const keys = new Set(batch.map((b) => b.key));
+      // Fires on the same frame the shatter animation starts, so audio and
+      // visuals land together.
+      if (settings.shatterSound) playShatter();
       clearGhost = window.setTimeout(
         () => setGhosts((g) => g.filter((x) => !keys.has(x.key))),
         Math.max(transitionMs + 120, 500),
