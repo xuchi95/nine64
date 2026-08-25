@@ -145,6 +145,90 @@ export const tryMatch = createServerFn({ method: "POST" })
     return { game: game as Game };
   });
 
+/**
+ * Từ chối ván vừa ghép: huỷ ván, thông báo cho đối thủ và đưa đối thủ trở lại
+ * hàng chờ, đồng thời trả về cấu hình để người từ chối tự vào lại hàng chờ.
+ */
+export const declineMatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_ID_SCHEMA.parse(input))
+  .handler(async ({ data, context }) => {
+    const supabase = context.supabase;
+
+    const { data: game, error: gameError } = await supabase
+      .from("games")
+      .select("id, white_id, black_id, variant, time_control, status")
+      .eq("id", data.gameId)
+      .maybeSingle();
+
+    if (gameError) throw new Error(gameError.message);
+    if (!game) throw new Error("Game not found");
+    if (game.white_id !== context.userId && game.black_id !== context.userId) {
+      throw new Error("Forbidden");
+    }
+
+    const opponentId = game.white_id === context.userId ? game.black_id : game.white_id;
+    const variant = game.variant;
+    const timeControl = game.time_control;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Không huỷ ván đã đi quân hoặc đã kết thúc.
+    const { count: moveCount } = await supabaseAdmin
+      .from("game_moves")
+      .select("id", { count: "exact", head: true })
+      .eq("game_id", game.id);
+
+    const abortable = game.status !== "completed" && (moveCount ?? 0) === 0;
+
+    if (abortable) {
+      await supabaseAdmin
+        .from("games")
+        .update({ status: "aborted", result: "*", end_reason: "declined" })
+        .eq("id", game.id)
+        .neq("status", "completed");
+    }
+
+    // Dọn hàng chờ của cả hai bên cho ván này.
+    await supabaseAdmin
+      .from("matchmaking_queue")
+      .update({ status: "cancelled" })
+      .eq("matched_game_id", game.id);
+
+    await supabaseAdmin
+      .from("matchmaking_queue")
+      .update({ status: "cancelled" })
+      .in("user_id", [context.userId, opponentId])
+      .eq("status", "waiting");
+
+    if (abortable) {
+      // Đối thủ được tự động xếp lại hàng chờ với cùng cấu hình.
+      const { data: opponentProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("rating")
+        .eq("id", opponentId)
+        .maybeSingle();
+
+      await supabaseAdmin.from("matchmaking_queue").insert({
+        user_id: opponentId,
+        rating: opponentProfile?.rating ?? 1200,
+        variant,
+        time_control: timeControl,
+        status: "waiting",
+      });
+
+      await supabaseAdmin.from("notifications").insert({
+        user_id: opponentId,
+        type: "match_declined",
+        title: "Đối thủ đã từ chối ván",
+        body: "Ván ghép đã bị huỷ. Bạn được đưa trở lại hàng chờ để tìm đối thủ khác.",
+        data: { gameId: game.id, variant, timeControl },
+      });
+    }
+
+    return { ok: true, aborted: abortable, variant, timeControl };
+  });
+
 export const getGame = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => GAME_ID_SCHEMA.parse(input))

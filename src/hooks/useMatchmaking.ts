@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { joinQueue, leaveQueue, tryMatch } from "@/lib/online.functions";
+import { declineMatch as declineMatchFn, joinQueue, leaveQueue, tryMatch } from "@/lib/online.functions";
 import { useAuth } from "@/lib/auth";
 import { playSound } from "@/lib/sound";
 import { errorDetail, logMmEvent } from "@/lib/matchmaking/diagnostics";
@@ -31,11 +31,13 @@ export function useMatchmaking() {
   const joinFn = useServerFn(joinQueue);
   const leaveFn = useServerFn(leaveQueue);
   const matchFn = useServerFn(tryMatch);
+  const declineFn = useServerFn(declineMatchFn);
   const [state, setState] = useState<MatchmakingState>({ kind: "idle" });
   const pollingRef = useRef<number | null>(null);
   const pollCountRef = useRef(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const acceptingRef = useRef(false);
+  const searchConfigRef = useRef<{ variant: string; timeControl: string } | null>(null);
 
   const cleanup = useCallback(() => {
     if (pollingRef.current) {
@@ -140,6 +142,7 @@ export function useMatchmaking() {
   const startSearch = useCallback(
     async (variant: string, timeControl: string) => {
       if (!user) return;
+      searchConfigRef.current = { variant, timeControl };
       cleanup();
       setState({ kind: "idle" });
       pollCountRef.current = 0;
@@ -271,21 +274,80 @@ export function useMatchmaking() {
     }
   }, [cleanup, navigate, state]);
 
+  /**
+   * Từ chối: huỷ ván, đưa đối thủ trở lại hàng chờ, rồi tự vào lại hàng chờ
+   * với đúng biến thể/kiểm soát thời gian đã chọn.
+   */
   const declineMatch = useCallback(async () => {
-    if (state.kind !== "found") return;
-    logMmEvent("warn", "queue", "Đã từ chối ván vừa ghép", { gameId: state.gameId });
+    if (state.kind !== "found" || acceptingRef.current) return;
+    const gameId = state.gameId;
+    logMmEvent("warn", "queue", "Đã từ chối ván vừa ghép", { gameId });
     cleanup();
-    try {
-      await leaveFn({ data: undefined });
-    } catch (e) {
-      logMmEvent("error", "queue", "Dọn hàng chờ sau khi từ chối thất bại", errorDetail(e));
-    }
     setState({ kind: "idle" });
-  }, [cleanup, leaveFn, state]);
+
+    let variant = searchConfigRef.current?.variant ?? null;
+    let timeControl = searchConfigRef.current?.timeControl ?? null;
+    try {
+      const res = (await declineFn({ data: { gameId } })) as {
+        variant: string;
+        timeControl: string;
+      };
+      variant = res.variant ?? variant;
+      timeControl = res.timeControl ?? timeControl;
+      logMmEvent("info", "queue", "Đã huỷ ván và trả đối thủ về hàng chờ", { gameId });
+    } catch (e) {
+      logMmEvent("error", "queue", "Huỷ ván sau khi từ chối thất bại", errorDetail(e));
+      try {
+        await leaveFn({ data: undefined });
+      } catch (err) {
+        logMmEvent("error", "queue", "Dọn hàng chờ thất bại", errorDetail(err));
+      }
+    }
+
+    if (variant && timeControl) {
+      try {
+        await startSearch(variant, timeControl);
+      } catch (e) {
+        logMmEvent("error", "queue", "Không vào lại được hàng chờ", errorDetail(e));
+      }
+    }
+  }, [cleanup, declineFn, leaveFn, startSearch, state]);
+
+  // Nếu đối thủ từ chối, ván bị huỷ: tự đưa mình trở lại hàng chờ.
+  useEffect(() => {
+    if (state.kind !== "found") return;
+    const gameId = state.gameId;
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      const { data } = await supabase
+        .from("games")
+        .select("status, variant, time_control")
+        .eq("id", gameId)
+        .maybeSingle();
+      if (cancelled || !data || data.status !== "aborted") return;
+      window.clearInterval(timer);
+      logMmEvent("warn", "queue", "Đối thủ đã từ chối, quay lại hàng chờ", { gameId });
+      setState({ kind: "idle" });
+      const variant = data.variant ?? searchConfigRef.current?.variant;
+      const timeControl = data.time_control ?? searchConfigRef.current?.timeControl;
+      if (variant && timeControl) {
+        try {
+          await startSearch(variant, timeControl);
+        } catch (e) {
+          logMmEvent("error", "queue", "Không vào lại được hàng chờ", errorDetail(e));
+        }
+      }
+    }, 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [startSearch, state]);
 
   useEffect(() => {
     return () => cleanup();
   }, [cleanup]);
+
 
   return {
     state,
