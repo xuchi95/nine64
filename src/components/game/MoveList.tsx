@@ -11,10 +11,15 @@ export function MoveList({
   activeIndex?: number;
   onSelect?: (index: number) => void;
 }) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "nearest" });
+    // Chỉ cuộn bên trong danh sách nước đi — không bao giờ cuộn cả trang
+    // (trên mobile scrollIntoView sẽ kéo màn hình xuống sau mỗi nước đi).
+    const el = listRef.current;
+    if (!el) return;
+    if (el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
   }, [moves.length]);
+
 
   if (moves.length === 0) {
     return (
@@ -36,7 +41,7 @@ export function MoveList({
   });
 
   return (
-    <div className="max-h-full overflow-y-auto">
+    <div ref={listRef} className="max-h-full overflow-y-auto overscroll-contain">
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-10 bg-surface">
           <tr className="text-left text-2xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -59,7 +64,6 @@ export function MoveList({
           ))}
         </tbody>
       </table>
-      <div ref={endRef} />
     </div>
   );
 }
