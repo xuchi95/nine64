@@ -107,7 +107,9 @@ function GamesPage() {
         ))}
       </div>
 
-      {onlineLoading && (
+      <BoardThemePicker className="mt-5" />
+
+
         <p className="mt-4 text-sm text-muted-foreground">Loading online games…</p>
       )}
 
