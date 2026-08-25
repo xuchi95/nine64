@@ -219,32 +219,32 @@ function ProgressPage() {
         <>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
-              title="% mất cơ hội / nước"
-              hint="Win% bạn đánh mất so với nước tốt nhất của engine."
+              title={t("study.progress.kpiLossTitle")}
+              hint={t("study.progress.kpiLossHint")}
               value={fmt(summary.lossPct, 1, "%")}
               change={lossTrend.change}
               lowerIsBetter
               unit="%"
             />
             <KpiCard
-              title="Độ chính xác"
-              hint="Điểm accuracy trung bình cho phía bạn."
+              title={t("study.progress.kpiAccuracyTitle")}
+              hint={t("study.progress.kpiAccuracyHint")}
               value={fmt(summary.accuracy, 1, "%")}
               change={accuracyTrend.change}
               lowerIsBetter={false}
               unit="%"
             />
             <KpiCard
-              title="Blunder / 100 nước"
-              hint="Số nước sai nặng do engine gắn nhãn blunder."
+              title={t("study.progress.kpiBlunderTitle")}
+              hint={t("study.progress.kpiBlunderHint")}
               value={fmt(blunderTrend.after ?? null, 1)}
               change={blunderTrend.change}
               lowerIsBetter
               unit=""
             />
             <KpiCard
-              title="Giây / nước"
-              hint="Thời gian suy nghĩ trung bình mỗi nước của bạn."
+              title={t("study.progress.kpiTimeTitle")}
+              hint={t("study.progress.kpiTimeHint")}
               value={fmt(summary.secPerMove, 1, "s")}
               change={timeTrend.change}
               lowerIsBetter={false}
@@ -255,7 +255,7 @@ function ProgressPage() {
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div className="panel p-4">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-                <LineChart className="size-4 text-primary" /> % mất cơ hội theo giai đoạn
+                <LineChart className="size-4 text-primary" /> {t("study.progress.chartLossTitle")}
               </h2>
               <div className="mt-3">
                 <TrendChart buckets={buckets} pick={(b) => b.lossPct} unit="%" lowerIsBetter />
@@ -263,7 +263,7 @@ function ProgressPage() {
             </div>
             <div className="panel p-4">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-                <Timer className="size-4 text-primary" /> Nhịp suy nghĩ (giây / nước)
+                <Timer className="size-4 text-primary" /> {t("study.progress.chartTimeTitle")}
               </h2>
               <div className="mt-3">
                 <TrendChart
@@ -274,7 +274,9 @@ function ProgressPage() {
                 />
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                Tỉ lệ nước đi dưới 2 giây: {fmt(summary.rushShare === null ? null : summary.rushShare * 100, 0, "%")}
+                {t("study.progress.rushShare", {
+                  value: fmt(summary.rushShare === null ? null : summary.rushShare * 100, 0, "%"),
+                })}
                 {rushTrend.change !== null && (
                   <>
                     {" "}
@@ -286,7 +288,7 @@ function ProgressPage() {
           </div>
 
           <div className="panel mt-4 p-4">
-            <h2 className="font-display text-base font-semibold">Lỗi nào đang giảm?</h2>
+            <h2 className="font-display text-base font-semibold">{t("study.progress.mistakesDeclining")}</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {severityTrends.map(({ severity, delta }) => (
                 <div key={severity} className={`rounded-lg border p-3 ${SEVERITY_META[severity].ring}`}>
@@ -294,7 +296,7 @@ function ProgressPage() {
                     {SEVERITY_META[severity].title}
                   </p>
                   <p className="tabular mt-1 text-xl font-bold">{fmt(delta.after, 1)}</p>
-                  <p className="text-xs text-muted-foreground">lỗi / ván ở giai đoạn gần nhất</p>
+                  <p className="text-xs text-muted-foreground">{t("study.progress.perGameLatest")}</p>
                   <div className="mt-1">
                     <DeltaBadge change={delta.change} lowerIsBetter unit="" />
                   </div>
@@ -303,25 +305,24 @@ function ProgressPage() {
             </div>
             {summary.coachedGames === 0 && (
               <p className="mt-3 text-xs text-muted-foreground">
-                Mức độ lỗi lấy từ báo cáo của Chuyên gia phân tích — hãy chạy AI review cho vài ván
-                để có số liệu.
+                {t("study.progress.coachedHint")}
               </p>
             )}
           </div>
 
           <div className="panel mt-4 overflow-x-auto p-4">
-            <h2 className="font-display text-base font-semibold">Chi tiết theo giai đoạn</h2>
+            <h2 className="font-display text-base font-semibold">{t("study.progress.detailByPhase")}</h2>
             <table className="mt-3 w-full min-w-[640px] text-sm">
               <thead className="text-xs uppercase tracking-wide text-muted-foreground">
                 <tr className="text-right">
-                  <th className="pb-2 text-left font-medium">Giai đoạn</th>
-                  <th className="pb-2 font-medium">Ván</th>
-                  <th className="pb-2 font-medium">Mất cơ hội</th>
-                  <th className="pb-2 font-medium">Chính xác</th>
-                  <th className="pb-2 font-medium">Sai nhỏ</th>
-                  <th className="pb-2 font-medium">Sai vừa</th>
-                  <th className="pb-2 font-medium">Blunder</th>
-                  <th className="pb-2 font-medium">Giây/nước</th>
+                  <th className="pb-2 text-left font-medium">{t("study.progress.colPhase")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colGames")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colLoss")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colAccuracy")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colInaccuracy")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colMistake")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colBlunder")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colSecPerMove")}</th>
                 </tr>
               </thead>
               <tbody className="tabular">
@@ -340,16 +341,16 @@ function ProgressPage() {
               </tbody>
             </table>
             <p className="mt-2 text-xs text-muted-foreground">
-              Sai nhỏ / sai vừa / blunder tính trên 100 nước của bạn.
+              {t("study.progress.tableNote")}
             </p>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild size="sm">
-              <Link to="/drills">Luyện các lỗi còn lại</Link>
+              <Link to="/drills">{t("study.progress.trainRemaining")}</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-              <Link to="/games">Mở lịch sử ván đấu</Link>
+              <Link to="/games">{t("study.progress.openHistory")}</Link>
             </Button>
           </div>
         </>

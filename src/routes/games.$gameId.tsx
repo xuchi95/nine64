@@ -29,20 +29,21 @@ import { generatePuzzles } from "@/lib/learn/puzzleGen";
 import { addPuzzles } from "@/lib/learn/store";
 import { useSettings } from "@/lib/settings";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/games/$gameId")({
   head: () => ({
     meta: [
-      { title: `Game detail — ${APP.name}` },
+      { title: `Chi tiết ván đấu — ${APP.name}` },
       {
         name: "description",
         content:
-          "Replay a saved game move by move with an evaluation graph, accuracy per side and PGN export.",
+          "Xem lại từng nước của ván đấu đã lưu với biểu đồ đánh giá, độ chính xác của mỗi bên và xuất PGN.",
       },
-      { property: "og:title", content: `Game detail — ${APP.name}` },
+      { property: "og:title", content: `Chi tiết ván đấu — ${APP.name}` },
       {
         property: "og:description",
-        content: "Move-by-move replay with engine evaluation and accuracy.",
+        content: "Xem lại từng nước với đánh giá engine và độ chính xác.",
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/games/$gameId")({
 });
 
 function GameDetail() {
+  const { t } = useT();
   const { gameId } = Route.useParams();
   const navigate = useNavigate();
   const settings = useSettings();
@@ -120,12 +122,12 @@ function GameDetail() {
   if (!game) {
     return (
       <AppShell>
-        <h1 className="text-2xl font-bold">Game not found</h1>
+        <h1 className="text-2xl font-bold">{t("play.detail.notFoundTitle")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          This game is no longer in your local archive.
+          {t("play.detail.notFoundText")}
         </p>
         <Button asChild className="mt-4">
-          <Link to="/games">Back to my games</Link>
+          <Link to="/games">{t("play.detail.backToGames")}</Link>
         </Button>
       </AppShell>
     );
@@ -153,13 +155,13 @@ function GameDetail() {
       });
       attachReview(game.id, review);
       const created = addPuzzles(generatePuzzles({ ...game, review }));
-      toast.success(deep ? "Phân tích sâu hoàn tất" : "Review complete", {
+      toast.success(t(deep ? "play.detail.deepReviewComplete" : "play.detail.reviewComplete"), {
         description:
-          `Accuracy — White ${review.accuracy.w}%, Black ${review.accuracy.b}%` +
-          (created > 0 ? ` · ${created} puzzle${created === 1 ? "" : "s"} added` : ""),
+          t("play.detail.reviewCompleteDesc", { w: review.accuracy.w, b: review.accuracy.b }) +
+          (created > 0 ? ` · ${t("play.detail.puzzlesAdded", { n: created })}` : ""),
       });
     } catch (e) {
-      toast.error("Review failed", { description: (e as Error).message });
+      toast.error(t("play.detail.reviewFailed"), { description: (e as Error).message });
     } finally {
       setProgress(null);
     }
@@ -169,10 +171,10 @@ function GameDetail() {
     <AppShell wide>
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="outline" size="sm" onClick={() => navigate({ to: "/games" })}>
-          <ArrowLeft className="size-4" /> My games
+          <ArrowLeft className="size-4" /> {t("play.detail.myGames")}
         </Button>
         <h1 className="font-display text-xl font-bold">
-          {game.white.name} <span className="text-muted-foreground">vs</span> {game.black.name}
+          {game.white.name} <span className="text-muted-foreground">{t("play.games.vsBadge")}</span> {game.black.name}
         </h1>
         <span className="rounded bg-secondary px-2 py-1 text-xs font-semibold text-muted-foreground">
           {outcomeLabel(game)} · {game.result.reason}
@@ -196,13 +198,13 @@ function GameDetail() {
             />
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="icon" aria-label="First move" onClick={() => setCursor(-1)}>
+            <Button variant="outline" size="icon" aria-label={t("play.detail.firstMove")} onClick={() => setCursor(-1)}>
               <SkipBack className="size-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              aria-label="Previous move"
+              aria-label={t("play.detail.prevMove")}
               onClick={() => setCursor((c) => Math.max(-1, c - 1))}
             >
               <ChevronLeft className="size-4" />
@@ -210,7 +212,7 @@ function GameDetail() {
             <Button
               variant="outline"
               size="icon"
-              aria-label="Next move"
+              aria-label={t("play.detail.nextMove")}
               onClick={() => setCursor((c) => Math.min(game.moves.length - 1, c + 1))}
             >
               <ChevronRight className="size-4" />
@@ -218,7 +220,7 @@ function GameDetail() {
             <Button
               variant="outline"
               size="icon"
-              aria-label="Last move"
+              aria-label={t("play.detail.lastMove")}
               onClick={() => setCursor(game.moves.length - 1)}
             >
               <SkipForward className="size-4" />
@@ -227,24 +229,24 @@ function GameDetail() {
               variant="outline"
               onClick={() => setOrientation((o) => (o === "w" ? "b" : "w"))}
             >
-              <FlipVertical2 className="size-4" /> Flip
+              <FlipVertical2 className="size-4" /> {t("play.detail.flip")}
             </Button>
             <Button
               variant="secondary"
               onClick={() => navigate({ to: "/analysis", search: { fen: fen ?? game.finalFen } })}
             >
-              Open in analysis
+              {t("play.detail.openAnalysis")}
             </Button>
             <Button
               variant="outline"
               onClick={() => {
                 void navigator.clipboard
                   .writeText(toPgn(game))
-                  .then(() => toast.success("PGN copied to clipboard"))
-                  .catch(() => toast.error("Clipboard unavailable"));
+                  .then(() => toast.success(t("play.detail.pgnCopied")))
+                  .catch(() => toast.error(t("play.detail.clipboardUnavailable")));
               }}
             >
-              <Copy className="size-4" /> PGN
+              <Copy className="size-4" /> {t("play.detail.copyPgn")}
             </Button>
           </div>
         </div>
@@ -253,7 +255,7 @@ function GameDetail() {
           <div className="panel p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Evaluation
+                {t("play.detail.evaluation")}
               </h2>
               <span className="tabular text-sm font-semibold">{formatEval(evalNow)}</span>
             </div>
@@ -269,7 +271,7 @@ function GameDetail() {
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div className="rounded-md bg-surface-2 p-3">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      White accuracy
+                      {t("play.detail.whiteAccuracy")}
                     </p>
                     <p className="tabular font-display text-xl font-bold">
                       {game.review.accuracy.w}%
@@ -277,7 +279,7 @@ function GameDetail() {
                   </div>
                   <div className="rounded-md bg-surface-2 p-3">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      Black accuracy
+                      {t("play.detail.blackAccuracy")}
                     </p>
                     <p className="tabular font-display text-xl font-bold">
                       {game.review.accuracy.b}%
@@ -287,11 +289,10 @@ function GameDetail() {
             <div className="mt-3 flex items-start justify-between gap-3 rounded-md bg-surface-2 p-3">
               <div>
                 <Label htmlFor="deep-review" className="text-sm font-semibold">
-                  Phân tích sâu
+                  {t("play.detail.deepReview")}
                 </Label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Engine tìm lâu hơn (~900ms/nước, 5 phương án) và lưu biến thể gợi ý chi tiết cho
-                  từng sai lầm. Chạy chậm hơn nhưng chính xác hơn.
+                  {t("play.detail.deepReviewDesc")}
                 </p>
               </div>
               <Switch
@@ -307,23 +308,21 @@ function GameDetail() {
                   disabled={progress !== null}
                   onClick={runReview}
                 >
-                  <Gauge className="size-4" /> {deep ? "Chạy phân tích sâu" : "Re-run review"}
+                  <Gauge className="size-4" /> {deep ? t("play.detail.runDeepReview") : t("play.detail.rerunReview")}
                 </Button>
               </>
             ) : (
               <div className="mt-3">
                 <p className="text-sm text-muted-foreground">
-                  Run an engine review to get an evaluation curve for every move plus accuracy for
-                  both sides. Everything is computed on your device.
+                  {t("play.detail.reviewIntro")}
                 </p>
             <div className="mt-3 flex items-start justify-between gap-3 rounded-md bg-surface-2 p-3">
               <div>
                 <Label htmlFor="deep-review" className="text-sm font-semibold">
-                  Phân tích sâu
+                  {t("play.detail.deepReview")}
                 </Label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Engine tìm lâu hơn (~900ms/nước, 5 phương án) và lưu biến thể gợi ý chi tiết cho
-                  từng sai lầm. Chạy chậm hơn nhưng chính xác hơn.
+                  {t("play.detail.deepReviewDesc")}
                 </p>
               </div>
               <Switch
@@ -336,16 +335,16 @@ function GameDetail() {
                 <Button className="mt-3 w-full" disabled={progress !== null} onClick={runReview}>
                   <Gauge className="size-4" />
                   {progress
-                    ? `Reviewing ${progress.done}/${progress.total}…`
+                    ? t("play.detail.reviewing", { done: progress.done, total: progress.total })
                     : deep
-                      ? "Chạy phân tích sâu"
-                      : "Run engine review"}
+                      ? t("play.detail.runDeepReview")
+                      : t("play.detail.runReview")}
                 </Button>
               </div>
             )}
             {progress && game.review && (
               <p className="mt-2 text-center text-xs text-muted-foreground">
-                Reviewing {progress.done}/{progress.total}…
+                {t("play.detail.reviewing", { done: progress.done, total: progress.total })}
               </p>
             )}
           </div>
@@ -356,18 +355,18 @@ function GameDetail() {
 
           <div className="panel flex max-h-[420px] flex-col overflow-hidden">
             <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Moves
+              {t("play.detail.moves")}
             </div>
             <MoveList moves={game.moves} activeIndex={cursor} onSelect={setCursor} />
           </div>
 
           <div className="panel space-y-2 p-4 text-sm">
-            <Row label="Mode" value={game.mode === "ai" ? "Vs engine" : "Local two player"} />
-            <Row label="Variant" value={game.variantName} />
-            <Row label="Time control" value={game.timeControl} />
-            <Row label="Opening" value={game.opening ?? "—"} />
-            <Row label="Moves" value={String(game.moves.length)} />
-            <Row label="Played" value={new Date(game.playedAt).toLocaleString()} />
+            <Row label={t("play.detail.mode")} value={game.mode === "ai" ? t("play.detail.modeAi") : t("play.detail.modeLocal")} />
+            <Row label={t("play.detail.variant")} value={game.variantName} />
+            <Row label={t("play.detail.timeControl")} value={game.timeControl} />
+            <Row label={t("play.detail.opening")} value={game.opening ?? "—"} />
+            <Row label={t("play.detail.movesLabel")} value={String(game.moves.length)} />
+            <Row label={t("play.detail.played")} value={new Date(game.playedAt).toLocaleString()} />
           </div>
         </div>
       </div>
