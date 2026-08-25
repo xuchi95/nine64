@@ -154,6 +154,11 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv01";
+    font-weight: 450;
+    line-height: 1.6;
+    letter-spacing: 0.001em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Một font duy nhất cho mọi phần tử, kể cả input/button/code/kbd */
@@ -170,12 +175,39 @@
     font-family: var(--font-sans);
   }
 
+  /* Nine64 headline voice: tight, heavy, quiet — giống wordmark. */
   h1,
   h2,
   h3,
-  h4 {
+  h4,
+  h5 {
     font-family: var(--font-sans);
+    font-weight: 700;
+    line-height: 1.18;
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-weight: 800;
+    letter-spacing: -0.028em;
+  }
+
+  h2 {
+    letter-spacing: -0.022em;
+  }
+
+  h3,
+  h4 {
     letter-spacing: -0.015em;
+  }
+
+  h5,
+  h6 {
+    letter-spacing: -0.008em;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   /* Giữ số thẳng cột ở những chỗ trước đây dùng font mono */
@@ -185,12 +217,28 @@
   kbd,
   samp {
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.005em;
+  }
+
+  small,
+  .text-xs,
+  .text-\[11px\] {
+    letter-spacing: 0.012em;
   }
 
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
+}
+
+/* Nhãn nhỏ kiểu wordmark: chữ hoa, giãn ký tự, mảnh. */
+@utility label-caps {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  font-size: 0.68rem;
+  color: var(--color-muted-foreground);
 }
 
 @utility panel {
