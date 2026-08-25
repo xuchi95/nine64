@@ -320,34 +320,46 @@ function GamesSparkline() {
   );
 }
 
-/* ── Visuals: pure CSS/unicode so the homepage stays instant ─────────────── */
+/* ── Visuals: same SVG pieces + board theme as the real game board ───────── */
 
-const BACK_RANK = ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"];
+const BACK_RANK: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
 
 function StartBoard() {
+  const settings = useSettings();
+  const theme = getBoardTheme(settings.boardTheme);
+  const pieceSet = getPieceSet(settings.pieceSet);
+
   return (
-    <div className="overflow-hidden rounded-xl border border-border shadow-2xl">
+    <div
+      className="overflow-hidden rounded-xl shadow-2xl"
+      style={{ border: `1px solid ${theme.frame}` }}
+    >
       <div className="grid grid-cols-8">
         {Array.from({ length: 64 }, (_, i) => {
           const rank = i >> 3;
           const file = i % 8;
-          const dark = (rank + file) % 2 === 1;
-          const piece =
-            rank === 0 || rank === 7 ? BACK_RANK[file]! : rank === 1 || rank === 6 ? "♟" : null;
-          const isWhitePiece = rank >= 6;
+          // same parity rule as ChessBoard (a8 is light)
+          const isDark = (file + (8 - rank)) % 2 === 0;
+          const type: PieceType | null =
+            rank === 0 || rank === 7 ? BACK_RANK[file]! : rank === 1 || rank === 6 ? "p" : null;
+          const color: PieceColor = rank >= 6 ? "w" : "b";
           return (
             <div
               key={i}
-              className={`flex aspect-square items-center justify-center text-[clamp(1.6rem,5.8vw,2.85rem)] leading-none ${
-                dark ? "bg-primary/45" : "bg-primary/15"
-              } ${
-                isWhitePiece
-                  ? "text-foreground [text-shadow:0_1px_2px_color-mix(in_oklab,var(--background)_75%,transparent)]"
-                  : // Quân đen: viền sáng quanh glyph để nổi bật trên ô đồng/vàng
-                    "text-background [text-shadow:0_0_1px_color-mix(in_oklab,var(--foreground)_85%,transparent),0_0_3px_color-mix(in_oklab,var(--foreground)_45%,transparent),0_1px_0_color-mix(in_oklab,var(--foreground)_60%,transparent)]"
-              }`}
+              className="relative aspect-square"
+              style={{
+                backgroundColor: isDark ? theme.dark : theme.light,
+                backgroundImage: isDark
+                  ? "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(0,0,0,0.14) 55%, rgba(0,0,0,0.22))"
+                  : "linear-gradient(135deg, rgba(255,255,255,0.30), rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.10))",
+                boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.08)",
+              }}
             >
-              {piece}
+              {type && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Piece type={type} color={color} set={pieceSet} size="100%" />
+                </div>
+              )}
             </div>
           );
         })}
@@ -355,6 +367,7 @@ function StartBoard() {
     </div>
   );
 }
+
 
 
 function BotsVisual() {
