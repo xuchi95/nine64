@@ -26,6 +26,8 @@ import {
   pvToArrows,
   pvToSan,
   recognizeEndgame,
+  PHASE_THRESHOLDS,
+  WINNING_CP_THRESHOLD,
 } from "@/lib/chess/endgame";
 
 
