@@ -232,6 +232,34 @@
   animation: nexus-shake 0.3s ease-in-out;
 }
 
+/* Captured piece: compositor-only fade + shrink, no layout or paint churn. */
+@keyframes nexus-capture {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 0.7;
+    transform: scale(0.9) rotate(-4deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
+  }
+}
+
+.animate-nexus-capture {
+  animation: nexus-capture 180ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-nexus-capture {
+    animation-duration: 1ms;
+  }
+}
+
+
 @keyframes nexus-page-enter {
   0% {
     opacity: 0;
