@@ -270,7 +270,9 @@ export function ChessBoard(props: ChessBoardProps) {
     setSelected(null);
   };
 
-  const transitionMs = settings.animations ? settings.animationMs : 0;
+  // Spring-like travel curve: quick launch, tiny settle at the target square.
+  const travelEase = "cubic-bezier(0.22, 1.16, 0.32, 1)";
+
 
   return (
     <div className="w-full">
