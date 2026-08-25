@@ -14,7 +14,7 @@ import asyncio
 import json
 import sys
 
-from PIL import Image, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageFilter, ImageStat
 from playwright.async_api import async_playwright
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8080"
@@ -68,8 +68,18 @@ GEOMETRY_JS = """
 
 
 def diff_metrics(a: str, b: str) -> dict[str, float]:
-    ia = Image.open(a).convert("RGB").resize((512, 512), Image.LANCZOS)
-    ib = Image.open(b).convert("RGB").resize((512, 512), Image.LANCZOS)
+    # Both boards render identical SVGs but at different raster sizes (a ~1140px
+    # hero vs a ~2160px game board), so a light blur after normalising removes
+    # pure resampling noise and leaves real geometry drift visible.
+    def norm(path: str) -> Image.Image:
+        return (
+            Image.open(path)
+            .convert("RGB")
+            .resize((512, 512), Image.LANCZOS)
+            .filter(ImageFilter.GaussianBlur(1.5))
+        )
+
+    ia, ib = norm(a), norm(b)
     delta = ImageChops.difference(ia, ib)
     px = list(delta.getdata())
     bad = sum(1 for p in px if max(p) > 24)
