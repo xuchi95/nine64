@@ -159,7 +159,7 @@ function MobileNav() {
     setOpen(false);
   }, [pathname]);
 
-  const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
+  const isActive = (to: string) => isRouteActive(pathname, to);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
