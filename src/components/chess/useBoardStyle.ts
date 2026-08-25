@@ -14,8 +14,14 @@ import {
 export function useBoardStyle() {
   const settings = useSettings();
   const mode = settings.appearance === "dark" ? "dark" : "light";
-  const boardThemeId = resolveBoardThemeId(settings.boardTheme, mode);
-  const pieceSetId = resolvePieceSetId(settings.pieceSet, mode);
+  // A theme the user picked by hand is used verbatim; only the automatic
+  // default follows the light/dark variant map.
+  const boardThemeId = settings.boardThemeAuto
+    ? resolveBoardThemeId(settings.boardTheme, mode)
+    : settings.boardTheme;
+  const pieceSetId = settings.pieceSetAuto
+    ? resolvePieceSetId(settings.pieceSet, mode)
+    : settings.pieceSet;
   return {
     mode,
     boardThemeId,

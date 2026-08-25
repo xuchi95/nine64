@@ -1,14 +1,13 @@
 import { Check } from "lucide-react";
 import { Piece } from "@/components/chess/Piece";
+import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import {
   BOARD_THEMES,
   PIECE_SETS,
-  getBoardTheme,
-  getPieceSet,
   type BoardTheme,
   type PieceSet,
 } from "@/lib/chess/themes";
-import { updateSettings, useSettings } from "@/lib/settings";
+import { updateSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_PIECES = [
@@ -47,9 +46,7 @@ function MiniBoard({ theme, set }: { theme: BoardTheme; set: PieceSet }) {
 
 /** Board + piece theme switcher with live mini-board previews. */
 export function BoardThemePicker({ className }: { className?: string }) {
-  const settings = useSettings();
-  const activeTheme = getBoardTheme(settings.boardTheme);
-  const activeSet = getPieceSet(settings.pieceSet);
+  const { theme: activeTheme, pieceSet: activeSet } = useBoardStyle();
 
   return (
     <section className={cn("panel p-4 sm:p-5", className)}>
@@ -75,7 +72,7 @@ export function BoardThemePicker({ className }: { className?: string }) {
             <button
               key={theme.id}
               type="button"
-              onClick={() => updateSettings({ boardTheme: theme.id })}
+              onClick={() => updateSettings({ boardTheme: theme.id, boardThemeAuto: false })}
               aria-pressed={active}
               className={cn(
                 "group rounded-lg border p-2 text-left transition-colors",
@@ -104,7 +101,7 @@ export function BoardThemePicker({ className }: { className?: string }) {
             <button
               key={set.id}
               type="button"
-              onClick={() => updateSettings({ pieceSet: set.id })}
+              onClick={() => updateSettings({ pieceSet: set.id, pieceSetAuto: false })}
               aria-pressed={active}
               className={cn(
                 "flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",

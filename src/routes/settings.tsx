@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { APP } from "@/config/app";
-import { BOARD_THEMES, PIECE_SETS, getBoardTheme, getPieceSet } from "@/lib/chess/themes";
+import { BOARD_THEMES, PIECE_SETS } from "@/lib/chess/themes";
 import { Piece } from "@/components/chess/Piece";
 import { resetSettings, updateSettings, useSettings, type Settings } from "@/lib/settings";
 import { playSound, playShatter } from "@/lib/sound";
+import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const settings = useSettings();
+  const boardStyle = useBoardStyle();
   const { user } = useAuth();
 
   return (
@@ -59,10 +61,10 @@ function SettingsPage() {
             <button
               key={t.id}
               type="button"
-              onClick={() => updateSettings({ boardTheme: t.id })}
+              onClick={() => updateSettings({ boardTheme: t.id, boardThemeAuto: false })}
               className={cn(
                 "rounded-md border p-2 transition-colors",
-                settings.boardTheme === t.id ? "border-primary" : "border-border hover:border-primary/40",
+                boardStyle.theme.id === t.id ? "border-primary" : "border-border hover:border-primary/40",
               )}
             >
               <span className="grid grid-cols-4 overflow-hidden rounded">
@@ -90,12 +92,12 @@ function SettingsPage() {
             <button
               key={set.id}
               type="button"
-              onClick={() => updateSettings({ pieceSet: set.id })}
+              onClick={() => updateSettings({ pieceSet: set.id, pieceSetAuto: false })}
               className={cn(
                 "flex flex-col items-center rounded-md border p-2 transition-colors",
-                settings.pieceSet === set.id ? "border-primary" : "border-border hover:border-primary/40",
+                boardStyle.pieceSet.id === set.id ? "border-primary" : "border-border hover:border-primary/40",
               )}
-              style={{ backgroundColor: getBoardTheme(settings.boardTheme).light }}
+              style={{ backgroundColor: boardStyle.theme.light }}
             >
               <span className="flex">
                 <Piece type="k" color="w" set={set} size={40} />
