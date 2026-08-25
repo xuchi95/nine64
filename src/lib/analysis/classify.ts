@@ -75,10 +75,14 @@ function pickLabel(input: ClassifyInput, loss: number): MoveLabel {
     secondBestAfter !== null &&
     secondBestAfter !== undefined &&
     input.bestAfter - secondBestAfter >= 20 &&
+    // In already decided positions the gap between lines is meaningless.
+    input.bestAfter > 20 &&
+    input.bestAfter < 85 &&
     loss <= 1.5
   ) {
     return "great";
   }
+
 
 
   if (inBook && loss <= 4) return "book";
