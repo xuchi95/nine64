@@ -615,7 +615,41 @@ html.theme-anim [data-no-theme-fade] * {
 html.theme-anim,
 html.theme-anim body {
   overflow-anchor: none;
+  scrollbar-gutter: stable;
 }
+
+/* --- Layout freeze -------------------------------------------------------
+   While the theme cross-fades, only paint-level properties may change.
+   Geometry, typography metrics and stacking order stay exactly as they were,
+   so panels can't resize, reflow or re-order mid-transition. */
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition-property:
+    background-color, background-image, border-color, color, fill, stroke,
+    box-shadow, outline-color, stop-color, flood-color, lighting-color,
+    fill-opacity, stroke-opacity, text-decoration-color, caret-color, filter,
+    backdrop-filter !important;
+  animation-play-state: paused;
+  will-change: auto;
+}
+
+/* Panels and board surfaces are isolated so a repaint never triggers a
+   sibling reflow, and their z-order is pinned for the whole transition. */
+html.theme-anim .panel,
+html.theme-anim [data-panel],
+html.theme-anim [data-game-panel],
+html.theme-anim [data-board-root] {
+  contain: layout paint style;
+  isolation: isolate;
+}
+
+/* Effect layers keep animating; nothing else does. */
+html.theme-anim [class*="animate-nexus-"],
+html.theme-anim [class*="animate-nexus-"] * {
+  animation-play-state: running;
+}
+
 
 
 @media (prefers-reduced-motion: reduce) {
