@@ -14,7 +14,7 @@ export type MmEvent = {
   level: MmEventLevel;
   source: "queue" | "realtime" | "rpc" | "navigate";
   message: string;
-  detail?: Record<string, unknown>;
+  detail?: Record<string, unknown> | undefined;
 };
 
 const MAX_EVENTS = 120;
