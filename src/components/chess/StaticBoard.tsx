@@ -1,6 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { Piece, type PieceColor, type PieceType } from "./Piece";
-import { FILES, RANKS, isDarkSquare, squareSurface } from "./boardSurface";
+import {
+  FILES,
+  PIECE_SCALE,
+  RANKS,
+  isDarkSquare,
+  pieceBoxStylePct,
+  squareSurface,
+} from "./boardSurface";
 import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { cn } from "@/lib/utils";
 import type { BoardPiece } from "./ChessBoard";
@@ -117,7 +124,7 @@ const BoardGrid = memo(function BoardGrid({
         className="pointer-events-none"
         style={pieceBoxStylePct(piece.square, orientation)}
       >
-        <div style={{ transform: PIECE_SCALE.idle }}>
+        <div className="h-full w-full" style={{ transform: PIECE_SCALE.idle }}>
           <Piece
             type={piece.type}
             color={piece.color}
