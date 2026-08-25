@@ -12,6 +12,10 @@ export default {
     "study.analysis.forcedMate": "Chiếu hết bắt buộc sau {n} nước",
     "study.analysis.mainLineFor": "Biến chính cho {color}",
     "study.analysis.pickLineHint": "Bấm một phương án để tô biến đó lên bàn cờ.",
+    "study.analysis.autoHighlight": "Tự tô biến thắng",
+    "study.analysis.autoHighlightHint": "Tắt để tự so sánh trước khi xem mũi tên của máy.",
+    "study.analysis.arrowsOff": "Mũi tên đang tắt",
+
 
     // ---------- Endgame recognition ----------
     "study.endgame.title": "Nhận diện tàn cuộc",
