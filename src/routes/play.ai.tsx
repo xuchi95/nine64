@@ -4,6 +4,7 @@ import { Cpu, Flag, Handshake, RefreshCw, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
+import { GamePanel, StatRow, EvalBar } from "@/components/game/GamePanel";
 import { PlayerCard } from "@/components/game/PlayerCard";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
@@ -531,11 +532,3 @@ function PlayAi() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="truncate text-sm font-medium">{value}</span>
-    </div>
-  );
-}
