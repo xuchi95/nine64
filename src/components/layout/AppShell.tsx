@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
+import { CREDIT } from "@/config/credit";
+
 import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
