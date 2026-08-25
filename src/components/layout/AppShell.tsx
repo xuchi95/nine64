@@ -84,19 +84,10 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
         >
           <MobileNav />
 
-          <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm transition-transform group-hover:scale-105 sm:size-11 lg:size-12">
-              <Crown className="size-5 sm:size-6" />
-            </span>
-            <span className="flex min-w-0 flex-col leading-none">
-              <span className="truncate text-[13px] font-bold tracking-[0.14em] sm:text-base sm:tracking-[0.16em] lg:text-lg">
-                {APP.name.toUpperCase()}
-              </span>
-              <span className="mt-1 hidden text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:block">
-                {APP.tagline}
-              </span>
-            </span>
+          <Link to="/" className="group flex min-w-0 items-center">
+            <BrandLogo className="h-9 transition-transform group-hover:scale-105 sm:h-10 lg:h-12" />
           </Link>
+
 
           <nav className="hidden items-center gap-1 text-sm font-medium lg:flex">
             {MAIN_NAV.map((item) => (
