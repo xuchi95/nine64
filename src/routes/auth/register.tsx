@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { APP } from "@/config/app";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
@@ -36,12 +35,14 @@ function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setFormError(null);
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -55,16 +56,15 @@ function RegisterPage() {
     setLoading(false);
 
     if (error) {
-      toast.error(error.message || t("study.register.signUpFailed"));
+      setFormError(error.message || t("study.register.signUpFailed"));
       return;
     }
 
     if (data.user?.identities?.length === 0) {
-      toast.error(t("study.register.accountExists"));
+      setFormError(t("study.register.accountExists"));
       return;
     }
 
-    toast.success(t("study.register.accountCreated"));
     navigate({ to: redirectTo, replace: true });
   }
 
@@ -78,6 +78,10 @@ function RegisterPage() {
         </p>
       </div>
 
+
+          {formError ? (
+            <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-2">
@@ -155,7 +159,7 @@ function RegisterPage() {
               });
               setLoading(false);
               if (result.error) {
-                toast.error(result.error.message || t("study.register.googleFailed"));
+                setFormError(result.error.message || t("study.register.googleFailed"));
               }
             }}
             disabled={loading}
