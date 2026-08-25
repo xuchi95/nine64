@@ -5,6 +5,7 @@ import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { playSound, playShatter } from "@/lib/sound";
 import { findCheckAttacks, squaresBetween } from "@/lib/chess/checkGeometry";
+import { useT } from "@/lib/i18n";
 
 
 export interface BoardPiece {
@@ -137,6 +138,7 @@ export function ChessBoard(props: ChessBoardProps) {
 
   const settings = useSettings();
   const { theme, pieceSet } = useBoardStyle();
+  const { t } = useT();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(480);
@@ -263,7 +265,7 @@ export function ChessBoard(props: ChessBoardProps) {
     }
   }, [isCheckmate]);
 
-  const winnerLabel = props.turn === "w" ? "Black" : "White";
+  const winnerLabel = props.turn === "w" ? t("game.board.black") : t("game.board.white");
 
 
 
@@ -578,7 +580,7 @@ export function ChessBoard(props: ChessBoardProps) {
         data-board-root=""
 
         role="grid"
-        aria-label="Chess board"
+        aria-label={t("game.board.aria")}
         className="relative aspect-square w-full max-w-full touch-none select-none overflow-hidden rounded-md ring-1 ring-black/40"
 
         style={{ backgroundColor: theme.frame }}
@@ -1072,7 +1074,7 @@ export function ChessBoard(props: ChessBoardProps) {
                   : "border-red-400/60 bg-red-600/90",
               )}
             >
-              {isCheckmate ? "Checkmate!" : "Check!"}
+              {isCheckmate ? t("game.board.checkmate") : t("game.board.check")}
             </div>
           </>
         )}
@@ -1081,22 +1083,22 @@ export function ChessBoard(props: ChessBoardProps) {
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-[2px]">
             <div
               role="alertdialog"
-              aria-label="Game over"
+              aria-label={t("game.board.gameOver")}
               className="panel animate-nexus-pop max-w-[85%] px-6 py-5 text-center"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-400">
-                Checkmate
+                {t("game.board.checkmateLabel")}
               </p>
-              <p className="mt-2 text-xl font-bold">{winnerLabel} wins</p>
+              <p className="mt-2 text-xl font-bold">{t("game.board.winnerWins", { winner: winnerLabel })}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                The king is in check with no legal moves left.
+                {t("game.board.mateDetail")}
               </p>
               <button
                 type="button"
                 onClick={() => setMateDismissed(true)}
                 className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
-                View board
+                {t("game.board.viewBoard")}
               </button>
             </div>
           </div>
@@ -1113,7 +1115,7 @@ export function ChessBoard(props: ChessBoardProps) {
                   type="button"
                   onClick={() => finishPromotion(p)}
                   className="rounded-md bg-surface-2 p-1 transition-colors hover:bg-primary/20"
-                  aria-label={`Promote to ${p}`}
+                  aria-label={t("game.board.promoteTo", { piece: p })}
                 >
                   <Piece
                     type={p}

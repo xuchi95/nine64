@@ -132,11 +132,8 @@ function DecisionItem({ row }: { row: DecisionRow }) {
       </div>
 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs tabular-nums text-muted-foreground">
-        <span>
-          {t("admin.log.scoreLabel", {
-            score: <span className={cn("font-semibold", tone(row.score))}>{row.score}</span> as unknown as string,
-          }).split(String(row.score))[0]}
-          <span className={cn("font-semibold", tone(row.score))}>{row.score}</span>
+        <span className={cn(tone(row.score))}>
+          {t("admin.log.scoreLabel", { score: row.score })}
         </span>
         {row.kind === "verdict" && <span>{t("admin.log.confidenceLabel", { confidence: confidenceLabel(row.confidence) })}</span>}
         {row.kind === "verdict" && row.evalMs > 0 && <span>{t("admin.log.processedMs", { ms: row.evalMs })}</span>}
@@ -273,7 +270,7 @@ function FairplayLogPage() {
             </Button>
             <Button variant="secondary" size="sm" disabled={busy} onClick={() => void load()}>
               <RefreshCw className={cn("mr-2 size-4", busy && "animate-spin")} />
-              {t("admin.audit.refresh") /* reuse generic refresh label */}
+              {t("admin.fairplay.refresh")}
             </Button>
           </div>
         </div>

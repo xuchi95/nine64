@@ -8,6 +8,7 @@ import {
   type PieceSet,
 } from "@/lib/chess/themes";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const PREVIEW_PIECES = [
   { sq: 0, type: "r", color: "b" },
@@ -45,6 +46,7 @@ function MiniBoard({ theme, set }: { theme: BoardTheme; set: PieceSet }) {
 
 /** Board + piece theme switcher with live mini-board previews. */
 export function BoardThemePicker({ className }: { className?: string }) {
+  const { t } = useT();
   const {
     theme: activeTheme,
     pieceSet: activeSet,
@@ -61,9 +63,9 @@ export function BoardThemePicker({ className }: { className?: string }) {
     <section className={cn("panel p-4 sm:p-5", className)}>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className="font-display text-lg font-semibold">Board theme</h2>
+          <h2 className="font-display text-lg font-semibold">{t("game.themePicker.title")}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Pick a board and piece style — applies everywhere instantly.
+            {t("game.themePicker.subtitle")}
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -77,10 +79,10 @@ export function BoardThemePicker({ className }: { className?: string }) {
             <Info className="mt-0.5 size-4 shrink-0 text-primary" />
             <p className="text-sm leading-relaxed text-foreground">
               {boardThemeAuto && pieceSetAuto
-                ? "Board and piece themes are currently auto-matched to your light/dark mode."
+                ? t("game.themePicker.autoBoth")
                 : boardThemeAuto
-                  ? "Board theme is currently auto-matched to your light/dark mode."
-                  : "Piece set is currently auto-matched to your light/dark mode."}
+                  ? t("game.themePicker.autoBoard")
+                  : t("game.themePicker.autoPieces")}
             </p>
           </div>
           <button
@@ -88,13 +90,13 @@ export function BoardThemePicker({ className }: { className?: string }) {
             onClick={() => setStyleAuto(false)}
             className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Manual
+            {t("game.themePicker.manual")}
           </button>
         </div>
       ) : (
         <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-2 p-3 sm:p-4">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Themes are pinned manually. Restore defaults to follow light/dark mode again.
+            {t("game.themePicker.pinnedManually")}
           </p>
           <button
             type="button"
@@ -102,13 +104,13 @@ export function BoardThemePicker({ className }: { className?: string }) {
             className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface-1 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
           >
             <RotateCcw className="size-3.5" />
-            Restore defaults
+            {t("game.themePicker.restoreDefaults")}
           </button>
         </div>
       )}
 
       <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Boards
+        {t("game.themePicker.boards")}
       </p>
       <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {BOARD_THEMES.map((theme) => {
@@ -137,7 +139,7 @@ export function BoardThemePicker({ className }: { className?: string }) {
       </div>
 
       <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Pieces
+        {t("game.themePicker.pieces")}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {PIECE_SETS.map((set) => {

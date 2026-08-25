@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 
 export const Route = createFileRoute("/games/")({
@@ -37,6 +38,7 @@ type ListItem =
   | { kind: "online"; game: OnlineGameDetail };
 
 function GamesPage() {
+  const { t } = useT();
   const { user } = useAuth();
   const localGames = useGameHistory();
   const { games: onlineGames, loading: onlineLoading } = useOnlineGames();
@@ -62,24 +64,21 @@ function GamesPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">My games</h1>
+          <h1 className="text-2xl font-bold">{t("play.games.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {items.length} game{items.length === 1 ? "" : "s"} in your archive.{" "}
-            {user
-              ? "Synced with your account."
-              : "Saved on this device only — sign in to sync them to your account."}
+            {t("play.games.subtitleCount", { n: items.length })}{" "}
+            {user ? t("play.games.syncedNote") : t("play.games.localOnlyNote")}
           </p>
         </div>
-        {/* Lịch sử ván đấu là bản ghi vĩnh viễn — người chơi không được xoá. */}
-        <p className="text-xs text-muted-foreground">Archive is permanent — games can't be deleted.</p>
+        <p className="text-xs text-muted-foreground">{t("play.games.archiveNote")}</p>
       </div>
 
 
       <div className="mt-5 grid gap-3 sm:grid-cols-4">
-        <Stat label="Total" value={String(items.length)} />
-        <Stat label="Wins vs bots" value={String(stats.wins)} />
-        <Stat label="Draws vs bots" value={String(stats.draws)} />
-        <Stat label="Losses vs bots" value={String(stats.losses)} />
+        <Stat label={t("play.games.statTotal")} value={String(items.length)} />
+        <Stat label={t("play.games.statWins")} value={String(stats.wins)} />
+        <Stat label={t("play.games.statDraws")} value={String(stats.draws)} />
+        <Stat label={t("play.games.statLosses")} value={String(stats.losses)} />
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
@@ -95,7 +94,13 @@ function GamesPage() {
                 : "border-border bg-surface-2 hover:border-primary/40",
             )}
           >
-            {f === "all" ? "All" : f === "ai" ? "Vs engine" : f === "local" ? "Local" : "Online"}
+            {f === "all"
+              ? t("play.games.filterAll")
+              : f === "ai"
+                ? t("play.games.filterAi")
+                : f === "local"
+                  ? t("play.games.filterLocal")
+                  : t("play.games.filterOnline")}
           </button>
         ))}
       </div>
@@ -103,18 +108,17 @@ function GamesPage() {
       <BoardThemePicker className="mt-5" />
 
       {onlineLoading && (
-        <p className="mt-4 text-sm text-muted-foreground">Loading online games…</p>
-
+        <p className="mt-4 text-sm text-muted-foreground">{t("play.games.loadingOnline")}</p>
       )}
 
       {items.length === 0 && !onlineLoading ? (
         <div className="panel mt-5 p-8 text-center">
-          <p className="font-display text-lg font-semibold">No games saved yet</p>
+          <p className="font-display text-lg font-semibold">{t("play.games.emptyTitle")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Finish a game against the engine, a friend, or online and it lands here automatically.
+            {t("play.games.emptyText")}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/play">Start playing</Link>
+            <Link to="/play">{t("play.games.startPlaying")}</Link>
           </Button>
         </div>
       ) : (
@@ -142,7 +146,16 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function LocalGameRow({ game }: { game: SavedGame }) {
+  const { t } = useT();
   const label = outcomeLabel(game);
+  const labelText =
+    label === "Win"
+      ? t("play.games.win")
+      : label === "Loss"
+        ? t("play.games.loss")
+        : label === "Draw"
+          ? t("play.games.draw")
+          : t("play.games.inProgress");
   const tone =
     label === "Win"
       ? "bg-primary/20 text-primary"
@@ -157,46 +170,47 @@ function LocalGameRow({ game }: { game: SavedGame }) {
       </span>
       <Link to="/games/$gameId" params={{ gameId: game.id }} className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">
-          {game.white.name} <span className="text-muted-foreground">vs</span> {game.black.name}
+          {game.white.name} <span className="text-muted-foreground">{t("play.games.vsBadge")}</span> {game.black.name}
         </p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {game.variantName} · {game.timeControl} · {game.moves.length} moves ·{" "}
-          {game.opening ?? "Unknown opening"} · {new Date(game.playedAt).toLocaleString()}
+          {game.variantName} · {game.timeControl} · {t("play.games.movesCount", { n: game.moves.length })} ·{" "}
+          {game.opening ?? t("play.games.unknownOpening")} · {new Date(game.playedAt).toLocaleString()}
         </p>
       </Link>
       {game.review && (
         <span className="hidden shrink-0 text-right text-xs text-muted-foreground sm:block">
-          <span className="block">Accuracy</span>
+          <span className="block">{t("play.games.accuracy")}</span>
           <span className="tabular text-foreground">
             {game.review.accuracy.w} / {game.review.accuracy.b}
           </span>
         </span>
       )}
-      <span className={cn("shrink-0 rounded px-2 py-1 text-xs font-semibold", tone)}>{label}</span>
+      <span className={cn("shrink-0 rounded px-2 py-1 text-xs font-semibold", tone)}>{labelText}</span>
     </li>
   );
 }
 
 
 function OnlineGameRow({ game }: { game: OnlineGameDetail }) {
+  const { t } = useT();
   const { user } = useAuth();
   const isWhite = game.white_id === user?.id;
   const opponentId = isWhite ? game.black_id : game.white_id;
-  const opponentName = `Opponent ${opponentId.slice(0, 6)}`;
-  const myName = user?.email?.split("@")[0] ?? "You";
+  const opponentName = t("play.games.opponentName", { id: opponentId.slice(0, 6) });
+  const myName = user?.email?.split("@")[0] ?? t("play.games.you");
   const whiteName = isWhite ? myName : opponentName;
   const blackName = isWhite ? opponentName : myName;
 
-  let label = "In progress";
+  let label = t("play.games.inProgress");
   let tone = "bg-secondary text-muted-foreground";
   if (game.status === "completed") {
     if (game.result === "1/2-1/2") {
-      label = "Draw";
+      label = t("play.games.draw");
     } else if ((game.result === "1-0" && isWhite) || (game.result === "0-1" && !isWhite)) {
-      label = "Win";
+      label = t("play.games.win");
       tone = "bg-primary/20 text-primary";
     } else {
-      label = "Loss";
+      label = t("play.games.loss");
       tone = "bg-destructive/20 text-destructive";
     }
   }
@@ -208,10 +222,10 @@ function OnlineGameRow({ game }: { game: OnlineGameDetail }) {
       </span>
       <Link to="/games/online/$gameId" params={{ gameId: game.id }} className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">
-          {whiteName} <span className="text-muted-foreground">vs</span> {blackName}
+          {whiteName} <span className="text-muted-foreground">{t("play.games.vsBadge")}</span> {blackName}
         </p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {game.variant} · {game.time_control} · {game.moves.length} moves ·{" "}
+          {game.variant} · {game.time_control} · {t("play.games.movesCount", { n: game.moves.length })} ·{" "}
           {new Date(game.created_at).toLocaleString()}
         </p>
       </Link>

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, LineChart, Timer } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
 import { useGameHistory } from "@/lib/history";
@@ -37,10 +38,11 @@ function fmt(value: number | null, digits = 1, suffix = ""): string {
 
 /** Lower is better for loss/mistakes; higher is better for accuracy. */
 function DeltaBadge({ change, lowerIsBetter, unit }: { change: number | null; lowerIsBetter: boolean; unit: string }) {
+  const { t } = useT();
   if (change === null || Math.abs(change) < 0.05) {
     return (
       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <ArrowRight className="size-3" /> chưa đổi
+        <ArrowRight className="size-3" /> {t("study.progress.noChange")}
       </span>
     );
   }
@@ -77,13 +79,14 @@ function KpiCard({
   lowerIsBetter: boolean;
   unit: string;
 }) {
+  const { t } = useT();
   return (
     <div className="panel p-4">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
       <p className="tabular mt-2 font-display text-2xl font-bold">{value}</p>
       <div className="mt-1 flex items-center gap-2">
         <DeltaBadge change={change} lowerIsBetter={lowerIsBetter} unit={unit} />
-        <span className="text-xs text-muted-foreground">so với giai đoạn trước</span>
+        <span className="text-xs text-muted-foreground">{t("study.progress.vsPrevious")}</span>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
     </div>
@@ -101,11 +104,12 @@ function TrendChart({
   unit: string;
   lowerIsBetter: boolean;
 }) {
+  const { t } = useT();
   const rows = buckets
     .map((b) => ({ label: b.label, value: pick(b) }))
     .filter((r): r is { label: string; value: number } => typeof r.value === "number");
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">Chưa có dữ liệu cho chỉ số này.</p>;
+    return <p className="text-sm text-muted-foreground">{t("study.progress.noDataForMetric")}</p>;
   }
   const max = Math.max(...rows.map((r) => r.value), 0.001);
   const w = 100;
@@ -144,6 +148,7 @@ function TrendChart({
 }
 
 function ProgressPage() {
+  const { t } = useT();
   const games = useGameHistory();
   const [granularity, setGranularity] = useState<Granularity>("week");
 
@@ -173,10 +178,9 @@ function ProgressPage() {
     <AppShell wide>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">Tiến bộ theo thời gian</h1>
+          <h1 className="font-display text-2xl font-bold">{t("study.progress.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tổng hợp từ {summary.games} ván đã phân tích ({summary.moves} nước của bạn). Chỉ số càng
-            thấp càng tốt, trừ độ chính xác.
+            {t("study.progress.summary", { games: summary.games, moves: summary.moves })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -187,7 +191,7 @@ function ProgressPage() {
               variant={granularity === g ? "default" : "outline"}
               onClick={() => setGranularity(g)}
             >
-              {g === "day" ? "Ngày" : g === "week" ? "Tuần" : "Tháng"}
+              {g === "day" ? t("study.progress.day") : g === "week" ? t("study.progress.week") : t("study.progress.month")}
             </Button>
           ))}
         </div>
@@ -195,13 +199,20 @@ function ProgressPage() {
 
       {buckets.length === 0 ? (
         <div className="panel mt-6 p-6 text-sm text-muted-foreground">
-          <p className="font-semibold text-foreground">Chưa có dữ liệu tiến bộ.</p>
+          <p className="font-semibold text-foreground">{t("study.progress.emptyTitle")}</p>
           <p className="mt-1">
-            Hãy chạy Engine review hoặc Chuyên gia phân tích cho vài ván trong{" "}
-            <Link to="/games" className="text-primary underline">
-              lịch sử ván đấu
-            </Link>{" "}
-            — thống kê sẽ xuất hiện ngay sau đó.
+            {(() => {
+              const [before, after] = t("study.progress.emptyBody", { link: "\u0000" }).split("\u0000");
+              return (
+                <>
+                  {before}
+                  <Link to="/games" className="text-primary underline">
+                    {t("study.progress.gameHistoryLink")}
+                  </Link>
+                  {after}
+                </>
+              );
+            })()}
           </p>
         </div>
       ) : (
