@@ -568,7 +568,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
     <div className="border-t border-border/40 bg-secondary/20">
       <div
         className={cn(
-          "mx-auto flex min-w-0 items-center gap-1 px-4 py-2 text-xs text-muted-foreground sm:gap-1.5 sm:px-6",
+          "mx-auto flex min-w-0 items-center gap-1 px-4 py-1 text-[11px] leading-tight text-muted-foreground sm:gap-1.5 sm:px-6 sm:py-2 sm:text-xs",
           wide ? "max-w-[1600px]" : "max-w-6xl",
         )}
       >
