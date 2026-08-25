@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/online/diagnostics")({
       </p>
     </AppShell>
   ),
-  component: DiagnosticsPage;
+  component: DiagnosticsPage,
 });
 
 function DiagnosticsPage() {
