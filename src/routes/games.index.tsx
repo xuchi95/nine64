@@ -178,17 +178,10 @@ function LocalGameRow({ game }: { game: SavedGame }) {
         </span>
       )}
       <span className={cn("shrink-0 rounded px-2 py-1 text-xs font-semibold", tone)}>{label}</span>
-      <button
-        type="button"
-        aria-label="Delete game"
-        onClick={() => deleteGame(game.id)}
-        className="shrink-0 rounded-md p-2 text-muted-foreground transition-colors hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </button>
     </li>
   );
 }
+
 
 function OnlineGameRow({ game }: { game: OnlineGameDetail }) {
   const { user } = useAuth();
