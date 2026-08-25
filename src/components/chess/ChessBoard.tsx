@@ -33,8 +33,7 @@ export interface ChessBoardProps {
   turn: PieceColor;
 }
 
-const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
+import { FILES, RANKS, isDarkSquare, squareSurface } from "./boardSurface";
 
 interface TrackedPiece extends BoardPiece {
   id: number;
@@ -524,7 +523,7 @@ export function ChessBoard(props: ChessBoardProps) {
         {ranks.map((rank, r) =>
           files.map((file, f) => {
             const square = `${file}${rank}`;
-            const isDark = (FILES.indexOf(file) + Number(rank)) % 2 === 0;
+            const isDark = isDarkSquare(file, rank);
             const isTarget = targets.includes(square);
             const isCapture = isTarget && occupied.has(square);
             const isLast = lastMove && (lastMove.from === square || lastMove.to === square);
@@ -543,11 +542,7 @@ export function ChessBoard(props: ChessBoardProps) {
                   top: r * squareSize,
                   width: squareSize,
                   height: squareSize,
-                  backgroundColor: isDark ? theme.dark : theme.light,
-                  backgroundImage: isDark
-                    ? "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(0,0,0,0.14) 55%, rgba(0,0,0,0.22))"
-                    : "linear-gradient(135deg, rgba(255,255,255,0.30), rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.10))",
-                  boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.08)",
+                  ...squareSurface(theme, isDark),
                 }}
 
                 onPointerDown={(e) => handlePointerDown(e, square)}
