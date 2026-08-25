@@ -36,14 +36,12 @@ export function BrandLogo({ className }: { className?: string }) {
     >
       <img
         src={logoLight}
-        srcSet={RASTER.light.srcSet}
         alt={`${APP.name} logo`}
         className={cn(IMG_CLASS, "opacity-100 dark:opacity-0")}
         draggable={false}
       />
       <img
         src={logoDark}
-        srcSet={RASTER.dark.srcSet}
         alt=""
         aria-hidden
         className={cn(IMG_CLASS, "opacity-0 dark:opacity-100")}
