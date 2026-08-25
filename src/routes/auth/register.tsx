@@ -171,8 +171,6 @@ function RegisterPage() {
               Sign in
             </Link>
           </p>
-        </div>
-      </div>
-    </AppShell>
+    </AuthModal>
   );
 }
