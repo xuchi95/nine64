@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { ChevronLeft, ChevronRight, Copy, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, LineChart, Play, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
+import { EvalGraph } from "@/components/game/EvalGraph";
 import { GamePanel } from "@/components/game/GamePanel";
 import { gameLabelClass } from "@/components/game/GameLayout";
 import { cn } from "@/lib/utils";
@@ -262,13 +263,6 @@ function Analysis() {
                 startEval={0}
                 evals={trend}
                 activeIndex={trend.length - 1}
-                onSelect={(i) => {
-                  const fen = i < 0 ? undefined : game.moves[i]?.fen;
-                  if (!fen) return;
-                  setFenInput(fen);
-                  setLines([]);
-                  if (game.loadFen(fen)) setLoadError(null);
-                }}
               />
             ) : (
               <p className="px-1 py-3 text-center text-xs text-muted-foreground">
