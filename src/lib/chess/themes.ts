@@ -203,7 +203,32 @@ export const PIECE_SETS: PieceSet[] = [
     darkFill: "#14202e",
     darkStroke: "#9fd0ff",
   },
+  {
+    id: "nocturne",
+    name: "Nocturne",
+    stroke: 0.02,
+    scale: 0.82,
+    weight: 600,
+    shadow: true,
+    lightFill: "#f4f1ea",
+    lightStroke: "#141821",
+    darkFill: "#14181f",
+    darkStroke: "#f3c96b",
+  },
+  {
+    id: "heritage",
+    name: "Heritage",
+    stroke: 0.024,
+    scale: 0.84,
+    weight: 500,
+    shadow: true,
+    lightFill: "#fbf1dc",
+    lightStroke: "#3b2a15",
+    darkFill: "#2b1d10",
+    darkStroke: "#e2c48b",
+  },
 ];
+
 
 export function getBoardTheme(id: string): BoardTheme {
   return BOARD_THEMES.find((t) => t.id === id) ?? BOARD_THEMES[0]!;
