@@ -264,6 +264,10 @@ export function ChessBoard(props: ChessBoardProps) {
                 }}
 
                 onPointerDown={(e) => handlePointerDown(e, square)}
+                onMouseEnter={() => setHoveredSquare(square)}
+                onMouseLeave={() => setHoveredSquare(null)}
+                onFocus={() => setFocusedSquare(square)}
+                onBlur={() => setFocusedSquare(null)}
               >
                 {isLast && (
                   <span
