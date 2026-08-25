@@ -520,6 +520,12 @@ function OnlineGamePage() {
     return null;
   }, [moves, result, boardRev]);
 
+  const isCheckmate = useMemo(
+    () => gameRef.current.isCheckmate(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [moves, result, boardRev],
+  );
+
   const journalEntries = useMemo(() => {
     const entries = buildJournalEntries(moves, {
       baseMs: spec.baseMs,
@@ -623,6 +629,7 @@ function OnlineGamePage() {
               needsPromotion={needsPromotion}
               lastMove={lastMove}
               checkSquare={checkSquare}
+              checkmate={isCheckmate}
               turn={turn}
               interactive={live}
             />
