@@ -47,6 +47,8 @@ function MiniBoard({ theme, set }: { theme: BoardTheme; set: PieceSet }) {
 /** Board + piece theme switcher with live mini-board previews. */
 export function BoardThemePicker({ className }: { className?: string }) {
   const { theme: activeTheme, pieceSet: activeSet } = useBoardStyle();
+  const settings = useSettings();
+  const anyAuto = settings.boardThemeAuto || settings.pieceSetAuto;
 
   return (
     <section className={cn("panel p-4 sm:p-5", className)}>
