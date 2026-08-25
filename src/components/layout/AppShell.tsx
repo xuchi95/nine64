@@ -129,7 +129,18 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
         {children}
       </main>
       <footer className="border-t border-border/70 py-5 text-center text-xs text-muted-foreground">
-        {APP.name} — {APP.tagline}
+        <p>{APP.name} — {APP.tagline}</p>
+        <p className="mt-1.5 text-2xs">
+          Built by{" "}
+          <a
+            href="https://www.facebook.com/chinhxuan95/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Nguyễn Xuân Chính
+          </a>
+        </p>
       </footer>
     </div>
   );
