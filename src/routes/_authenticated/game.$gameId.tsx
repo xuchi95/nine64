@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { Flag, Hand, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  formatClock,
   formatTimeControl,
   timeControlSpec,
 } from "@/lib/chess/timeControls";
