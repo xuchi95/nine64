@@ -256,7 +256,23 @@ function Analysis() {
               <Play className="size-4" /> {analysing ? t("study.analysis.analysing") : t("study.analysis.analysePosition")}
             </Button>
           </div>
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-1 px-3 py-2">
+            <div className="min-w-0">
+              <Label htmlFor="auto-highlight" className="text-xs font-semibold text-foreground">
+                {t("study.analysis.autoHighlight")}
+              </Label>
+              <p className="mt-0.5 text-2xs text-muted-foreground">
+                {t("study.analysis.autoHighlightHint")}
+              </p>
+            </div>
+            <Switch
+              id="auto-highlight"
+              checked={autoHighlight}
+              onCheckedChange={toggleAutoHighlight}
+            />
+          </div>
         </div>
+
 
         <div className="space-y-3">
           <GamePanel
