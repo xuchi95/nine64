@@ -46,9 +46,16 @@ function MiniBoard({ theme, set }: { theme: BoardTheme; set: PieceSet }) {
 
 /** Board + piece theme switcher with live mini-board previews. */
 export function BoardThemePicker({ className }: { className?: string }) {
-  const { theme: activeTheme, pieceSet: activeSet } = useBoardStyle();
-  const settings = useSettings();
-  const anyAuto = settings.boardThemeAuto || settings.pieceSetAuto;
+  const {
+    theme: activeTheme,
+    pieceSet: activeSet,
+    boardThemeAuto,
+    pieceSetAuto,
+    anyAuto,
+    selectBoardTheme,
+    selectPieceSet,
+    setStyleAuto,
+  } = useBoardStyle();
 
   return (
     <section className={cn("panel p-4 sm:p-5", className)}>
@@ -69,18 +76,16 @@ export function BoardThemePicker({ className }: { className?: string }) {
           <div className="flex items-start gap-2.5">
             <Info className="mt-0.5 size-4 shrink-0 text-primary" />
             <p className="text-sm leading-relaxed text-foreground">
-              {settings.boardThemeAuto && settings.pieceSetAuto
+              {boardThemeAuto && pieceSetAuto
                 ? "Board and piece themes are currently auto-matched to your light/dark mode."
-                : settings.boardThemeAuto
+                : boardThemeAuto
                   ? "Board theme is currently auto-matched to your light/dark mode."
                   : "Piece set is currently auto-matched to your light/dark mode."}
             </p>
           </div>
           <button
             type="button"
-            onClick={() =>
-              updateSettings({ boardThemeAuto: false, pieceSetAuto: false })
-            }
+            onClick={() => setStyleAuto(false)}
             className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Manual
@@ -98,7 +103,7 @@ export function BoardThemePicker({ className }: { className?: string }) {
             <button
               key={theme.id}
               type="button"
-              onClick={() => updateSettings({ boardTheme: theme.id, boardThemeAuto: false })}
+              onClick={() => selectBoardTheme(theme.id)}
               aria-pressed={active}
               className={cn(
                 "group rounded-lg border p-2 text-left transition-colors",
@@ -127,7 +132,7 @@ export function BoardThemePicker({ className }: { className?: string }) {
             <button
               key={set.id}
               type="button"
-              onClick={() => updateSettings({ pieceSet: set.id, pieceSetAuto: false })}
+              onClick={() => selectPieceSet(set.id)}
               aria-pressed={active}
               className={cn(
                 "flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
