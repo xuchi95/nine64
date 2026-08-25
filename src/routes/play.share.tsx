@@ -195,7 +195,7 @@ function SharePage() {
   const pgn = useMemo(
     () =>
       buildPgn(applied, {
-        event: "Nexus Chess link match",
+        event: "Nine64 link match",
         white: payload?.white ?? "White",
         black: payload?.black ?? "Black",
         result: result?.code ?? "*",

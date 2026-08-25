@@ -188,7 +188,7 @@ function OnlineGameDetail() {
       chess.reset();
     }
     const headers = [
-      `[Event "Nexus Chess Online ${game.time_control}"]`,
+      `[Event "Nine64 Online ${game.time_control}"]`,
       `[Site "${APP.name}"]`,
       `[Date "${new Date(game.created_at).toISOString().slice(0, 10)}"]`,
       `[White "${whiteName}"]`,

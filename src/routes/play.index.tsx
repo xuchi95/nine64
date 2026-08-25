@@ -16,7 +16,7 @@ export const Route = createFileRoute("/play/")({
       { property: "og:title", content: `Play — ${APP.name}` },
       {
         property: "og:description",
-        content: "Engine matches, local play and variants on the Nexus Chess board.",
+        content: "Engine matches, local play and variants on the Nine64 board.",
       },
     ],
   }),

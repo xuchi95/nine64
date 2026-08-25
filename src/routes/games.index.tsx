@@ -25,7 +25,7 @@ export const Route = createFileRoute("/games/")({
       {
         name: "description",
         content:
-          "Every game you finish on Nexus Chess is saved: browse results, openings, accuracy and full move lists.",
+          "Every game you finish on Nine64 is saved: browse results, openings, accuracy and full move lists.",
       },
       { property: "og:title", content: `My games — ${APP.name}` },
       {
