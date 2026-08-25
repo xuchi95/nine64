@@ -181,6 +181,26 @@ export function ChessBoard(props: ChessBoardProps) {
     [defences],
   );
 
+  /** Squares the checked king may legally step to in order to escape. */
+  const kingSquare = useMemo(() => {
+    if (!checkSquare) return null;
+    const king = pieces.find((p) => p.square === checkSquare && p.type === "k");
+    return king ? king.square : checkSquare;
+  }, [pieces, checkSquare]);
+
+  const escapeSquares = useMemo(() => {
+    if (!interactive || !checkSquare || !kingSquare) return new Set<string>();
+    const kingPiece = pieces.find((p) => p.square === kingSquare);
+    if (!kingPiece || kingPiece.color !== props.turn) return new Set<string>();
+    return new Set(legalTargets(kingSquare));
+  }, [interactive, checkSquare, kingSquare, pieces, props.turn, legalTargets]);
+
+  /** Colour-blind mode: every status also carries a shape/pattern/glyph cue. */
+  const cb = settings.colorBlindMode;
+  const stripes = (color: string, angle: number) =>
+    `repeating-linear-gradient(${angle}deg, ${color} 0px, ${color} 3px, transparent 3px, transparent 8px)`;
+
+
 
   /**
    * Checkmate = the side to move is in check and has no legal target anywhere.
@@ -441,7 +461,9 @@ export function ChessBoard(props: ChessBoardProps) {
                     style={{
                       background:
                         "radial-gradient(circle, rgba(255,176,60,0.55) 20%, rgba(255,150,40,0.18) 62%, transparent 78%)",
-                      boxShadow: "inset 0 0 0 2px rgba(255,190,80,0.95)",
+                      boxShadow: cb
+                        ? "inset 0 0 0 3px rgba(255,190,80,1)"
+                        : "inset 0 0 0 2px rgba(255,190,80,0.95)",
                     }}
                   />
                 )}
@@ -449,14 +471,20 @@ export function ChessBoard(props: ChessBoardProps) {
                   <span
                     aria-hidden
                     className="absolute inset-0"
-                    style={{ backgroundColor: "rgba(255,140,70,0.16)" }}
+                    style={{
+                      backgroundColor: "rgba(255,140,70,0.16)",
+                      backgroundImage: cb ? stripes("rgba(255,150,60,0.55)", 45) : undefined,
+                    }}
                   />
                 )}
                 {defencePathSquares.has(square) && (
                   <span
                     aria-hidden
                     className="absolute inset-0"
-                    style={{ backgroundColor: "rgba(80,220,140,0.14)" }}
+                    style={{
+                      backgroundColor: cb ? "rgba(70,170,255,0.16)" : "rgba(80,220,140,0.14)",
+                      backgroundImage: cb ? stripes("rgba(70,170,255,0.55)", -45) : undefined,
+                    }}
                   />
                 )}
                 {defenderSquares.has(square) && (
@@ -464,9 +492,26 @@ export function ChessBoard(props: ChessBoardProps) {
                     aria-hidden
                     className="animate-nexus-check-pulse absolute inset-0"
                     style={{
+                      background: cb
+                        ? "radial-gradient(circle, rgba(70,170,255,0.42) 22%, rgba(70,170,255,0.14) 62%, transparent 78%)"
+                        : "radial-gradient(circle, rgba(70,220,140,0.42) 22%, rgba(70,220,140,0.14) 62%, transparent 78%)",
+                      boxShadow: cb
+                        ? "inset 0 0 0 3px rgba(120,190,255,1)"
+                        : "inset 0 0 0 2px rgba(110,240,170,0.9)",
+                    }}
+                  />
+                )}
+                {escapeSquares.has(square) && !isCheck && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{
                       background:
-                        "radial-gradient(circle, rgba(70,220,140,0.42) 22%, rgba(70,220,140,0.14) 62%, transparent 78%)",
-                      boxShadow: "inset 0 0 0 2px rgba(110,240,170,0.9)",
+                        "radial-gradient(circle, rgba(120,235,255,0.34) 24%, rgba(120,235,255,0.12) 62%, transparent 80%)",
+                      boxShadow: "inset 0 0 0 2px rgba(150,240,255,0.9)",
+                      backgroundImage: cb
+                        ? stripes("rgba(150,240,255,0.5)", 90)
+                        : undefined,
                     }}
                   />
                 )}
@@ -476,14 +521,43 @@ export function ChessBoard(props: ChessBoardProps) {
                     style={{
                       background:
                         "radial-gradient(circle, rgba(220,60,50,0.85) 8%, rgba(220,60,50,0.25) 55%, transparent 72%)",
-                      boxShadow: "inset 0 0 0 2px rgba(255,90,80,0.9)",
+                      boxShadow: cb
+                        ? "inset 0 0 0 3px rgba(255,90,80,1)"
+                        : "inset 0 0 0 2px rgba(255,90,80,0.9)",
                     }}
                   />
                 )}
+                {cb &&
+                  (() => {
+                    const glyph = isCheck
+                      ? "!"
+                      : attackerSquares.has(square)
+                        ? "\u2715"
+                        : defenderSquares.has(square)
+                          ? "\u2714"
+                          : escapeSquares.has(square)
+                            ? "\u2192"
+                            : null;
+                    if (!glyph) return null;
+                    return (
+                      <span
+                        aria-hidden
+                        className="absolute right-[2px] top-[2px] flex items-center justify-center rounded-full bg-black/75 font-bold leading-none text-white"
+                        style={{
+                          width: Math.max(14, squareSize * 0.3),
+                          height: Math.max(14, squareSize * 0.3),
+                          fontSize: Math.max(9, squareSize * 0.18),
+                        }}
+                      >
+                        {glyph}
+                      </span>
+                    );
+                  })()}
+
 
                 {settings.showLegalMoves && isTarget && !isCapture && (
                   <span
-                    className="absolute rounded-full"
+                    className={cn("absolute", cb ? "rotate-45" : "rounded-full")}
                     style={{
                       width: squareSize * 0.28,
                       height: squareSize * 0.28,
@@ -493,6 +567,19 @@ export function ChessBoard(props: ChessBoardProps) {
                     }}
                   />
                 )}
+                {cb && settings.showLegalMoves && isCapture && (
+                  <span
+                    aria-hidden
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-black leading-none text-white"
+                    style={{
+                      fontSize: Math.max(12, squareSize * 0.34),
+                      textShadow: "0 0 4px rgba(0,0,0,0.9)",
+                    }}
+                  >
+                    {"\u2715"}
+                  </span>
+                )}
+
                 {settings.showLegalMoves && isCapture && (
                   <span
                     className="absolute rounded-full"
@@ -552,7 +639,7 @@ export function ChessBoard(props: ChessBoardProps) {
                 markerHeight="4"
                 orient="auto-start-reverse"
               >
-                <path d="M0,0 L10,5 L0,10 z" fill="rgba(90,230,150,0.95)" />
+                <path d="M0,0 L10,5 L0,10 z" fill={cb ? "rgba(90,180,255,0.98)" : "rgba(90,230,150,0.95)"} />
               </marker>
             </defs>
             {defences.map((d) => {
@@ -566,10 +653,10 @@ export function ChessBoard(props: ChessBoardProps) {
                   y1={from.y + half}
                   x2={to.x + half}
                   y2={to.y + half}
-                  stroke="rgba(90,230,150,0.8)"
+                  stroke={cb ? "rgba(90,180,255,0.9)" : "rgba(90,230,150,0.8)"}
                   strokeWidth={Math.max(2, squareSize * 0.045)}
                   strokeLinecap="round"
-                  strokeDasharray={`${squareSize * 0.14} ${squareSize * 0.1}`}
+                  strokeDasharray={cb ? `${squareSize * 0.05} ${squareSize * 0.12}` : `${squareSize * 0.14} ${squareSize * 0.1}`}
                   markerEnd="url(#nexus-defend-arrow)"
                 />
               );
