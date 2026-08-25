@@ -8,9 +8,18 @@ import { playSound } from "@/lib/sound";
 import { errorDetail, logMmEvent } from "@/lib/matchmaking/diagnostics";
 import type { Game, MatchmakingQueue } from "@/lib/database.types";
 
+export const MATCH_ACCEPT_SECONDS = 15;
+
+export type MatchOpponent = {
+  name: string;
+  rating: number | null;
+  color: "white" | "black";
+};
+
 type MatchmakingState =
   | { kind: "idle" }
   | { kind: "searching"; queueId: string }
+  | { kind: "found"; gameId: string; opponent: MatchOpponent | null; deadline: number }
   | { kind: "matched"; gameId: string };
 
 export function useMatchmaking() {
@@ -36,17 +45,65 @@ export function useMatchmaking() {
     }
   }, []);
 
+  const loadOpponent = useCallback(
+    async (gameId: string): Promise<MatchOpponent | null> => {
+      if (!user?.id) return null;
+      try {
+        const { data: game, error } = await supabase
+          .from("games")
+          .select("white_id, black_id, white_rating, black_rating")
+          .eq("id", gameId)
+          .maybeSingle();
+        if (error || !game) return null;
+
+        const isWhite = game.white_id === user.id;
+        const opponentId = isWhite ? game.black_id : game.white_id;
+        const rating = isWhite ? game.black_rating : game.white_rating;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", opponentId)
+          .maybeSingle();
+
+        return {
+          name: profile?.display_name ?? opponentId.slice(0, 6),
+          rating: typeof rating === "number" ? rating : null,
+          color: isWhite ? "white" : "black",
+        };
+      } catch (e) {
+        logMmEvent("warn", "queue", "Không tải được thông tin đối thủ", errorDetail(e));
+        return null;
+      }
+    },
+    [user?.id],
+  );
+
+  /** A match exists: stop searching and ask the player to accept or decline. */
+  const presentMatch = useCallback(
+    async (gameId: string, via: "realtime" | "rpc") => {
+      cleanup();
+      playSound("matchFound");
+      setState({
+        kind: "found",
+        gameId,
+        opponent: null,
+        deadline: Date.now() + MATCH_ACCEPT_SECONDS * 1000,
+      });
+      logMmEvent("info", "queue", `Đã tìm được đối thủ (qua ${via})`, { gameId });
+      const opponent = await loadOpponent(gameId);
+      setState((prev) =>
+        prev.kind === "found" && prev.gameId === gameId ? { ...prev, opponent } : prev,
+      );
+    },
+    [cleanup, loadOpponent],
+  );
+
   const findGameAfterMatch = useCallback(
     async (queue: MatchmakingQueue) => {
       try {
         if (queue.matched_game_id) {
-          playSound("matchFound");
-          cleanup();
-          setState({ kind: "matched", gameId: queue.matched_game_id });
-          logMmEvent("info", "navigate", "Ghép trận thành công qua realtime", {
-            gameId: queue.matched_game_id,
-          });
-          void navigate({ to: "/game/$gameId", params: { gameId: queue.matched_game_id } });
+          await presentMatch(queue.matched_game_id, "realtime");
           return;
         }
         if (!user?.id) return;
@@ -64,11 +121,7 @@ export function useMatchmaking() {
 
         const gameId = rows?.[0]?.id;
         if (gameId) {
-          playSound("matchFound");
-          cleanup();
-          setState({ kind: "matched", gameId });
-          logMmEvent("info", "navigate", "Tìm thấy ván đang diễn ra sau khi ghép", { gameId });
-          void navigate({ to: "/game/$gameId", params: { gameId } });
+          await presentMatch(gameId, "realtime");
         } else {
           logMmEvent("warn", "queue", "Hàng chờ báo đã ghép nhưng chưa thấy ván đấu");
         }
@@ -76,7 +129,7 @@ export function useMatchmaking() {
         logMmEvent("error", "queue", "Lỗi khi xử lý sự kiện đã ghép", errorDetail(e));
       }
     },
-    [cleanup, navigate, user?.id],
+    [presentMatch, user?.id],
   );
 
   const startSearch = useCallback(
@@ -133,11 +186,8 @@ export function useMatchmaking() {
           try {
             const { game } = (await matchFn({ data: { queueId: entry.id } })) as { game: Game | null };
             if (game) {
-              playSound("matchFound");
-              cleanup();
-              setState({ kind: "matched", gameId: game.id });
               logMmEvent("info", "rpc", "tryMatch trả về ván đấu", { attempt, gameId: game.id });
-              void navigate({ to: "/game/$gameId", params: { gameId: game.id } });
+              await presentMatch(game.id, "rpc");
               return;
             }
             logMmEvent("info", "rpc", `tryMatch lần ${attempt}: chưa có đối thủ`, {
@@ -155,7 +205,7 @@ export function useMatchmaking() {
         throw e;
       }
     },
-    [cleanup, findGameAfterMatch, joinFn, matchFn, navigate, user],
+    [cleanup, findGameAfterMatch, joinFn, matchFn, presentMatch, user],
   );
 
   const stopSearch = useCallback(async () => {
@@ -169,6 +219,26 @@ export function useMatchmaking() {
     setState({ kind: "idle" });
   }, [cleanup, leaveFn]);
 
+  const acceptMatch = useCallback(() => {
+    if (state.kind !== "found") return;
+    const gameId = state.gameId;
+    setState({ kind: "matched", gameId });
+    logMmEvent("info", "navigate", "Đã đồng ý vào ván", { gameId });
+    void navigate({ to: "/game/$gameId", params: { gameId } });
+  }, [navigate, state]);
+
+  const declineMatch = useCallback(async () => {
+    if (state.kind !== "found") return;
+    logMmEvent("warn", "queue", "Đã từ chối ván vừa ghép", { gameId: state.gameId });
+    cleanup();
+    try {
+      await leaveFn({ data: undefined });
+    } catch (e) {
+      logMmEvent("error", "queue", "Dọn hàng chờ sau khi từ chối thất bại", errorDetail(e));
+    }
+    setState({ kind: "idle" });
+  }, [cleanup, leaveFn, state]);
+
   useEffect(() => {
     return () => cleanup();
   }, [cleanup]);
@@ -177,5 +247,7 @@ export function useMatchmaking() {
     state,
     startSearch,
     stopSearch,
+    acceptMatch,
+    declineMatch,
   };
 }

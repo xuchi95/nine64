@@ -11,6 +11,7 @@ import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { Loader2 } from "lucide-react";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { useT } from "@/lib/i18n";
+import { MatchFoundDialog } from "@/components/online/MatchFoundDialog";
 
 export const Route = createFileRoute("/_authenticated/online")({
   head: () => ({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/online")({
 function OnlinePage() {
   const { t } = useT();
   const { user } = useAuth();
-  const { state, startSearch, stopSearch } = useMatchmaking();
+  const { state, startSearch, stopSearch, acceptMatch, declineMatch } = useMatchmaking();
   const [variant, setVariant] = useState("standard");
   const [timeControl, setTimeControl] = useState("blitz5m");
   const searching = state.kind === "searching";
@@ -126,6 +127,16 @@ function OnlinePage() {
           </Link>
         </div>
       </div>
+
+      <MatchFoundDialog
+        open={state.kind === "found"}
+        opponent={state.kind === "found" ? state.opponent : null}
+        deadline={state.kind === "found" ? state.deadline : 0}
+        variantLabel={VARIANTS.find((v) => v.id === variant)?.name ?? variant}
+        timeControlLabel={TIME_CONTROLS.find((tc) => tc.id === timeControl)?.label ?? timeControl}
+        onAccept={acceptMatch}
+        onDecline={() => void declineMatch()}
+      />
     </AppShell>
   );
 }
