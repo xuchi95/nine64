@@ -99,7 +99,7 @@ function Home() {
           </div>
 
           <div className="min-w-0">
-            <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-primary">
+            <p className="font-mono text-2xs uppercase tracking-[0.28em] text-primary">
               Stockfish 18 · in-browser
             </p>
             <h1 className="mt-4 font-display text-[clamp(2rem,7vw,2.5rem)] font-extrabold leading-[1.03] tracking-tight sm:text-5xl md:text-4xl lg:text-[3.25rem]">
@@ -200,7 +200,7 @@ function Home() {
 
         {/* ── Mode grid ────────────────────────────────────────────────── */}
         <section className="relative mt-12 [contain-intrinsic-size:auto_220px] [content-visibility:auto]">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+          <h2 className="font-mono text-2xs uppercase tracking-[0.28em] text-muted-foreground">
             Quick modes
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -259,7 +259,7 @@ function Metric({ value, label }: { value: string; label: string }) {
       <dd className="font-mono text-2xl font-bold tabular-nums text-foreground">
         {value}
       </dd>
-      <dt className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      <dt className="mt-1 text-2xs font-bold uppercase tracking-widest text-muted-foreground">
         {label}
       </dt>
     </div>
@@ -319,7 +319,7 @@ function ModeTile({
       <span className="text-muted-foreground transition-colors group-hover:text-primary">
         {icon}
       </span>
-      <span className="font-display text-[11px] font-bold uppercase tracking-wider">
+      <span className="font-display text-2xs font-bold uppercase tracking-wider">
         {title}
       </span>
     </Link>

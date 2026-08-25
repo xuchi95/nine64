@@ -366,7 +366,7 @@ function NotificationBell() {
           >
             <Bell className="size-5" />
             {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-2xs font-bold text-primary-foreground">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -408,7 +408,7 @@ function NotificationBell() {
               >
                 <span className="text-sm font-medium">{n.title}</span>
                 <span className="text-xs text-muted-foreground">{n.body}</span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-2xs text-muted-foreground">
                   {new Date(n.created_at).toLocaleString()}
                 </span>
               </DropdownMenuItem>
@@ -558,7 +558,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
     <div className="border-t border-border/40 bg-secondary/20">
       <div
         className={cn(
-          "mx-auto flex min-w-0 items-center gap-1 px-4 py-1 text-[11px] leading-tight text-muted-foreground sm:gap-1.5 sm:px-6 sm:py-2 sm:text-xs",
+          "mx-auto flex min-w-0 items-center gap-1 px-4 py-1 text-2xs leading-tight text-muted-foreground sm:gap-1.5 sm:px-6 sm:py-2 sm:text-xs",
           wide ? "max-w-[1600px]" : "max-w-6xl",
         )}
       >
@@ -580,7 +580,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
         <ChevronRight className="size-3 shrink-0 opacity-50" />
         <span
           aria-current="page"
-          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary sm:px-2 sm:text-xs"
+          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-2xs font-semibold text-primary sm:px-2 sm:text-xs"
         >
           {currentLabel}
         </span>

@@ -218,12 +218,12 @@ function PuzzlesPage() {
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {puzzle.themes.length === 0 ? (
-                  <span className="rounded bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">
+                  <span className="rounded bg-secondary px-2 py-0.5 text-2xs text-muted-foreground">
                     Tactic
                   </span>
                 ) : (
                   puzzle.themes.map((m) => (
-                    <span key={m} className="rounded bg-secondary px-2 py-0.5 text-[11px]">
+                    <span key={m} className="rounded bg-secondary px-2 py-0.5 text-2xs">
                       {MOTIF_LABEL[m]}
                     </span>
                   ))

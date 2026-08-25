@@ -14,6 +14,42 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
+  /* Thang chữ thống nhất (tỉ lệ ~1.2), dùng chung cho mọi component. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.45;
+  --text-2xs--letter-spacing: 0.02em;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-xs--letter-spacing: 0.012em;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.55;
+  --text-sm--letter-spacing: 0.006em;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-base--letter-spacing: 0.001em;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.55;
+  --text-lg--letter-spacing: -0.004em;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.45;
+  --text-xl--letter-spacing: -0.008em;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.3;
+  --text-2xl--letter-spacing: -0.015em;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 1.22;
+  --text-3xl--letter-spacing: -0.02em;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 1.16;
+  --text-4xl--letter-spacing: -0.024em;
+  --text-5xl: 2.75rem;
+  --text-5xl--line-height: 1.1;
+  --text-5xl--letter-spacing: -0.028em;
+  --text-6xl: 3.5rem;
+  --text-6xl--line-height: 1.05;
+  --text-6xl--letter-spacing: -0.03em;
+
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -171,8 +207,62 @@
   code,
   pre,
   kbd,
-  samp {
+  samp,
+  th,
+  td,
+  legend,
+  fieldset,
+  label,
+  [role="button"],
+  [role="menuitem"],
+  [role="option"],
+  [role="tab"],
+  [cmdk-input] {
     font-family: var(--font-sans);
+  }
+
+  /* Control mặc định bám thang chữ chung (button, form, table, pagination). */
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="menuitem"],
+  [role="option"],
+  [role="tab"] {
+    font-size: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+  }
+
+  input,
+  textarea,
+  select {
+    font-weight: 450;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    font-weight: 450;
+    letter-spacing: 0.006em;
+  }
+
+  label,
+  th {
+    font-weight: 600;
+    letter-spacing: 0.004em;
+  }
+
+  table {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-variant-numeric: tabular-nums;
+  }
+
+  nav[role="navigation"][aria-label="pagination"] {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-variant-numeric: tabular-nums;
   }
 
   /* Nine64 headline voice: tight, heavy, quiet — giống wordmark. */
@@ -180,7 +270,8 @@
   h2,
   h3,
   h4,
-  h5 {
+  h5,
+  h6 {
     font-family: var(--font-sans);
     font-weight: 700;
     line-height: 1.18;
@@ -220,11 +311,10 @@
     letter-spacing: -0.005em;
   }
 
-  small,
-  .text-xs,
-  .text-\[11px\] {
+  small {
     letter-spacing: 0.012em;
   }
+
 
   :focus-visible {
     outline: 2px solid var(--color-ring);

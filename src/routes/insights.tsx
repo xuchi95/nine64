@@ -134,7 +134,7 @@ function InsightsPage() {
                   <span className="text-sm text-muted-foreground">No repeated pattern yet.</span>
                 ) : (
                   profile.missedMotifs.map((m) => (
-                    <span key={m.motif} className="rounded bg-secondary px-2 py-0.5 text-[11px]">
+                    <span key={m.motif} className="rounded bg-secondary px-2 py-0.5 text-2xs">
                       {m.label} ×{m.count}
                     </span>
                   ))
@@ -146,7 +146,7 @@ function InsightsPage() {
               </h3>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {labelRows.map(([label, count]) => (
-                  <span key={label} className="rounded bg-secondary px-2 py-0.5 text-[11px]">
+                  <span key={label} className="rounded bg-secondary px-2 py-0.5 text-2xs">
                     {LABEL_META[label]?.symbol} {LABEL_META[label]?.title ?? label} ×{count}
                   </span>
                 ))}

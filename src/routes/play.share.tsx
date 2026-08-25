@@ -300,7 +300,7 @@ function SharePage() {
               Play your move, then send this link. Your opponent opens it, plays their reply and
               sends the new link back — no server needed.
             </p>
-            <div className="break-all rounded bg-surface-2/60 p-2 font-mono text-[11px] text-muted-foreground">
+            <div className="break-all rounded bg-surface-2/60 p-2 font-mono text-2xs text-muted-foreground">
               {link}
             </div>
             <div className="flex gap-2">

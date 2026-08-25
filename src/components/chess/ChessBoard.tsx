@@ -705,7 +705,7 @@ export function ChessBoard(props: ChessBoardProps) {
                 )}
                 {settings.showCoordinates && f === 0 && (
                   <span
-                    className="absolute left-[3px] top-[2px] text-[10px] font-semibold leading-none"
+                    className="absolute left-[3px] top-[2px] text-2xs font-semibold leading-none"
                     style={{ color: isDark ? theme.light : theme.coord }}
                   >
                     {rank}
@@ -713,7 +713,7 @@ export function ChessBoard(props: ChessBoardProps) {
                 )}
                 {settings.showCoordinates && r === 7 && (
                   <span
-                    className="absolute bottom-[2px] right-[3px] text-[10px] font-semibold leading-none"
+                    className="absolute bottom-[2px] right-[3px] text-2xs font-semibold leading-none"
                     style={{ color: isDark ? theme.light : theme.coord }}
                   >
                     {file}
