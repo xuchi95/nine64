@@ -1,7 +1,6 @@
 import { Bot, User } from "lucide-react";
 import { Piece, type PieceType } from "@/components/chess/Piece";
 import { Clock } from "./Clock";
-import { useSettings } from "@/lib/settings";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +26,6 @@ export function PlayerCard({
   captured: { type: string; count: number }[];
   thinking?: boolean;
 }) {
-  const settings = useSettings();
   const set = useBoardStyle().pieceSet;
   const opponentColor = player.color === "w" ? "b" : "w";
 
