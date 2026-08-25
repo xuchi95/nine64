@@ -205,7 +205,7 @@ function InsightsPage() {
                     path: weakestLine.path,
                     games: weakestLine.games,
                     winRate: weakestLine.winRate,
-                    avgLoss: weakestLine.avgLoss,
+                    avgLoss: weakestLine.avgLoss ?? 0,
                     opening: weakestLine.openingName ? ` (${weakestLine.openingName})` : "",
                   })}
                 </p>
