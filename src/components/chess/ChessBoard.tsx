@@ -133,6 +133,32 @@ export function ChessBoard(props: ChessBoardProps) {
     prevCheckRef.current = checkSquare ?? null;
   }, [checkSquare]);
 
+  /**
+   * Checkmate = the side to move is in check and has no legal target anywhere.
+   * Only trusted on interactive boards, where `legalTargets` is a real query.
+   */
+  const isCheckmate =
+    interactive &&
+    !!checkSquare &&
+    !pieces.some((p) => p.color === props.turn && legalTargets(p.square).length > 0);
+
+  const [mateDismissed, setMateDismissed] = useState(false);
+  const matePlayedRef = useRef(false);
+  useEffect(() => {
+    if (!isCheckmate) {
+      matePlayedRef.current = false;
+      setMateDismissed(false);
+      return;
+    }
+    if (!matePlayedRef.current) {
+      matePlayedRef.current = true;
+      playSound("checkmate");
+    }
+  }, [isCheckmate]);
+
+  const winnerLabel = props.turn === "w" ? "Black" : "White";
+
+
 
 
 
