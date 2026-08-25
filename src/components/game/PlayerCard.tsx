@@ -3,6 +3,7 @@ import { Piece, type PieceType } from "@/components/chess/Piece";
 import { Clock } from "./Clock";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export interface PlayerInfo {
   name: string;
@@ -26,6 +27,7 @@ export function PlayerCard({
   captured: { type: string; count: number }[];
   thinking?: boolean;
 }) {
+  const { t } = useT();
   const set = useBoardStyle().pieceSet;
   const opponentColor = player.color === "w" ? "b" : "w";
 
@@ -58,15 +60,15 @@ export function PlayerCard({
           <span className="truncate text-sm font-semibold leading-tight">{player.name}</span>
           {player.isBot && (
             <span className="rounded bg-primary/15 px-1.5 py-0.5 text-2xs font-bold uppercase tracking-[0.14em] text-primary">
-              Bot
+              {t("game.playerCard.bot")}
             </span>
           )}
         </div>
         <div className="mt-0.5 truncate text-xs font-medium text-muted-foreground">
           {thinking ? (
-            <span className="text-primary">Thinking…</span>
+            <span className="text-primary">{t("game.playerCard.thinking")}</span>
           ) : active ? (
-            <span className="text-primary">To move</span>
+            <span className="text-primary">{t("game.playerCard.toMove")}</span>
           ) : (
             player.subtitle
           )}

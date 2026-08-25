@@ -12,8 +12,8 @@ import { TimeControlPicker } from "@/components/game/TimeControlPicker";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { APP, type TimeControl } from "@/config/app";
-import { BOT_LEVELS, BOT_PERSONALITIES, getBotLevel, getPersonality } from "@/config/bots";
-import { VARIANTS, type VariantId } from "@/config/variants";
+import { BOT_LEVELS, BOT_PERSONALITIES, getBotLevel, getPersonality, botLevelTitle, personalityName, personalityBlurb } from "@/config/bots";
+import { VARIANTS, type VariantId, variantName, variantBlurb } from "@/config/variants";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import {
   StockfishEngine,
@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/play/ai")({
   validateSearch: (search: Record<string, unknown>): { quick?: boolean } =>
@@ -55,6 +56,7 @@ interface Config {
 }
 
 function PlayAi() {
+  const { t } = useT();
   const navigate = useNavigate();
   const settings = useSettings();
   const [config, setConfig] = useState<Config>({
@@ -84,26 +86,26 @@ function PlayAi() {
       if (r.winner === "draw") playSound("draw");
       else playSound(r.winner === playerColor ? "victory" : "defeat");
       if (snapshot.moves.length === 0) return;
-      const botName = `${personality.name} · Lv ${level.level}`;
-      const botSubtitle = `${level.title} · ${level.strength}`;
+      const botName = `${personalityName(personality.id)} · Lv ${level.level}`;
+      const botSubtitle = `${botLevelTitle(level.level)} · ${level.strength}`;
       const saved = saveGame({
         mode: "ai",
         variant: config.variant,
-        variantName: VARIANTS.find((v) => v.id === config.variant)?.name ?? config.variant,
-        timeControl: config.timeControl?.label ?? "Unlimited",
+        variantName: variantName(config.variant),
+        timeControl: config.timeControl?.label ?? t("play.ai.standard"),
         startFen: snapshot.startFen,
         finalFen: snapshot.finalFen,
         moves: snapshot.moves,
         result: r,
         playerColor,
-        white: playerColor === "w" ? { name: "You" } : { name: botName, subtitle: botSubtitle },
-        black: playerColor === "b" ? { name: "You" } : { name: botName, subtitle: botSubtitle },
+        white: playerColor === "w" ? { name: t("play.ai.you") } : { name: botName, subtitle: botSubtitle },
+        black: playerColor === "b" ? { name: t("play.ai.you") } : { name: botName, subtitle: botSubtitle },
         opening: detectOpening(snapshot.moves.map((m) => m.san))?.name ?? null,
       });
-      toast.success("Game saved to your archive", {
-        description: "Open it for a move-by-move replay and engine review.",
+      toast.success(t("play.ai.gameSaved"), {
+        description: t("play.ai.gameSavedDesc"),
         action: {
-          label: "View",
+          label: t("play.ai.viewAction"),
           onClick: () => void navigate({ to: "/games/$gameId", params: { gameId: saved.id } }),
         },
       });
@@ -259,20 +261,18 @@ function PlayAi() {
   if (phase === "setup") {
     return (
       <AppShell>
-        <h1 className="text-2xl font-bold">Play the engine</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Stockfish 18 (WASM) runs in a web worker on your device — nothing leaves the browser.
-        </p>
+        <h1 className="text-2xl font-bold">{t("play.ai.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("play.ai.subtitle")}</p>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
           <div className="panel p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Strength
+              {t("play.ai.strength")}
             </h2>
             <div className="mt-4 flex items-baseline justify-between">
               <div>
                 <p className="font-display text-xl font-bold">
-                  Level {level.level} — {level.title}
+                  {t("play.ai.levelLabel", { level: level.level, title: botLevelTitle(level.level) })}
                 </p>
                 <p className="text-xs text-muted-foreground">{level.strength}</p>
               </div>
@@ -287,12 +287,12 @@ function PlayAi() {
               onValueChange={([v]) => setConfig((c) => ({ ...c, level: v ?? c.level }))}
             />
             <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>Beginner</span>
-              <span>Engine Max</span>
+              <span>{t("play.ai.sliderBeginner")}</span>
+              <span>{t("play.ai.sliderMax")}</span>
             </div>
 
             <h2 className="mt-7 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Personality
+              {t("play.ai.personality")}
             </h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {BOT_PERSONALITIES.map((p) => (
@@ -308,18 +308,18 @@ function PlayAi() {
                   )}
                 >
                   <span className="flex items-center gap-2 text-sm font-semibold">
-                    {p.name}
+                    {personalityName(p.id)}
                     <span className="rounded bg-accent/20 px-1.5 py-0.5 text-2xs font-bold tracking-wider text-accent">
-                      BOT
+                      {t("play.ai.botBadge")}
                     </span>
                   </span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{p.blurb}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{personalityBlurb(p.id)}</span>
                 </button>
               ))}
             </div>
 
             <h2 className="mt-7 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Your colour
+              {t("play.ai.yourColor")}
             </h2>
             <div className="mt-3 flex gap-2">
               {(["w", "b", "random"] as const).map((c) => (
@@ -334,7 +334,7 @@ function PlayAi() {
                       : "border-border bg-surface-2 hover:border-primary/40",
                   )}
                 >
-                  {c === "w" ? "White" : c === "b" ? "Black" : "Random"}
+                  {c === "w" ? t("play.ai.colorWhite") : c === "b" ? t("play.ai.colorBlack") : t("play.ai.colorRandom")}
                 </button>
               ))}
             </div>
@@ -343,7 +343,7 @@ function PlayAi() {
           <div className="space-y-4">
             <div className="panel p-5">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Variant
+                {t("play.ai.variant")}
               </h2>
               <div className="mt-3 grid gap-2">
                 {VARIANTS.filter((v) => v.enabled).map((v) => (
@@ -358,15 +358,15 @@ function PlayAi() {
                         : "border-border bg-surface-2 hover:border-primary/40",
                     )}
                   >
-                    <span className="font-medium">{v.name}</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">{v.blurb}</span>
+                    <span className="font-medium">{variantName(v.id)}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">{variantBlurb(v.id)}</span>
                   </button>
                 ))}
               </div>
             </div>
             <div className="panel p-5">
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Time control
+                {t("play.ai.timeControl")}
               </h2>
               <TimeControlPicker
                 value={config.timeControl}
@@ -374,7 +374,7 @@ function PlayAi() {
               />
             </div>
             <Button size="lg" className="w-full" onClick={start}>
-              Start game
+              {t("play.ai.startGame")}
             </Button>
           </div>
         </div>
@@ -389,8 +389,8 @@ function PlayAi() {
           <>
           <PlayerCard
             player={{
-              name: `${personality.name}`,
-              subtitle: `Level ${level.level} · ${level.title} · ${level.strength}`,
+              name: personalityName(personality.id),
+              subtitle: t("play.ai.playerLevel", { level: level.level, title: botLevelTitle(level.level), strength: level.strength }),
               isBot: true,
               color: botColor,
             }}
@@ -401,38 +401,38 @@ function PlayAi() {
             thinking={thinking}
           />
           <PlayerCard
-            player={{ name: "You", subtitle: playerColor === "w" ? "White" : "Black", color: playerColor }}
+            player={{ name: t("play.ai.you"), subtitle: playerColor === "w" ? t("play.ai.colorWhite") : t("play.ai.colorBlack"), color: playerColor }}
             seconds={game.clock[playerColor]}
             active={game.turn === playerColor && !game.result}
             clockEnabled={!!config.timeControl}
             captured={game.captured[botColor]}
           />
           <GamePanel
-            title="Game status"
+            title={t("play.ai.gameStatus")}
             meta={
               <StatusPill tone={game.result ? "neutral" : "live"}>
-                {game.result ? "Finished" : "Live"}
+                {game.result ? t("play.ai.finished") : t("play.ai.live")}
               </StatusPill>
             }
             bodyClassName="space-y-3.5 p-4"
           >
-            <StatRow label="Variant" value={VARIANTS.find((v) => v.id === config.variant)!.name} />
-            <StatRow label="Opening" value={game.opening?.name ?? "—"} />
-            <StatRow label="Engine depth" value={engineInfo ? String(engineInfo.depth) : "—"} mono />
+            <StatRow label={t("play.ai.variantLabel")} value={variantName(config.variant)} />
+            <StatRow label={t("play.ai.openingLabel")} value={game.opening?.name ?? "—"} />
+            <StatRow label={t("play.ai.engineDepth")} value={engineInfo ? String(engineInfo.depth) : "—"} mono />
             <EvalBar
               score={engineInfo?.eval ? Number.parseFloat(engineInfo.eval) || 0 : null}
               label={engineInfo?.eval ?? "—"}
             />
             {capability && (
               <StatRow
-                label="Engine setup"
+                label={t("play.ai.engineSetup")}
                 value={`${capability.threads}T · ${capability.hashMb}MB${capability.threaded ? "" : " · single"}`}
                 mono
               />
             )}
           </GamePanel>
           {engineError && (
-            <GameNotice tone="error">Engine unavailable: {engineError}</GameNotice>
+            <GameNotice tone="error">{t("play.ai.engineUnavailable", { error: engineError })}</GameNotice>
           )}
           </>
         }
@@ -456,8 +456,8 @@ function PlayAi() {
         right={
           <>
           <GamePanel
-            title="Notation"
-            meta={game.moves.length > 0 ? `Move ${Math.ceil(game.moves.length / 2)}` : undefined}
+            title={t("play.ai.notation")}
+            meta={game.moves.length > 0 ? t("play.ai.move", { n: Math.ceil(game.moves.length / 2) }) : undefined}
             className="max-h-[420px]"
             bodyClassName="overflow-hidden"
           >
@@ -468,20 +468,20 @@ function PlayAi() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (!settings.confirmResign || window.confirm("Resign this game?")) {
+                  if (!settings.confirmResign || window.confirm(t("play.ai.resignConfirm"))) {
                     game.resign(playerColor);
                   }
                 }}
                 disabled={!!game.result}
               >
-                <Flag className="size-4" /> Resign
+                <Flag className="size-4" /> {t("play.ai.resign")}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => game.declareDraw("Agreement")}
                 disabled={!!game.result}
               >
-                <Handshake className="size-4" /> Draw
+                <Handshake className="size-4" /> {t("play.ai.draw")}
               </Button>
             </GameActions>
             <Button
@@ -493,11 +493,11 @@ function PlayAi() {
                 setShowResult(false);
               }}
             >
-              <RefreshCw className="size-4" /> Rematch
+              <RefreshCw className="size-4" /> {t("play.ai.rematch")}
             </Button>
             {game.result && (
               <Button variant="secondary" className="w-full" onClick={() => setShowResult(true)}>
-                View result
+                {t("play.ai.viewResult")}
               </Button>
             )}
             <Button
@@ -505,7 +505,7 @@ function PlayAi() {
               className="w-full text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground"
               onClick={() => setPhase("setup")}
             >
-              <RotateCcw className="size-4" /> New setup
+              <RotateCcw className="size-4" /> {t("play.ai.newSetup")}
             </Button>
           </div>
           </>

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, LineChart, Timer } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
 import { useGameHistory } from "@/lib/history";
@@ -37,10 +38,11 @@ function fmt(value: number | null, digits = 1, suffix = ""): string {
 
 /** Lower is better for loss/mistakes; higher is better for accuracy. */
 function DeltaBadge({ change, lowerIsBetter, unit }: { change: number | null; lowerIsBetter: boolean; unit: string }) {
+  const { t } = useT();
   if (change === null || Math.abs(change) < 0.05) {
     return (
       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <ArrowRight className="size-3" /> chưa đổi
+        <ArrowRight className="size-3" /> {t("study.progress.noChange")}
       </span>
     );
   }
@@ -77,13 +79,14 @@ function KpiCard({
   lowerIsBetter: boolean;
   unit: string;
 }) {
+  const { t } = useT();
   return (
     <div className="panel p-4">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
       <p className="tabular mt-2 font-display text-2xl font-bold">{value}</p>
       <div className="mt-1 flex items-center gap-2">
         <DeltaBadge change={change} lowerIsBetter={lowerIsBetter} unit={unit} />
-        <span className="text-xs text-muted-foreground">so với giai đoạn trước</span>
+        <span className="text-xs text-muted-foreground">{t("study.progress.vsPrevious")}</span>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
     </div>
@@ -101,11 +104,12 @@ function TrendChart({
   unit: string;
   lowerIsBetter: boolean;
 }) {
+  const { t } = useT();
   const rows = buckets
     .map((b) => ({ label: b.label, value: pick(b) }))
     .filter((r): r is { label: string; value: number } => typeof r.value === "number");
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">Chưa có dữ liệu cho chỉ số này.</p>;
+    return <p className="text-sm text-muted-foreground">{t("study.progress.noDataForMetric")}</p>;
   }
   const max = Math.max(...rows.map((r) => r.value), 0.001);
   const w = 100;
@@ -144,6 +148,7 @@ function TrendChart({
 }
 
 function ProgressPage() {
+  const { t } = useT();
   const games = useGameHistory();
   const [granularity, setGranularity] = useState<Granularity>("week");
 
@@ -173,10 +178,9 @@ function ProgressPage() {
     <AppShell wide>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">Tiến bộ theo thời gian</h1>
+          <h1 className="font-display text-2xl font-bold">{t("study.progress.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tổng hợp từ {summary.games} ván đã phân tích ({summary.moves} nước của bạn). Chỉ số càng
-            thấp càng tốt, trừ độ chính xác.
+            {t("study.progress.summary", { games: summary.games, moves: summary.moves })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -187,7 +191,7 @@ function ProgressPage() {
               variant={granularity === g ? "default" : "outline"}
               onClick={() => setGranularity(g)}
             >
-              {g === "day" ? "Ngày" : g === "week" ? "Tuần" : "Tháng"}
+              {g === "day" ? t("study.progress.day") : g === "week" ? t("study.progress.week") : t("study.progress.month")}
             </Button>
           ))}
         </div>
@@ -195,45 +199,52 @@ function ProgressPage() {
 
       {buckets.length === 0 ? (
         <div className="panel mt-6 p-6 text-sm text-muted-foreground">
-          <p className="font-semibold text-foreground">Chưa có dữ liệu tiến bộ.</p>
+          <p className="font-semibold text-foreground">{t("study.progress.emptyTitle")}</p>
           <p className="mt-1">
-            Hãy chạy Engine review hoặc Chuyên gia phân tích cho vài ván trong{" "}
-            <Link to="/games" className="text-primary underline">
-              lịch sử ván đấu
-            </Link>{" "}
-            — thống kê sẽ xuất hiện ngay sau đó.
+            {(() => {
+              const [before, after] = t("study.progress.emptyBody", { link: "\u0000" }).split("\u0000");
+              return (
+                <>
+                  {before}
+                  <Link to="/games" className="text-primary underline">
+                    {t("study.progress.gameHistoryLink")}
+                  </Link>
+                  {after}
+                </>
+              );
+            })()}
           </p>
         </div>
       ) : (
         <>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
-              title="% mất cơ hội / nước"
-              hint="Win% bạn đánh mất so với nước tốt nhất của engine."
+              title={t("study.progress.kpiLossTitle")}
+              hint={t("study.progress.kpiLossHint")}
               value={fmt(summary.lossPct, 1, "%")}
               change={lossTrend.change}
               lowerIsBetter
               unit="%"
             />
             <KpiCard
-              title="Độ chính xác"
-              hint="Điểm accuracy trung bình cho phía bạn."
+              title={t("study.progress.kpiAccuracyTitle")}
+              hint={t("study.progress.kpiAccuracyHint")}
               value={fmt(summary.accuracy, 1, "%")}
               change={accuracyTrend.change}
               lowerIsBetter={false}
               unit="%"
             />
             <KpiCard
-              title="Blunder / 100 nước"
-              hint="Số nước sai nặng do engine gắn nhãn blunder."
+              title={t("study.progress.kpiBlunderTitle")}
+              hint={t("study.progress.kpiBlunderHint")}
               value={fmt(blunderTrend.after ?? null, 1)}
               change={blunderTrend.change}
               lowerIsBetter
               unit=""
             />
             <KpiCard
-              title="Giây / nước"
-              hint="Thời gian suy nghĩ trung bình mỗi nước của bạn."
+              title={t("study.progress.kpiTimeTitle")}
+              hint={t("study.progress.kpiTimeHint")}
               value={fmt(summary.secPerMove, 1, "s")}
               change={timeTrend.change}
               lowerIsBetter={false}
@@ -244,7 +255,7 @@ function ProgressPage() {
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div className="panel p-4">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-                <LineChart className="size-4 text-primary" /> % mất cơ hội theo giai đoạn
+                <LineChart className="size-4 text-primary" /> {t("study.progress.chartLossTitle")}
               </h2>
               <div className="mt-3">
                 <TrendChart buckets={buckets} pick={(b) => b.lossPct} unit="%" lowerIsBetter />
@@ -252,7 +263,7 @@ function ProgressPage() {
             </div>
             <div className="panel p-4">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-                <Timer className="size-4 text-primary" /> Nhịp suy nghĩ (giây / nước)
+                <Timer className="size-4 text-primary" /> {t("study.progress.chartTimeTitle")}
               </h2>
               <div className="mt-3">
                 <TrendChart
@@ -263,7 +274,9 @@ function ProgressPage() {
                 />
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                Tỉ lệ nước đi dưới 2 giây: {fmt(summary.rushShare === null ? null : summary.rushShare * 100, 0, "%")}
+                {t("study.progress.rushShare", {
+                  value: fmt(summary.rushShare === null ? null : summary.rushShare * 100, 0, "%"),
+                })}
                 {rushTrend.change !== null && (
                   <>
                     {" "}
@@ -275,7 +288,7 @@ function ProgressPage() {
           </div>
 
           <div className="panel mt-4 p-4">
-            <h2 className="font-display text-base font-semibold">Lỗi nào đang giảm?</h2>
+            <h2 className="font-display text-base font-semibold">{t("study.progress.mistakesDeclining")}</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {severityTrends.map(({ severity, delta }) => (
                 <div key={severity} className={`rounded-lg border p-3 ${SEVERITY_META[severity].ring}`}>
@@ -283,7 +296,7 @@ function ProgressPage() {
                     {SEVERITY_META[severity].title}
                   </p>
                   <p className="tabular mt-1 text-xl font-bold">{fmt(delta.after, 1)}</p>
-                  <p className="text-xs text-muted-foreground">lỗi / ván ở giai đoạn gần nhất</p>
+                  <p className="text-xs text-muted-foreground">{t("study.progress.perGameLatest")}</p>
                   <div className="mt-1">
                     <DeltaBadge change={delta.change} lowerIsBetter unit="" />
                   </div>
@@ -292,25 +305,24 @@ function ProgressPage() {
             </div>
             {summary.coachedGames === 0 && (
               <p className="mt-3 text-xs text-muted-foreground">
-                Mức độ lỗi lấy từ báo cáo của Chuyên gia phân tích — hãy chạy AI review cho vài ván
-                để có số liệu.
+                {t("study.progress.coachedHint")}
               </p>
             )}
           </div>
 
           <div className="panel mt-4 overflow-x-auto p-4">
-            <h2 className="font-display text-base font-semibold">Chi tiết theo giai đoạn</h2>
+            <h2 className="font-display text-base font-semibold">{t("study.progress.detailByPhase")}</h2>
             <table className="mt-3 w-full min-w-[640px] text-sm">
               <thead className="text-xs uppercase tracking-wide text-muted-foreground">
                 <tr className="text-right">
-                  <th className="pb-2 text-left font-medium">Giai đoạn</th>
-                  <th className="pb-2 font-medium">Ván</th>
-                  <th className="pb-2 font-medium">Mất cơ hội</th>
-                  <th className="pb-2 font-medium">Chính xác</th>
-                  <th className="pb-2 font-medium">Sai nhỏ</th>
-                  <th className="pb-2 font-medium">Sai vừa</th>
-                  <th className="pb-2 font-medium">Blunder</th>
-                  <th className="pb-2 font-medium">Giây/nước</th>
+                  <th className="pb-2 text-left font-medium">{t("study.progress.colPhase")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colGames")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colLoss")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colAccuracy")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colInaccuracy")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colMistake")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colBlunder")}</th>
+                  <th className="pb-2 font-medium">{t("study.progress.colSecPerMove")}</th>
                 </tr>
               </thead>
               <tbody className="tabular">
@@ -329,16 +341,16 @@ function ProgressPage() {
               </tbody>
             </table>
             <p className="mt-2 text-xs text-muted-foreground">
-              Sai nhỏ / sai vừa / blunder tính trên 100 nước của bạn.
+              {t("study.progress.tableNote")}
             </p>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild size="sm">
-              <Link to="/drills">Luyện các lỗi còn lại</Link>
+              <Link to="/drills">{t("study.progress.trainRemaining")}</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-              <Link to="/games">Mở lịch sử ván đấu</Link>
+              <Link to="/games">{t("study.progress.openHistory")}</Link>
             </Button>
           </div>
         </>

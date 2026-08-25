@@ -18,6 +18,7 @@ import { StockfishEngine, type EngineLine } from "@/lib/engine/stockfish";
 import { useSettings } from "@/lib/settings";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 const searchSchema = z.object({ fen: z.string().optional() });
 
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/analysis")({
 });
 
 function Analysis() {
+  const { t } = useT();
   const { fen: initialFen } = Route.useSearch();
   const settings = useSettings();
   const [orientation, setOrientation] = useState<Color>("w");
@@ -64,7 +66,7 @@ function Analysis() {
     // Some share links arrive form-encoded, where FEN spaces became "+".
     const clean = initialFen.includes(" ") ? initialFen : initialFen.replace(/\+/g, " ");
     setFenInput(clean);
-    if (!game.loadFen(clean)) setLoadError("That position could not be loaded.");
+    if (!game.loadFen(clean)) setLoadError(t("study.analysis.couldNotLoadPosition"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFen]);
 
@@ -80,15 +82,18 @@ function Analysis() {
   const terminal = useMemo<string | null>(() => {
     try {
       const c = new Chess(game.fen);
-      if (c.isCheckmate()) return `Hết cờ — ${c.turn() === "w" ? "Đen" : "Trắng"} chiếu hết.`;
-      if (c.isStalemate()) return "Hết cờ — hết nước đi (hòa).";
-      if (c.isInsufficientMaterial()) return "Hết cờ — không đủ lực chiếu hết (hòa).";
-      if (c.isDraw()) return "Hết cờ — hòa.";
+      if (c.isCheckmate())
+        return t("study.analysis.checkmateBy", {
+          color: c.turn() === "w" ? t("study.analysis.colorBlack") : t("study.analysis.colorWhite"),
+        });
+      if (c.isStalemate()) return t("study.analysis.stalemate");
+      if (c.isInsufficientMaterial()) return t("study.analysis.insufficientMaterial");
+      if (c.isDraw()) return t("study.analysis.draw");
       return null;
     } catch {
       return null;
     }
-  }, [game.fen]);
+  }, [game.fen, t]);
 
   const analyse = async () => {
     const engine = engineRef.current;
@@ -144,13 +149,13 @@ function Analysis() {
     setLines([]);
     setTrend([]);
     if (game.loadFen(fenInput.trim())) setLoadError(null);
-    else setLoadError("Invalid FEN.");
+    else setLoadError(t("study.analysis.invalidFen"));
   };
 
 
   return (
     <AppShell wide>
-      <h1 className="sr-only">Analysis board</h1>
+      <h1 className="sr-only">{t("study.analysis.boardTitle")}</h1>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="mx-auto w-full max-w-[720px]">
           <ChessBoard
@@ -171,7 +176,7 @@ function Analysis() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setOrientation((o) => (o === "w" ? "b" : "w"))}>
               <ChevronLeft className="size-4" />
-              Flip
+              {t("study.analysis.flip")}
               <ChevronRight className="size-4" />
             </Button>
             <Button
@@ -183,26 +188,26 @@ function Analysis() {
               }}
             >
 
-              <RotateCcw className="size-4" /> Reset
+              <RotateCcw className="size-4" /> {t("study.analysis.reset")}
             </Button>
             <Button onClick={analyse} disabled={analysing || scanning || terminal !== null}>
-              <Play className="size-4" /> {analysing ? "Analysing…" : "Analyse position"}
+              <Play className="size-4" /> {analysing ? t("study.analysis.analysing") : t("study.analysis.analysePosition")}
             </Button>
           </div>
         </div>
 
         <div className="space-y-3">
           <GamePanel
-            title="Engine lines"
+            title={t("study.analysis.engineLines")}
             meta={
               lines.length > 0 ? (
                 <span className="rounded bg-surface-2 px-1.5 py-0.5 text-2xs font-semibold text-primary">
-                  Depth {Math.max(...lines.map((l) => l.depth))}
+                  {t("study.analysis.depth", { depth: Math.max(...lines.map((l) => l.depth)) })}
                 </span>
               ) : analysing ? (
                 <span className="flex items-center gap-1.5 text-2xs font-semibold text-primary">
                   <span className="size-1.5 animate-pulse rounded-full bg-primary" />
-                  Searching
+                  {t("study.analysis.searching")}
                 </span>
               ) : null
             }
@@ -213,8 +218,8 @@ function Analysis() {
                 {terminal
                   ? terminal
                   : analysing
-                    ? "Stockfish đang tính toán…"
-                    : "Chạy phân tích để xem các nước tiếp theo tốt nhất."}
+                    ? t("study.analysis.thinking")
+                    : t("study.analysis.runAnalysisHint")}
               </p>
             ) : (
               <ul className="space-y-1">
@@ -252,7 +257,7 @@ function Analysis() {
           </GamePanel>
 
           <GamePanel
-            title="Eval trend"
+            title={t("study.analysis.evalTrend")}
             meta={
               scanning ? (
                 <span className="flex items-center gap-1.5 text-2xs font-semibold text-primary">
@@ -279,8 +284,8 @@ function Analysis() {
             ) : (
               <p className="px-1 py-3 text-center text-xs text-muted-foreground">
                 {game.moves.length === 0
-                  ? "Đi vài nước rồi quét để xem xu hướng tốt/xấu."
-                  : "Quét eval để vẽ biểu đồ đường theo từng nước."}
+                  ? t("study.analysis.playMovesFirst")
+                  : t("study.analysis.scanHint")}
               </p>
             )}
             <Button
@@ -289,20 +294,20 @@ function Analysis() {
               onClick={scanTrend}
               disabled={scanning || analysing || game.moves.length === 0}
             >
-              <LineChart className="size-4" /> {scanning ? "Đang quét…" : "Quét eval từng nước"}
+              <LineChart className="size-4" /> {scanning ? t("study.analysis.scanning") : t("study.analysis.scanEval")}
             </Button>
           </GamePanel>
 
 
           <GamePanel
-            title="Moves"
-            meta={game.moves.length > 0 ? `${Math.ceil(game.moves.length / 2)} lượt` : undefined}
+            title={t("study.analysis.moves")}
+            meta={game.moves.length > 0 ? t("study.analysis.moveCount", { n: Math.ceil(game.moves.length / 2) }) : undefined}
             className="max-h-[340px]"
           >
             <MoveList moves={game.moves} />
           </GamePanel>
 
-          <GamePanel title="Load FEN" bodyClassName="flex flex-col gap-3 p-4">
+          <GamePanel title={t("study.analysis.loadFen")} bodyClassName="flex flex-col gap-3 p-4">
             <Input
               id="fen"
               value={fenInput}
@@ -311,18 +316,18 @@ function Analysis() {
               className="tabular bg-surface-2 text-xs"
             />
             <Button className="w-full" onClick={handleLoadFen}>
-              Load position
+              {t("study.analysis.loadPosition")}
             </Button>
             {loadError && <p className="text-xs font-medium text-destructive">{loadError}</p>}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className={gameLabelClass}>Current position</span>
+                <span className={gameLabelClass}>{t("study.analysis.currentPosition")}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard?.writeText(game.fen)}
                   className="flex items-center gap-1 rounded px-1 py-0.5 text-2xs font-semibold text-muted-foreground transition-colors hover:text-primary"
                 >
-                  <Copy className="size-3" /> Copy
+                  <Copy className="size-3" /> {t("study.analysis.copy")}
                 </button>
               </div>
               <code className="tabular block break-all rounded-md border border-border bg-surface-2 p-2 text-xs leading-tight text-muted-foreground">

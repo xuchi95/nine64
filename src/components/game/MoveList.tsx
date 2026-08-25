@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { MoveRecord } from "@/hooks/useChessGame";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export function MoveList({
   moves,
@@ -11,6 +12,7 @@ export function MoveList({
   activeIndex?: number;
   onSelect?: (index: number) => void;
 }) {
+  const { t } = useT();
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Chỉ cuộn bên trong danh sách nước đi — không bao giờ cuộn cả trang
@@ -24,7 +26,7 @@ export function MoveList({
   if (moves.length === 0) {
     return (
       <div className="flex h-full min-h-24 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-        No moves yet. White to start.
+        {t("game.moveList.empty")}
       </div>
     );
   }
@@ -46,8 +48,8 @@ export function MoveList({
         <thead className="sticky top-0 z-10 bg-surface">
           <tr className="text-left text-2xs uppercase tracking-[0.16em] text-muted-foreground">
             <th className="w-10 px-3 py-1.5 font-semibold">#</th>
-            <th className="px-3 py-1.5 font-semibold">White</th>
-            <th className="px-3 py-1.5 font-semibold">Black</th>
+            <th className="px-3 py-1.5 font-semibold">{t("game.moveList.white")}</th>
+            <th className="px-3 py-1.5 font-semibold">{t("game.moveList.black")}</th>
           </tr>
         </thead>
         <tbody>

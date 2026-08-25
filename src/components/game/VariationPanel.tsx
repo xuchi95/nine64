@@ -4,6 +4,7 @@ import { LABEL_META, type MoveLabel } from "@/lib/analysis/classify";
 import { plyLabel } from "@/lib/analysis/variation";
 import type { PlyAnalysis } from "@/lib/analysis/types";
 import type { SavedGame } from "@/lib/history";
+import { useT } from "@/lib/i18n";
 
 function scoreText(cp: number | null, mateIn: number | null): string {
   if (mateIn !== null) return `M${Math.abs(mateIn)}`;
@@ -19,6 +20,7 @@ interface Props {
 
 /** Deep-mode panel: detailed engine variations for each mistake. */
 export function VariationPanel({ game, onSelectMove }: Props) {
+  const { t } = useT();
   const items = useMemo<PlyAnalysis[]>(
     () => (game.review?.plies ?? []).filter((p) => (p.variations?.length ?? 0) > 0),
     [game.review],
@@ -31,14 +33,13 @@ export function VariationPanel({ game, onSelectMove }: Props) {
       <div className="flex items-center gap-2">
         <Sparkles className="size-4 text-accent" />
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Biến thể gợi ý (phân tích sâu)
+          {t("game.variationPanel.title")}
         </h2>
       </div>
 
       {items.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
-          Không có sai lầm đáng kể nào trong ván này — engine không tìm thấy phương án nào tốt hơn
-          rõ rệt.
+          {t("game.variationPanel.empty")}
         </p>
       ) : (
         <ul className="mt-3 max-h-[420px] space-y-3 overflow-y-auto pr-1">
@@ -62,7 +63,7 @@ export function VariationPanel({ game, onSelectMove }: Props) {
 
                 {ply.playedPvSan && ply.playedPvSan.length > 1 && (
                   <p className="tabular mt-2 text-xs text-muted-foreground">
-                    <span className="font-semibold uppercase tracking-wider">Nước đã đi:</span>{" "}
+                    <span className="font-semibold uppercase tracking-wider">{t("game.variationPanel.playedMove")}</span>{" "}
                     {ply.playedPvSan.join(" ")}
                   </p>
                 )}

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n";
 
 type GateState = "checking" | "no-factor" | "needs-code" | "ready";
 
@@ -14,6 +15,7 @@ type GateState = "checking" | "no-factor" | "needs-code" | "ready";
  * requirement usable instead of a hard error.
  */
 export function AdminMfaGate({ children }: { children: React.ReactNode }) {
+  const { t } = useT();
   const [state, setState] = useState<GateState>("checking");
   const [factorId, setFactorId] = useState<string | null>(null);
   const [code, setCode] = useState("");
@@ -57,7 +59,7 @@ export function AdminMfaGate({ children }: { children: React.ReactNode }) {
       setCode("");
       await check();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Mã không hợp lệ");
+      setError(e instanceof Error ? e.message : t("admin.mfa.invalidCode"));
     } finally {
       setBusy(false);
     }
@@ -71,22 +73,21 @@ export function AdminMfaGate({ children }: { children: React.ReactNode }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldCheck className="size-4 text-primary" />
-            Bắt buộc xác thực 2 bước
+            {t("admin.mfa.title")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
-          {state === "checking" && <p className="text-muted-foreground">Đang kiểm tra phiên đăng nhập…</p>}
+          {state === "checking" && <p className="text-muted-foreground">{t("admin.mfa.checking")}</p>}
 
           {state === "no-factor" && (
             <>
               <p className="text-muted-foreground">
-                Khu vực Fair Play chỉ mở cho quản trị viên đã bật TOTP. Hãy thêm ứng dụng xác thực
-                cho tài khoản này rồi quay lại.
+                {t("admin.mfa.noFactorBody")}
               </p>
               <Button asChild size="sm">
                 <Link to="/account">
                   <KeyRound className="mr-2 size-4" />
-                  Bật 2FA trong hồ sơ
+                  {t("admin.mfa.enableCta")}
                 </Link>
               </Button>
             </>
@@ -95,7 +96,7 @@ export function AdminMfaGate({ children }: { children: React.ReactNode }) {
           {state === "needs-code" && (
             <>
               <p className="text-muted-foreground">
-                Nhập mã 6 số từ ứng dụng xác thực để nâng cấp phiên hiện tại.
+                {t("admin.mfa.needsCodeBody")}
               </p>
               <div className="flex gap-2">
                 <Input
@@ -108,7 +109,7 @@ export function AdminMfaGate({ children }: { children: React.ReactNode }) {
                   className="w-32 font-mono tabular-nums"
                 />
                 <Button size="sm" disabled={busy || code.trim().length < 6} onClick={() => void verify()}>
-                  Xác thực
+                  {t("admin.mfa.verify")}
                 </Button>
               </div>
             </>

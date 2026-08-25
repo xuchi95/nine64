@@ -56,7 +56,7 @@ export function evaluateGame(input: EvaluateInput): FairplayEvaluation {
 }
 
 export * from "./types";
-export { THRESHOLDS, ACTION_LABEL, ACTION_MESSAGE, ACTION_TONE, actionForScore } from "./thresholds";
+export { THRESHOLDS, actionLabel, actionMessage, ACTION_TONE, actionForScore } from "./thresholds";
 export { sprt, SPRT_BOUNDS } from "./sprt";
 export { detectCollusion } from "./collusion";
 export { scoreFeatures, confidenceFor } from "./model";

@@ -16,6 +16,7 @@ import {
 } from "@/lib/security.functions";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/security")({
   head: () => ({
@@ -35,30 +36,46 @@ export const Route = createFileRoute("/_authenticated/admin/security")({
   component: SecurityLogPage,
 });
 
-const WINDOWS = [
-  { label: "1 giờ", value: 60 },
-  { label: "24 giờ", value: 1440 },
-  { label: "7 ngày", value: 10080 },
-];
+function useWindows() {
+  const { t } = useT();
+  return [
+    { label: t("admin.security.window1h"), value: 60 },
+    { label: t("admin.security.window24h"), value: 1440 },
+    { label: t("admin.security.window7d"), value: 10080 },
+  ];
+}
 
-const KINDS = [
-  { label: "Tất cả", value: "all" as const },
-  { label: "Bị từ chối", value: "access_denied" as const },
-  { label: "Nghi dò quyền", value: "probe_suspected" as const },
-  { label: "RPC chặn", value: "rpc_denied" as const },
-];
+function useKinds() {
+  const { t } = useT();
+  return [
+    { label: t("admin.security.kindAll"), value: "all" as const },
+    { label: t("admin.security.kindAccessDenied"), value: "access_denied" as const },
+    { label: t("admin.security.kindProbeSuspected"), value: "probe_suspected" as const },
+    { label: t("admin.security.kindRpcDenied"), value: "rpc_denied" as const },
+  ];
+}
 
-function kindLabel(kind: string): string {
-  if (kind === "access_denied") return "Truy cập bị từ chối";
-  if (kind === "probe_suspected") return "Nghi dò quyền";
-  if (kind === "rpc_denied") return "Hàm máy chủ từ chối";
-  return kind;
+function useKindLabel() {
+  const { t } = useT();
+  return useCallback(
+    (kind: string): string => {
+      if (kind === "access_denied") return t("admin.security.kindLabelAccessDenied");
+      if (kind === "probe_suspected") return t("admin.security.kindLabelProbeSuspected");
+      if (kind === "rpc_denied") return t("admin.security.kindLabelRpcDenied");
+      return kind;
+    },
+    [t],
+  );
 }
 
 function SecurityLogPage() {
+  const { t } = useT();
   const roleFn = useServerFn(hasRole);
   const eventsFn = useServerFn(listSecurityEvents);
   const alertsFn = useServerFn(listProbeAlerts);
+  const WINDOWS = useWindows();
+  const KINDS = useKinds();
+  const kindLabel = useKindLabel();
 
   const [admin, setAdmin] = useState<boolean | null>(null);
   const [rows, setRows] = useState<SecurityEventRow[]>([]);
@@ -102,7 +119,7 @@ function SecurityLogPage() {
     return (
       <AppShell>
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
-          Trang này chỉ dành cho quản trị viên.
+          {t("admin.adminOnly")}
         </div>
       </AppShell>
     );
@@ -116,16 +133,15 @@ function SecurityLogPage() {
             <div>
               <h1 className="flex items-center gap-2 text-2xl font-bold">
                 <Lock className="size-6 text-primary" />
-                Nhật ký truy cập bị từ chối
+                {t("admin.security.title")}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Mọi truy vấn bị phân quyền chặn đều được ghi lại. Nhiều lần từ chối liên tiếp sẽ được nâng
-                thành cảnh báo dò quyền.
+                {t("admin.security.subtitle")}
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={() => void load()} disabled={busy}>
               <RefreshCw className={cn("size-4", busy && "animate-spin")} />
-              Tải lại
+              {t("admin.security.reload")}
             </Button>
           </div>
 
@@ -157,13 +173,13 @@ function SecurityLogPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Siren className="size-4 text-destructive" />
-                Cảnh báo dò quyền ({alerts.length})
+                {t("admin.security.probeAlertsTitle", { count: alerts.length })}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {alerts.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  Không có tài khoản nào vượt ngưỡng 5 lần bị từ chối trong khoảng thời gian này.
+                  {t("admin.security.noProbeAlerts")}
                 </p>
               )}
               {alerts.map((a) => (
@@ -174,7 +190,7 @@ function SecurityLogPage() {
                   <ShieldAlert className="size-4 shrink-0 text-destructive" />
                   <span className="text-sm font-medium">{a.displayName}</span>
                   <span className="font-mono text-xs tabular-nums text-destructive">
-                    {a.events} lần từ chối · {a.resources} tài nguyên
+                    {t("admin.security.probeSummary", { events: a.events, resources: a.resources })}
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">{a.kinds.join(", ")}</span>
                   <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">
@@ -187,11 +203,11 @@ function SecurityLogPage() {
 
           <Card className="mt-5">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Sự kiện gần đây ({rows.length})</CardTitle>
+              <CardTitle className="text-base">{t("admin.security.recentEventsTitle", { count: rows.length })}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {rows.length === 0 && (
-                <p className="text-sm text-muted-foreground">Chưa ghi nhận truy cập bị từ chối nào.</p>
+                <p className="text-sm text-muted-foreground">{t("admin.security.noEvents")}</p>
               )}
               {rows.map((r) => (
                 <div key={r.id} className="rounded-md border border-border/60 p-3">
@@ -216,7 +232,7 @@ function SecurityLogPage() {
                   </div>
                   {r.message && <p className="mt-1 text-xs text-muted-foreground">{r.message}</p>}
                   {r.path && (
-                    <p className="mt-1 font-mono text-2xs text-muted-foreground">Trang: {r.path}</p>
+                    <p className="mt-1 font-mono text-2xs text-muted-foreground">{t("admin.security.pagePrefix", { path: r.path })}</p>
                   )}
                 </div>
               ))}

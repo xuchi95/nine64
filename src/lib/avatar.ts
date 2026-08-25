@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { translate as t } from "@/lib/i18n";
 
 const BUCKET = "avatars";
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -36,8 +37,8 @@ export function useAvatarUrl(path: string | null | undefined) {
 export type AvatarUploadResult = { path: string } | { error: string };
 
 export async function uploadAvatar(userId: string, file: File): Promise<AvatarUploadResult> {
-  if (!ALLOWED.includes(file.type)) return { error: "Chỉ hỗ trợ ảnh PNG, JPEG hoặc WebP." };
-  if (file.size > MAX_BYTES) return { error: "Ảnh phải nhỏ hơn 2MB." };
+  if (!ALLOWED.includes(file.type)) return { error: t("avatar.invalidType") };
+  if (file.size > MAX_BYTES) return { error: t("avatar.tooLarge") };
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = `${userId}/avatar-${Date.now()}.${ext}`;

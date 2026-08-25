@@ -4,6 +4,7 @@ import { Chess } from "chess.js";
 import { Check, Lightbulb, RotateCcw, Sparkles, Target, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
+import { useT } from "@/lib/i18n";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/puzzles/")({
 type Verdict = "idle" | "correct" | "wrong";
 
 function PuzzlesPage() {
+  const { t } = useT();
   const games = useGameHistory();
   const learn = useLearnState();
   const [index, setIndex] = useState(0);
@@ -84,16 +86,16 @@ function PuzzlesPage() {
   const generate = () => {
     const created = addPuzzles(generateFromLibrary(games));
     if (created === 0) {
-      toast.info("No new puzzles", {
+      toast.info(t("study.puzzles.noNewTitle"), {
         description:
           reviewedCount === 0
-            ? "Run an engine review on a saved game first — puzzles come from your own mistakes."
-            : "Every missed chance in your reviewed games is already in the deck.",
+            ? t("study.puzzles.noNewNeedsReview")
+            : t("study.puzzles.noNewAllUsed"),
       });
       return;
     }
-    toast.success(`${created} new puzzle${created === 1 ? "" : "s"}`, {
-      description: "Built from positions where you gave away a real chance.",
+    toast.success(t("study.puzzles.createdCount", { n: created }), {
+      description: t("study.puzzles.createdDesc"),
     });
   };
 
@@ -109,14 +111,14 @@ function PuzzlesPage() {
       const grade = hinted ? 2 : seconds < 12 ? 4 : 3;
       gradePuzzle(puzzle.id, grade);
       setVerdict("correct");
-      toast.success(hinted ? "Correct — with a hint" : "Correct!", {
-        description: puzzle.solutionSan ? `Best move: ${puzzle.solutionSan}` : undefined,
+      toast.success(hinted ? t("study.puzzles.correctHint") : t("study.puzzles.correct"), {
+        description: puzzle.solutionSan ? t("study.puzzles.bestMove", { san: puzzle.solutionSan }) : undefined,
       });
     } else {
       gradePuzzle(puzzle.id, 1);
       setVerdict("wrong");
-      toast.error("Not the move", {
-        description: puzzle.solutionSan ? `The win was ${puzzle.solutionSan}.` : undefined,
+      toast.error(t("study.puzzles.wrong"), {
+        description: puzzle.solutionSan ? t("study.puzzles.theWinWas", { san: puzzle.solutionSan }) : undefined,
       });
     }
     return true;
@@ -134,37 +136,36 @@ function PuzzlesPage() {
     <AppShell wide>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Puzzles from your games</h1>
+          <h1 className="text-2xl font-bold">{t("study.puzzles.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Every position here is a chance you actually missed. Scheduling uses spaced repetition.
+            {t("study.puzzles.subtitle")}
           </p>
         </div>
         <Button onClick={generate}>
-          <Sparkles className="size-4" /> Generate from my games
+          <Sparkles className="size-4" /> {t("study.puzzles.generate")}
         </Button>
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-4">
-        <Stat label="Puzzle rating" value={formatRating(learn.rating.rating, learn.rating.rd)} note={isProvisional(learn.rating.rd) ? "Provisional" : "Established"} />
-        <Stat label="Deck" value={String(learn.puzzles.length)} note={`${dueCount} due now`} />
-        <Stat label="Solved" value={String(solvedTotal)} note={`${attemptTotal} attempts`} />
+        <Stat label={t("study.puzzles.statRating")} value={formatRating(learn.rating.rating, learn.rating.rd)} note={isProvisional(learn.rating.rd) ? t("study.puzzles.provisional") : t("study.puzzles.established")} />
+        <Stat label={t("study.puzzles.statDeck")} value={String(learn.puzzles.length)} note={t("study.puzzles.dueNow", { n: dueCount })} />
+        <Stat label={t("study.puzzles.statSolved")} value={String(solvedTotal)} note={t("study.puzzles.attempts", { n: attemptTotal })} />
         <Stat
-          label="Success rate"
+          label={t("study.puzzles.statSuccessRate")}
           value={attemptTotal === 0 ? "—" : `${Math.round((solvedTotal / attemptTotal) * 100)}%`}
-          note="All time"
+          note={t("study.puzzles.allTime")}
         />
       </div>
 
       {!puzzle || !position ? (
         <div className="panel mt-6 p-6 text-center">
           <Target className="mx-auto size-8 text-muted-foreground" />
-          <h2 className="mt-3 font-semibold">No puzzles yet</h2>
+          <h2 className="mt-3 font-semibold">{t("study.puzzles.emptyTitle")}</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Run an engine review on a saved game, then generate puzzles — the trainer extracts the
-            positions where you threw away a real advantage.
+            {t("study.puzzles.emptyBody")}
           </p>
           <Button asChild variant="outline" className="mt-4">
-            <Link to="/games">Open my games</Link>
+            <Link to="/games">{t("study.puzzles.openMyGames")}</Link>
           </Button>
         </div>
       ) : (
@@ -200,17 +201,17 @@ function PuzzlesPage() {
             <div className="panel p-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Puzzle {Math.min(index + 1, queue.length)} / {queue.length}
+                  {t("study.puzzles.puzzleCounter", { current: Math.min(index + 1, queue.length), total: queue.length })}
                 </span>
                 <span className="font-mono text-sm">{puzzle.rating}</span>
               </div>
               <p className="mt-2 text-sm">
-                {puzzle.color === "w" ? "White" : "Black"} to move — find the move you missed.
+                {t("study.puzzles.toMove", { color: puzzle.color === "w" ? "Trắng" : "Đen" })}
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {puzzle.themes.length === 0 ? (
                   <span className="rounded bg-secondary px-2 py-0.5 text-2xs text-muted-foreground">
-                    Tactic
+                    {t("study.puzzles.tactic")}
                   </span>
                 ) : (
                   puzzle.themes.map((m) => (
@@ -221,8 +222,10 @@ function PuzzlesPage() {
                 )}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                You lost {Math.round(puzzle.swing)}% win chance here · retention{" "}
-                {Math.round(retrievability(puzzle.srs.stability, 0) * 100)}%
+                {t("study.puzzles.lostChance", {
+                  pct: Math.round(puzzle.swing),
+                  retention: Math.round(retrievability(puzzle.srs.stability, 0) * 100),
+                })}
               </p>
             </div>
 
@@ -234,15 +237,15 @@ function PuzzlesPage() {
                     className="w-full"
                     onClick={() => {
                       setHinted(true);
-                      toast.info("Hint", {
-                        description: `Start with the piece on ${puzzle.solution.slice(0, 2)}.`,
+                      toast.info(t("study.puzzles.hintToast"), {
+                        description: t("study.puzzles.hintDesc", { square: puzzle.solution.slice(0, 2) }),
                       });
                     }}
                   >
-                    <Lightbulb className="size-4" /> Hint
+                    <Lightbulb className="size-4" /> {t("study.puzzles.hint")}
                   </Button>
                   <Button variant="ghost" className="w-full" onClick={next}>
-                    Skip
+                    {t("study.puzzles.skip")}
                   </Button>
                 </>
               ) : (
@@ -255,14 +258,14 @@ function PuzzlesPage() {
                     }`}
                   >
                     {verdict === "correct" ? <Check className="size-4" /> : <X className="size-4" />}
-                    {verdict === "correct" ? "Solved" : `Best was ${puzzle.solutionSan ?? puzzle.solution}`}
+                    {verdict === "correct" ? t("study.puzzles.solved") : t("study.puzzles.bestWas", { san: puzzle.solutionSan ?? puzzle.solution })}
                   </div>
                   <Button className="w-full" onClick={next}>
-                    Next puzzle
+                    {t("study.puzzles.nextPuzzle")}
                   </Button>
                   <Button asChild variant="ghost" className="w-full">
                     <Link to="/games/$gameId" params={{ gameId: puzzle.gameId }}>
-                      <RotateCcw className="size-4" /> Open source game
+                      <RotateCcw className="size-4" /> {t("study.puzzles.openSourceGame")}
                     </Link>
                   </Button>
                 </>

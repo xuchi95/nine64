@@ -3,6 +3,7 @@ import type { PlyAnalysis } from "@/lib/analysis/types";
 import type { GamePhase } from "@/lib/analysis/phase";
 import type { Motif } from "@/lib/analysis/motifs";
 import { MAX_CP_LOSS, ratingFromAcpl } from "@/lib/analysis/winrate";
+import { translate as t } from "@/lib/i18n";
 
 export interface WeaknessBucket {
   key: string;
@@ -23,10 +24,25 @@ export interface WeaknessProfile {
   weakest: WeaknessBucket | null;
 }
 
-const PHASE_LABEL: Record<GamePhase, string> = {
-  opening: "Opening",
-  middlegame: "Middlegame",
-  endgame: "Endgame",
+function phaseLabel(phase: GamePhase): string {
+  const key = {
+    opening: "study.insights.phaseOpening",
+    middlegame: "study.insights.phaseMiddlegame",
+    endgame: "study.insights.phaseEndgame",
+  }[phase];
+  return t(key);
+}
+
+const MOTIF_TRAIN_KEY: Record<Motif, string> = {
+  fork: "study.train.motifFork",
+  pin: "study.train.motifPin",
+  skewer: "study.train.motifSkewer",
+  discovered: "study.train.motifDiscovered",
+  "back-rank": "study.train.motifBackRank",
+  hanging: "study.train.motifHanging",
+  "mate-net": "study.train.motifMateNet",
+  promotion: "study.train.motifPromotion",
+  zugzwang: "study.train.motifZugzwang",
 };
 
 function ownPlies(game: SavedGame): PlyAnalysis[] {
@@ -52,8 +68,8 @@ export function buildWeaknessProfile(games: SavedGame[]): WeaknessProfile {
   const reviewed = games.filter((g) => g.review?.plies?.length);
   const all = reviewed.flatMap(ownPlies);
 
-  const phases = (Object.keys(PHASE_LABEL) as GamePhase[]).map((phase) =>
-    bucket(phase, PHASE_LABEL[phase], all.filter((p) => p.phase === phase)),
+  const phases = (["opening", "middlegame", "endgame"] as GamePhase[]).map((phase) =>
+    bucket(phase, phaseLabel(phase), all.filter((p) => p.phase === phase)),
   );
 
   const motifKeys: Motif[] = [
@@ -70,7 +86,7 @@ export function buildWeaknessProfile(games: SavedGame[]): WeaknessProfile {
     .map((motif) =>
       bucket(
         motif,
-        motif.replace(/(^|-)([a-z])/g, (_, sep: string, c: string) => (sep ? " " : "") + c.toUpperCase()),
+        t(MOTIF_TRAIN_KEY[motif]),
         all.filter((p) => p.motifs.includes(motif)),
       ),
     )

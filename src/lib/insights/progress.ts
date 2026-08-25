@@ -1,6 +1,7 @@
 import type { SavedGame } from "@/lib/history";
 import type { PlyAnalysis } from "@/lib/analysis/types";
 import type { MistakeSeverity } from "@/lib/coach/types";
+import { translate as t } from "@/lib/i18n";
 
 /** Which side the report is written for (human side in AI games, white in local). */
 export function playerSide(game: SavedGame): "w" | "b" {
@@ -122,7 +123,7 @@ function bucketKey(date: Date, granularity: Granularity): { key: string; start: 
     return { key: start.toISOString(), start, label: `${start.getMonth() + 1}/${start.getFullYear()}` };
   }
   const start = startOfWeek(date);
-  return { key: start.toISOString(), start, label: `Tuần ${fmtDate(start)}` };
+  return { key: start.toISOString(), start, label: t("study.train.weekLabel", { date: fmtDate(start) }) };
 }
 
 /** Group analysed games into time buckets, oldest first. */

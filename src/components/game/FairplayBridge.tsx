@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ShieldCheck } from "lucide-react";
+import { translate } from "@/lib/i18n";
 import { reviewGame } from "@/lib/engine/review";
 import { toObservations } from "@/lib/fairplay/engineProfile";
 import { reportFairplayGame } from "@/lib/fairplay.functions";
@@ -83,7 +84,7 @@ export function FairplayBridge({ gameId, initialFen, moves, whiteId, blackId, ru
   return (
     <p className="flex items-center gap-2 text-xs text-muted-foreground">
       <ShieldCheck className="size-3.5" />
-      Đang kiểm tra fair play cho ván này…
+      {translate("admin.bridge.checking")}
     </p>
   );
 }

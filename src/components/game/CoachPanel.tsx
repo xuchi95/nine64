@@ -7,6 +7,7 @@ import { coachGame } from "@/lib/coach.functions";
 import { buildCoachDigest } from "@/lib/coach/digest";
 import { SEVERITY_META, type CoachReport } from "@/lib/coach/types";
 import { attachCoach, type SavedGame } from "@/lib/history";
+import { useT, getLocale } from "@/lib/i18n";
 
 interface Props {
   game: SavedGame;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function CoachPanel({ game, onSelectMove }: Props) {
+  const { t } = useT();
   const runCoach = useServerFn(coachGame);
   const [pending, setPending] = useState(false);
   const side = game.playerColor ?? "w";
@@ -32,11 +34,11 @@ export function CoachPanel({ game, onSelectMove }: Props) {
     setPending(true);
     try {
       const digest = buildCoachDigest(game, side);
-      const result = (await runCoach({ data: { digest } })) as CoachReport;
+      const result = (await runCoach({ data: { digest, locale: getLocale() } })) as CoachReport;
       attachCoach(game.id, result);
-      toast.success("Chuyên gia đã phân tích xong ván của bạn");
+      toast.success(t("game.coach.successToast"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Không tạo được bản phân tích");
+      toast.error(err instanceof Error ? err.message : t("game.coach.errorToast"));
     } finally {
       setPending(false);
     }
@@ -46,11 +48,11 @@ export function CoachPanel({ game, onSelectMove }: Props) {
     <div className="panel p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          <Brain className="size-4 text-primary" /> Chuyên gia phân tích
+          <Brain className="size-4 text-primary" /> {t("game.coach.title")}
         </h2>
         {report && (
           <Button size="sm" variant="ghost" disabled={pending} onClick={() => void generate()}>
-            {pending ? "Đang phân tích…" : "Phân tích lại"}
+            {pending ? t("game.coach.analysing") : t("game.coach.reanalyse")}
           </Button>
         )}
       </div>
@@ -58,13 +60,12 @@ export function CoachPanel({ game, onSelectMove }: Props) {
       {!report && (
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">
-            Nhận bình luận bằng ngôn từ của chuyên gia: nhận định từng giai đoạn, các lỗi từ cơ bản
-            đến trầm trọng và lời khuyên cụ thể cho ván này.
-            {!game.review && " Nên chạy engine review trước để phân tích chính xác hơn."}
+            {t("game.coach.intro")}
+            {!game.review && t("game.coach.introReviewHint")}
           </p>
           <Button className="mt-3 w-full" disabled={pending} onClick={() => void generate()}>
             <Sparkles className="size-4" />
-            {pending ? "Đang phân tích…" : "Phân tích với chuyên gia AI"}
+            {pending ? t("game.coach.analysing") : t("game.coach.generate")}
           </Button>
         </div>
       )}
@@ -82,13 +83,13 @@ export function CoachPanel({ game, onSelectMove }: Props) {
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
-            <PhaseCard label="Khai cuộc" text={report.phases.opening} />
-            <PhaseCard label="Trung cuộc" text={report.phases.middlegame} />
-            <PhaseCard label="Tàn cuộc" text={report.phases.endgame} />
+            <PhaseCard label={t("game.coach.phaseOpening")} text={report.phases.opening} />
+            <PhaseCard label={t("game.coach.phaseMiddlegame")} text={report.phases.middlegame} />
+            <PhaseCard label={t("game.coach.phaseEndgame")} text={report.phases.endgame} />
           </div>
 
           {report.strengths.length > 0 && (
-            <Section icon={<Target className="size-4 text-primary" />} title="Bạn làm tốt">
+            <Section icon={<Target className="size-4 text-primary" />} title={t("game.coach.strengths")}>
               <ul className="space-y-1">
                 {report.strengths.map((s, i) => (
                   <li key={i} className="text-muted-foreground">
@@ -102,7 +103,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
           {mistakes.length > 0 && (
             <Section
               icon={<ShieldAlert className="size-4 text-destructive" />}
-              title="Lỗi trong ván (cơ bản → trầm trọng)"
+              title={t("game.coach.mistakesTitle")}
             >
               <ul className="space-y-2">
                 {mistakes.map((m, i) => {
@@ -131,7 +132,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
                       )}
                       {m.betterPlan && (
                         <p className="mt-1 text-muted-foreground">
-                          <span className="font-medium text-foreground">Nên làm: </span>
+                          <span className="font-medium text-foreground">{t("game.coach.betterPlan")}</span>
                           {m.betterPlan}
                         </p>
                       )}
@@ -143,7 +144,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
           )}
 
           {report.habits.length > 0 && (
-            <Section icon={<ShieldAlert className="size-4 text-warning" />} title="Thói quen cần sửa">
+            <Section icon={<ShieldAlert className="size-4 text-warning" />} title={t("game.coach.habits")}>
               <ul className="space-y-1">
                 {report.habits.map((h, i) => (
                   <li key={i} className="text-muted-foreground">
@@ -155,7 +156,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
           )}
 
           {report.advice.length > 0 && (
-            <Section icon={<Lightbulb className="size-4 text-accent" />} title="Lời khuyên">
+            <Section icon={<Lightbulb className="size-4 text-accent" />} title={t("game.coach.advice")}>
               <ol className="space-y-1">
                 {report.advice.map((a, i) => (
                   <li key={i} className="text-muted-foreground">
@@ -167,7 +168,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
           )}
 
           {report.drills.length > 0 && (
-            <Section icon={<Target className="size-4 text-primary" />} title="Nên luyện">
+            <Section icon={<Target className="size-4 text-primary" />} title={t("game.coach.drills")}>
               <div className="flex flex-wrap gap-2">
                 {report.drills.map((d, i) => (
                   <span
@@ -182,8 +183,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
           )}
 
           <p className="text-2xs text-muted-foreground">
-            Bình luận do AI tạo từ dữ liệu engine của ván này — dùng như góc nhìn huấn luyện, không
-            phải chân lý tuyệt đối.
+{t("game.coach.disclaimer")}
           </p>
         </div>
       )}

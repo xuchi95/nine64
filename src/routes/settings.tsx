@@ -13,18 +13,19 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: `Settings — ${APP.name}` },
+      { title: `Cài đặt — ${APP.name}` },
       {
         name: "description",
         content:
-          "Tune board themes, piece sets, sound, animations and engine performance for Nine64.",
+          "Tuỳ chỉnh chủ đề bàn cờ, bộ quân, âm thanh, hiệu ứng và hiệu năng engine cho Nine64.",
       },
-      { property: "og:title", content: `Settings — ${APP.name}` },
-      { property: "og:description", content: "Board, pieces, sound and engine preferences." },
+      { property: "og:title", content: `Cài đặt — ${APP.name}` },
+      { property: "og:description", content: "Bàn cờ, quân cờ, âm thanh và tuỳ chọn engine." },
     ],
   }),
   pendingComponent: FormSkeleton,
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
+  const { t } = useT();
   const settings = useSettings();
   const boardStyle = useBoardStyle();
   const { user } = useAuth();
@@ -39,9 +41,9 @@ function SettingsPage() {
   return (
     <AppShell>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold">{t("play.settings.title")}</h1>
         <Button variant="outline" onClick={resetSettings}>
-          Reset to defaults
+          {t("play.settings.resetDefaults")}
         </Button>
       </div>
 
@@ -54,17 +56,17 @@ function SettingsPage() {
 
       <section className="panel mt-5 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Board
+          {t("play.settings.board")}
         </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {BOARD_THEMES.map((t) => (
+          {BOARD_THEMES.map((th) => (
             <button
-              key={t.id}
+              key={th.id}
               type="button"
-              onClick={() => boardStyle.selectBoardTheme(t.id)}
+              onClick={() => boardStyle.selectBoardTheme(th.id)}
               className={cn(
                 "rounded-md border p-2 transition-colors",
-                boardStyle.theme.id === t.id ? "border-primary" : "border-border hover:border-primary/40",
+                boardStyle.theme.id === th.id ? "border-primary" : "border-border hover:border-primary/40",
               )}
             >
               <span className="grid grid-cols-4 overflow-hidden rounded">
@@ -74,18 +76,18 @@ function SettingsPage() {
                     <span
                       key={i}
                       className="aspect-square"
-                      style={{ backgroundColor: dark ? t.dark : t.light }}
+                      style={{ backgroundColor: dark ? th.dark : th.light }}
                     />
                   );
                 })}
               </span>
-              <span className="mt-1.5 block text-xs">{t.name}</span>
+              <span className="mt-1.5 block text-xs">{th.name}</span>
             </button>
           ))}
         </div>
 
         <h2 className="mt-7 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Pieces
+          {t("play.settings.pieces")}
         </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {PIECE_SETS.map((set) => (
@@ -111,31 +113,53 @@ function SettingsPage() {
 
       <section className="panel mt-4 divide-y divide-border p-5">
         <h2 className="pb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Gameplay
+          {t("play.settings.gameplay")}
         </h2>
         <Toggle
-          label="Show legal moves"
-          description="Highlight destination squares for the selected piece."
+          label={t("play.settings.showLegalMoves")}
+          description={t("play.settings.showLegalMovesDesc")}
           field="showLegalMoves"
         />
-        <Toggle label="Board coordinates" description="Files and ranks on the board edge." field="showCoordinates" />
-        <Toggle label="Auto-queen" description="Skip the promotion picker and always promote to a queen." field="autoQueen" />
-        <Toggle label="Premove" description="Queue a move while the opponent is thinking." field="premove" />
-        <Toggle label="Confirm resignation" description="Ask before resigning a game." field="confirmResign" />
-        <Toggle label="Move animations" description="Animate pieces sliding between squares." field="animations" />
         <Toggle
-          label="Colour-blind friendly"
-          description="Adds shape cues so status is never colour-only."
+          label={t("play.settings.boardCoordinates")}
+          description={t("play.settings.boardCoordinatesDesc")}
+          field="showCoordinates"
+        />
+        <Toggle
+          label={t("play.settings.autoQueen")}
+          description={t("play.settings.autoQueenDesc")}
+          field="autoQueen"
+        />
+        <Toggle
+          label={t("play.settings.premove")}
+          description={t("play.settings.premoveDesc")}
+          field="premove"
+        />
+        <Toggle
+          label={t("play.settings.confirmResign")}
+          description={t("play.settings.confirmResignDesc")}
+          field="confirmResign"
+        />
+        <Toggle
+          label={t("play.settings.moveAnimations")}
+          description={t("play.settings.moveAnimationsDesc")}
+          field="animations"
+        />
+        <Toggle
+          label={t("play.settings.colorBlind")}
+          description={t("play.settings.colorBlindDesc")}
           field="colorBlindMode"
         />
       </section>
 
       <section className="panel mt-4 space-y-5 p-5">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Sound</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          {t("play.settings.sound")}
+        </h2>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Sound effects</p>
-            <p className="text-xs text-muted-foreground">Moves, captures, checks and results.</p>
+            <p className="text-sm font-medium">{t("play.settings.soundEffects")}</p>
+            <p className="text-xs text-muted-foreground">{t("play.settings.soundEffectsDesc")}</p>
           </div>
           <Switch
             checked={settings.soundEnabled}
@@ -147,9 +171,9 @@ function SettingsPage() {
         </div>
         <div className="flex items-center justify-between">
           <div className="pr-4">
-            <p className="text-sm font-medium">Capture shatter sound</p>
+            <p className="text-sm font-medium">{t("play.settings.shatterSound")}</p>
             <p className="text-xs text-muted-foreground">
-              Layered glass-shatter cue synced with the capture animation.
+              {t("play.settings.shatterSoundDesc")}
             </p>
           </div>
           <Switch
@@ -163,7 +187,7 @@ function SettingsPage() {
         </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-sm">
-            <span>Effects volume</span>
+            <span>{t("play.settings.effectsVolume")}</span>
             <span className="tabular text-muted-foreground">
               {Math.round(settings.sfxVolume * 100)}%
             </span>
@@ -181,10 +205,10 @@ function SettingsPage() {
 
       <section className="panel mt-4 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Engine performance
+          {t("play.settings.enginePerformance")}
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Threads and hash are auto-detected from your device; this sets the budget.
+          {t("play.settings.enginePerformanceDesc")}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {(["performance", "balanced", "maximum"] as const).map((mode) => (
@@ -199,7 +223,7 @@ function SettingsPage() {
                   : "border-border bg-surface-2 hover:border-primary/40",
               )}
             >
-              {mode === "maximum" ? "Maximum strength" : mode}
+              {t(`play.settings.${mode}`)}
             </button>
           ))}
         </div>

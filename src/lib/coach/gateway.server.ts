@@ -1,6 +1,6 @@
 import type { CoachDigest } from "./digest";
 import type { CoachMistake, CoachReport, MistakeSeverity } from "./types";
-import { COACH_MODEL, COACH_SCHEMA, COACH_SYSTEM, buildCoachPrompt } from "./prompt";
+import { COACH_MODEL, COACH_SCHEMA, coachSystem, buildCoachPrompt } from "./prompt";
 
 const ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const SEVERITIES: MistakeSeverity[] = ["basic", "moderate", "serious", "critical"];
@@ -53,9 +53,12 @@ function toMistakes(value: unknown): CoachMistake[] {
 }
 
 /** Calls the Lovable AI gateway and normalises the coach report. */
-export async function requestCoachReport(digest: CoachDigest): Promise<CoachReport> {
+export async function requestCoachReport(
+  digest: CoachDigest,
+  locale: "vi" | "en" = "vi",
+): Promise<CoachReport> {
   const apiKey = process.env['LOVABLE_API_KEY'];
-  if (!apiKey) throw new Error("AI chưa được cấu hình (thiếu khoá API).");
+  if (!apiKey) throw new Error(locale === "en" ? "AI is not configured (missing API key)." : "AI chưa được cấu hình (thiếu khoá API).");
 
   const res = await fetch(ENDPOINT, {
     method: "POST",
@@ -67,8 +70,8 @@ export async function requestCoachReport(digest: CoachDigest): Promise<CoachRepo
     body: JSON.stringify({
       model: COACH_MODEL,
       messages: [
-        { role: "system", content: COACH_SYSTEM },
-        { role: "user", content: buildCoachPrompt(digest) },
+        { role: "system", content: coachSystem(locale) },
+        { role: "user", content: buildCoachPrompt(digest, locale) },
       ],
       response_format: {
         type: "json_schema",
@@ -79,11 +82,17 @@ export async function requestCoachReport(digest: CoachDigest): Promise<CoachRepo
 
   if (!res.ok) {
     const body = await res.text();
-    if (res.status === 429) throw new Error("AI đang quá tải, thử lại sau ít phút.");
+    if (res.status === 429)
+      throw new Error(locale === "en" ? "AI is overloaded, try again in a few minutes." : "AI đang quá tải, thử lại sau ít phút.");
     if (res.status === 402)
-      throw new Error("Hết credit AI của workspace — chủ app cần nạp thêm để dùng tính năng này.");
-    if (res.status === 403) throw new Error("Tính năng AI đang bị chặn bởi thiết lập workspace.");
-    throw new Error(`AI lỗi ${res.status}: ${body.slice(0, 200)}`);
+      throw new Error(
+        locale === "en"
+          ? "The workspace is out of AI credits — the app owner needs to top up to use this feature."
+          : "Hết credit AI của workspace — chủ app cần nạp thêm để dùng tính năng này.",
+      );
+    if (res.status === 403)
+      throw new Error(locale === "en" ? "AI features are blocked by workspace settings." : "Tính năng AI đang bị chặn bởi thiết lập workspace.");
+    throw new Error(`${locale === "en" ? "AI error" : "AI lỗi"} ${res.status}: ${body.slice(0, 200)}`);
   }
 
   const payload = (await res.json()) as {
@@ -94,13 +103,13 @@ export async function requestCoachReport(digest: CoachDigest): Promise<CoachRepo
   try {
     parsed = JSON.parse(content) as RawReport;
   } catch {
-    throw new Error("AI trả về dữ liệu không đọc được, thử lại nhé.");
+    throw new Error(locale === "en" ? "AI returned unreadable data, please try again." : "AI trả về dữ liệu không đọc được, thử lại nhé.");
   }
 
   return {
     createdAt: new Date().toISOString(),
     side: digest.side,
-    headline: str(parsed.headline, "Phân tích ván đấu"),
+    headline: str(parsed.headline, locale === "en" ? "Game analysis" : "Phân tích ván đấu"),
     verdict: str(parsed.verdict),
     levelImpression: str(parsed.levelImpression),
     phases: {

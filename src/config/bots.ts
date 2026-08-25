@@ -119,3 +119,17 @@ export function getBotLevel(level: number): BotLevel {
 export function getPersonality(id: string): BotPersonality {
   return BOT_PERSONALITIES.find((p) => p.id === id) ?? BOT_PERSONALITIES[0]!;
 }
+
+import { translate } from "@/lib/i18n";
+
+export function botLevelTitle(level: number): string {
+  return translate(`play.bots.level.${level}.title`);
+}
+
+export function personalityName(id: string): string {
+  return translate(`play.bots.personality.${id}.name`);
+}
+
+export function personalityBlurb(id: string): string {
+  return translate(`play.bots.personality.${id}.blurb`);
+}

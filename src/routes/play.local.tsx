@@ -11,7 +11,7 @@ import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
 import { Button } from "@/components/ui/button";
 import { APP, type TimeControl } from "@/config/app";
-import { VARIANTS, type VariantId } from "@/config/variants";
+import { VARIANTS, type VariantId, variantName, variantBlurb } from "@/config/variants";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/play/local")({
   head: () =>
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/play/local")({
 });
 
 function LocalGame() {
+  const { t } = useT();
   const navigate = useNavigate();
   const settings = useSettings();
   const [variant, setVariant] = useState<VariantId>("standard");
@@ -54,20 +56,20 @@ function LocalGame() {
       const saved = saveGame({
         mode: "local",
         variant,
-        variantName: VARIANTS.find((v) => v.id === variant)?.name ?? variant,
-        timeControl: timeControl?.label ?? "Unlimited",
+        variantName: variantName(variant),
+        timeControl: timeControl?.label ?? t("play.local.standard"),
         startFen: snapshot.startFen,
         finalFen: snapshot.finalFen,
         moves: snapshot.moves,
         result: r,
         playerColor: null,
-        white: { name: "White", subtitle: "Local player" },
-        black: { name: "Black", subtitle: "Local player" },
+        white: { name: t("play.local.white"), subtitle: t("play.local.localPlayer") },
+        black: { name: t("play.local.black"), subtitle: t("play.local.localPlayer") },
         opening: detectOpening(snapshot.moves.map((m) => m.san))?.name ?? null,
       });
-      toast.success("Game saved to your archive", {
+      toast.success(t("play.local.gameSaved"), {
         action: {
-          label: "View",
+          label: t("play.local.viewAction"),
           onClick: () => void navigate({ to: "/games/$gameId", params: { gameId: saved.id } }),
         },
       });
@@ -86,12 +88,12 @@ function LocalGame() {
   if (phase === "setup") {
     return (
       <AppShell>
-        <h1 className="text-2xl font-bold">Local two player</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Share one device and take turns.</p>
+        <h1 className="text-2xl font-bold">{t("play.local.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("play.local.subtitle")}</p>
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className="panel p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Variant
+              {t("play.local.variant")}
             </h2>
             <div className="mt-3 grid gap-2">
               {VARIANTS.filter((v) => v.enabled).map((v) => (
@@ -106,8 +108,8 @@ function LocalGame() {
                       : "border-border bg-surface-2 hover:border-primary/40",
                   )}
                 >
-                  <span className="font-medium">{v.name}</span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">{v.blurb}</span>
+                  <span className="font-medium">{variantName(v.id)}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{variantBlurb(v.id)}</span>
                 </button>
               ))}
             </div>
@@ -115,12 +117,12 @@ function LocalGame() {
           <div className="space-y-4">
             <div className="panel p-5">
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Time control
+                {t("play.local.timeControl")}
               </h2>
               <TimeControlPicker value={timeControl} onChange={setTimeControl} />
             </div>
             <label className="panel flex items-center justify-between p-4 text-sm">
-              <span>Flip board automatically each turn</span>
+              <span>{t("play.local.autoFlip")}</span>
               <input
                 type="checkbox"
                 checked={autoFlip}
@@ -136,7 +138,7 @@ function LocalGame() {
                 setPhase("playing");
               }}
             >
-              Start game
+              {t("play.local.startGame")}
             </Button>
           </div>
         </div>
@@ -152,31 +154,31 @@ function LocalGame() {
         left={
           <>
           <PlayerCard
-            player={{ name: "Black", subtitle: "Local player", color: "b" }}
+            player={{ name: t("play.local.black"), subtitle: t("play.local.localPlayer"), color: "b" }}
             seconds={game.clock.b}
             active={game.turn === "b" && !game.result}
             clockEnabled={!!timeControl}
             captured={game.captured.w}
           />
           <PlayerCard
-            player={{ name: "White", subtitle: "Local player", color: "w" }}
+            player={{ name: t("play.local.white"), subtitle: t("play.local.localPlayer"), color: "w" }}
             seconds={game.clock.w}
             active={game.turn === "w" && !game.result}
             clockEnabled={!!timeControl}
             captured={game.captured.b}
           />
           <GamePanel
-            title="Game status"
+            title={t("play.local.gameStatus")}
             meta={
               <StatusPill tone={game.result ? "neutral" : "live"}>
-                {game.result ? "Finished" : "Live"}
+                {game.result ? t("play.local.finished") : t("play.local.live")}
               </StatusPill>
             }
             bodyClassName="space-y-3.5 p-4"
           >
-            <StatRow label="Variant" value={VARIANTS.find((v) => v.id === variant)?.name ?? "Standard"} />
-            <StatRow label="Opening" value={game.opening?.name ?? "—"} />
-            <StatRow label="Moves" value={String(game.moves.length)} mono />
+            <StatRow label={t("play.local.variantLabel")} value={variant ? variantName(variant) : t("play.local.standard")} />
+            <StatRow label={t("play.local.openingLabel")} value={game.opening?.name ?? "—"} />
+            <StatRow label={t("play.local.movesLabel")} value={String(game.moves.length)} mono />
           </GamePanel>
           </>
         }
@@ -198,8 +200,8 @@ function LocalGame() {
         right={
           <>
           <GamePanel
-            title="Notation"
-            meta={game.moves.length > 0 ? `Move ${Math.ceil(game.moves.length / 2)}` : undefined}
+            title={t("play.local.notation")}
+            meta={game.moves.length > 0 ? t("play.local.move", { n: Math.ceil(game.moves.length / 2) }) : undefined}
             className="max-h-[420px]"
             bodyClassName="overflow-hidden"
           >
@@ -210,22 +212,22 @@ function LocalGame() {
               variant="outline"
               disabled={!!game.result}
               onClick={() => {
-                if (!settings.confirmResign || window.confirm(`Resign as ${game.turn === "w" ? "White" : "Black"}?`)) {
+                if (!settings.confirmResign || window.confirm(t("play.local.resignConfirm", { color: game.turn === "w" ? t("play.local.white") : t("play.local.black") }))) {
                   game.resign(game.turn);
                 }
               }}
             >
-              <Flag className="size-4" /> Resign
+              <Flag className="size-4" /> {t("play.local.resign")}
             </Button>
             <Button variant="outline" disabled={!!game.result} onClick={() => game.declareDraw()}>
-              <Handshake className="size-4" /> Draw
+              <Handshake className="size-4" /> {t("play.local.draw")}
             </Button>
             <Button
               variant="outline"
               onClick={() => setOrientation((o) => (o === "w" ? "b" : "w"))}
               disabled={autoFlip}
             >
-              <FlipVertical2 className="size-4" /> Flip
+              <FlipVertical2 className="size-4" /> {t("play.local.flip")}
             </Button>
             <Button
               variant="outline"
@@ -234,7 +236,7 @@ function LocalGame() {
                 setShowResult(false);
               }}
             >
-              <RefreshCw className="size-4" /> Restart
+              <RefreshCw className="size-4" /> {t("play.local.restart")}
             </Button>
           </GameActions>
           </>

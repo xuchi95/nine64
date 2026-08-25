@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { GameResult } from "@/hooks/useChessGame";
+import { useT } from "@/lib/i18n";
 
 export function ResultModal({
   result,
@@ -19,15 +20,18 @@ export function ResultModal({
   onAnalyse: () => void;
   onNewGame: () => void;
 }) {
+  const { t } = useT();
   if (!result) return null;
   const outcome =
     result.winner === "draw"
-      ? "Draw"
+      ? t("game.resultModal.draw")
       : playerColor === null
-        ? `${result.winner === "w" ? "White" : "Black"} wins`
+        ? t("game.resultModal.winnerWins", {
+            winner: result.winner === "w" ? t("game.board.white") : t("game.board.black"),
+          })
         : result.winner === playerColor
-          ? "Victory"
-          : "Defeat";
+          ? t("game.resultModal.victory")
+          : t("game.resultModal.defeat");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -37,12 +41,12 @@ export function ResultModal({
         </DialogHeader>
         <p className="text-center text-sm text-muted-foreground">{result.reason}</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button onClick={onRematch}>Rematch</Button>
+          <Button onClick={onRematch}>{t("game.resultModal.rematch")}</Button>
           <Button variant="secondary" onClick={onNewGame}>
-            New game
+            {t("game.resultModal.newGame")}
           </Button>
           <Button variant="outline" className="col-span-2" onClick={onAnalyse}>
-            Analyse this game
+            {t("game.resultModal.analyse")}
           </Button>
         </div>
       </DialogContent>

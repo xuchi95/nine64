@@ -11,6 +11,7 @@ import { hydrateLearn, useLearnState } from "@/lib/learn/store";
 import { LABEL_META, type MoveLabel } from "@/lib/analysis/classify";
 import { DashboardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/insights")({
   head: () =>
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/insights")({
 });
 
 function InsightsPage() {
+  const { t } = useT();
   const games = useGameHistory();
   const learn = useLearnState();
   const [path, setPath] = useState("");
@@ -47,53 +49,71 @@ function InsightsPage() {
     (a, b) => b[1] - a[1],
   );
 
+  const phaseLabel = (phase: string) =>
+    phase === "opening"
+      ? t("study.insights.phaseOpening")
+      : phase === "middlegame"
+        ? t("study.insights.phaseMiddlegame")
+        : phase === "endgame"
+          ? t("study.insights.phaseEndgame")
+          : cap(phase);
+
   return (
     <AppShell wide>
-      <h1 className="text-2xl font-bold">Insights</h1>
+      <h1 className="text-2xl font-bold">{t("study.insights.title")}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Built from {profile.reviewedGames} reviewed game{profile.reviewedGames === 1 ? "" : "s"} ·{" "}
-        {profile.plies} of your moves analysed.
+        {t("study.insights.summary", {
+          n: profile.reviewedGames,
+          plural: profile.reviewedGames === 1 ? "" : "s",
+          plies: profile.plies,
+        })}
       </p>
 
       {profile.reviewedGames === 0 ? (
         <div className="panel mt-6 p-6 text-center">
           <Activity className="mx-auto size-8 text-muted-foreground" />
-          <h2 className="mt-3 font-semibold">No analysed games yet</h2>
+          <h2 className="mt-3 font-semibold">{t("study.insights.emptyTitle")}</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Run an engine review on a saved game — the weakness profile, opening tree and training
-            plan all come from your own moves.
+            {t("study.insights.emptyBody")}
           </p>
           <Button asChild variant="outline" className="mt-4">
-            <Link to="/games">Open my games</Link>
+            <Link to="/games">{t("study.insights.openGames")}</Link>
           </Button>
         </div>
       ) : (
         <>
           <div className="mt-5 grid gap-4 sm:grid-cols-4">
             <Stat
-              label="Estimated strength"
+              label={t("study.insights.statStrength")}
               value={profile.estimatedRating === null ? "—" : String(profile.estimatedRating)}
-              note="From complexity-weighted ACPL"
+              note={t("study.insights.statStrengthNote")}
             />
             <Stat
-              label="Forecast (10 games)"
+              label={t("study.insights.statForecast")}
               value={profile.forecast === null ? "—" : String(profile.forecast)}
-              note={`${profile.trend >= 0 ? "+" : ""}${profile.trend} / game`}
+              note={t("study.insights.statForecastNote", {
+                sign: profile.trend >= 0 ? "+" : "",
+                trend: profile.trend,
+              })}
               icon={profile.trend >= 0 ? TrendingUp : TrendingDown}
               tone={profile.trend >= 0 ? "text-primary" : "text-destructive"}
             />
-            <Stat label="Avg win% lost / move" value={`${profile.avgLoss}%`} note="Lower is better" />
             <Stat
-              label="Weakest phase"
-              value={profile.weakestPhase ? cap(profile.weakestPhase) : "—"}
-              note="Highest average loss"
+              label={t("study.insights.statAvgLoss")}
+              value={`${profile.avgLoss}%`}
+              note={t("study.insights.statAvgLossNote")}
+            />
+            <Stat
+              label={t("study.insights.statWeakestPhase")}
+              value={profile.weakestPhase ? phaseLabel(profile.weakestPhase) : "—"}
+              note={t("study.insights.statWeakestPhaseNote")}
             />
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <section className="panel p-5">
               <h2 className="flex items-center gap-2 font-semibold">
-                <Activity className="size-4 text-primary" /> Phase breakdown
+                <Activity className="size-4 text-primary" /> {t("study.insights.phaseBreakdown")}
               </h2>
               <div className="mt-4 space-y-3">
                 {profile.phases.map((p) => {
@@ -101,9 +121,13 @@ function InsightsPage() {
                   return (
                     <div key={p.phase}>
                       <div className="flex items-center justify-between text-sm">
-                        <span>{cap(p.phase)}</span>
+                        <span>{phaseLabel(p.phase)}</span>
                         <span className="font-mono text-xs text-muted-foreground">
-                          {p.avgLoss}% · {p.blunders} blunders · {p.plies} moves
+                          {t("study.insights.phaseStats", {
+                            avgLoss: p.avgLoss,
+                            blunders: p.blunders,
+                            plies: p.plies,
+                          })}
                         </span>
                       </div>
                       <div className="mt-1 h-2 rounded-full bg-secondary">
@@ -118,11 +142,11 @@ function InsightsPage() {
               </div>
 
               <h3 className="mt-5 text-xs uppercase tracking-wider text-muted-foreground">
-                Motifs you keep missing
+                {t("study.insights.missedMotifs")}
               </h3>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {profile.missedMotifs.length === 0 ? (
-                  <span className="text-sm text-muted-foreground">No repeated pattern yet.</span>
+                  <span className="text-sm text-muted-foreground">{t("study.insights.noPattern")}</span>
                 ) : (
                   profile.missedMotifs.map((m) => (
                     <span key={m.motif} className="rounded bg-secondary px-2 py-0.5 text-2xs">
@@ -133,7 +157,7 @@ function InsightsPage() {
               </div>
 
               <h3 className="mt-5 text-xs uppercase tracking-wider text-muted-foreground">
-                Move quality
+                {t("study.insights.moveQuality")}
               </h3>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {labelRows.map(([label, count]) => (
@@ -146,41 +170,48 @@ function InsightsPage() {
 
             <section className="panel p-5">
               <h2 className="flex items-center gap-2 font-semibold">
-                <Bot className="size-4 text-primary" /> Recommended sparring
+                <Bot className="size-4 text-primary" /> {t("study.insights.recommendedSparring")}
               </h2>
               {recommendation ? (
                 <>
                   <p className="mt-3 text-lg font-semibold">
-                    Level {recommendation.level} · {recommendation.title} as{" "}
-                    {recommendation.personalityName}
+                    {t("study.insights.recommendationLevel", {
+                      level: recommendation.level,
+                      title: recommendation.title,
+                      personality: recommendation.personalityName,
+                    })}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">{recommendation.reason}</p>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Chosen by an exploration/exploitation bandit that keeps your results near a coin
-                    flip while targeting your weakest phase.
+                    {t("study.insights.recommendationHint")}
                   </p>
                   <Button asChild className="mt-4">
                     <Link to="/play/ai">
-                      Play this bot <ChevronRight className="size-4" />
+                      {t("study.insights.playThisBot")} <ChevronRight className="size-4" />
                     </Link>
                   </Button>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">Not enough data yet.</p>
+                <p className="mt-3 text-sm text-muted-foreground">{t("study.insights.notEnoughData")}</p>
               )}
 
               <h3 className="mt-6 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-                <GitBranch className="size-3.5" /> Weakest opening line
+                <GitBranch className="size-3.5" /> {t("study.insights.weakestLine")}
               </h3>
               {weakestLine ? (
                 <p className="mt-2 text-sm">
-                  <span className="font-mono">{weakestLine.path}</span> — {weakestLine.games} games,{" "}
-                  {weakestLine.winRate}% score, avg loss {weakestLine.avgLoss}%
-                  {weakestLine.openingName ? ` (${weakestLine.openingName})` : ""}
+                  <span className="font-mono">{weakestLine.path}</span> —{" "}
+                  {t("study.insights.weakestLineStats", {
+                    path: weakestLine.path,
+                    games: weakestLine.games,
+                    winRate: weakestLine.winRate,
+                    avgLoss: weakestLine.avgLoss ?? 0,
+                    opening: weakestLine.openingName ? ` (${weakestLine.openingName})` : "",
+                  })}
                 </p>
               ) : (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Play a few more games to build the tree.
+                  {t("study.insights.playMoreGames")}
                 </p>
               )}
             </section>
@@ -188,11 +219,11 @@ function InsightsPage() {
 
           <section className="panel mt-6 p-5">
             <h2 className="flex items-center gap-2 font-semibold">
-              <GitBranch className="size-4 text-primary" /> Your opening tree
+              <GitBranch className="size-4 text-primary" /> {t("study.insights.openingTree")}
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-1 text-sm">
               <button className="text-primary hover:underline" onClick={() => setPath("")}>
-                start
+                {t("study.insights.start")}
               </button>
               {path
                 ? path.split(" ").map((san, i, arr) => (
@@ -210,17 +241,17 @@ function InsightsPage() {
             </div>
 
             {rows.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">No continuations recorded here.</p>
+              <p className="mt-4 text-sm text-muted-foreground">{t("study.insights.noContinuations")}</p>
             ) : (
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="text-xs uppercase tracking-wider text-muted-foreground">
                     <tr>
-                      <th className="py-2 text-left">Move</th>
-                      <th className="py-2 text-left">Opening</th>
-                      <th className="py-2 text-right">Games</th>
-                      <th className="py-2 text-right">Score</th>
-                      <th className="py-2 text-right">Avg loss</th>
+                      <th className="py-2 text-left">{t("study.insights.colMove")}</th>
+                      <th className="py-2 text-left">{t("study.insights.colOpening")}</th>
+                      <th className="py-2 text-right">{t("study.insights.colGames")}</th>
+                      <th className="py-2 text-right">{t("study.insights.colScore")}</th>
+                      <th className="py-2 text-right">{t("study.insights.colAvgLoss")}</th>
                       <th />
                     </tr>
                   </thead>
@@ -236,7 +267,7 @@ function InsightsPage() {
                         </td>
                         <td className="py-2 text-right">
                           <Button variant="ghost" size="sm" onClick={() => setPath(row.path)}>
-                            Open
+                            {t("study.insights.open")}
                           </Button>
                         </td>
                       </tr>

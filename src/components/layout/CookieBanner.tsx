@@ -3,9 +3,11 @@ import { Link } from "@tanstack/react-router";
 import { Cookie, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCookieConsent, setCookieConsent } from "@/lib/cookieConsent";
+import { useT } from "@/lib/i18n";
 
 export function CookieBanner() {
   const [visible, setVisible] = useState(false);
+  const { t } = useT();
 
   useEffect(() => {
     if (!getCookieConsent()) setVisible(true);
@@ -24,7 +26,7 @@ export function CookieBanner() {
   return (
     <div
       role="dialog"
-      aria-label="Thông báo cookie"
+      aria-label={t("cookie.dialogLabel")}
       className="fixed inset-x-0 bottom-0 z-50 px-3 pb-3 sm:px-4 sm:pb-4"
     >
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-border/80 bg-card/95 p-4 shadow-xl backdrop-blur-md sm:flex-row sm:items-center sm:gap-4 sm:p-5">
@@ -33,23 +35,22 @@ export function CookieBanner() {
             <Cookie className="size-4" />
           </span>
           <p className="min-w-0 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-            Chúng tôi dùng cookie để ghi nhớ phiên đăng nhập và tuỳ chọn giao diện, cùng cookie
-            phân tích không bắt buộc để cải thiện trải nghiệm.{" "}
+            {t("cookie.message")}{" "}
             <Link to="/cookie-policy" className="text-primary hover:underline">
-              Tìm hiểu thêm
+              {t("cookie.learnMore")}
             </Link>
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:ml-auto">
           <Button variant="outline" size="sm" onClick={() => choose("rejected")}>
-            Từ chối
+            {t("cookie.reject")}
           </Button>
           <Button size="sm" onClick={() => choose("accepted")}>
-            Chấp nhận
+            {t("cookie.accept")}
           </Button>
           <button
             type="button"
-            aria-label="Đóng"
+            aria-label={t("cookie.close")}
             onClick={() => choose("rejected")}
             className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground sm:hidden"
           >

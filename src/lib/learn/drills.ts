@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { SEVERITY_META, type MistakeSeverity } from "@/lib/coach/types";
 import type { SavedGame } from "@/lib/history";
 import { MOTIF_LABEL } from "@/lib/analysis/motifs";
+import { translate as t } from "@/lib/i18n";
 
 /** A concrete practice task derived from one of the player's mistakes. */
 export interface Drill {
@@ -54,7 +55,8 @@ function moveLabelFor(ply: number): string {
 }
 
 function gameLabel(game: SavedGame): string {
-  return `${game.white?.name ?? "?"} – ${game.black?.name ?? "?"}`;
+  const unknown = t("study.train.unknownPlayer");
+  return `${game.white?.name ?? unknown} – ${game.black?.name ?? unknown}`;
 }
 
 function themeNames(motifs: unknown): string[] {
@@ -71,21 +73,25 @@ function taskFor(drill: {
   san: string | null;
 }): string {
   const theme = drill.themes[0];
-  const where = drill.san ? `nước ${drill.moveLabel} ${drill.san}` : "vị trí này";
+  const where = drill.san
+    ? t("study.train.whereMove", { move: drill.moveLabel, san: drill.san })
+    : t("study.train.wherePosition");
   if (drill.severity === "critical") {
-    return `Mở lại ${where} trong bàn phân tích, tự tìm nước tốt hơn trong 2 phút rồi so với biến thể của engine${
-      theme ? `; ôn lại chủ đề "${theme}"` : ""
-    }.`;
+    return t("study.train.taskCritical", {
+      where,
+      theme: theme ? t("study.train.themeReviewSuffix", { theme }) : "",
+    });
   }
   if (drill.severity === "serious") {
-    return `Đi lại ${where} 3 lần liên tiếp mà không xem gợi ý, mỗi lần nói ra kế hoạch trước khi đi${
-      theme ? ` (chú ý "${theme}")` : ""
-    }.`;
+    return t("study.train.taskSerious", {
+      where,
+      theme: theme ? t("study.train.themeFocusSuffix", { theme }) : "",
+    });
   }
   if (drill.severity === "moderate") {
-    return `Kiểm tra lại ${where}: liệt kê mọi nước ăn quân/chiếu của đối thủ trước khi chọn nước đi.`;
+    return t("study.train.taskModerate", { where });
   }
-  return `Xem nhanh ${where} và ghi lại 1 câu về nguyên nhân chọn sai.`;
+  return t("study.train.taskBasic", { where });
 }
 
 /**
@@ -120,7 +126,7 @@ export function buildDrills(games: SavedGame[], limit = 40): Drill[] {
         moveLabel: moveLabelFor(ply),
         san: mistake?.san || (plyInfo?.san ?? null),
         severity,
-        title: mistake?.title ?? "Sai lầm cần xem lại",
+        title: mistake?.title ?? t("study.train.mistakeTitle"),
         problem: mistake?.whatHappened ?? "",
         task: mistake?.betterPlan || taskFor({
           severity,
@@ -151,10 +157,15 @@ export function buildDrills(games: SavedGame[], limit = 40): Drill[] {
         moveLabel,
         san: ply.san,
         severity,
-        title: `${SEVERITY_META[severity].title} tại ${moveLabel} ${ply.san}`,
-        problem: `Mất ${ply.loss}% cơ hội thắng so với nước tốt nhất của engine${
-          themes.length > 0 ? ` · ${themes.join(", ")}` : ""
-        }.`,
+        title: t("study.train.severityAt", {
+          severity: SEVERITY_META[severity].title,
+          move: moveLabel,
+          san: ply.san,
+        }),
+        problem: t("study.train.lostChanceProblem", {
+          loss: ply.loss,
+          themes: themes.length > 0 ? ` · ${themes.join(", ")}` : "",
+        }),
         task: taskFor({ severity, themes, moveLabel, san: ply.san }),
         loss: ply.loss,
         themes,
@@ -172,8 +183,8 @@ export function buildDrills(games: SavedGame[], limit = 40): Drill[] {
         moveLabel: "—",
         san: null,
         severity: "moderate",
-        title: "Bài tập từ chuyên gia",
-        problem: "Đề xuất luyện tập dựa trên toàn bộ ván đấu.",
+        title: t("study.train.expertDrillTitle"),
+        problem: t("study.train.expertDrillProblem"),
         task: text,
         loss: null,
         themes: [],

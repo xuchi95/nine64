@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export function GamePanel({
   title,
@@ -63,13 +64,14 @@ export function StatRow({
 
 /** Horizontal eval bar. `score` in pawns, positive = white better. */
 export function EvalBar({ score, label }: { score: number | null; label: string }) {
+  const { t } = useT();
   const clamped = score === null ? 0 : Math.max(-6, Math.min(6, score));
   const pct = score === null ? 50 : 50 + (clamped / 6) * 50;
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
         <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Evaluation
+          {t("game.evalBar.label")}
         </span>
         <span className="tabular text-xs font-bold text-primary">{label}</span>
       </div>

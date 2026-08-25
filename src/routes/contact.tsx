@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { submitContactRequest } from "@/lib/contact.functions";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/contact")({
   head: () =>
@@ -36,15 +37,20 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
-const REQUEST_TYPES = [
-  { value: "support", label: "Hỗ trợ chung" },
-  { value: "data", label: "Yêu cầu dữ liệu cá nhân" },
-  { value: "bug", label: "Báo lỗi" },
-  { value: "feedback", label: "Góp ý" },
-  { value: "general", label: "Khác" },
-];
+function useRequestTypes() {
+  const { t } = useT();
+  return [
+    { value: "support", label: t("study.contact.typeSupport") },
+    { value: "data", label: t("study.contact.typeData") },
+    { value: "bug", label: t("study.contact.typeBug") },
+    { value: "feedback", label: t("study.contact.typeFeedback") },
+    { value: "general", label: t("study.contact.typeGeneral") },
+  ];
+}
 
 function ContactPage() {
+  const { t } = useT();
+  const REQUEST_TYPES = useRequestTypes();
   const { user } = useAuth();
   const submit = useServerFn(submitContactRequest);
 
@@ -68,7 +74,7 @@ function ContactPage() {
       setForm((f) => ({ ...f, subject: "", message: "" }));
     } catch (err) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Đã xảy ra lỗi. Vui lòng thử lại.");
+      setErrorMsg(err instanceof Error ? err.message : t("study.contact.genericError"));
     }
   };
 
@@ -77,12 +83,12 @@ function ContactPage() {
       <AppShell>
         <div className="mx-auto max-w-2xl py-12 text-center">
           <CheckCircle className="mx-auto size-16 text-primary" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight">Đã gửi yêu cầu</h1>
+          <h1 className="mt-6 text-3xl font-bold tracking-tight">{t("study.contact.successTitle")}</h1>
           <p className="mt-3 text-muted-foreground">
-            Cảm ơn bạn đã liên hệ. Đội ngũ Nine64 sẽ phản hồi qua email trong thời gian sớm nhất.
+            {t("study.contact.successBody")}
           </p>
           <Button className="mt-8" onClick={() => setStatus("idle")}>
-            Gửi yêu cầu khác
+            {t("study.contact.sendAnother")}
           </Button>
         </div>
       </AppShell>
@@ -93,9 +99,9 @@ function ContactPage() {
     <AppShell>
       <div className="mx-auto max-w-2xl">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Liên hệ</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("study.contact.title")}</h1>
           <p className="mt-3 text-muted-foreground">
-            Gửi yêu cầu hỗ trợ, báo lỗi, góp ý hoặc yêu cầu về dữ liệu cá nhân.
+            {t("study.contact.subtitle")}
           </p>
         </div>
 
@@ -103,17 +109,17 @@ function ContactPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
               <Mail className="size-5 text-primary" />
-              Gửi tin nhắn
+              {t("study.contact.sendMessage")}
             </CardTitle>
             <CardDescription>
-              Chúng tôi lưu yêu cầu của bạn và phản hồi qua email đã cung cấp.
+              {t("study.contact.cardDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Họ tên</Label>
+                  <Label htmlFor="name">{t("study.contact.fullName")}</Label>
                   <Input
                     id="name"
                     required
@@ -123,7 +129,7 @@ function ContactPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("study.contact.email")}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -136,13 +142,13 @@ function ContactPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type">Loại yêu cầu</Label>
+                <Label htmlFor="type">{t("study.contact.requestType")}</Label>
                 <Select
                   value={form.requestType}
                   onValueChange={(v) => setForm((f) => ({ ...f, requestType: v }))}
                 >
                   <SelectTrigger id="type">
-                    <SelectValue placeholder="Chọn loại yêu cầu" />
+                    <SelectValue placeholder={t("study.contact.chooseType")} />
                   </SelectTrigger>
                   <SelectContent>
                     {REQUEST_TYPES.map((t) => (
@@ -155,7 +161,7 @@ function ContactPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject">Tiêu đề</Label>
+                <Label htmlFor="subject">{t("study.contact.subject")}</Label>
                 <Input
                   id="subject"
                   required
@@ -166,7 +172,7 @@ function ContactPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message">Nội dung</Label>
+                <Label htmlFor="message">{t("study.contact.message")}</Label>
                 <Textarea
                   id="message"
                   required
@@ -177,7 +183,7 @@ function ContactPage() {
                   onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                 />
                 <p className="text-2xs text-muted-foreground">
-                  Tối thiểu 10 ký tự. Tối đa 5.000 ký tự.
+                  {t("study.contact.messageHint")}
                 </p>
               </div>
 
@@ -189,12 +195,12 @@ function ContactPage() {
                 {status === "loading" ? (
                   <span className="flex items-center gap-2">
                     <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Đang gửi...
+                    {t("study.contact.sending")}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <Send className="size-4" />
-                    Gửi yêu cầu
+                    {t("study.contact.send")}
                   </span>
                 )}
               </Button>

@@ -1,6 +1,7 @@
 import { Wifi, WifiOff, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useT, type TFunction } from "@/lib/i18n";
 
 export type SyncMode = "connecting" | "realtime" | "fallback" | "offline";
 
@@ -12,35 +13,41 @@ export interface ConnectionStatusProps {
   className?: string;
 }
 
-const COPY: Record<SyncMode, { label: string; detail: string; tone: string }> = {
-  connecting: {
-    label: "Connecting…",
-    detail: "Opening the realtime channel for this game.",
-    tone: "bg-warning/15 text-warning",
-  },
-  realtime: {
-    label: "Realtime",
-    detail: "Moves and clocks arrive instantly for both players.",
-    tone: "bg-success/15 text-success",
-  },
-  fallback: {
-    label: "Backup sync",
-    detail: "Realtime is unavailable — polling the server every 2.5s instead.",
-    tone: "bg-warning/15 text-warning",
-  },
-  offline: {
-    label: "Disconnected",
-    detail: "No connection to the server. Reconnecting automatically.",
-    tone: "bg-destructive/15 text-destructive",
-  },
-};
+function copyFor(mode: SyncMode, t: TFunction): { label: string; detail: string; tone: string } {
+  switch (mode) {
+    case "connecting":
+      return {
+        label: t("game.connection.connecting.label"),
+        detail: t("game.connection.connecting.detail"),
+        tone: "bg-warning/15 text-warning",
+      };
+    case "realtime":
+      return {
+        label: t("game.connection.realtime.label"),
+        detail: t("game.connection.realtime.detail"),
+        tone: "bg-success/15 text-success",
+      };
+    case "fallback":
+      return {
+        label: t("game.connection.fallback.label"),
+        detail: t("game.connection.fallback.detail"),
+        tone: "bg-warning/15 text-warning",
+      };
+    case "offline":
+      return {
+        label: t("game.connection.offline.label"),
+        detail: t("game.connection.offline.detail"),
+        tone: "bg-destructive/15 text-destructive",
+      };
+  }
+}
 
-function ago(ts: number | null): string {
-  if (!ts) return "never";
+function ago(ts: number | null, t: TFunction): string {
+  if (!ts) return t("game.connection.syncedNever");
   const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
-  if (s < 2) return "just now";
-  if (s < 60) return `${s}s ago`;
-  return `${Math.floor(s / 60)}m ago`;
+  if (s < 2) return t("game.connection.syncedJustNow");
+  if (s < 60) return t("game.connection.syncedSecondsAgo", { n: s });
+  return t("game.connection.syncedMinutesAgo", { n: Math.floor(s / 60) });
 }
 
 export function ConnectionStatus({
@@ -50,7 +57,8 @@ export function ConnectionStatus({
   onRefresh,
   className,
 }: ConnectionStatusProps) {
-  const copy = COPY[mode];
+  const { t } = useT();
+  const copy = copyFor(mode, t);
   const Icon = mode === "realtime" ? Wifi : mode === "offline" ? WifiOff : RefreshCw;
 
   return (
@@ -72,7 +80,7 @@ export function ConnectionStatus({
           {copy.label}
         </span>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="tabular">synced {ago(lastSyncAt)}</span>
+          <span className="tabular">{t("game.connection.syncedPrefix", { ago: ago(lastSyncAt, t) })}</span>
           {onRefresh && (
             <Button
               size="sm"
