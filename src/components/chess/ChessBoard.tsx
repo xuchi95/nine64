@@ -136,6 +136,21 @@ export function ChessBoard(props: ChessBoardProps) {
     prevCheckRef.current = checkSquare ?? null;
   }, [checkSquare]);
 
+  /** Who is giving check, and along which squares — used to explain the check. */
+  const checkAttacks = useMemo(
+    () => findCheckAttacks(pieces, checkSquare),
+    [pieces, checkSquare],
+  );
+  const attackerSquares = useMemo(
+    () => new Set(checkAttacks.map((a) => a.from)),
+    [checkAttacks],
+  );
+  const raySquares = useMemo(
+    () => new Set(checkAttacks.flatMap((a) => a.ray)),
+    [checkAttacks],
+  );
+
+
   /**
    * Checkmate = the side to move is in check and has no legal target anywhere.
    * Only trusted on interactive boards, where `legalTargets` is a real query.
