@@ -133,7 +133,7 @@ export function playSound(name: SoundName) {
  * on-board shatter animation: a low impact thud, an expanding shockwave sweep
  * and a spray of crystalline shard pings over a short filtered noise burst.
  */
-export function playShatter() {
+export function playShatter(promotion = false) {
   if (!enabled || volume <= 0) return;
   const audio = getCtx();
   if (!audio) return;
@@ -205,4 +205,10 @@ export function playShatter() {
     osc.start(start);
     osc.stop(start + dur + 0.02);
   });
+}
+
+// Promotion flourish appended on top of the shatter: the shards are reforged
+// into a rising major piece.
+if (promotion) {
+  // placeholder
 }
