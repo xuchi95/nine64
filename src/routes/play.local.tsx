@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
 import { GamePanel, StatRow } from "@/components/game/GamePanel";
+import { GameLayout, GameActions, StatusPill } from "@/components/game/GameLayout";
 import { PlayerCard } from "@/components/game/PlayerCard";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
@@ -154,8 +155,9 @@ function LocalGame() {
 
   return (
     <AppShell wide>
-      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
-        <div className="order-2 space-y-3 lg:order-1">
+      <GameLayout
+        left={
+          <>
           <PlayerCard
             player={{ name: "Black", subtitle: "Local player", color: "b" }}
             seconds={game.clock.b}
@@ -170,15 +172,22 @@ function LocalGame() {
             clockEnabled={!!timeControl}
             captured={game.captured.b}
           />
-          <GamePanel title="Game status" bodyClassName="space-y-3.5 p-4">
+          <GamePanel
+            title="Game status"
+            meta={
+              <StatusPill tone={game.result ? "neutral" : "live"}>
+                {game.result ? "Finished" : "Live"}
+              </StatusPill>
+            }
+            bodyClassName="space-y-3.5 p-4"
+          >
             <StatRow label="Variant" value={VARIANTS.find((v) => v.id === variant)?.name ?? "Standard"} />
             <StatRow label="Opening" value={game.opening?.name ?? "—"} />
             <StatRow label="Moves" value={String(game.moves.length)} mono />
           </GamePanel>
-        </div>
-
-        <div className="order-1 lg:order-2">
-          <div className="mx-auto w-full max-w-[720px]">
+          </>
+        }
+        board={
             <ChessBoard
               pieces={game.board}
               orientation={boardOrientation}
@@ -192,10 +201,9 @@ function LocalGame() {
               interactive={!game.result}
               turn={game.turn}
             />
-          </div>
-        </div>
-
-        <div className="order-3 space-y-4">
+        }
+        right={
+          <>
           <GamePanel
             title="Notation"
             meta={game.moves.length > 0 ? `Move ${Math.ceil(game.moves.length / 2)}` : undefined}
@@ -204,7 +212,7 @@ function LocalGame() {
           >
             <MoveList moves={game.moves} />
           </GamePanel>
-          <div className="grid grid-cols-2 gap-2">
+          <GameActions>
             <Button
               variant="outline"
               disabled={!!game.result}
@@ -235,9 +243,10 @@ function LocalGame() {
             >
               <RefreshCw className="size-4" /> Restart
             </Button>
-          </div>
-        </div>
-      </div>
+          </GameActions>
+          </>
+        }
+      />
 
       <ResultModal
         result={game.result}

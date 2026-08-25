@@ -5,7 +5,15 @@ import { Chess, type Move } from "chess.js";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PlayerCard } from "@/components/game/PlayerCard";
+import { GamePanel, StatRow } from "@/components/game/GamePanel";
+import {
+  GameLayout,
+  GameActions,
+  GameNotice,
+  StatusPill,
+  type StatusTone,
+} from "@/components/game/GameLayout";
 import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { Flag, Hand, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  formatClock,
   formatTimeControl,
   timeControlSpec,
 } from "@/lib/chess/timeControls";
@@ -608,18 +615,68 @@ function OnlineGamePage() {
       }`
     : `${resultView.title} — ${result?.reason ?? "finished"} (${result?.code ?? "*"})`;
 
+  const opponentRating = myColor === "w" ? game.black_rating : game.white_rating;
+  const myRating = myColor === "w" ? game.white_rating : game.black_rating;
+  const opponentColor: PieceColor = myColor === "w" ? "b" : "w";
+
   return (
     <AppShell wide>
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_340px]">
-        <div>
-          <PlayerBar
-            name={opponentName}
-            rating={myColor === "w" ? game.black_rating : game.white_rating}
-            color={myColor === "w" ? "b" : "w"}
-            clock={clock}
-            active={turn !== myColor && live}
-          />
-          <div className="my-3">
+      <GameLayout
+        left={
+          <>
+            <PlayerCard
+              player={{
+                name: opponentName,
+                subtitle: `Rating ${opponentRating}`,
+                color: opponentColor,
+              }}
+              seconds={(opponentColor === "w" ? clock.w : clock.b) / 1000}
+              active={turn !== myColor && live}
+              clockEnabled={!!game.time_control}
+              captured={[]}
+            />
+            <PlayerCard
+              player={{
+                name: myName,
+                subtitle: `Rating ${myRating}`,
+                color: myColor ?? "w",
+              }}
+              seconds={((myColor ?? "w") === "w" ? clock.w : clock.b) / 1000}
+              active={turn === myColor && live}
+              clockEnabled={!!game.time_control}
+              captured={[]}
+            />
+            <GamePanel
+              title="Game status"
+              meta={
+                <StatusPill tone={live ? "live" : (resultView.tone as StatusTone)}>
+                  {live ? "Live" : resultView.title}
+                </StatusPill>
+              }
+              bodyClassName="space-y-3.5 p-4"
+            >
+              <StatRow label="Variant" value={game.variant} />
+              <StatRow label="Time control" value={formatTimeControl(game.time_control)} mono />
+              <StatRow label="Sync" value={syncMode === "realtime" ? "Realtime" : "Backup"} />
+              {result && <StatRow label="Result" value={`${result.reason} · ${result.code}`} />}
+            </GamePanel>
+            <ConnectionStatus
+              mode={syncMode}
+              lastSyncAt={lastSyncAt}
+              syncing={syncing}
+              onRefresh={() => void refresh({ showSpinner: true }).catch(() => undefined)}
+            />
+            {conflict && (
+              <GameNotice tone="warning">
+                <span className="font-semibold">Move conflict handled: </span>
+                {conflict}
+              </GameNotice>
+            )}
+            {error && <GameNotice tone="error">{error}</GameNotice>}
+          </>
+        }
+        board={
+          <>
             <ChessBoard
               pieces={pieces}
               orientation={orientation}
@@ -633,16 +690,7 @@ function OnlineGamePage() {
               turn={turn}
               interactive={live}
             />
-          </div>
-          <PlayerBar
-            name={myName}
-            rating={myColor === "w" ? game.white_rating : game.black_rating}
-            color={myColor ?? "w"}
-            clock={clock}
-            active={turn === myColor && live}
-          />
-          {game.status === "completed" && (
-            <div className="mt-3">
+            {game.status === "completed" && (
               <FairplayBridge
                 gameId={game.id}
                 initialFen={game.initial_fen}
@@ -651,174 +699,66 @@ function OnlineGamePage() {
                 blackId={game.black_id}
                 runAnalysis={myColor === "w"}
               />
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                {game.variant} · {formatTimeControl(game.time_control)}
-              </span>
-              <span
-                className={cn(
-                  "rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
-                  live && "bg-emerald-500/15 text-emerald-400",
-                  !live && resultView.tone === "win" && "bg-emerald-500/15 text-emerald-400",
-                  !live && resultView.tone === "loss" && "bg-destructive/15 text-destructive",
-                  !live && resultView.tone === "draw" && "bg-muted text-muted-foreground",
-                )}
-              >
-                {live ? "Live" : resultView.title}
-              </span>
-            </div>
-            {result && (
-              <div className="mt-3 rounded-md bg-muted p-3 text-sm">
-                <p className="font-semibold">{resultView.title}</p>
-                <p className="text-muted-foreground">
-                  {result.reason} · {result.code}
-                </p>
-              </div>
             )}
-            {error && <p className="mt-3 text-xs text-destructive">{error}</p>}
-          </Card>
+          </>
+        }
+        right={
+          <>
+            <GamePanel
+              title="Move journal"
+              meta={moves.length > 0 ? `Move ${Math.ceil(moves.length / 2)}` : undefined}
+              className="max-h-[420px]"
+              bodyClassName="overflow-hidden p-4"
+            >
+              <MoveJournal entries={journalEntries} statusLine={statusLine} />
+            </GamePanel>
 
-          <ConnectionStatus
-            mode={syncMode}
-            lastSyncAt={lastSyncAt}
-            syncing={syncing}
-            onRefresh={() => void refresh({ showSpinner: true }).catch(() => undefined)}
-          />
+            {live && (
+              <GameActions>
+                <Button variant="outline" onClick={() => void offerDraw()}>
+                  <Hand className="size-4" /> Draw
+                </Button>
+                <Button variant="outline" onClick={() => void resign()}>
+                  <Flag className="size-4" /> Resign
+                </Button>
+              </GameActions>
+            )}
 
-          {conflict && (
-            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-              <span className="font-semibold">Move conflict handled: </span>
-              {conflict}
-            </div>
-          )}
-
-          {live && (
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="gap-2" onClick={() => void offerDraw()}>
-                <Hand className="size-4" />
-                Draw
-              </Button>
-              <Button variant="outline" className="gap-2" onClick={() => void resign()}>
-                <Flag className="size-4" />
-                Resign
-              </Button>
-            </div>
-          )}
-
-          <Card className="p-4">
-            <MoveJournal entries={journalEntries} statusLine={statusLine} />
-          </Card>
-
-          <Card className="space-y-2 p-4">
-            <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">Share this game</h3>
-            <p className="text-xs text-muted-foreground">
-              Copy the PGN, or send a turn-by-turn link your opponent can open on another device.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={() => void copy(pgn, "PGN")}
-              >
-                <Copy className="size-4" />
-                PGN
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={() =>
-                  void copy(
-                    shareUrl({
-                      moves: sanList,
-                      turnFor: turn,
-                      white: "White",
-                      black: "Black",
-                      ...(game.variant !== "standard" ? { startFen: game.initial_fen } : {}),
-                    }),
-                    "Share link",
-                  )
-                }
-              >
-                <Share2 className="size-4" />
-                Link
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
+            <GamePanel title="Share this game" bodyClassName="space-y-2.5 p-4">
+              <p className="text-xs text-muted-foreground">
+                Copy the PGN, or send a turn-by-turn link your opponent can open on another device.
+              </p>
+              <GameActions>
+                <Button variant="outline" size="sm" onClick={() => void copy(pgn, "PGN")}>
+                  <Copy className="size-4" /> PGN
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    void copy(
+                      shareUrl({
+                        moves: sanList,
+                        turnFor: turn,
+                        white: "White",
+                        black: "Black",
+                        ...(game.variant !== "standard" ? { startFen: game.initial_fen } : {}),
+                      }),
+                      "Share link",
+                    )
+                  }
+                >
+                  <Share2 className="size-4" /> Link
+                </Button>
+              </GameActions>
+            </GamePanel>
+          </>
+        }
+      />
     </AppShell>
   );
 }
 
-function PlayerBar({
-  name,
-  rating,
-  color,
-  clock,
-  active,
-}: {
-  name: string;
-  rating: number;
-  color: PieceColor;
-  clock: { w: number; b: number };
-  active: boolean;
-}) {
-  const ms = color === "w" ? clock.w : clock.b;
-  const low = ms <= 10_000;
-  return (
-    <div
-      className={cn(
-        "panel relative flex items-center justify-between overflow-hidden px-4 py-3 transition-colors",
-        active && "border-primary/70 bg-primary/[0.04]",
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "absolute inset-y-0 left-0 w-[3px] transition-colors",
-          active ? "bg-primary" : "bg-transparent",
-        )}
-      />
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span
-          className={cn(
-            "flex size-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold",
-            color === "w"
-              ? "border-border bg-foreground text-background"
-              : "border-border bg-surface-2 text-foreground",
-          )}
-        >
-          {color === "w" ? "W" : "B"}
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold leading-tight">{name}</p>
-          <p className="text-[0.7rem] font-medium text-muted-foreground">
-            {active ? <span className="text-primary">To move</span> : `Rating ${rating}`}
-          </p>
-        </div>
-      </div>
-      <span
-        className={cn(
-          "tabular rounded-md border px-3 py-1.5 text-xl font-bold leading-none tracking-tight transition-colors",
-          active
-            ? "border-primary bg-primary text-primary-foreground"
-            : "border-border bg-surface-2 text-muted-foreground",
-          low && active && "animate-pulse border-destructive bg-destructive text-destructive-foreground",
-        )}
-      >
-        {formatClock(ms)}
-      </span>
-    </div>
-  );
-}
 
 function playMoveSound(game: Chess, move: Move) {
   if (game.isCheck()) {

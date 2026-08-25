@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { formatClock, formatDuration } from "@/lib/chess/timeControls";
+import { gameLabelClass } from "./GameLayout";
 
 export interface JournalEntry {
   /** 1-based ply index. */
@@ -33,8 +34,10 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Live move log</h3>
-        <span className="font-mono text-xs text-muted-foreground">{entries.length} plies</span>
+        <span className={gameLabelClass}>Live log</span>
+        <span className="tabular text-xs font-semibold text-muted-foreground">
+          {entries.length} plies
+        </span>
       </div>
 
       <div ref={scroller} className="max-h-[320px] overflow-y-auto pr-1">
@@ -53,7 +56,7 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                   e.pending && "opacity-60",
                 )}
               >
-                <span className="w-8 font-mono text-xs text-muted-foreground">
+                <span className="tabular w-8 text-xs text-muted-foreground">
                   {Math.ceil(e.ply / 2)}
                   {e.color === "w" ? "." : "…"}
                 </span>
@@ -61,24 +64,26 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                   className={cn(
                     "flex size-4 items-center justify-center rounded-full text-[9px] font-bold",
                     e.color === "w"
-                      ? "bg-white text-black"
-                      : "bg-black text-white ring-1 ring-white/20",
+                      ? "bg-foreground text-background"
+                      : "bg-surface-2 text-foreground ring-1 ring-border",
                   )}
                 >
                   {e.color === "w" ? "W" : "B"}
                 </span>
-                <span className="flex-1 font-mono font-medium">{e.san}</span>
+                <span className="tabular flex-1 text-[0.82rem] font-semibold">{e.san}</span>
                 {e.spentMs != null && (
-                  <span className="font-mono text-xs text-muted-foreground">
+                  <span className="tabular text-xs text-muted-foreground">
                     {formatDuration(e.spentMs)}
                   </span>
                 )}
                 {e.clockMs != null && (
-                  <span className="w-14 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                  <span className="tabular w-14 text-right text-xs text-muted-foreground">
                     {formatClock(e.clockMs)}
                   </span>
                 )}
-                {e.pending && <span className="text-[10px] uppercase text-amber-400">sending</span>}
+                {e.pending && <span className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-amber-400">
+                    sending
+                  </span>}
               </li>
             ))}
           </ul>
