@@ -47,9 +47,13 @@ function Analysis() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [analysing, setAnalysing] = useState(false);
   const [lines, setLines] = useState<EngineLine[]>([]);
+  const [trend, setTrend] = useState<(number | null)[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
   const engineRef = useRef<StockfishEngine | null>(null);
 
   const game = useChessGame({ variant: "standard", timeControl: null });
+
 
   useEffect(() => {
     const engine = new StockfishEngine(settings.enginePerformance);
