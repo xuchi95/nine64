@@ -1,15 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { APP } from "@/config/app";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({
-    meta: [
-      { title: `Chính sách bảo mật — ${APP.name}` },
-      { name: "description", content: `Chính sách bảo mật của ${APP.name}.` },
-      { property: "og:title", content: `Chính sách bảo mật — ${APP.name}` },
-      { property: "og:description", content: `Chính sách bảo mật của ${APP.name}.` },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/privacy",
+      title: `Chính sách bảo mật — ${APP.name}`,
+      description:
+        "Cách Nine64 thu thập, sử dụng và bảo vệ dữ liệu tài khoản cùng lịch sử ván đấu của bạn.",
+    }),
   component: PrivacyPage,
 });
 

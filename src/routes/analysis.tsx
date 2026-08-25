@@ -16,26 +16,19 @@ import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { StockfishEngine, type EngineLine } from "@/lib/engine/stockfish";
 import { useSettings } from "@/lib/settings";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 const searchSchema = z.object({ fen: z.string().optional() });
 
 export const Route = createFileRoute("/analysis")({
   validateSearch: searchSchema,
-  head: () => ({
-    meta: [
-      { title: `Analysis board — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Explore any position on the Nine64 analysis board and ask Stockfish for the best continuation.",
-      },
-      { property: "og:title", content: `Analysis board — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Free board with local Stockfish evaluation and principal variation.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/analysis",
+      title: `Bàn phân tích — ${APP.name}`,
+      description:
+        "Dựng bất kỳ thế cờ nào trên bàn phân tích Nine64 và để Stockfish chỉ ra nước đi tốt nhất cùng biến chính.",
+    }),
   pendingComponent: BoardSkeleton,
   component: Analysis,
 });

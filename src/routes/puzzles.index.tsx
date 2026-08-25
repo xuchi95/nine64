@@ -15,25 +15,16 @@ import { addPuzzles, gradePuzzle, hydrateLearn, useLearnState } from "@/lib/lear
 import { generateFromLibrary, type Puzzle } from "@/lib/learn/puzzleGen";
 import { isDue, retrievability, sortByUrgency } from "@/lib/learn/fsrs";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/puzzles/")({
-  head: () => ({
-    meta: [
-      { title: `Puzzles from your games — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Spaced-repetition tactics trainer built from the exact positions you misplayed, rated with Glicko-2.",
-      },
-      { property: "og:title", content: `Puzzles from your games — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Train the tactics you actually missed, scheduled by an FSRS-style algorithm.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/puzzles",
+      title: `Câu đố từ ván của bạn — ${APP.name}`,
+      description:
+        "Luyện chiến thuật theo lặp lại ngắt quãng, sinh ra từ đúng những thế cờ bạn đã đi sai, chấm điểm bằng Glicko-2.",
+    }),
   pendingComponent: BoardSkeleton,
   component: PuzzlesPage,
 });

@@ -14,25 +14,16 @@ import {
   type Granularity,
 } from "@/lib/insights/progress";
 import { DashboardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/progress")({
-  head: () => ({
-    meta: [
-      { title: `Tiến bộ theo thời gian — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Theo dõi tiến bộ của bạn qua từng tuần: lỗi nào giảm, % mất cơ hội mỗi nước và thời gian suy nghĩ cải thiện ra sao.",
-      },
-      { property: "og:title", content: `Tiến bộ theo thời gian — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Đồ thị % mất cơ hội, số lỗi theo mức độ và nhịp suy nghĩ qua từng giai đoạn.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/progress",
+      title: `Tiến bộ theo thời gian — ${APP.name}`,
+      description:
+        "Theo dõi tiến bộ qua từng tuần: lỗi nào giảm, % mất cơ hội mỗi nước và nhịp suy nghĩ cải thiện ra sao.",
+    }),
   pendingComponent: DashboardSkeleton,
   component: ProgressPage,
 });

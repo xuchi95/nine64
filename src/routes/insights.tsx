@@ -10,25 +10,16 @@ import { buildWeaknessProfile, recommendTraining } from "@/lib/insights/profile"
 import { hydrateLearn, useLearnState } from "@/lib/learn/store";
 import { LABEL_META, type MoveLabel } from "@/lib/analysis/classify";
 import { DashboardSkeleton } from "@/components/layout/PageSkeleton";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/insights")({
-  head: () => ({
-    meta: [
-      { title: `Insights & training plan — ${APP.name}` },
-      {
-        name: "description",
-        content:
-          "Personal opening tree, phase-by-phase weakness profile, rating forecast and the bot picked to train your weak spots.",
-      },
-      { property: "og:title", content: `Insights & training plan — ${APP.name}` },
-      {
-        property: "og:description",
-        content: "Opening tree, weakness radar and an adaptive bot recommendation from your own games.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/insights",
+      title: `Insights & lộ trình luyện tập — ${APP.name}`,
+      description:
+        "Cây khai cuộc cá nhân, hồ sơ điểm yếu theo từng giai đoạn, dự báo elo và bot phù hợp để luyện đúng chỗ yếu.",
+    }),
   pendingComponent: DashboardSkeleton,
   component: InsightsPage,
 });
