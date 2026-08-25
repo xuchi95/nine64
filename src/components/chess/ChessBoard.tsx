@@ -251,8 +251,9 @@ export function ChessBoard(props: ChessBoardProps) {
       const keys = new Set(batch.map((b) => b.key));
       clearGhost = window.setTimeout(
         () => setGhosts((g) => g.filter((x) => !keys.has(x.key))),
-        transitionMs + 120,
+        Math.max(transitionMs + 120, 500),
       );
+
     }
     return () => {
       if (clearTravel) window.clearTimeout(clearTravel);
@@ -684,29 +685,74 @@ export function ChessBoard(props: ChessBoardProps) {
         )}
 
 
-        {/* captured pieces fade out in place instead of vanishing on the frame */}
+        {/* Capture: "Nexus Shatter" — impact flash, shockwave ring, flying shards. */}
         {ghosts.map((g) => {
           const pos = squareToXY(g.square);
+          const accent = g.color === "w" ? "rgba(255,224,168," : "rgba(126,196,255,";
+          const shardCount = 10;
           return (
             <div
               key={`ghost-${g.key}`}
-              className="pointer-events-none absolute z-10"
+              className="pointer-events-none absolute z-20"
               style={{
                 width: squareSize,
                 height: squareSize,
                 transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
               }}
             >
+              <span
+                aria-hidden
+                className="animate-nexus-impact absolute inset-0 rounded-sm"
+                style={{
+                  background: `radial-gradient(circle, ${accent}0.85) 0%, ${accent}0.25) 45%, transparent 72%)`,
+                }}
+              />
+              <span
+                aria-hidden
+                className="animate-nexus-shockwave absolute rounded-full"
+                style={{
+                  inset: squareSize * 0.08,
+                  border: `${Math.max(2, squareSize * 0.05)}px solid ${accent}0.9)`,
+                  boxShadow: `0 0 ${squareSize * 0.22}px ${accent}0.55)`,
+                }}
+              />
+              {Array.from({ length: shardCount }).map((_, i) => {
+                const angle = (i / shardCount) * Math.PI * 2 + (g.key % 7) * 0.21;
+                const dist = squareSize * (0.44 + ((i * 37) % 11) / 40);
+                const w = Math.max(2, squareSize * (i % 3 === 0 ? 0.11 : 0.07));
+                const h = Math.max(2, squareSize * (i % 2 === 0 ? 0.05 : 0.08));
+                return (
+                  <span
+                    key={i}
+                    aria-hidden
+                    className="animate-nexus-shard absolute"
+                    style={
+                      {
+                        left: squareSize / 2 - w / 2,
+                        top: squareSize / 2 - h / 2,
+                        width: w,
+                        height: h,
+                        background: `linear-gradient(90deg, ${accent}0.95), ${accent}0.35))`,
+                        clipPath: "polygon(0 40%, 60% 0, 100% 55%, 45% 100%)",
+                        animationDelay: `${(i % 4) * 18}ms`,
+                        "--sx": `${Math.cos(angle) * dist}px`,
+                        "--sy": `${Math.sin(angle) * dist}px`,
+                        "--sr": `${(i % 2 === 0 ? 1 : -1) * (140 + i * 22)}deg`,
+                      } as React.CSSProperties
+                    }
+                  />
+                );
+              })}
               <div
                 className="animate-nexus-capture"
-                style={{ animationDuration: `${Math.max(140, transitionMs)}ms` }}
+                style={{ animationDuration: `${Math.max(300, transitionMs)}ms` }}
               >
                 <Piece type={g.type} color={g.color} set={pieceSet} size={squareSize} />
               </div>
             </div>
-
           );
         })}
+
 
         {tracked.map((piece) => {
           const isDragged = dragging?.id === piece.id;
