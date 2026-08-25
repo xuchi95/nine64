@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
 import { GamePanel, StatRow, EvalBar } from "@/components/game/GamePanel";
+import { GameLayout, GameActions, GameNotice, StatusPill } from "@/components/game/GameLayout";
 import { PlayerCard } from "@/components/game/PlayerCard";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
@@ -390,8 +391,9 @@ function PlayAi() {
 
   return (
     <AppShell wide>
-      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
-        <div className="order-2 space-y-3 lg:order-1">
+      <GameLayout
+        left={
+          <>
           <PlayerCard
             player={{
               name: `${personality.name}`,
@@ -412,7 +414,15 @@ function PlayAi() {
             clockEnabled={!!config.timeControl}
             captured={game.captured[botColor]}
           />
-          <GamePanel title="Game status" bodyClassName="space-y-3.5 p-4">
+          <GamePanel
+            title="Game status"
+            meta={
+              <StatusPill tone={game.result ? "neutral" : "live"}>
+                {game.result ? "Finished" : "Live"}
+              </StatusPill>
+            }
+            bodyClassName="space-y-3.5 p-4"
+          >
             <StatRow label="Variant" value={VARIANTS.find((v) => v.id === config.variant)!.name} />
             <StatRow label="Opening" value={game.opening?.name ?? "—"} />
             <StatRow label="Engine depth" value={engineInfo ? String(engineInfo.depth) : "—"} mono />
@@ -429,14 +439,11 @@ function PlayAi() {
             )}
           </GamePanel>
           {engineError && (
-            <div className="panel border-destructive/60 p-4 text-sm text-destructive">
-              Engine unavailable: {engineError}
-            </div>
+            <GameNotice tone="error">Engine unavailable: {engineError}</GameNotice>
           )}
-        </div>
-
-        <div className="order-1 lg:order-2">
-          <div className="mx-auto w-full max-w-[720px]">
+          </>
+        }
+        board={
             <ChessBoard
               pieces={game.board}
               orientation={playerColor}
@@ -452,10 +459,9 @@ function PlayAi() {
               premove={premove}
               onPremove={(from, to) => setPremove({ from, to })}
             />
-          </div>
-        </div>
-
-        <div className="order-3 space-y-4">
+        }
+        right={
+          <>
           <GamePanel
             title="Notation"
             meta={game.moves.length > 0 ? `Move ${Math.ceil(game.moves.length / 2)}` : undefined}
@@ -465,7 +471,7 @@ function PlayAi() {
             <MoveList moves={game.moves} />
           </GamePanel>
           <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-2">
+            <GameActions>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -484,7 +490,7 @@ function PlayAi() {
               >
                 <Handshake className="size-4" /> Draw
               </Button>
-            </div>
+            </GameActions>
             <Button
               className="w-full"
               size="lg"
@@ -509,8 +515,9 @@ function PlayAi() {
               <RotateCcw className="size-4" /> New setup
             </Button>
           </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <ResultModal
         result={game.result}
