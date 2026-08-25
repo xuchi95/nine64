@@ -181,6 +181,26 @@ export function ChessBoard(props: ChessBoardProps) {
     [defences],
   );
 
+  /** Squares the checked king may legally step to in order to escape. */
+  const kingSquare = useMemo(() => {
+    if (!checkSquare) return null;
+    const king = pieces.find((p) => p.square === checkSquare && p.type === "k");
+    return king ? king.square : checkSquare;
+  }, [pieces, checkSquare]);
+
+  const escapeSquares = useMemo(() => {
+    if (!interactive || !checkSquare || !kingSquare) return new Set<string>();
+    const kingPiece = pieces.find((p) => p.square === kingSquare);
+    if (!kingPiece || kingPiece.color !== props.turn) return new Set<string>();
+    return new Set(legalTargets(kingSquare));
+  }, [interactive, checkSquare, kingSquare, pieces, props.turn, legalTargets]);
+
+  /** Colour-blind mode: every status also carries a shape/pattern/glyph cue. */
+  const cb = settings.colorBlindMode;
+  const stripes = (color: string, angle: number) =>
+    `repeating-linear-gradient(${angle}deg, ${color} 0px, ${color} 3px, transparent 3px, transparent 8px)`;
+
+
 
   /**
    * Checkmate = the side to move is in check and has no legal target anywhere.
