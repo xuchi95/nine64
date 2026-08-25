@@ -154,6 +154,10 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
           <Link to="/terms" className="hover:text-foreground hover:underline">
             Điều khoản sử dụng
           </Link>
+          <span aria-hidden className="text-border">|</span>
+          <Link to="/cookie-policy" className="hover:text-foreground hover:underline">
+            Cookie
+          </Link>
         </p>
 
       </footer>
