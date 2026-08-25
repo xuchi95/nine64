@@ -33,6 +33,8 @@ import {
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useSwipeToClose } from "@/hooks/useSwipeToClose";
+import { CookieBanner } from "@/components/layout/CookieBanner";
+import { resetCookieConsent } from "@/lib/cookieConsent";
 
 const MAIN_NAV = [
   { to: "/", label: "Home" },
@@ -158,9 +160,18 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
           <Link to="/cookie-policy" className="hover:text-foreground hover:underline">
             Cookie
           </Link>
+          <span aria-hidden className="text-border">|</span>
+          <button
+            type="button"
+            onClick={resetCookieConsent}
+            className="hover:text-foreground hover:underline"
+          >
+            Tuỳ chọn cookie
+          </button>
         </p>
 
       </footer>
+      <CookieBanner />
     </div>
   );
 }
