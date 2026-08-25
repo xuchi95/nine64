@@ -29,7 +29,7 @@ const BODIES: Record<PieceType, string> = {
   // Queen — five-point coronet over a tapered gown.
   q: "M25.5 44.5 30 24l9.5 12.5L50 18l10.5 18.5L70 24l4.5 20.5z M31 49h38l-3.5 21.5H34.5z",
   // King — cross-crowned crown over a broad chest.
-  k: "M46.5 13h7v6.5H60v7h-6.5V33h-7v-6.5H40v-7h6.5z M28.5 44.5c3.5-9.5 11-14.5 21.5-14.5s18 5 21.5 14.5l-3.5 26h-36z",
+  k: "M46.5 12h7v7H61v7h-7.5V33h-7v-7H39v-7h7.5z M28.5 45c1-11.5 9-17 21.5-17s20.5 5.5 21.5 17l-3.5 25.5h-36z",
 };
 
 /** Facet highlight — a soft gloss on the light-source side of each sculpture. */
