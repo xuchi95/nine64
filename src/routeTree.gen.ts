@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AnalysisRouteImport } from './routes/analysis'
+import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProgressRouteImport } from './routes/progress'
@@ -48,6 +49,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AnalysisRoute = AnalysisRouteImport.update({
   id: '/analysis',
   path: '/analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiePolicyRoute = CookiePolicyRouteImport.update({
+  id: '/cookie-policy',
+  path: '/cookie-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InsightsRoute = InsightsRouteImport.update({
@@ -171,6 +177,7 @@ const AuthenticatedAdminFairplayLogRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/cookie-policy': typeof CookiePolicyRoute
   '/insights': typeof InsightsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/cookie-policy': typeof CookiePolicyRoute
   '/insights': typeof InsightsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/analysis': typeof AnalysisRoute
+  '/cookie-policy': typeof CookiePolicyRoute
   '/insights': typeof InsightsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/analysis'
+    | '/cookie-policy'
     | '/insights'
     | '/privacy'
     | '/progress'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analysis'
+    | '/cookie-policy'
     | '/insights'
     | '/privacy'
     | '/progress'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/analysis'
+    | '/cookie-policy'
     | '/insights'
     | '/privacy'
     | '/progress'
@@ -340,6 +352,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AnalysisRoute: typeof AnalysisRoute
+  CookiePolicyRoute: typeof CookiePolicyRoute
   InsightsRoute: typeof InsightsRoute
   PrivacyRoute: typeof PrivacyRoute
   ProgressRoute: typeof ProgressRoute
@@ -380,6 +393,13 @@ declare module '@tanstack/react-router' {
       path: '/analysis'
       fullPath: '/analysis'
       preLoaderRoute: typeof AnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookie-policy': {
+      id: '/cookie-policy'
+      path: '/cookie-policy'
+      fullPath: '/cookie-policy'
+      preLoaderRoute: typeof CookiePolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/insights': {
@@ -583,6 +603,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AnalysisRoute: AnalysisRoute,
+  CookiePolicyRoute: CookiePolicyRoute,
   InsightsRoute: InsightsRoute,
   PrivacyRoute: PrivacyRoute,
   ProgressRoute: ProgressRoute,
