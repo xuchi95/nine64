@@ -34,8 +34,29 @@ export const Route = createFileRoute("/drills/")({
     ],
   }),
   pendingComponent: ListSkeleton,
+  errorComponent: DrillsError,
   component: DrillsPage,
 });
+
+function DrillsError({ reset }: { error: Error; reset: () => void }) {
+  return (
+    <AppShell>
+      <div className="panel mt-4 p-6 text-center">
+        <h1 className="font-display text-xl font-bold">Không tải được trang bài tập</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Có một ván trong kho lưu trữ khiến danh sách bài tập lỗi. Thử tải lại, hoặc mở lại từ
+          trang ván của tôi.
+        </p>
+        <div className="mt-4 flex justify-center gap-2">
+          <Button onClick={() => reset()}>Thử lại</Button>
+          <Button variant="outline" asChild>
+            <Link to="/games">Ván của tôi</Link>
+          </Button>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
 
 type Filter = "todo" | "done" | "all";
 
@@ -44,7 +65,13 @@ function DrillsPage() {
   const done = useDrillProgress();
   const [filter, setFilter] = useState<Filter>("todo");
 
-  const drills = useMemo(() => buildDrills(games), [games]);
+  const drills = useMemo(() => {
+    try {
+      return buildDrills(games);
+    } catch {
+      return [];
+    }
+  }, [games]);
   const completed = drills.filter((d) => done[d.id]).length;
   const shown = drills.filter((d) =>
     filter === "all" ? true : filter === "done" ? !!done[d.id] : !done[d.id],
@@ -130,7 +157,7 @@ function DrillsPage() {
 }
 
 function DrillRow({ drill, doneAt }: { drill: Drill; doneAt: string | null }) {
-  const meta = SEVERITY_META[drill.severity];
+  const meta = SEVERITY_META[drill.severity] ?? SEVERITY_META.moderate;
   return (
     <li className={`panel border p-4 ${doneAt ? "opacity-60" : ""} ${meta.ring}`}>
       <div className="flex items-start gap-3">
