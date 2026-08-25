@@ -35,6 +35,7 @@ export function useMatchmaking() {
   const pollingRef = useRef<number | null>(null);
   const pollCountRef = useRef(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const acceptingRef = useRef(false);
 
   const cleanup = useCallback(() => {
     if (pollingRef.current) {
