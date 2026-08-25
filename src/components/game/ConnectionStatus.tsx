@@ -56,7 +56,7 @@ export function ConnectionStatus({
   return (
     <div
       className={cn(
-        "rounded-md border border-border/70 bg-surface-1 p-3 text-sm",
+        "panel p-3 text-sm",
         mode === "offline" && "border-destructive/40",
         className,
       )}
@@ -64,7 +64,7 @@ export function ConnectionStatus({
       <div className="flex items-center justify-between gap-2">
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium",
+            "inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
             copy.tone,
           )}
         >
@@ -72,7 +72,7 @@ export function ConnectionStatus({
           {copy.label}
         </span>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-mono">synced {ago(lastSyncAt)}</span>
+          <span className="tabular">synced {ago(lastSyncAt)}</span>
           {onRefresh && (
             <Button
               size="sm"
