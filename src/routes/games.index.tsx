@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Bot, Globe, Trash2, Users } from "lucide-react";
+import { Bot, Globe, Users } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
 import {
-  clearHistory,
-  deleteGame,
   historyStats,
+
   outcomeLabel,
   useGameHistory,
   type SavedGame,
