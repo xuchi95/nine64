@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 /** Uppercase micro-label used by every in-game header/eyebrow. */
 export const gameLabelClass =
-  "text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground";
+  "text-2xs font-bold uppercase tracking-[0.18em] text-muted-foreground";
 
 /** Three-column play layout: info rail, board, notation rail. */
 export function GameLayout({
@@ -61,7 +61,7 @@ export function StatusPill({ tone, children }: { tone: StatusTone; children: Rea
   return (
     <span
       className={cn(
-        "rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
+        "rounded px-2 py-0.5 text-2xs font-bold uppercase tracking-[0.12em]",
         tone === "live" && "bg-primary/15 text-primary",
         tone === "win" && "bg-success/15 text-success",
         tone === "loss" && "bg-destructive/15 text-destructive",
