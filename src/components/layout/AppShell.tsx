@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate, useParams } from "@tanstack/react-route
 import {
   Moon,
   Sun,
-  Crown,
   LogOut,
   Loader2,
   Bell,
@@ -30,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useSwipeToClose } from "@/hooks/useSwipeToClose";
 
 const MAIN_NAV = [
