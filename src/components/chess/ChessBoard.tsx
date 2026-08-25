@@ -4,6 +4,8 @@ import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { playSound } from "@/lib/sound";
+import { findCheckAttacks } from "@/lib/chess/checkGeometry";
+
 
 export interface BoardPiece {
   square: string;
@@ -135,6 +137,21 @@ export function ChessBoard(props: ChessBoardProps) {
     }
     prevCheckRef.current = checkSquare ?? null;
   }, [checkSquare]);
+
+  /** Who is giving check, and along which squares — used to explain the check. */
+  const checkAttacks = useMemo(
+    () => findCheckAttacks(pieces, checkSquare),
+    [pieces, checkSquare],
+  );
+  const attackerSquares = useMemo(
+    () => new Set(checkAttacks.map((a) => a.from)),
+    [checkAttacks],
+  );
+  const raySquares = useMemo(
+    () => new Set(checkAttacks.flatMap((a) => a.ray)),
+    [checkAttacks],
+  );
+
 
   /**
    * Checkmate = the side to move is in check and has no legal target anywhere.
@@ -389,6 +406,23 @@ export function ChessBoard(props: ChessBoardProps) {
                 {selected === square && (
                   <span className="absolute inset-0" style={{ backgroundColor: theme.selected }} />
                 )}
+                {attackerSquares.has(square) && (
+                  <span
+                    className="animate-nexus-check-pulse absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(255,176,60,0.55) 20%, rgba(255,150,40,0.18) 62%, transparent 78%)",
+                      boxShadow: "inset 0 0 0 2px rgba(255,190,80,0.95)",
+                    }}
+                  />
+                )}
+                {raySquares.has(square) && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{ backgroundColor: "rgba(255,140,70,0.16)" }}
+                  />
+                )}
                 {isCheck && (
                   <span
                     className="animate-nexus-check-pulse absolute inset-0"
@@ -399,6 +433,7 @@ export function ChessBoard(props: ChessBoardProps) {
                     }}
                   />
                 )}
+
                 {settings.showLegalMoves && isTarget && !isCapture && (
                   <span
                     className="absolute rounded-full"
@@ -440,6 +475,50 @@ export function ChessBoard(props: ChessBoardProps) {
             );
           }),
         )}
+
+        {/* attack lines: from every checking piece to the king */}
+        {checkAttacks.length > 0 && (
+          <svg
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-20"
+            width={squareSize * 8}
+            height={squareSize * 8}
+          >
+            <defs>
+              <marker
+                id="nexus-check-arrow"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="4"
+                markerHeight="4"
+                orient="auto-start-reverse"
+              >
+                <path d="M0,0 L10,5 L0,10 z" fill="rgba(255,120,60,0.9)" />
+              </marker>
+            </defs>
+            {checkAttacks.map((a) => {
+              const from = squareToXY(a.from);
+              const to = squareToXY(a.to);
+              const half = squareSize / 2;
+              return (
+                <line
+                  key={`atk-${a.from}-${a.to}`}
+                  x1={from.x + half}
+                  y1={from.y + half}
+                  x2={to.x + half}
+                  y2={to.y + half}
+                  stroke="rgba(255,120,60,0.85)"
+                  strokeWidth={Math.max(2, squareSize * 0.05)}
+                  strokeLinecap="round"
+                  strokeDasharray={`${squareSize * 0.18} ${squareSize * 0.12}`}
+                  markerEnd="url(#nexus-check-arrow)"
+                />
+              );
+            })}
+          </svg>
+        )}
+
 
         {/* captured pieces fade out in place instead of vanishing on the frame */}
         {ghosts.map((g) => {
