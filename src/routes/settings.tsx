@@ -7,7 +7,7 @@ import { APP } from "@/config/app";
 import { BOARD_THEMES, PIECE_SETS, getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { Piece } from "@/components/chess/Piece";
 import { resetSettings, updateSettings, useSettings, type Settings } from "@/lib/settings";
-import { playSound } from "@/lib/sound";
+import { playSound, playShatter } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
