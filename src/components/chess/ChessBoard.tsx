@@ -524,14 +524,15 @@ export function ChessBoard(props: ChessBoardProps) {
 
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-full overflow-hidden">
       <div
         ref={containerRef}
         data-board-root=""
 
         role="grid"
         aria-label="Chess board"
-        className="relative aspect-square w-full touch-none select-none overflow-hidden rounded-md ring-1 ring-black/40"
+        className="relative aspect-square w-full max-w-full touch-none select-none overflow-hidden rounded-md ring-1 ring-black/40"
+
         style={{ backgroundColor: theme.frame }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
