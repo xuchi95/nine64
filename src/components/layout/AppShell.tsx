@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Check,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
 import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
@@ -155,9 +155,21 @@ function MobileNav() {
     onClose: () => setOpen(false),
   });
 
+  const navRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  // Khi mở drawer: cuộn tới mục đang active để luôn nhìn thấy vị trí hiện tại.
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => {
+      const el = navRef.current?.querySelector<HTMLElement>('[data-active="true"]');
+      el?.scrollIntoView({ block: "center", behavior: "auto" });
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
   const isActive = (to: string) => isRouteActive(pathname, to);
 
@@ -191,7 +203,10 @@ function MobileNav() {
           <SheetTitle className="text-xl tracking-[0.14em]">{APP.name.toUpperCase()}</SheetTitle>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-5">
+        <nav
+          ref={navRef}
+          className="flex-1 overflow-y-auto overscroll-contain scroll-smooth p-5 [-webkit-overflow-scrolling:touch]"
+        >
           <div className="flex flex-col gap-2">
             {MAIN_NAV.map((item) => {
               const active = isActive(item.to);
@@ -199,8 +214,9 @@ function MobileNav() {
                 <Link
                   key={item.to}
                   to={item.to}
+                  data-active={active ? "true" : undefined}
                   className={cn(
-                    "flex min-h-[3.75rem] items-center justify-between rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
+                    "flex min-h-[3.75rem] scroll-mt-6 items-center justify-between rounded-xl px-6 text-base font-semibold text-muted-foreground transition-colors active:bg-secondary",
                     active && "bg-primary/15 text-primary",
                   )}
                 >
@@ -221,8 +237,9 @@ function MobileNav() {
                 <Link
                   key={item.to}
                   to={item.to}
+                  data-active={active ? "true" : undefined}
                   className={cn(
-                    "flex min-h-[3.75rem] items-center justify-between rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                    "flex min-h-[3.75rem] scroll-mt-6 items-center justify-between rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
                     active && "bg-primary/15 text-primary",
                   )}
                 >
@@ -245,8 +262,9 @@ function MobileNav() {
                     <Link
                       key={item.to + item.label}
                       to={item.to}
+                      data-active={active ? "true" : undefined}
                       className={cn(
-                        "flex min-h-[3.75rem] items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
+                        "flex min-h-[3.75rem] scroll-mt-6 items-center gap-4 rounded-xl px-6 text-base font-medium text-muted-foreground transition-colors active:bg-secondary",
                         active && "bg-primary/15 text-primary",
                       )}
                     >
@@ -260,6 +278,7 @@ function MobileNav() {
             </>
           )}
         </nav>
+
 
         <div className="flex items-center gap-3 border-t border-border/70 p-5">
           <Button
@@ -549,7 +568,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
     <div className="border-t border-border/40 bg-secondary/20">
       <div
         className={cn(
-          "mx-auto flex min-w-0 items-center gap-1 px-4 py-2 text-xs text-muted-foreground sm:gap-1.5 sm:px-6",
+          "mx-auto flex min-w-0 items-center gap-1 px-4 py-1 text-[11px] leading-tight text-muted-foreground sm:gap-1.5 sm:px-6 sm:py-2 sm:text-xs",
           wide ? "max-w-[1600px]" : "max-w-6xl",
         )}
       >
@@ -571,7 +590,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
         <ChevronRight className="size-3 shrink-0 opacity-50" />
         <span
           aria-current="page"
-          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary"
+          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary sm:px-2 sm:text-xs"
         >
           {currentLabel}
         </span>
