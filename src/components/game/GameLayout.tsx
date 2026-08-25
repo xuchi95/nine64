@@ -63,7 +63,7 @@ export function StatusPill({ tone, children }: { tone: StatusTone; children: Rea
       className={cn(
         "rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
         tone === "live" && "bg-primary/15 text-primary",
-        tone === "win" && "bg-emerald-500/15 text-emerald-400",
+        tone === "win" && "bg-success/15 text-success",
         tone === "loss" && "bg-destructive/15 text-destructive",
         tone === "draw" && "bg-muted text-muted-foreground",
         tone === "neutral" && "bg-surface-2 text-muted-foreground",
@@ -87,7 +87,7 @@ export function GameNotice({
       className={cn(
         "rounded-md border px-3 py-2 text-xs font-medium",
         tone === "info" && "border-border bg-surface-2 text-muted-foreground",
-        tone === "warning" && "border-amber-500/40 bg-amber-500/10 text-amber-300",
+        tone === "warning" && "border-warning/40 bg-warning/10 text-warning",
         tone === "error" && "border-destructive/50 bg-destructive/10 text-destructive",
       )}
     >

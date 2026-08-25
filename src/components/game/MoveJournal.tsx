@@ -81,7 +81,7 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                     {formatClock(e.clockMs)}
                   </span>
                 )}
-                {e.pending && <span className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-amber-400">
+                {e.pending && <span className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-warning">
                     sending
                   </span>}
               </li>

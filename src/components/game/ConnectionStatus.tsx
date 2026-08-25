@@ -16,17 +16,17 @@ const COPY: Record<SyncMode, { label: string; detail: string; tone: string }> = 
   connecting: {
     label: "Connecting…",
     detail: "Opening the realtime channel for this game.",
-    tone: "bg-amber-500/15 text-amber-400",
+    tone: "bg-warning/15 text-warning",
   },
   realtime: {
     label: "Realtime",
     detail: "Moves and clocks arrive instantly for both players.",
-    tone: "bg-emerald-500/15 text-emerald-400",
+    tone: "bg-success/15 text-success",
   },
   fallback: {
     label: "Backup sync",
     detail: "Realtime is unavailable — polling the server every 2.5s instead.",
-    tone: "bg-amber-500/15 text-amber-400",
+    tone: "bg-warning/15 text-warning",
   },
   offline: {
     label: "Disconnected",
