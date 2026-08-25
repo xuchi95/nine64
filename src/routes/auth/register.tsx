@@ -61,7 +61,7 @@ function RegisterPage() {
       return;
     }
 
-    toast.success("Account created. Welcome to Nexus Chess!");
+    toast.success("Account created. Welcome to Nine64!");
     navigate({ to: redirectTo, replace: true });
   }
 
