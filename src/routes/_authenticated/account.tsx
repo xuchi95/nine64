@@ -139,7 +139,52 @@ function ProfileCard() {
   const [displayName, setDisplayName] = useState(
     (user?.user_metadata?.["display_name"] as string | undefined) ?? "",
   );
+  const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const avatarUrl = useAvatarUrl(avatarPath);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    void supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        setAvatarPath(data.avatar_url);
+        setDisplayName((prev) => prev || data.display_name || "");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    setUploading(true);
+    const res = await uploadAvatar(user.id, file);
+    setUploading(false);
+    if ("error" in res) toast.error(res.error);
+    else {
+      setAvatarPath(res.path);
+      toast.success("Đã cập nhật ảnh đại diện.");
+    }
+  }
+
+  async function onRemoveAvatar() {
+    if (!user) return;
+    setUploading(true);
+    await removeAvatar(user.id, avatarPath);
+    setAvatarPath(null);
+    setUploading(false);
+    toast.success("Đã xoá ảnh đại diện.");
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -160,7 +205,50 @@ function ProfileCard() {
 
   return (
     <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
-      <SectionHead title="Hồ sơ" desc="Tên này xuất hiện trên bàn cờ và bảng xếp hạng." />
+      <SectionHead
+        title="Hồ sơ"
+        desc="Ảnh và tên này xuất hiện trên bàn cờ và bảng xếp hạng."
+      />
+
+      <div className="flex flex-wrap items-center gap-5">
+        <span className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-primary/30 bg-primary/10 font-display text-xl font-bold text-primary">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Ảnh đại diện" className="size-full object-cover" />
+          ) : (
+            (displayName || user?.email || "P").slice(0, 2).toUpperCase()
+          )}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={onPickFile}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            disabled={uploading}
+            onClick={() => fileRef.current?.click()}
+          >
+            {uploading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 size-4" />
+            )}
+            Tải ảnh lên
+          </Button>
+          {avatarPath && (
+            <Button type="button" variant="ghost" disabled={uploading} onClick={onRemoveAvatar}>
+              <Trash2 className="mr-2 size-4" />
+              Xoá ảnh
+            </Button>
+          )}
+          <p className="w-full text-xs text-muted-foreground">PNG, JPEG hoặc WebP, tối đa 2MB.</p>
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="display-name">Tên hiển thị</Label>
         <Input
@@ -177,6 +265,7 @@ function ProfileCard() {
     </form>
   );
 }
+
 
 function EmailCard() {
   const { user } = useAuth();
