@@ -88,7 +88,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: `${APP.name} — ${APP.tagline}` },
       { name: "description", content: APP.description },
-      { name: "theme-color", content: "#171719" },
+      { name: "theme-color", content: "#FAF7F0", media: "(prefers-color-scheme: light)" },
+      { name: "theme-color", content: "#171719", media: "(prefers-color-scheme: dark)" },
+
       { property: "og:site_name", content: APP.name },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -105,8 +107,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Symbols+2&display=swap",
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
+      // Favicon + touch icons swap with the OS colour scheme.
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/favicon-light.svg",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/favicon.svg",
+        media: "(prefers-color-scheme: dark)",
+      },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: "/icons/apple-touch-icon-light.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: "/icons/apple-touch-icon.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png" },
+
     ],
   }),
   shellComponent: RootShell,
