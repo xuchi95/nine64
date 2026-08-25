@@ -350,6 +350,12 @@ export function ChessBoard(props: ChessBoardProps) {
 
     let raf = 0;
     let last = 0;
+    // Khoá kích thước trong lúc xoay màn hình: iOS/Android bắn ra vài giá trị
+    // trung gian (chiều cũ, chiều mới, có/không thanh URL) khiến bàn cờ nhảy.
+    let rotating = false;
+    let settleTimer = 0;
+    let stableTimer = 0;
+    let stableWidth = -1;
 
     /** Snap to a whole pixel so the 8x8 grid never lands on sub-pixel seams. */
     const apply = (raw: number) => {
@@ -382,23 +388,65 @@ export function ChessBoard(props: ChessBoardProps) {
     const schedule = () => {
       // Never resize mid theme cross-fade: geometry is frozen there.
       if (document.documentElement.classList.contains("theme-anim")) return;
+      // Đang xoay màn hình -> giữ nguyên kích thước cũ, chỉ đo lại 1 lần
+      // duy nhất sau khi viewport đã đứng yên.
+      if (rotating) return;
       if (raf) return;
       raf = window.requestAnimationFrame(measure);
+    };
+
+    /** Đợi bề rộng viewport đứng yên (2 lần đo giống nhau) rồi mới đo lại. */
+    const settle = () => {
+      const width = Math.round(
+        window.visualViewport?.width ?? window.innerWidth,
+      );
+      if (width === stableWidth) {
+        rotating = false;
+        stableWidth = -1;
+        if (raf) window.cancelAnimationFrame(raf);
+        raf = window.requestAnimationFrame(measure);
+        return;
+      }
+      stableWidth = width;
+      stableTimer = window.setTimeout(settle, 120);
+    };
+
+    const beginRotation = () => {
+      rotating = true;
+      stableWidth = -1;
+      if (raf) {
+        window.cancelAnimationFrame(raf);
+        raf = 0;
+      }
+      window.clearTimeout(stableTimer);
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(settle, 120);
     };
 
     const observer = new ResizeObserver(schedule);
     observer.observe(el);
     window.addEventListener("resize", schedule);
-    window.addEventListener("orientationchange", schedule);
+    window.addEventListener("orientationchange", beginRotation);
+    const mql =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(orientation: portrait)")
+        : null;
+    mql?.addEventListener?.("change", beginRotation);
+    window.screen?.orientation?.addEventListener?.("change", beginRotation);
     apply(el.getBoundingClientRect().width);
 
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", schedule);
-      window.removeEventListener("orientationchange", schedule);
+      window.removeEventListener("orientationchange", beginRotation);
+      mql?.removeEventListener?.("change", beginRotation);
+      window.screen?.orientation?.removeEventListener?.("change", beginRotation);
+      window.clearTimeout(settleTimer);
+      window.clearTimeout(stableTimer);
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, []);
+
 
   const squareSize = size / 8;
 
