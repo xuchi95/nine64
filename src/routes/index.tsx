@@ -32,8 +32,28 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: `${APP.name} — Play Chess Online, Free` },
       { property: "og:description", content: APP.description },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://nexchess.lovable.app/" },
+      // Dark card first (used by every crawler); light card offered as an
+      // alternate for clients that pick a variant by theme.
+      {
+        property: "og:image",
+        content: "https://nexchess.lovable.app/og-nexus-chess-dark.png",
+      },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: `${APP.name} logo` },
+      {
+        property: "og:image",
+        content: "https://nexchess.lovable.app/og-nexus-chess-light.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
+      {
+        name: "twitter:image",
+        content: "https://nexchess.lovable.app/og-nexus-chess-dark.png",
+      },
+      { name: "twitter:image:alt", content: `${APP.name} logo` },
     ],
+    links: [{ rel: "canonical", href: "https://nexchess.lovable.app/" }],
   }),
   pendingComponent: GenericSkeleton,
   component: Home,
