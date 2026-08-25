@@ -11,10 +11,15 @@ export function MoveList({
   activeIndex?: number;
   onSelect?: (index: number) => void;
 }) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "nearest" });
+    // Chỉ cuộn bên trong danh sách nước đi — không bao giờ cuộn cả trang
+    // (trên mobile scrollIntoView sẽ kéo màn hình xuống sau mỗi nước đi).
+    const el = listRef.current;
+    if (!el) return;
+    if (el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
   }, [moves.length]);
+
 
   if (moves.length === 0) {
     return (
