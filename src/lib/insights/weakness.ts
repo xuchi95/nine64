@@ -2,7 +2,7 @@ import type { SavedGame } from "@/lib/history";
 import type { PlyAnalysis } from "@/lib/analysis/types";
 import type { GamePhase } from "@/lib/analysis/phase";
 import type { Motif } from "@/lib/analysis/motifs";
-import { ratingFromAcpl } from "@/lib/analysis/winrate";
+import { MAX_CP_LOSS, ratingFromAcpl } from "@/lib/analysis/winrate";
 
 export interface WeaknessBucket {
   key: string;
@@ -78,6 +78,12 @@ export function buildWeaknessProfile(games: SavedGame[]): WeaknessProfile {
 
   const blunders = all.filter((p) => p.label === "blunder" || p.label === "miss").length;
   const avgLoss = all.length === 0 ? 0 : all.reduce((a, p) => a + p.loss, 0) / all.length;
+  // Rating estimation needs centipawn loss, not win-percentage loss. Older
+  // reviews only stored win% loss, so approximate it near equality (1% ≈ 8cp).
+  const avgCpLoss =
+    all.length === 0
+      ? 0
+      : all.reduce((a, p) => a + Math.min(MAX_CP_LOSS, p.cpLoss ?? p.loss * 8), 0) / all.length;
 
   const withData = phases.filter((p) => p.moves >= 5);
   const weakest =
@@ -89,7 +95,7 @@ export function buildWeaknessProfile(games: SavedGame[]): WeaknessProfile {
     phases,
     motifs,
     blunderRate: all.length === 0 ? 0 : Math.round((blunders / all.length) * 1000) / 10,
-    estimatedRating: ratingFromAcpl(avgLoss),
+    estimatedRating: ratingFromAcpl(avgCpLoss),
     reviewedGames: reviewed.length,
     totalMoves: all.length,
     weakest,

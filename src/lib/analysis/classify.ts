@@ -66,16 +66,24 @@ function pickLabel(input: ClassifyInput, loss: number): MoveLabel {
   // keeps the position at least balanced.
   if (isBestMove && see <= -110 && after >= 45 && loss <= 2) return "brilliant";
 
-  // Great: only move that holds the position — every alternative is much worse.
+  // Great: only move that holds the position — every alternative is clearly
+  // worse. Book moves never qualify, and a shallow search rarely separates the
+  // top lines by this much, so the bar is deliberately high.
   if (
     isBestMove &&
+    !inBook &&
     secondBestAfter !== null &&
     secondBestAfter !== undefined &&
-    after - secondBestAfter >= 12 &&
-    loss <= 2
+    input.bestAfter - secondBestAfter >= 20 &&
+    // In already decided positions the gap between lines is meaningless.
+    input.bestAfter > 20 &&
+    input.bestAfter < 85 &&
+    loss <= 1.5
   ) {
     return "great";
   }
+
+
 
   if (inBook && loss <= 4) return "book";
   if (isBestMove || loss <= 0.5) return "best";
