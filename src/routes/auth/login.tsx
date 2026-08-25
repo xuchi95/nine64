@@ -216,8 +216,7 @@ function LoginPage() {
               Create one
             </Link>
           </p>
-        </div>
-      </div>
-    </AppShell>
+    </AuthModal>
   );
 }
+
