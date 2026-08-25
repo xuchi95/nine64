@@ -5,7 +5,15 @@ import { Chess, type Move } from "chess.js";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PlayerCard } from "@/components/game/PlayerCard";
+import { GamePanel, StatRow } from "@/components/game/GamePanel";
+import {
+  GameLayout,
+  GameActions,
+  GameNotice,
+  StatusPill,
+  type StatusTone,
+} from "@/components/game/GameLayout";
 import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -752,68 +760,6 @@ function OnlineGamePage() {
   );
 }
 
-
-function PlayerBar({
-  name,
-  rating,
-  color,
-  clock,
-  active,
-}: {
-  name: string;
-  rating: number;
-  color: PieceColor;
-  clock: { w: number; b: number };
-  active: boolean;
-}) {
-  const ms = color === "w" ? clock.w : clock.b;
-  const low = ms <= 10_000;
-  return (
-    <div
-      className={cn(
-        "panel relative flex items-center justify-between overflow-hidden px-4 py-3 transition-colors",
-        active && "border-primary/70 bg-primary/[0.04]",
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "absolute inset-y-0 left-0 w-[3px] transition-colors",
-          active ? "bg-primary" : "bg-transparent",
-        )}
-      />
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span
-          className={cn(
-            "flex size-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold",
-            color === "w"
-              ? "border-border bg-foreground text-background"
-              : "border-border bg-surface-2 text-foreground",
-          )}
-        >
-          {color === "w" ? "W" : "B"}
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold leading-tight">{name}</p>
-          <p className="text-[0.7rem] font-medium text-muted-foreground">
-            {active ? <span className="text-primary">To move</span> : `Rating ${rating}`}
-          </p>
-        </div>
-      </div>
-      <span
-        className={cn(
-          "tabular rounded-md border px-3 py-1.5 text-xl font-bold leading-none tracking-tight transition-colors",
-          active
-            ? "border-primary bg-primary text-primary-foreground"
-            : "border-border bg-surface-2 text-muted-foreground",
-          low && active && "animate-pulse border-destructive bg-destructive text-destructive-foreground",
-        )}
-      >
-        {formatClock(ms)}
-      </span>
-    </div>
-  );
-}
 
 function playMoveSound(game: Chess, move: Move) {
   if (game.isCheck()) {
