@@ -44,7 +44,7 @@ const FACETS: Record<PieceType, string> = {
   k: "M50 30.5c-9.5.6-16.4 5.6-19.7 14h-1.8c3.5-9.5 11-14.5 21.5-14.5zM39.5 44.5c2.4-6.4 6.5-10.3 12.5-11.4l-1.2-1.6c-7.4.8-12.6 5.1-15.6 13z",
 };
 
-export function Piece({ type, color, set, size, className }: Props) {
+export function Piece({ type, color, set, size, className, glow = false }: Props) {
   const uid = useId().replace(/[:]/g, "");
   const isDark = color === "b";
   const fill = isDark ? set.darkFill : set.lightFill;
@@ -58,13 +58,18 @@ export function Piece({ type, color, set, size, className }: Props) {
       viewBox="0 0 100 100"
       width={size}
       height={size}
-      className={className}
+      className={cn("transition-all duration-200 ease-out will-change-transform", className)}
       aria-hidden="true"
       focusable="false"
       style={{
-        filter: isDark
-          ? "drop-shadow(0 0 1.4px rgba(255,255,255,0.5)) drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.5))"
-          : "drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.38))",
+        transform: glow ? "scale(1.07)" : "scale(1)",
+        filter: glow
+          ? isDark
+            ? "drop-shadow(0 0 2.5px rgba(255,215,120,0.95)) drop-shadow(0 0 7px rgba(255,255,255,0.55)) drop-shadow(0 2px 2px rgba(0,0,0,0.55))"
+            : "drop-shadow(0 0 2.5px rgba(0,0,0,0.65)) drop-shadow(0 0 7px rgba(255,200,90,0.45)) drop-shadow(0 2px 2px rgba(0,0,0,0.35))"
+          : isDark
+            ? "drop-shadow(0 0 1.4px rgba(255,255,255,0.5)) drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.5))"
+            : "drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.38))",
       }}
     >
       <defs>
