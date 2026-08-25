@@ -86,7 +86,7 @@ describe("hero board matches the real board", () => {
 
     const hero = renderHero(theme, set);
     for (const sq of SQUARES) {
-      const cell = hero.container.querySelector<HTMLElement>(`[data-square="${sq}"]`);
+      const cell = hero.container.querySelector<HTMLElement>(`[data-cell="${sq}"]`);
       expect(cell, `hero board missing ${sq}`).toBeTruthy();
       expect(surfaceOf(cell!), `square ${sq}`).toBe(realSurfaces.get(sq));
     }
@@ -126,7 +126,7 @@ describe("hero board matches the real board", () => {
 
         const hero = renderHero(t.id, s.id);
         for (const sq of SQUARES) {
-          const cell = hero.container.querySelector<HTMLElement>(`[data-square="${sq}"]`)!;
+          const cell = hero.container.querySelector<HTMLElement>(`[data-cell="${sq}"]`)!;
           expect(surfaceOf(cell), `${t.id}/${s.id} ${sq}`).toBe(realSurfaces.get(sq));
         }
         expect(
@@ -140,7 +140,7 @@ describe("hero board matches the real board", () => {
 
   it("scales fluidly so it cannot drift on any screen size", () => {
     const hero = renderHero(theme, set);
-    const cells = hero.container.querySelectorAll<HTMLElement>("[data-square]");
+    const cells = hero.container.querySelectorAll<HTMLElement>("[data-cell]");
     expect(cells.length).toBe(64);
     cells.forEach((c) => {
       // No fixed pixel sizing: the grid derives square size from its container,
