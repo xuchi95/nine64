@@ -11,6 +11,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
+import { BrandMark } from "@/components/layout/BrandMark";
 
 export const Route = createFileRoute("/auth/login")({
   head: () => ({
