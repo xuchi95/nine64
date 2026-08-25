@@ -1,4 +1,4 @@
-import { useSettings } from "@/lib/settings";
+import { updateSettings, useSettings } from "@/lib/settings";
 import {
   getBoardTheme,
   getPieceSet,
