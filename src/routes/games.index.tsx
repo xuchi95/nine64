@@ -15,6 +15,8 @@ import { useOnlineGames, type OnlineGameDetail } from "@/hooks/useOnlineGames";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import { BoardThemePicker } from "@/components/chess/BoardThemePicker";
+
 
 export const Route = createFileRoute("/games/")({
   head: () => ({
