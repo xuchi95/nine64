@@ -6,6 +6,9 @@ export interface Settings {
   appearance: AppearanceMode;
   boardTheme: string;
   pieceSet: string;
+  /** When true, the board/piece style follows the light/dark variant map. */
+  boardThemeAuto: boolean;
+  pieceSetAuto: boolean;
   showCoordinates: boolean;
   showLegalMoves: boolean;
   animations: boolean;
@@ -24,6 +27,8 @@ export const DEFAULT_SETTINGS: Settings = {
   appearance: "dark",
   boardTheme: "walnut",
   pieceSet: "classic",
+  boardThemeAuto: true,
+  pieceSetAuto: true,
   showCoordinates: true,
   showLegalMoves: true,
   animations: true,
