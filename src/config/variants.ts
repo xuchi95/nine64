@@ -68,3 +68,13 @@ export const VARIANTS: VariantMeta[] = [
 export function getVariant(id: VariantId): VariantMeta {
   return VARIANTS.find((v) => v.id === id) ?? VARIANTS[0]!;
 }
+
+import { translate } from "@/lib/i18n";
+
+export function variantName(id: VariantId): string {
+  return translate(`play.variants.${id}.name`);
+}
+
+export function variantBlurb(id: VariantId): string {
+  return translate(`play.variants.${id}.blurb`);
+}

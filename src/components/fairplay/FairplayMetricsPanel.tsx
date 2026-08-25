@@ -2,6 +2,7 @@ import { Activity, AlertTriangle, Gauge, Timer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FairplayMetrics } from "@/lib/fairplay/metrics";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 function Kpi({
   icon: Icon,
@@ -27,6 +28,7 @@ function Kpi({
 }
 
 export function FairplayMetricsPanel({ metrics }: { metrics: FairplayMetrics }) {
+  const { t } = useT();
   const peakDaily = Math.max(1, ...metrics.daily.map((d) => d.reports));
 
   return (
@@ -34,45 +36,54 @@ export function FairplayMetricsPanel({ metrics }: { metrics: FairplayMetrics }) 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           icon={Activity}
-          label="Ván đã soát"
+          label={t("admin.metrics.reviewed")}
           value={String(metrics.totals.reports)}
-          hint={`${metrics.totals.last24h} ván trong 24 giờ qua`}
+          hint={t("admin.metrics.reviewedHint", { n: metrics.totals.last24h })}
         />
         <Kpi
           icon={AlertTriangle}
-          label="Tỷ lệ cảnh báo"
+          label={t("admin.metrics.flagRate")}
           value={`${metrics.totals.flagRate}%`}
-          hint={`${metrics.totals.flagged} cảnh báo · ${metrics.totals.held} khoá xếp hạng`}
+          hint={t("admin.metrics.flagRateHint", {
+            flagged: metrics.totals.flagged,
+            held: metrics.totals.held,
+          })}
         />
         <Kpi
           icon={Gauge}
-          label="Báo động sai"
+          label={t("admin.metrics.falseAlarm")}
           value={`${metrics.falseAlarm.rate}%`}
-          hint={`${metrics.falseAlarm.clearedCases}/${metrics.falseAlarm.reviewed} hồ sơ tự động bị admin gỡ`}
+          hint={t("admin.metrics.falseAlarmHint", {
+            cleared: metrics.falseAlarm.clearedCases,
+            reviewed: metrics.falseAlarm.reviewed,
+          })}
         />
         <Kpi
           icon={Timer}
-          label="Thời gian xử lý"
+          label={t("admin.metrics.processingTime")}
           value={`${metrics.processing.p50Ms} ms`}
-          hint={`p95 ${metrics.processing.p95Ms} ms · max ${metrics.processing.maxMs} ms`}
+          hint={t("admin.metrics.processingTimeHint", {
+            p95: metrics.processing.p95Ms,
+            max: metrics.processing.maxMs,
+          })}
         />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Phát hiện theo phân khúc rating</CardTitle>
+            <CardTitle className="text-base">{t("admin.metrics.bySegment")}</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground">
                 <tr className="border-b border-border/60">
-                  <th className="px-4 py-2 text-left font-medium">Phân khúc</th>
-                  <th className="px-3 py-2 text-right font-medium">Ván</th>
-                  <th className="px-3 py-2 text-right font-medium">Cảnh báo</th>
-                  <th className="px-3 py-2 text-right font-medium">Khoá</th>
-                  <th className="px-3 py-2 text-right font-medium">Điểm TB</th>
-                  <th className="px-4 py-2 text-right font-medium">p95 ms</th>
+                  <th className="px-4 py-2 text-left font-medium">{t("admin.metrics.colSegment")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("admin.metrics.colGames")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("admin.metrics.colFlagged")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("admin.metrics.colHeld")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("admin.metrics.colAvgScore")}</th>
+                  <th className="px-4 py-2 text-right font-medium">{t("admin.metrics.colP95")}</th>
                 </tr>
               </thead>
               <tbody className="font-mono tabular-nums">
@@ -102,7 +113,7 @@ export function FairplayMetricsPanel({ metrics }: { metrics: FairplayMetrics }) 
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">14 ngày gần nhất</CardTitle>
+            <CardTitle className="text-base">{t("admin.metrics.last14days")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex h-32 items-end gap-1">
@@ -110,7 +121,7 @@ export function FairplayMetricsPanel({ metrics }: { metrics: FairplayMetrics }) 
                 <div
                   key={d.day}
                   className="flex-1"
-                  title={`${d.day}: ${d.reports} ván · ${d.flagged} cảnh báo`}
+                  title={t("admin.metrics.dayTooltip", { day: d.day, reports: d.reports, flagged: d.flagged })}
                 >
                   <div className="relative h-32">
                     <div
@@ -126,7 +137,7 @@ export function FairplayMetricsPanel({ metrics }: { metrics: FairplayMetrics }) 
               ))}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Cột xám: ván đã soát. Cột đỏ: ván bị cảnh báo.
+              {t("admin.metrics.chartLegend")}
             </p>
           </CardContent>
         </Card>

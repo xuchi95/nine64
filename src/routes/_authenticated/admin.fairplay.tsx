@@ -26,16 +26,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
-import { ACTION_LABEL, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
+import { actionLabel, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/fairplay")({
   head: () => ({
     meta: [
-      { title: `Fair play cases — ${APP.name}` },
+      { title: `Hồ sơ Fair Play — ${APP.name}` },
       { name: "description", content: "Xem xét hồ sơ fair play và bằng chứng thuật toán." },
-      { property: "og:title", content: `Fair play cases — ${APP.name}` },
+      { property: "og:title", content: `Hồ sơ Fair Play — ${APP.name}` },
       { property: "og:description", content: "Bảng điều khiển fair play cho quản trị viên." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -93,6 +94,7 @@ function asStrings(value: unknown): string[] {
 }
 
 function AdminFairplayPage() {
+  const { t } = useT();
   const roleFn = useServerFn(hasRole);
   const listFn = useServerFn(listFairplayCases);
   const caseFn = useServerFn(getFairplayCase);
@@ -182,7 +184,7 @@ function AdminFairplayPage() {
     return (
       <AppShell>
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
-          Trang này chỉ dành cho quản trị viên.
+          {t("admin.adminOnly")}
         </div>
       </AppShell>
     );
@@ -194,23 +196,22 @@ function AdminFairplayPage() {
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Fair play</h1>
+            <h1 className="text-2xl font-bold">{t("admin.fairplay.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Hồ sơ được xếp theo điểm nghi vấn tổng hợp. Hành động tự động chỉ giới hạn xếp hạng,
-              không khoá tài khoản.
+              {t("admin.fairplay.subtitle")}
             </p>
           </div>
           <div className="flex gap-2">
           <Button asChild variant="secondary" size="sm">
-            <Link to="/admin/fairplay/log">Nhật ký quyết định</Link>
+            <Link to="/admin/fairplay/log">{t("admin.fairplay.decisionLog")}</Link>
           </Button>
           <Button asChild variant="secondary" size="sm">
-            <Link to="/admin/audit">Nhật ký quản trị</Link>
+            <Link to="/admin/audit">{t("admin.fairplay.adminAuditLog")}</Link>
           </Button>
 
           <Button variant="secondary" size="sm" disabled={busy} onClick={() => void load()}>
             <RefreshCw className={cn("mr-2 size-4", busy && "animate-spin")} />
-            Làm mới
+            {t("admin.fairplay.refresh")}
           </Button>
           </div>
         </div>
@@ -225,7 +226,7 @@ function AdminFairplayPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">
-                Hồ sơ ({filtered.length}/{rows.length})
+                {t("admin.fairplay.casesTitle", { filtered: filtered.length, total: rows.length })}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -235,46 +236,48 @@ function AdminFairplayPage() {
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Tên hoặc ID người chơi"
+                    placeholder={t("admin.fairplay.searchPlaceholder")}
                     className="h-9 pl-8"
                   />
                 </div>
                 <Select value={range} onValueChange={(v) => setRange(v as typeof range)}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Thời gian" />
+                    <SelectValue placeholder={t("admin.fairplay.timePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="24h">24 giờ qua</SelectItem>
-                    <SelectItem value="7d">7 ngày qua</SelectItem>
-                    <SelectItem value="30d">30 ngày qua</SelectItem>
-                    <SelectItem value="all">Mọi thời điểm</SelectItem>
+                    <SelectItem value="24h">{t("admin.fairplay.time24h")}</SelectItem>
+                    <SelectItem value="7d">{t("admin.fairplay.time7d")}</SelectItem>
+                    <SelectItem value="30d">{t("admin.fairplay.time30d")}</SelectItem>
+                    <SelectItem value="all">{t("admin.fairplay.timeAll")}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={risk} onValueChange={(v) => setRisk(v as typeof risk)}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Mức rủi ro" />
+                    <SelectValue placeholder={t("admin.fairplay.riskPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Mọi mức rủi ro</SelectItem>
-                    <SelectItem value="high">Cao (≥ {THRESHOLDS.hold})</SelectItem>
-                    <SelectItem value="medium">Trung bình ({THRESHOLDS.unrated}–{THRESHOLDS.hold - 1})</SelectItem>
-                    <SelectItem value="low">Thấp (&lt; {THRESHOLDS.unrated})</SelectItem>
+                    <SelectItem value="all">{t("admin.fairplay.riskAll")}</SelectItem>
+                    <SelectItem value="high">{t("admin.fairplay.riskHigh", { hold: THRESHOLDS.hold })}</SelectItem>
+                    <SelectItem value="medium">
+                      {t("admin.fairplay.riskMedium", { unrated: THRESHOLDS.unrated, maxMedium: THRESHOLDS.hold - 1 })}
+                    </SelectItem>
+                    <SelectItem value="low">{t("admin.fairplay.riskLow", { unrated: THRESHOLDS.unrated })}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Trạng thái" />
+                    <SelectValue placeholder={t("admin.fairplay.statusPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Mọi trạng thái</SelectItem>
-                    <SelectItem value="locked">Đang khoá xếp hạng</SelectItem>
-                    <SelectItem value="flagged">Đang cảnh báo</SelectItem>
-                    <SelectItem value="clear">Đã sạch</SelectItem>
+                    <SelectItem value="all">{t("admin.fairplay.statusAll")}</SelectItem>
+                    <SelectItem value="locked">{t("admin.fairplay.statusLocked")}</SelectItem>
+                    <SelectItem value="flagged">{t("admin.fairplay.statusFlagged")}</SelectItem>
+                    <SelectItem value="clear">{t("admin.fairplay.statusClear")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {filtered.length === 0 && (
-                <p className="text-sm text-muted-foreground">Không có hồ sơ khớp bộ lọc.</p>
+                <p className="text-sm text-muted-foreground">{t("admin.fairplay.noMatch")}</p>
               )}
               {filtered.map((row) => (
                 <button
@@ -294,15 +297,20 @@ function AdminFairplayPage() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{row.displayName}</span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {ACTION_LABEL[isAction(row.action) ? row.action : "none"]} · SPRT{" "}
-                      {row.sprt_decision} · {row.games_reviewed} ván
-                      {row.boosting_score >= 60 ? " · dàn xếp" : ""}
-                      {row.sandbagging_score >= 60 ? " · cố thua" : ""}
+                      {t("admin.fairplay.rowSummary", {
+                        action: actionLabel(isAction(row.action) ? row.action : "none"),
+                        sprt: row.sprt_decision,
+                        games: row.games_reviewed,
+                      })}
+                      {row.boosting_score >= 60 ? t("admin.fairplay.boostingSuffix") : ""}
+                      {row.sandbagging_score >= 60 ? t("admin.fairplay.sandbaggingSuffix") : ""}
                     </span>
                     {isLockActive(row) && (
                       <span className="mt-0.5 flex items-center gap-1 text-xs text-destructive">
                         <Clock className="size-3" />
-                        Khoá còn {formatRemaining(remainingLockMs(row.lock_expires_at))}
+                        {t("admin.fairplay.lockRemaining", {
+                          remaining: formatRemaining(remainingLockMs(row.lock_expires_at)),
+                        })}
                       </span>
                     )}
                   </span>
@@ -316,16 +324,16 @@ function AdminFairplayPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Bằng chứng</CardTitle>
+              <CardTitle className="text-base">{t("admin.fairplay.evidenceTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              {!selected && <p className="text-muted-foreground">Chọn một hồ sơ để xem chi tiết.</p>}
+              {!selected && <p className="text-muted-foreground">{t("admin.fairplay.selectCase")}</p>}
               {selected && detail && (
                 <>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-muted-foreground" htmlFor="lock-hours">
-                        Thời hạn khoá (giờ)
+                        {t("admin.fairplay.lockHoursLabel")}
                       </label>
                       <Input
                         id="lock-hours"
@@ -339,7 +347,7 @@ function AdminFairplayPage() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground" htmlFor="lock-note">
-                        Lý do xử lý (ghi vào lịch sử)
+                        {t("admin.fairplay.reasonLabel")}
                       </label>
                       <Textarea
                         id="lock-note"
@@ -347,32 +355,35 @@ function AdminFairplayPage() {
                         maxLength={500}
                         value={lockNote}
                         onChange={(e) => setLockNote(e.target.value)}
-                        placeholder="Ví dụ: trùng khớp engine 92% trong 3 ván liên tiếp, nhịp thời gian bất thường."
+                        placeholder={t("admin.fairplay.reasonPlaceholder")}
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="secondary" onClick={() => void resolve(selected, "clear")}>
-                        Xoá cảnh báo
+                        {t("admin.fairplay.clearWarning")}
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => void resolve(selected, "rating_hold")}
                       >
-                        Khoá {lockHours}h
+                        {t("admin.fairplay.lockFor", { hours: lockHours })}
                       </Button>
                       {selectedRow && isLockActive(selectedRow) && (
                         <Button size="sm" onClick={() => void resolve(selected, "unlock")}>
                           <LockOpen className="mr-2 size-4" />
-                          Mở khoá
+                          {t("admin.fairplay.unlock")}
                         </Button>
                       )}
                     </div>
                     {selectedRow && isLockActive(selectedRow) && (
                       <p className="text-xs text-muted-foreground">
-                        Khoá tự động hết hạn sau{" "}
-                        {formatRemaining(remainingLockMs(selectedRow.lock_expires_at))}
-                        {selectedRow.lock_hours ? ` (đặt ${selectedRow.lock_hours} giờ)` : ""}.
+                        {t("admin.fairplay.autoExpireNotice", {
+                          remaining: formatRemaining(remainingLockMs(selectedRow.lock_expires_at)),
+                          hours: selectedRow.lock_hours
+                            ? t("admin.fairplay.autoExpireHoursSuffix", { hours: selectedRow.lock_hours })
+                            : "",
+                        })}
                       </p>
                     )}
                   </div>
@@ -396,21 +407,28 @@ function AdminFairplayPage() {
                       </div>
                     ))}
                     {detail.reports.length === 0 && (
-                      <p className="text-muted-foreground">Chưa có báo cáo ván nào.</p>
+                      <p className="text-muted-foreground">{t("admin.fairplay.noReports")}</p>
                     )}
                   </div>
 
                   {detail.actions.length > 0 && (
                     <div>
-                      <p className="mb-1 font-medium">Lịch sử xử lý</p>
+                      <p className="mb-1 font-medium">{t("admin.fairplay.actionHistory")}</p>
                       <ul className="space-y-1 text-xs text-muted-foreground">
                         {detail.actions.map((a) => (
                           <li key={a.id} className="rounded border border-border/50 p-2">
                             <span className="block">
-                              {new Date(a.created_at).toLocaleString("vi-VN")} · {a.action} ·{" "}
-                              {a.automatic ? "tự động" : "quản trị viên"}
+                              {t("admin.fairplay.historyLine", {
+                                time: new Date(a.created_at).toLocaleString("vi-VN"),
+                                action: a.action,
+                                actor: a.automatic ? t("admin.fairplay.automatic") : t("admin.fairplay.byAdmin"),
+                              })}
                             </span>
-                            {a.note && <span className="mt-1 block text-foreground">Lý do: {a.note}</span>}
+                            {a.note && (
+                              <span className="mt-1 block text-foreground">
+                                {t("admin.fairplay.reasonPrefix", { note: a.note })}
+                              </span>
+                            )}
                           </li>
                         ))}
                       </ul>

@@ -8,6 +8,7 @@
  * each individual denial looks innocent.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { translate } from "@/lib/i18n";
 
 /** Postgres / PostgREST codes that mean "the backend refused this access". */
 const DENIED_CODES = new Set([
@@ -142,7 +143,10 @@ export function reportAccessDenied(
       resource,
       operation,
       errorCode: denied.code,
-      message: `${recent.length} lần truy cập bị từ chối trong ${Math.round(WINDOW_MS / 60000)} phút`,
+      message: translate("admin.rlsAudit.burstMessage", {
+        count: recent.length,
+        minutes: Math.round(WINDOW_MS / 60000),
+      }),
       detail: { window_ms: WINDOW_MS, denials: recent.length },
     });
   }

@@ -6,6 +6,7 @@
  * how many times the player has already been locked, and it expires on its own
  * so no admin action is required to restore a false positive.
  */
+import { translate } from "@/lib/i18n";
 import { THRESHOLDS } from "./thresholds";
 
 export interface LockInput {
@@ -48,14 +49,14 @@ export function remainingLockMs(expiresAt: string | null, now = Date.now()): num
 }
 
 export function formatRemaining(ms: number): string {
-  if (!Number.isFinite(ms)) return "không thời hạn";
-  if (ms <= 0) return "đã hết hạn";
+  if (!Number.isFinite(ms)) return translate("admin.lock.unlimited");
+  if (ms <= 0) return translate("admin.lock.expired");
   const hours = Math.floor(ms / 3_600_000);
   const minutes = Math.floor((ms % 3_600_000) / 60_000);
   if (hours >= 24) {
     const days = Math.floor(hours / 24);
-    return `${days} ngày ${hours % 24} giờ`;
+    return translate("admin.lock.daysHours", { days, hours: hours % 24 });
   }
-  if (hours >= 1) return `${hours} giờ ${minutes} phút`;
-  return `${minutes} phút`;
+  if (hours >= 1) return translate("admin.lock.hoursMinutes", { hours, minutes });
+  return translate("admin.lock.minutes", { minutes });
 }

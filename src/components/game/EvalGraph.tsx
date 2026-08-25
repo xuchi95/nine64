@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const CLAMP = 800;
 
@@ -20,6 +21,7 @@ export function EvalGraph({
   onSelect?: (index: number) => void;
   className?: string;
 }) {
+  const { t } = useT();
   const points = useMemo(() => {
     const series = [startEval, ...evals];
     let last = 0;
@@ -44,7 +46,7 @@ export function EvalGraph({
         preserveAspectRatio="none"
         className="h-24 w-full rounded-md bg-surface-2"
         role="img"
-        aria-label="Evaluation over the course of the game"
+        aria-label={t("game.evalGraph.aria")}
       >
         <rect x="0" y="0" width={width} height={height / 2} fill="var(--color-foreground)" opacity="0.06" />
         <path d={area} fill="var(--color-primary)" opacity="0.22" />
@@ -76,7 +78,7 @@ export function EvalGraph({
             <button
               key={i}
               type="button"
-              aria-label={`Jump to move ${i}`}
+              aria-label={t("game.evalGraph.jumpToMove", { n: i })}
               className="h-full flex-1 cursor-pointer"
               onClick={() => onSelect(i - 1)}
             />

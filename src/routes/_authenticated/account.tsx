@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,19 +45,24 @@ export const Route = createFileRoute("/_authenticated/account")({
   component: AccountPage,
 });
 
-const SECTIONS = [
-  { value: "profile", label: "Hồ sơ", hint: "Tên hiển thị", icon: User },
-  { value: "email", label: "Email", hint: "Địa chỉ đăng nhập", icon: Mail },
-  { value: "password", label: "Mật khẩu", hint: "Đổi mật khẩu", icon: KeyRound },
-  { value: "mfa", label: "Xác thực 2 bước", hint: "TOTP", icon: ShieldCheck },
-] as const;
+function useSections() {
+  const { t } = useT();
+  return [
+    { value: "profile", label: t("study.account.sectionProfile"), hint: t("study.account.sectionProfileHint"), icon: User },
+    { value: "email", label: t("study.account.sectionEmail"), hint: t("study.account.sectionEmailHint"), icon: Mail },
+    { value: "password", label: t("study.account.sectionPassword"), hint: t("study.account.sectionPasswordHint"), icon: KeyRound },
+    { value: "mfa", label: t("study.account.sectionMfa"), hint: t("study.account.sectionMfaHint"), icon: ShieldCheck },
+  ] as const;
+}
 
 function AccountPage() {
+  const { t } = useT();
   const { user } = useAuth();
+  const SECTIONS = useSections();
   const name =
     (user?.user_metadata?.["display_name"] as string | undefined) ||
     user?.email?.split("@")[0] ||
-    "Player";
+    t("study.account.player");
   const initials = name.slice(0, 2).toUpperCase();
 
   return (
@@ -72,7 +78,7 @@ function AccountPage() {
           </span>
           <div className="min-w-0">
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              Tài khoản &amp; bảo mật
+              {t("study.account.headerEyebrow")}
             </p>
             <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight sm:text-3xl">
               {name}
@@ -137,6 +143,7 @@ function SectionHead({ title, desc }: { title: string; desc: string }) {
 
 
 function ProfileCard() {
+  const { t } = useT();
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(
     (user?.user_metadata?.["display_name"] as string | undefined) ?? "",
@@ -175,7 +182,7 @@ function ProfileCard() {
     if ("error" in res) toast.error(res.error);
     else {
       setAvatarPath(res.path);
-      toast.success("Đã cập nhật ảnh đại diện.");
+      toast.success(t("study.account.avatarUpdated"));
     }
   }
 
@@ -185,14 +192,14 @@ function ProfileCard() {
     await removeAvatar(user.id, avatarPath);
     setAvatarPath(null);
     setUploading(false);
-    toast.success("Đã xoá ảnh đại diện.");
+    toast.success(t("study.account.avatarRemoved"));
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     const name = displayName.trim();
     if (name.length < 2 || name.length > 32) {
-      toast.error("Tên hiển thị cần 2–32 ký tự.");
+      toast.error(t("study.account.nameLengthError"));
       return;
     }
     setBusy(true);
@@ -202,20 +209,20 @@ function ProfileCard() {
     }
     setBusy(false);
     if (error) toast.error(error.message);
-    else toast.success("Đã cập nhật hồ sơ.");
+    else toast.success(t("study.account.profileUpdated"));
   }
 
   return (
     <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
       <SectionHead
-        title="Hồ sơ"
-        desc="Ảnh và tên này xuất hiện trên bàn cờ và bảng xếp hạng."
+        title={t("study.account.profileTitle")}
+        desc={t("study.account.profileDesc")}
       />
 
       <div className="flex flex-wrap items-center gap-5">
         <span className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-primary/30 bg-primary/10 font-display text-xl font-bold text-primary">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="Ảnh đại diện" className="size-full object-cover" />
+            <img src={avatarUrl} alt={t("study.account.avatarAlt")} className="size-full object-cover" />
           ) : (
             (displayName || user?.email || "P").slice(0, 2).toUpperCase()
           )}
@@ -239,30 +246,30 @@ function ProfileCard() {
             ) : (
               <Upload className="mr-2 size-4" />
             )}
-            Tải ảnh lên
+            {t("study.account.uploadPhoto")}
           </Button>
           {avatarPath && (
             <Button type="button" variant="ghost" disabled={uploading} onClick={onRemoveAvatar}>
               <Trash2 className="mr-2 size-4" />
-              Xoá ảnh
+              {t("study.account.removePhoto")}
             </Button>
           )}
-          <p className="w-full text-xs text-muted-foreground">PNG, JPEG hoặc WebP, tối đa 2MB.</p>
+          <p className="w-full text-xs text-muted-foreground">{t("study.account.photoHint")}</p>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="display-name">Tên hiển thị</Label>
+        <Label htmlFor="display-name">{t("study.account.displayName")}</Label>
         <Input
           id="display-name"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           maxLength={32}
-          placeholder="Nine64 player"
+          placeholder={t("study.account.displayNamePlaceholder")}
         />
       </div>
       <Button type="submit" disabled={busy}>
-        {busy && <Loader2 className="mr-2 size-4 animate-spin" />}Lưu hồ sơ
+        {busy && <Loader2 className="mr-2 size-4 animate-spin" />}{t("study.account.saveProfile")}
       </Button>
     </form>
   );
@@ -270,6 +277,7 @@ function ProfileCard() {
 
 
 function EmailCard() {
+  const { t } = useT();
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -278,11 +286,11 @@ function EmailCard() {
     e.preventDefault();
     const next = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next) || next.length > 255) {
-      toast.error("Email không hợp lệ.");
+      toast.error(t("study.account.invalidEmail"));
       return;
     }
     if (next === user?.email) {
-      toast.error("Email mới trùng email hiện tại.");
+      toast.error(t("study.account.emailSameAsCurrent"));
       return;
     }
     setBusy(true);
@@ -294,39 +302,40 @@ function EmailCard() {
     if (error) toast.error(error.message);
     else {
       setEmail("");
-      toast.success("Đã gửi email xác nhận tới địa chỉ mới. Hãy bấm liên kết để hoàn tất.");
+      toast.success(t("study.account.confirmationSent"));
     }
   }
 
   return (
     <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
-      <SectionHead title="Email" desc="Đổi địa chỉ đăng nhập, cần xác nhận qua liên kết." />
+      <SectionHead title={t("study.account.emailTitle")} desc={t("study.account.emailDesc")} />
       <div className="space-y-2">
-        <Label>Email hiện tại</Label>
+        <Label>{t("study.account.currentEmail")}</Label>
         <Input value={user?.email ?? ""} disabled />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="new-email">Email mới</Label>
+        <Label htmlFor="new-email">{t("study.account.newEmail")}</Label>
         <Input
           id="new-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
-          placeholder="ban@example.com"
+          placeholder={t("study.account.emailPlaceholder")}
         />
       </div>
       <p className="text-xs text-muted-foreground">
-        Chúng tôi sẽ gửi liên kết xác nhận. Email chỉ đổi sau khi bạn xác nhận.
+        {t("study.account.emailConfirmHint")}
       </p>
       <Button type="submit" disabled={busy}>
-        {busy && <Loader2 className="mr-2 size-4 animate-spin" />}Đổi email
+        {busy && <Loader2 className="mr-2 size-4 animate-spin" />}{t("study.account.changeEmail")}
       </Button>
     </form>
   );
 }
 
 function PasswordCard() {
+  const { t } = useT();
   const { user } = useAuth();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -336,11 +345,11 @@ function PasswordCard() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (next.length < 8) {
-      toast.error("Mật khẩu mới cần tối thiểu 8 ký tự.");
+      toast.error(t("study.account.passwordTooShort"));
       return;
     }
     if (next !== confirm) {
-      toast.error("Xác nhận mật khẩu không khớp.");
+      toast.error(t("study.account.passwordMismatch"));
       return;
     }
     setBusy(true);
@@ -351,7 +360,7 @@ function PasswordCard() {
       });
       if (verifyError) {
         setBusy(false);
-        toast.error("Mật khẩu hiện tại không đúng.");
+        toast.error(t("study.account.currentPasswordWrong"));
         return;
       }
     }
@@ -362,15 +371,15 @@ function PasswordCard() {
       setCurrent("");
       setNext("");
       setConfirm("");
-      toast.success("Đã đổi mật khẩu.");
+      toast.success(t("study.account.passwordChanged"));
     }
   }
 
   return (
     <form onSubmit={save} className="panel max-w-2xl space-y-5 p-6">
-      <SectionHead title="Mật khẩu" desc="Tối thiểu 8 ký tự. Xác minh mật khẩu hiện tại trước." />
+      <SectionHead title={t("study.account.passwordTitle")} desc={t("study.account.passwordDesc")} />
       <div className="space-y-2">
-        <Label htmlFor="cur-pass">Mật khẩu hiện tại</Label>
+        <Label htmlFor="cur-pass">{t("study.account.currentPassword")}</Label>
         <Input
           id="cur-pass"
           type="password"
@@ -381,7 +390,7 @@ function PasswordCard() {
       </div>
       <Separator />
       <div className="space-y-2">
-        <Label htmlFor="new-pass">Mật khẩu mới</Label>
+        <Label htmlFor="new-pass">{t("study.account.newPassword")}</Label>
         <Input
           id="new-pass"
           type="password"
@@ -391,7 +400,7 @@ function PasswordCard() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirm-pass">Nhập lại mật khẩu mới</Label>
+        <Label htmlFor="confirm-pass">{t("study.account.confirmNewPassword")}</Label>
         <Input
           id="confirm-pass"
           type="password"
@@ -401,7 +410,7 @@ function PasswordCard() {
         />
       </div>
       <Button type="submit" disabled={busy}>
-        {busy && <Loader2 className="mr-2 size-4 animate-spin" />}Cập nhật mật khẩu
+        {busy && <Loader2 className="mr-2 size-4 animate-spin" />}{t("study.account.updatePassword")}
       </Button>
     </form>
   );
@@ -414,6 +423,7 @@ interface Factor {
 }
 
 function MfaCard() {
+  const { t } = useT();
   const [factors, setFactors] = useState<Factor[] | null>(null);
   const [enroll, setEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null);
   const [code, setCode] = useState("");
@@ -449,7 +459,7 @@ function MfaCard() {
     });
     setBusy(false);
     if (error || !data) {
-      toast.error(error?.message ?? "Không tạo được mã TOTP.");
+      toast.error(error?.message ?? t("study.account.mfaCreateFailed"));
       return;
     }
     setEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
@@ -462,7 +472,7 @@ function MfaCard() {
     const challenge = await supabase.auth.mfa.challenge({ factorId: enroll.id });
     if (challenge.error || !challenge.data) {
       setBusy(false);
-      toast.error(challenge.error?.message ?? "Không tạo được phiên xác thực.");
+      toast.error(challenge.error?.message ?? t("study.account.mfaChallengeFailed"));
       return;
     }
     const { error } = await supabase.auth.mfa.verify({
@@ -472,12 +482,12 @@ function MfaCard() {
     });
     setBusy(false);
     if (error) {
-      toast.error("Mã không đúng hoặc đã hết hạn.");
+      toast.error(t("study.account.mfaCodeInvalid"));
       return;
     }
     setEnroll(null);
     setCode("");
-    toast.success("Đã bật xác thực hai bước.");
+    toast.success(t("study.account.mfaEnabled"));
     void refresh();
   }
 
@@ -487,7 +497,7 @@ function MfaCard() {
     setBusy(false);
     if (error) toast.error(error.message);
     else {
-      toast.success("Đã tắt thiết bị xác thực.");
+      toast.success(t("study.account.mfaDisabled"));
       void refresh();
     }
   }
@@ -509,13 +519,13 @@ function MfaCard() {
           )}
         </span>
         <div className="min-w-0">
-          <p className="font-semibold">Xác thực hai bước (TOTP)</p>
+          <p className="font-semibold">{t("study.account.mfaTitle")}</p>
           <p className="text-sm text-muted-foreground">
-            Dùng Google Authenticator, Authy hoặc 1Password để tạo mã 6 số khi đăng nhập.
+            {t("study.account.mfaDesc")}
           </p>
         </div>
         <Badge variant={verified.length > 0 ? "default" : "secondary"} className="ml-auto">
-          {factors === null ? "Đang tải" : verified.length > 0 ? "Đang bật" : "Chưa bật"}
+          {factors === null ? t("study.account.mfaLoading") : verified.length > 0 ? t("study.account.mfaOn") : t("study.account.mfaOff")}
         </Badge>
       </div>
 
@@ -525,7 +535,7 @@ function MfaCard() {
             <li key={f.id} className="flex items-center gap-3 px-3 py-2.5">
               <Smartphone className="size-4 text-muted-foreground" />
               <span className="min-w-0 flex-1 truncate text-sm">
-                {f.friendly_name || "Authenticator"}
+                {f.friendly_name || t("study.account.authenticatorDefault")}
               </span>
               <Button
                 variant="ghost"
@@ -535,7 +545,7 @@ function MfaCard() {
                 onClick={() => void removeFactor(f.id)}
               >
                 <Trash2 className="mr-1.5 size-4" />
-                Tắt
+                {t("study.account.turnOff")}
               </Button>
             </li>
           ))}
@@ -545,28 +555,28 @@ function MfaCard() {
       {!enroll ? (
         <Button onClick={() => void startEnroll()} disabled={busy}>
           {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-          {verified.length > 0 ? "Thêm thiết bị mới" : "Bật xác thực hai bước"}
+          {verified.length > 0 ? t("study.account.addNewDevice") : t("study.account.enableMfa")}
         </Button>
       ) : (
         <form onSubmit={verifyEnroll} className="space-y-4 rounded-lg border border-border p-4">
           <div className="flex flex-wrap items-start gap-4">
             <img
               src={enroll.qr}
-              alt="Mã QR để thêm tài khoản vào ứng dụng xác thực"
+              alt={t("study.account.qrAlt")}
               className="size-40 rounded-md bg-white p-2"
             />
             <div className="min-w-0 space-y-2 text-sm">
-              <p>1. Quét mã QR bằng ứng dụng xác thực.</p>
-              <p className="text-muted-foreground">Hoặc nhập khoá thủ công:</p>
+              <p>{t("study.account.mfaStep1")}</p>
+              <p className="text-muted-foreground">{t("study.account.mfaOrManual")}</p>
               <code className="block break-all rounded bg-secondary px-2 py-1 font-mono text-xs">
                 {enroll.secret}
               </code>
-              <p>2. Nhập mã 6 số hiện trên ứng dụng.</p>
+              <p>{t("study.account.mfaStep2")}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-2">
-              <Label htmlFor="totp-code">Mã xác thực</Label>
+              <Label htmlFor="totp-code">{t("study.account.verificationCode")}</Label>
               <Input
                 id="totp-code"
                 value={code}
@@ -577,7 +587,7 @@ function MfaCard() {
               />
             </div>
             <Button type="submit" disabled={busy || code.length !== 6}>
-              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}Xác nhận
+              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}{t("study.account.confirm")}
             </Button>
             <Button
               type="button"
@@ -587,7 +597,7 @@ function MfaCard() {
                 setCode("");
               }}
             >
-              Huỷ
+              {t("study.account.cancel")}
             </Button>
           </div>
         </form>

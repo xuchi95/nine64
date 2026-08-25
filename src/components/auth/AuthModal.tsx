@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { useT } from "@/lib/i18n";
 
 /**
  * Floating auth dialog: the page behind is dimmed, inert (no interaction) and
@@ -9,6 +10,7 @@ import { AppShell } from "@/components/layout/AppShell";
  * on the backdrop.
  */
 export function AuthModal({ children }: { children: ReactNode }) {
+  const { t } = useT();
   const navigate = useNavigate();
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -64,7 +66,7 @@ export function AuthModal({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={close}
-            aria-label="Đóng"
+            aria-label={t("authModal.close")}
             className="absolute right-3 top-3 grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-ring-brass"
           >
             <X className="size-4" />

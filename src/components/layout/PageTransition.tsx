@@ -1,5 +1,6 @@
 import { useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useT } from "@/lib/i18n";
 
 /**
  * Fades/slides each route in when its pathname changes, so navigations and
@@ -17,12 +18,13 @@ export function PageTransition({ children }: { children: ReactNode }) {
 
 /** Default pending UI: keeps layout stable while a route resolves. */
 export function RoutePending() {
+  const { t } = useT();
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4">
       <div className="h-1.5 w-40 overflow-hidden rounded-full bg-secondary">
         <div className="nexus-indeterminate h-full w-1/3 rounded-full bg-primary" />
       </div>
-      <p className="text-xs text-muted-foreground">Đang tải…</p>
+      <p className="text-xs text-muted-foreground">{t("pageTransition.loading")}</p>
     </div>
   );
 }

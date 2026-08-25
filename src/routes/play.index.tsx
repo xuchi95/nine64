@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/play/")({
   head: () =>
@@ -21,56 +22,57 @@ const AVAILABLE = [
   {
     to: "/play/ai",
     icon: Bot,
-    title: "Play AI",
-    text: "15 levels, 7 personalities, human-like pacing.",
+    titleKey: "play.hub.card.ai.title",
+    textKey: "play.hub.card.ai.text",
   },
   {
     to: "/play/local",
     icon: Users,
-    title: "Local game",
-    text: "Two players, one device, real clocks.",
+    titleKey: "play.hub.card.local.title",
+    textKey: "play.hub.card.local.text",
   },
   {
     to: "/online",
     icon: Globe,
-    title: "Online & ranked",
-    text: "Realtime matchmaking with Elo rating.",
+    titleKey: "play.hub.card.online.title",
+    textKey: "play.hub.card.online.text",
   },
   {
     to: "/play/share",
     icon: Link2,
-    title: "Share by link / PGN",
-    text: "Correspondence play: sync each move via URL or PGN.",
+    titleKey: "play.hub.card.share.title",
+    textKey: "play.hub.card.share.text",
   },
   {
     to: "/play/ai",
     icon: Swords,
-    title: "Variants",
-    text: "Chess960, Three-Check, King of the Hill and more.",
+    titleKey: "play.hub.card.variants.title",
+    textKey: "play.hub.card.variants.text",
   },
 
   {
     to: "/analysis",
     icon: LineChart,
-    title: "Analysis board",
-    text: "Free board with engine evaluation on demand.",
+    titleKey: "play.hub.card.analysis.title",
+    textKey: "play.hub.card.analysis.text",
   },
 ] as const;
 
-const SOON = [{ icon: Trophy, title: "Tournaments", text: "Arenas, brackets and leaderboards." }] as const;
+const SOON = [
+  { icon: Trophy, titleKey: "play.hub.soon.tournaments.title", textKey: "play.hub.soon.tournaments.text" },
+] as const;
 
 function PlayHub() {
+  const { t } = useT();
   return (
     <AppShell>
-      <h1 className="text-2xl font-bold">Play</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Everything below is live and fully playable offline.
-      </p>
+      <h1 className="text-2xl font-bold">{t("play.hub.title")}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{t("play.hub.subtitle")}</p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         {AVAILABLE.map((card) => (
           <Link
-            key={card.title}
+            key={card.titleKey}
             to={card.to}
             className="panel flex items-start gap-4 p-5 transition-colors hover:border-primary/50"
           >
@@ -78,30 +80,30 @@ function PlayHub() {
               <card.icon className="size-5" />
             </span>
             <span>
-              <span className="block font-semibold">{card.title}</span>
-              <span className="mt-1 block text-sm text-muted-foreground">{card.text}</span>
+              <span className="block font-semibold">{t(card.titleKey)}</span>
+              <span className="mt-1 block text-sm text-muted-foreground">{t(card.textKey)}</span>
             </span>
           </Link>
         ))}
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        Coming soon
+        {t("play.hub.comingSoon")}
       </h2>
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
         {SOON.map((card) => (
-          <div key={card.title} className="panel flex items-start gap-4 p-5 opacity-60">
+          <div key={card.titleKey} className="panel flex items-start gap-4 p-5 opacity-60">
             <span className="flex size-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
               <card.icon className="size-5" />
             </span>
             <span>
               <span className="flex items-center gap-2 font-semibold">
-                {card.title}
+                {t(card.titleKey)}
                 <span className="rounded bg-secondary px-1.5 py-0.5 text-2xs uppercase tracking-wider text-muted-foreground">
-                  Soon
+                  {t("play.hub.soon.badge")}
                 </span>
               </span>
-              <span className="mt-1 block text-sm text-muted-foreground">{card.text}</span>
+              <span className="mt-1 block text-sm text-muted-foreground">{t(card.textKey)}</span>
             </span>
           </div>
         ))}

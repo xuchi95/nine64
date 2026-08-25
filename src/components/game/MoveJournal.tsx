@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import { formatClock, formatDuration } from "@/lib/chess/timeControls";
 import { gameLabelClass } from "./GameLayout";
 
@@ -24,6 +25,7 @@ export interface MoveJournalProps {
 }
 
 export function MoveJournal({ entries, statusLine, footer, className }: MoveJournalProps) {
+  const { t } = useT();
   const scroller = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -34,16 +36,16 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="mb-2 flex items-center justify-between">
-        <span className={gameLabelClass}>Live log</span>
+        <span className={gameLabelClass}>{t("game.journal.liveLog")}</span>
         <span className="tabular text-xs font-semibold text-muted-foreground">
-          {entries.length} plies
+          {t("game.journal.pliesCount", { n: entries.length })}
         </span>
       </div>
 
       <div ref={scroller} className="max-h-[320px] overflow-y-auto pr-1">
         {entries.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No moves yet — the log updates for both players after every move.
+            {t("game.journal.empty")}
           </p>
         ) : (
           <ul className="space-y-1 text-sm">
@@ -82,7 +84,7 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                   </span>
                 )}
                 {e.pending && <span className="text-2xs font-bold uppercase tracking-[0.12em] text-warning">
-                    sending
+                    {t("game.journal.sending")}
                   </span>}
               </li>
             ))}

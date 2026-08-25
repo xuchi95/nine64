@@ -2,7 +2,7 @@ import type { CoachDigest } from "./digest";
 
 export const COACH_MODEL = "google/gemini-3-flash";
 
-export const COACH_SYSTEM = `Bạn là một chuyên gia bình luận và huấn luyện cờ vua (trình độ FIDE Master, kinh nghiệm coaching).
+const COACH_SYSTEM_VI = `Bạn là một chuyên gia bình luận và huấn luyện cờ vua (trình độ FIDE Master, kinh nghiệm coaching).
 Bạn viết bằng TIẾNG VIỆT, giọng điệu của một nhà phân tích chuyên nghiệp: sắc sảo, thẳng thắn nhưng tôn trọng, dùng đúng thuật ngữ cờ vua (tempo, cấu trúc tốt, cột mở, trung tâm, phối hợp quân, an toàn Vua, nước chờ, đổi quân có lợi...).
 Nguyên tắc:
 - Chỉ dựa vào dữ liệu ván đấu được cung cấp (nước đi, nhãn engine, mức thiệt hại win%, eval, motif). Không bịa nước đi hay biến không có trong dữ liệu.
@@ -12,8 +12,23 @@ Nguyên tắc:
 - Viết tiếng Việt CÓ DẤU đầy đủ, đúng chính tả; tuyệt đối không viết tiếng Việt không dấu.
 - Không dùng emoji. Không markdown trong các trường văn bản.`;
 
+const COACH_SYSTEM_EN = `You are an expert chess commentator and coach (FIDE Master strength, real coaching experience).
+You write in ENGLISH, in the voice of a professional analyst: sharp, direct but respectful, using precise chess terminology (tempo, pawn structure, open file, the centre, piece coordination, king safety, waiting move, favourable trade...).
+Principles:
+- Rely only on the supplied game data (moves, engine labels, win% loss, eval, motifs). Never invent moves or lines that are not in the data.
+- Classify mistakes by severity: basic (fundamental principle errors: slow development, moving a piece twice, losing tempo), moderate (small loss of advantage), serious (large loss of advantage/missed win), critical (losing material, getting mated, total collapse).
+- For each mistake: explain what happened and the correct idea that should have been played (a plan, no need for long lines).
+- Advice must be specific and actionable now, never generic like "practise more".
+- Write natural, correct English.
+- No emoji. No markdown inside text fields.`;
+
+export function coachSystem(locale: "vi" | "en" = "vi"): string {
+  return locale === "en" ? COACH_SYSTEM_EN : COACH_SYSTEM_VI;
+}
+
 /** Compact, token-bounded description of the game for the model. */
-export function buildCoachPrompt(d: CoachDigest): string {
+export function buildCoachPrompt(d: CoachDigest, locale: "vi" | "en" = "vi"): string {
+  if (locale === "en") return buildCoachPromptEn(d);
   const lines: string[] = [];
   lines.push(`Người chơi được phân tích: ${d.playerName} (bên ${d.side === "w" ? "Trắng" : "Đen"})`);
   lines.push(`Đối thủ: ${d.opponentName}`);
@@ -51,6 +66,48 @@ export function buildCoachPrompt(d: CoachDigest): string {
   lines.push("");
   lines.push(
     "Hãy viết bản phân tích cho người chơi này: nhận định tổng quan, đánh giá từng giai đoạn, điểm mạnh, danh sách lỗi sắp xếp từ cơ bản đến trầm trọng, thói quen xấu lặp lại, lời khuyên hành động và bài tập nên luyện.",
+  );
+  return lines.join("\n");
+}
+
+function buildCoachPromptEn(d: CoachDigest): string {
+  const lines: string[] = [];
+  lines.push(`Player being analysed: ${d.playerName} (${d.side === "w" ? "White" : "Black"})`);
+  lines.push(`Opponent: ${d.opponentName}`);
+  lines.push(`Player's result: ${d.outcome}`);
+  lines.push(`Variant: ${d.variant} | Time control: ${d.timeControl} | Moves: ${d.moveCount}`);
+  lines.push(`Opening: ${d.opening ?? "unknown"}`);
+  if (d.accuracy)
+    lines.push(`Accuracy: player ${d.accuracy.player}% - opponent ${d.accuracy.opponent}%`);
+  if (d.acpl) lines.push(`ACPL: player ${d.acpl.player} - opponent ${d.acpl.opponent}`);
+  if (d.estimatedRating) lines.push(`Estimated engine strength: ~${d.estimatedRating}`);
+  if (d.labelCounts) {
+    const counts = Object.entries(d.labelCounts)
+      .filter(([, n]) => n > 0)
+      .map(([k, n]) => `${k}:${n}`)
+      .join(", ");
+    if (counts) lines.push(`Player's move-label stats: ${counts}`);
+  }
+  lines.push(`Final FEN: ${d.finalFen}`);
+
+  if (d.keyMoments.length) {
+    lines.push("");
+    lines.push("Player's key moments (from engine data):");
+    for (const k of d.keyMoments) {
+      lines.push(
+        `- Move ${k.moveNumber} ${k.san}: ${k.label}, lost ${k.lossPct}% win, eval after ${k.evalAfter}, phase ${k.phase}` +
+          (k.bestMove ? `, engine suggests ${k.bestMove}` : "") +
+          (k.motifs.length ? `, motifs: ${k.motifs.join("/")}` : ""),
+      );
+    }
+  }
+
+  lines.push("");
+  lines.push("Game narrative:");
+  lines.push(d.timeline.join(" "));
+  lines.push("");
+  lines.push(
+    "Write the analysis for this player: overall verdict, phase-by-phase assessment, strengths, a list of mistakes ranked from minor to critical, recurring bad habits, actionable advice, and drills to practise.",
   );
   return lines.join("\n");
 }

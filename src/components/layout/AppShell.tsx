@@ -35,25 +35,27 @@ import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useSwipeToClose } from "@/hooks/useSwipeToClose";
 import { CookieBanner } from "@/components/layout/CookieBanner";
 import { resetCookieConsent } from "@/lib/cookieConsent";
+import { LanguageToggle } from "@/components/layout/LanguageToggle";
+import { useT } from "@/lib/i18n";
 
 const MAIN_NAV = [
-  { to: "/", label: "Home" },
-  { to: "/play", label: "Play" },
-  { to: "/games", label: "Games" },
-  { to: "/puzzles", label: "Puzzles" },
+  { to: "/", labelKey: "shell.nav.home" },
+  { to: "/play", labelKey: "shell.nav.play" },
+  { to: "/games", labelKey: "shell.nav.games" },
+  { to: "/puzzles", labelKey: "shell.nav.puzzles" },
 ] as const;
 
 const MORE_NAV = [
-  { to: "/drills", label: "Drills" },
-  { to: "/progress", label: "Progress" },
-  { to: "/insights", label: "Insights" },
-  { to: "/analysis", label: "Analysis" },
+  { to: "/drills", labelKey: "shell.nav.drills" },
+  { to: "/progress", labelKey: "shell.nav.progress" },
+  { to: "/insights", labelKey: "shell.nav.insights" },
+  { to: "/analysis", labelKey: "shell.nav.analysis" },
 ] as const;
 
 const PROFILE_MENU = [
-  { to: "/account", label: "Account", icon: ShieldCheck },
-  { to: "/games", label: "Games", icon: History },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/account", labelKey: "shell.profile.account", icon: ShieldCheck },
+  { to: "/games", labelKey: "shell.profile.games", icon: History },
+  { to: "/settings", labelKey: "shell.profile.settings", icon: SettingsIcon },
 ] as const;
 
 /** Normalise a URL path: no trailing slash, always leading slash. */
@@ -76,6 +78,7 @@ function isRouteActive(pathname: string, to: string) {
 
 export function AppShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
   const settings = useSettings();
+  const { t } = useT();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -102,7 +105,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
                 activeProps={{ className: "bg-primary/10 text-foreground after:opacity-100" }}
                 activeOptions={{ exact: item.to === "/" }}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
             <MoreNav />
@@ -111,7 +114,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
           <div className="flex shrink-0 items-center gap-2 justify-self-end sm:gap-2.5 lg:ml-auto">
             <button
               type="button"
-              aria-label="Toggle colour mode"
+              aria-label={t("shell.aria.toggleTheme")}
               onClick={() =>
                 updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
               }
@@ -123,6 +126,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
                 <Moon className="size-5" />
               )}
             </button>
+            <LanguageToggle />
             <NotificationBell />
             <AuthHeader />
           </div>
@@ -150,19 +154,19 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             </>
           )}
           <Link to="/privacy" className="hover:text-foreground hover:underline">
-            Chính sách bảo mật
+            {t("shell.footer.privacy")}
           </Link>
           <span aria-hidden className="text-border">|</span>
           <Link to="/terms" className="hover:text-foreground hover:underline">
-            Điều khoản sử dụng
+            {t("shell.footer.terms")}
           </Link>
           <span aria-hidden className="text-border">|</span>
           <Link to="/cookie-policy" className="hover:text-foreground hover:underline">
-            Cookie
+            {t("shell.footer.cookiePolicy")}
           </Link>
           <span aria-hidden className="text-border">|</span>
           <Link to="/contact" className="hover:text-foreground hover:underline">
-            Liên hệ
+            {t("shell.footer.contact")}
           </Link>
           <span aria-hidden className="text-border">|</span>
           <button
@@ -170,7 +174,7 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             onClick={resetCookieConsent}
             className="hover:text-foreground hover:underline"
           >
-            Tuỳ chọn cookie
+            {t("shell.footer.cookiePrefs")}
           </button>
         </p>
 
@@ -185,6 +189,7 @@ function MobileNav() {
   const { pathname } = useLocation();
   const settings = useSettings();
   const { user, signOut } = useAuth();
+  const { t } = useT();
   const swipe = useSwipeToClose({
     side: "left",
     enabled: open,
@@ -214,7 +219,7 @@ function MobileNav() {
         <SheetTrigger asChild>
           <button
             type="button"
-            aria-label="Mở menu"
+            aria-label={t("shell.aria.openMenu")}
             className="flex size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors active:bg-secondary lg:hidden"
           >
             <Menu className="size-6" />
@@ -255,7 +260,7 @@ function MobileNav() {
                     active && "bg-primary/15 text-primary",
                   )}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                   {active && <Check className="size-5 text-primary" />}
                 </Link>
               );
@@ -263,7 +268,7 @@ function MobileNav() {
           </div>
 
           <p className="px-6 pb-2.5 pt-7 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            Train
+            {t("shell.nav.train")}
           </p>
           <div className="flex flex-col gap-2">
             {MORE_NAV.map((item) => {
@@ -278,7 +283,7 @@ function MobileNav() {
                     active && "bg-primary/15 text-primary",
                   )}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                   {active && <Check className="size-5 text-primary" />}
                 </Link>
               );
@@ -288,14 +293,14 @@ function MobileNav() {
           {user && (
             <>
               <p className="px-6 pb-2.5 pt-7 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Account
+                {t("shell.nav.account")}
               </p>
               <div className="flex flex-col gap-2">
                 {PROFILE_MENU.map((item) => {
                   const active = isActive(item.to);
                   return (
                     <Link
-                      key={item.to + item.label}
+                      key={item.to + item.labelKey}
                       to={item.to}
                       data-active={active ? "true" : undefined}
                       className={cn(
@@ -304,7 +309,7 @@ function MobileNav() {
                       )}
                     >
                       <item.icon className={cn("size-5 shrink-0", active && "text-primary")} />
-                      {item.label}
+                      {t(item.labelKey)}
                       {active && <Check className="ml-auto size-5 text-primary" />}
                     </Link>
                   );
@@ -315,34 +320,37 @@ function MobileNav() {
         </nav>
 
 
-        <div className="flex items-center gap-3 border-t border-border/70 p-5">
-          <Button
-            variant="outline"
-            className="h-14 flex-1 justify-center gap-2 text-base"
-            onClick={() =>
-              updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
-            }
-          >
-            {settings.appearance === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
-            {settings.appearance === "dark" ? "Sáng" : "Tối"}
-          </Button>
-          {user ? (
+        <div className="flex flex-col gap-3 border-t border-border/70 p-5">
+          <LanguageToggle variant="inline" />
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              className="h-14 flex-1 justify-center gap-2 text-base text-destructive"
-              onClick={() => {
-                setOpen(false);
-                void signOut();
-              }}
+              className="h-14 flex-1 justify-center gap-2 text-base"
+              onClick={() =>
+                updateSettings({ appearance: settings.appearance === "dark" ? "light" : "dark" })
+              }
             >
-              <LogOut className="size-5" />
-              Đăng xuất
+              {settings.appearance === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+              {settings.appearance === "dark" ? t("shell.mobile.themeLight") : t("shell.mobile.themeDark")}
             </Button>
-          ) : (
-            <Button asChild className="h-14 flex-1 justify-center text-base">
-              <Link to="/auth/login">Đăng nhập</Link>
-            </Button>
-          )}
+            {user ? (
+              <Button
+                variant="outline"
+                className="h-14 flex-1 justify-center gap-2 text-base text-destructive"
+                onClick={() => {
+                  setOpen(false);
+                  void signOut();
+                }}
+              >
+                <LogOut className="size-5" />
+                {t("shell.mobile.signOut")}
+              </Button>
+            ) : (
+              <Button asChild className="h-14 flex-1 justify-center text-base">
+                <Link to="/auth/login">{t("shell.mobile.signIn")}</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -352,6 +360,7 @@ function MobileNav() {
 
 function MoreNav({ mobile }: { mobile?: boolean }) {
   const { pathname } = useLocation();
+  const { t } = useT();
   const active = MORE_NAV.some((item) => isRouteActive(pathname, item.to));
 
   return (
@@ -365,7 +374,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
             active && "bg-primary/10 text-primary",
           )}
         >
-          More
+          {t("shell.nav.more")}
           <ChevronDown className="size-4 opacity-70" />
         </button>
       </DropdownMenuTrigger>
@@ -382,7 +391,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
               )}
             >
               <Link to={item.to} className="flex items-center justify-between">
-                {item.label}
+                {t(item.labelKey)}
                 {isActive && <Check className="size-4 text-primary" />}
               </Link>
             </DropdownMenuItem>
@@ -398,6 +407,7 @@ function NotificationBell() {
   const { user } = useAuth();
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
+  const { t } = useT();
 
   if (!user) return null;
 
@@ -406,7 +416,7 @@ function NotificationBell() {
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            aria-label="Notifications"
+            aria-label={t("shell.aria.notifications")}
             className="relative flex size-12 items-center justify-center rounded-xl border border-border/80 bg-secondary/30 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:size-11"
           >
             <Bell className="size-5" />
@@ -420,20 +430,20 @@ function NotificationBell() {
         <DropdownMenuContent align="end" className="w-80 rounded-xl p-2">
 
         <div className="flex items-center justify-between px-2.5 py-2">
-          <span className="text-sm font-medium">Notifications</span>
+          <span className="text-sm font-medium">{t("shell.notifications.title")}</span>
           {unreadCount > 0 && (
             <button
               type="button"
               onClick={() => void markAllRead()}
               className="text-xs text-primary hover:underline"
             >
-              Mark all read
+              {t("shell.notifications.markAllRead")}
             </button>
           )}
         </div>
         <DropdownMenuSeparator />
         {notifications.length === 0 ? (
-          <div className="px-2.5 py-4 text-center text-sm text-muted-foreground">No notifications yet.</div>
+          <div className="px-2.5 py-4 text-center text-sm text-muted-foreground">{t("shell.notifications.empty")}</div>
         ) : (
           <div className="max-h-80 overflow-y-auto">
             {notifications.slice(0, 20).map((n) => (
@@ -468,6 +478,7 @@ function NotificationBell() {
 function AuthHeader() {
   const { pathname } = useLocation();
   const { user, isLoading, signOut } = useAuth();
+  const { t } = useT();
 
   if (isLoading) {
     return (
@@ -481,19 +492,19 @@ function AuthHeader() {
     return (
       <div className="flex items-center gap-2">
         <Button asChild variant="ghost" className="hidden h-12 px-4 sm:inline-flex lg:h-11">
-          <Link to="/auth/login">Sign in</Link>
+          <Link to="/auth/login">{t("shell.auth.signIn")}</Link>
         </Button>
         <Button asChild className="h-12 px-4 lg:h-11">
           <Link to="/auth/register">
-            <span className="sm:hidden">Đăng nhập</span>
-            <span className="hidden sm:inline">Register</span>
+            <span className="sm:hidden">{t("shell.auth.signIn")}</span>
+            <span className="hidden sm:inline">{t("shell.auth.register")}</span>
           </Link>
         </Button>
       </div>
     );
   }
 
-  const displayName = (user.user_metadata?.["display_name"] as string) || user.email || "Player";
+  const displayName = (user.user_metadata?.["display_name"] as string) || user.email || t("shell.auth.defaultName");
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
@@ -525,7 +536,7 @@ function AuthHeader() {
           const active = isRouteActive(pathname, item.to);
           return (
             <DropdownMenuItem
-              key={item.to + item.label}
+              key={item.to + item.labelKey}
               asChild
               className={cn(
                 "cursor-pointer rounded-lg px-3.5 py-2.5",
@@ -535,7 +546,7 @@ function AuthHeader() {
               <Link to={item.to} className="flex items-center justify-between">
                 <span className="flex items-center">
                   <item.icon className={cn("mr-3 size-4", active ? "text-primary" : "text-muted-foreground")} />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(item.labelKey)}</span>
                 </span>
                 {active && <Check className="size-4 text-primary" />}
               </Link>
@@ -548,7 +559,7 @@ function AuthHeader() {
           className="cursor-pointer rounded-lg px-3.5 py-2.5 text-destructive focus:text-destructive"
         >
           <LogOut className="mr-3 size-4" />
-          Sign out
+          {t("shell.auth.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -556,32 +567,33 @@ function AuthHeader() {
 
 }
 
-const ROUTE_LABELS: Record<string, string> = {
-  "/": "Home",
-  "/play": "Play",
-  "/play/ai": "vs Bot",
-  "/play/local": "Local",
-  "/play/share": "Share",
-  "/online": "Play online",
-  "/game": "Live game",
-  "/games": "My games",
-  "/puzzles": "Puzzles",
-  "/drills": "Bài tập",
-  "/progress": "Tiến bộ",
-  "/insights": "Insights",
-  "/analysis": "Analysis",
-  "/account": "Account",
-  "/settings": "Settings",
-  "/admin": "Admin",
-  "/admin/fairplay": "Fair Play",
-  "/admin/fairplay/log": "Nhật ký",
-  "/admin/audit": "Audit log",
-  "/admin/security": "Truy cập bị chặn",
+const ROUTE_LABEL_KEYS: Record<string, string> = {
+  "/": "shell.nav.home",
+  "/play": "shell.nav.play",
+  "/play/ai": "shell.route.playAi",
+  "/play/local": "shell.route.playLocal",
+  "/play/share": "shell.route.playShare",
+  "/online": "shell.route.online",
+  "/game": "shell.route.liveGame",
+  "/games": "shell.route.myGames",
+  "/puzzles": "shell.nav.puzzles",
+  "/drills": "shell.nav.drills",
+  "/progress": "shell.nav.progress",
+  "/insights": "shell.nav.insights",
+  "/analysis": "shell.nav.analysis",
+  "/account": "shell.profile.account",
+  "/settings": "shell.profile.settings",
+  "/admin": "shell.route.admin",
+  "/admin/fairplay": "shell.route.fairplay",
+  "/admin/fairplay/log": "shell.route.fairplayLog",
+  "/admin/audit": "shell.route.auditLog",
+  "/admin/security": "shell.route.security",
 
 };
 
 function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
   const location = useLocation();
+  const { t } = useT();
   const pathname = normalizePath(location.pathname);
   const params = useParams({ strict: false });
   const gameId = (params as { gameId?: string }).gameId;
@@ -593,12 +605,13 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
   // Build every ancestor crumb that has a known label and is a real route.
   const crumbs = segments.slice(0, -1).map((_, index) => {
     const to = "/" + segments.slice(0, index + 1).join("/");
-    return { to, label: ROUTE_LABELS[to] };
+    const key = ROUTE_LABEL_KEYS[to];
+    return { to, label: key ? t(key) : undefined };
   }).filter((c): c is { to: string; label: string } => Boolean(c.label));
 
   const currentLabel =
-    ROUTE_LABELS[pathname] ||
-    (gameId ? `Game ${gameId.slice(0, 6)}` : segments[segments.length - 1] || "");
+    (ROUTE_LABEL_KEYS[pathname] ? t(ROUTE_LABEL_KEYS[pathname]!) : "") ||
+    (gameId ? t("shell.route.game", { id: gameId.slice(0, 6) }) : segments[segments.length - 1] || "");
 
   return (
     <div className="border-t border-border/40 bg-secondary/20">
@@ -610,7 +623,7 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
       >
         <Link to="/" className="flex shrink-0 items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-secondary/60 hover:text-foreground">
           <Home className="size-3" />
-          <span className="hidden sm:inline">Home</span>
+          <span className="hidden sm:inline">{t("shell.breadcrumb.home")}</span>
         </Link>
         {crumbs.map((crumb) => (
           <span key={crumb.to} className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-1.5">

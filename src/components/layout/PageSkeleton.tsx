@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Route-level skeletons. They render inside AppShell so the header/nav stay
@@ -130,10 +131,11 @@ export function FormSkeleton() {
 }
 
 function SkeletonFrame({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
+  const { t } = useT();
   return (
     <AppShell wide={wide}>
       <div aria-busy="true" aria-live="polite" className="nexus-skeleton-fade space-y-6">
-        <span className="sr-only">Đang tải nội dung…</span>
+        <span className="sr-only">{t("skeleton.loading")}</span>
         {children}
       </div>
     </AppShell>

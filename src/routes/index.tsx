@@ -20,6 +20,7 @@ import { GenericSkeleton } from "@/components/layout/PageSkeleton";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { StaticBoard, START_PIECES } from "@/components/chess/StaticBoard";
 import { pageHead } from "@/lib/seo";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { t } = useT();
   return (
     <AppShell>
       <div className="relative">
@@ -78,13 +80,12 @@ function Home() {
 
           <div className="min-w-0">
             <h1 className="font-display text-[clamp(2.15rem,7.5vw,2.75rem)] font-extrabold leading-[1.03] tracking-tight sm:text-[3.25rem] md:text-[2.75rem] lg:text-[3.5rem]">
-              Play Chess Online
+              {t("play.home.title1")}
               <br />
-              <span className="text-primary">on a board built to win.</span>
+              <span className="text-primary">{t("play.home.title2")}</span>
             </h1>
             <p className="mt-5 max-w-md text-sm text-muted-foreground sm:text-base">
-              {BOT_LEVELS.length} bot levels, ranked online games and a review that
-              actually teaches you.
+              {t("play.home.subtitle", { n: BOT_LEVELS.length })}
             </p>
 
 
@@ -96,7 +97,7 @@ function Home() {
               >
                 <Link to="/play/ai" search={{ quick: true }}>
                   <Play className="size-5" />
-                  New game
+                  {t("play.home.newGame")}
                 </Link>
               </Button>
               <Button
@@ -107,7 +108,7 @@ function Home() {
               >
                 <Link to="/online">
                   <Users className="size-5" />
-                  Play online
+                  {t("play.home.playOnline")}
                 </Link>
               </Button>
             </div>
@@ -117,14 +118,14 @@ function Home() {
                 to="/play/ai"
                 className="underline underline-offset-4 hover:text-primary"
               >
-                Custom setup
+                {t("play.home.customSetup")}
               </Link>{" "}
               ·{" "}
               <Link
                 to="/play/local"
                 className="underline underline-offset-4 hover:text-primary"
               >
-                Pass &amp; play
+                {t("play.home.passAndPlay")}
               </Link>
             </p>
           </div>
@@ -132,16 +133,16 @@ function Home() {
 
         {/* ── Stats rail ───────────────────────────────────────────────── */}
         <section className="relative mt-6 flex items-stretch justify-between border-y border-border bg-surface-2/60 px-2 py-5 sm:px-8">
-          <Metric value={`${BOT_LEVELS.length}`} label="Bot levels" />
+          <Metric value={`${BOT_LEVELS.length}`} label={t("play.home.stat.botLevels")} />
           <span aria-hidden className="w-px bg-border" />
           <Metric
             value={`${BOT_PERSONALITIES.length}`.padStart(2, "0")}
-            label="Personalities"
+            label={t("play.home.stat.personalities")}
           />
           <span aria-hidden className="w-px bg-border" />
           <Metric
             value={`${VARIANTS.length}`.padStart(2, "0")}
-            label="Variants"
+            label={t("play.home.stat.variants")}
           />
         </section>
 
@@ -150,40 +151,43 @@ function Home() {
           <FeatureRule
             to="/play/ai"
             icon={<Bot className="size-5" />}
-            title="Bots & Personalities"
-            text={`${BOT_PERSONALITIES.length} personalities across ${BOT_LEVELS.length} strength tiers, each with human-like pacing.`}
+            title={t("play.home.feature.bots.title")}
+            text={t("play.home.feature.bots.text", {
+              personalities: BOT_PERSONALITIES.length,
+              levels: BOT_LEVELS.length,
+            })}
             accent
           />
           <FeatureRule
             to="/puzzles"
             icon={<GraduationCap className="size-5" />}
-            title="Tactical Puzzles"
-            text="Your real mistakes become trainable positions, scheduled by spaced repetition."
+            title={t("play.home.feature.puzzles.title")}
+            text={t("play.home.feature.puzzles.text")}
           />
           <FeatureRule
             to="/insights"
             icon={<LineChart className="size-5" />}
-            title="Review & Insights"
-            text="Brilliant to blunder, eval curve, accuracy and phase-by-phase weakness."
+            title={t("play.home.feature.review.title")}
+            text={t("play.home.feature.review.text")}
           />
           <FeatureRule
             to="/online"
             icon={<Globe className="size-5" />}
-            title="Online Ranked"
-            text="Glicko-2 rating, priority matchmaking and realtime clocks that never desync."
+            title={t("play.home.feature.online.title")}
+            text={t("play.home.feature.online.text")}
           />
         </section>
 
         {/* ── Mode grid ────────────────────────────────────────────────── */}
         <section className="relative mt-12 [contain-intrinsic-size:auto_220px] [content-visibility:auto]">
           <h2 className="font-mono text-2xs uppercase tracking-[0.28em] text-muted-foreground">
-            Quick modes
+            {t("play.home.quickModes")}
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <ModeTile to="/play/local" icon={<Users className="size-6" />} title="Local" />
-            <ModeTile to="/play/share" icon={<Share2 className="size-6" />} title="Share" />
-            <ModeTile to="/analysis" icon={<BarChart3 className="size-6" />} title="Analysis" />
-            <ModeTile to="/games" icon={<LineChart className="size-6" />} title="Games" />
+            <ModeTile to="/play/local" icon={<Users className="size-6" />} title={t("play.home.mode.local")} />
+            <ModeTile to="/play/share" icon={<Share2 className="size-6" />} title={t("play.home.mode.share")} />
+            <ModeTile to="/analysis" icon={<BarChart3 className="size-6" />} title={t("play.home.mode.analysis")} />
+            <ModeTile to="/games" icon={<LineChart className="size-6" />} title={t("play.home.mode.games")} />
           </div>
         </section>
 
@@ -196,10 +200,10 @@ function Home() {
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="font-display text-[clamp(1.5rem,6vw,1.875rem)] font-extrabold tracking-tight sm:text-3xl">
-                Your next game is one click away
+                {t("play.home.closing.title")}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                No download. Offline-ready board. {APP.tagline}
+                {t("play.home.closing.text", { tagline: APP.tagline })}
               </p>
             </div>
             <div className="flex w-full flex-col gap-3 sm:flex-row md:w-auto">
@@ -210,7 +214,7 @@ function Home() {
               >
                 <Link to="/play/ai" search={{ quick: true }}>
                   <Swords className="size-5" />
-                  New game
+                  {t("play.home.closing.newGame")}
                 </Link>
               </Button>
               <Button
@@ -219,7 +223,7 @@ function Home() {
                 variant="outline"
                 className="h-13 rounded-sm border-primary px-8 font-display text-sm font-extrabold uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
               >
-                <Link to="/online">Play online</Link>
+                <Link to="/online">{t("play.home.closing.playOnline")}</Link>
               </Button>
             </div>
           </div>

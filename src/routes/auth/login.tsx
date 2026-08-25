@@ -12,14 +12,15 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth/login")({
   head: () => ({
     meta: [
-      { title: `Sign in — ${APP.name}` },
-      { name: "description", content: "Sign in to your Nine64 account to play online and track your rating." },
-      { property: "og:title", content: `Sign in — ${APP.name}` },
-      { property: "og:description", content: "Sign in to your Nine64 account." },
+      { title: `Đăng nhập — ${APP.name}` },
+      { name: "description", content: "Đăng nhập vào tài khoản Nine64 để chơi trực tuyến và theo dõi điểm rating." },
+      { property: "og:title", content: `Đăng nhập — ${APP.name}` },
+      { property: "og:description", content: "Đăng nhập vào tài khoản Nine64 của bạn." },
     ],
   }),
   pendingComponent: FormSkeleton,
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/auth/login")({
 });
 
 function LoginPage() {
+  const { t } = useT();
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth/login" }) as { redirect?: string };
   const [email, setEmail] = useState("");
@@ -44,7 +46,7 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message || "Sign in failed");
+      toast.error(error.message || t("study.login.signInFailed"));
       return;
     }
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -53,11 +55,11 @@ function LoginPage() {
       const factor = factors?.totp?.[0];
       if (factor) {
         setMfaFactorId(factor.id);
-        toast.info("Nhập mã xác thực 2 bước để hoàn tất đăng nhập.");
+        toast.info(t("study.login.mfaEnterToFinish"));
         return;
       }
     }
-    toast.success("Welcome back!");
+    toast.success(t("study.login.welcomeToast"));
     navigate({ to: redirectTo, replace: true });
   }
 
@@ -68,7 +70,7 @@ function LoginPage() {
     const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
     if (challenge.error || !challenge.data) {
       setLoading(false);
-      toast.error(challenge.error?.message ?? "Không tạo được phiên xác thực.");
+      toast.error(challenge.error?.message ?? t("study.login.mfaChallengeFailed"));
       return;
     }
     const { error } = await supabase.auth.mfa.verify({
@@ -78,10 +80,10 @@ function LoginPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error("Mã không đúng hoặc đã hết hạn.");
+      toast.error(t("study.login.mfaCodeInvalid"));
       return;
     }
-    toast.success("Welcome back!");
+    toast.success(t("study.login.welcomeToast"));
     navigate({ to: redirectTo, replace: true });
   }
 
@@ -90,13 +92,13 @@ function LoginPage() {
       <AuthModal>
         <form onSubmit={handleMfa} className="space-y-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">Xác thực hai bước</h1>
+            <h1 className="text-2xl font-bold">{t("study.login.mfaTitle")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Nhập mã 6 số từ ứng dụng xác thực của bạn.
+              {t("study.login.mfaSubtitle")}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="mfa-code">Mã xác thực</Label>
+            <Label htmlFor="mfa-code">{t("study.login.mfaCode")}</Label>
             <Input
               id="mfa-code"
               value={mfaCode}
@@ -109,7 +111,7 @@ function LoginPage() {
           </div>
           <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
             {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-            Verify
+            {t("study.login.verify")}
           </Button>
           <Button
             type="button"
@@ -121,7 +123,7 @@ function LoginPage() {
               setMfaCode("");
             }}
           >
-            Huỷ
+            {t("study.login.cancel")}
           </Button>
         </form>
       </AuthModal>
@@ -132,14 +134,14 @@ function LoginPage() {
     <AuthModal>
       <div className="text-center">
         <BrandMark className="mx-auto mb-4 size-14" />
-        <h1 className="text-2xl font-bold">Sign in</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Welcome back to {APP.name}</p>
+        <h1 className="text-2xl font-bold">{t("study.login.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("study.login.welcomeBack", { app: APP.name })}</p>
       </div>
 
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("study.login.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -152,7 +154,7 @@ function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("study.login.password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -177,13 +179,13 @@ function LoginPage() {
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Sign in
+              {t("study.login.signIn")}
             </Button>
           </form>
 
           <div className="mt-4 flex items-center gap-2">
             <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">or</span>
+            <span className="text-xs text-muted-foreground">{t("study.login.or")}</span>
             <Separator className="flex-1" />
           </div>
 
@@ -198,22 +200,22 @@ function LoginPage() {
               });
               setLoading(false);
               if (result.error) {
-                toast.error(result.error.message || "Google sign in failed");
+                toast.error(result.error.message || t("study.login.googleFailed"));
               }
             }}
             disabled={loading}
           >
-            Continue with Google
+            {t("study.login.continueWithGoogle")}
           </Button>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            {t("study.login.noAccount")}{" "}
             <Link
               to="/auth/register"
               search={{ redirect: redirectTo }}
               className="text-primary hover:underline"
             >
-              Create one
+              {t("study.login.createOne")}
             </Link>
           </p>
     </AuthModal>

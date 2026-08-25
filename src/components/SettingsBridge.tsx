@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { hydrateSettings, useSettings } from "@/lib/settings";
 import { hydrateHistory } from "@/lib/history";
 import { hydrateLearn } from "@/lib/learn/store";
+import { hydrateLocale } from "@/lib/i18n";
 import { configureSound } from "@/lib/sound";
 
 /**
@@ -13,6 +14,7 @@ export function SettingsBridge() {
 
   useEffect(() => {
     hydrateSettings();
+    hydrateLocale();
     hydrateHistory();
     hydrateLearn();
   }, []);
