@@ -105,8 +105,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Symbols+2&display=swap",
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
+      // Favicon + touch icons swap with the OS colour scheme.
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/favicon-light.svg",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/favicon.svg",
+        media: "(prefers-color-scheme: dark)",
+      },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: "/icons/apple-touch-icon-light.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: "/icons/apple-touch-icon.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png" },
+
     ],
   }),
   shellComponent: RootShell,
