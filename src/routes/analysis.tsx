@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Chess } from "chess.js";
 import { z } from "zod";
 import { ChevronLeft, ChevronRight, Copy, LineChart, Play, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -60,8 +61,10 @@ function Analysis() {
 
   useEffect(() => {
     if (!initialFen) return;
-    setFenInput(initialFen);
-    if (!game.loadFen(initialFen)) setLoadError("That position could not be loaded.");
+    // Some share links arrive form-encoded, where FEN spaces became "+".
+    const clean = initialFen.includes(" ") ? initialFen : initialFen.replace(/\+/g, " ");
+    setFenInput(clean);
+    if (!game.loadFen(clean)) setLoadError("That position could not be loaded.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFen]);
 
@@ -73,9 +76,23 @@ function Analysis() {
     [game],
   );
 
+  /** Terminal positions have no engine move — say so instead of showing +0.00. */
+  const terminal = useMemo<string | null>(() => {
+    try {
+      const c = new Chess(game.fen);
+      if (c.isCheckmate()) return `Hết cờ — ${c.turn() === "w" ? "Đen" : "Trắng"} chiếu hết.`;
+      if (c.isStalemate()) return "Hết cờ — hết nước đi (hòa).";
+      if (c.isInsufficientMaterial()) return "Hết cờ — không đủ lực chiếu hết (hòa).";
+      if (c.isDraw()) return "Hết cờ — hòa.";
+      return null;
+    } catch {
+      return null;
+    }
+  }, [game.fen]);
+
   const analyse = async () => {
     const engine = engineRef.current;
-    if (!engine) return;
+    if (!engine || terminal) return;
     setAnalysing(true);
     try {
       const result = await engine.search({
@@ -95,7 +112,7 @@ function Analysis() {
 
   const scanTrend = async () => {
     const engine = engineRef.current;
-    if (!engine || game.moves.length === 0 || scanning) return;
+    if (!engine || game.moves.length === 0 || scanning || analysing) return;
     setScanning(true);
     setScanProgress(0);
     const out: (number | null)[] = [];
@@ -168,7 +185,7 @@ function Analysis() {
 
               <RotateCcw className="size-4" /> Reset
             </Button>
-            <Button onClick={analyse} disabled={analysing}>
+            <Button onClick={analyse} disabled={analysing || scanning || terminal !== null}>
               <Play className="size-4" /> {analysing ? "Analysing…" : "Analyse position"}
             </Button>
           </div>
@@ -193,9 +210,11 @@ function Analysis() {
           >
             {lines.length === 0 ? (
               <p className="px-1 py-4 text-center text-xs text-muted-foreground">
-                {analysing
-                  ? "Stockfish đang tính toán…"
-                  : "Chạy phân tích để xem các nước tiếp theo tốt nhất."}
+                {terminal
+                  ? terminal
+                  : analysing
+                    ? "Stockfish đang tính toán…"
+                    : "Chạy phân tích để xem các nước tiếp theo tốt nhất."}
               </p>
             ) : (
               <ul className="space-y-1">
@@ -268,7 +287,7 @@ function Analysis() {
               variant="outline"
               className="w-full"
               onClick={scanTrend}
-              disabled={scanning || game.moves.length === 0}
+              disabled={scanning || analysing || game.moves.length === 0}
             >
               <LineChart className="size-4" /> {scanning ? "Đang quét…" : "Quét eval từng nước"}
             </Button>
