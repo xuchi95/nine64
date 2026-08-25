@@ -129,12 +129,13 @@ function OnlinePage() {
       </div>
 
       <MatchFoundDialog
-        open={state.kind === "found"}
-        opponent={state.kind === "found" ? state.opponent : null}
-        deadline={state.kind === "found" ? state.deadline : 0}
+        open={state.kind === "found" || state.kind === "accepting"}
+        pending={state.kind === "accepting"}
+        opponent={state.kind === "found" || state.kind === "accepting" ? state.opponent : null}
+        deadline={state.kind === "found" || state.kind === "accepting" ? state.deadline : 0}
         variantLabel={VARIANTS.find((v) => v.id === variant)?.name ?? variant}
         timeControlLabel={TIME_CONTROLS.find((tc) => tc.id === timeControl)?.label ?? timeControl}
-        onAccept={acceptMatch}
+        onAccept={() => void acceptMatch()}
         onDecline={() => void declineMatch()}
       />
     </AppShell>
