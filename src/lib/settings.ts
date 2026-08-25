@@ -11,6 +11,7 @@ export interface Settings {
   animations: boolean;
   animationMs: number;
   soundEnabled: boolean;
+  shatterSound: boolean;
   sfxVolume: number;
   autoQueen: boolean;
   premove: boolean;
