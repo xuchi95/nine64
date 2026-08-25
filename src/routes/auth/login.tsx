@@ -17,9 +17,9 @@ export const Route = createFileRoute("/auth/login")({
   head: () => ({
     meta: [
       { title: `Sign in — ${APP.name}` },
-      { name: "description", content: "Sign in to your Nexus Chess account to play online and track your rating." },
+      { name: "description", content: "Sign in to your Nine64 account to play online and track your rating." },
       { property: "og:title", content: `Sign in — ${APP.name}` },
-      { property: "og:description", content: "Sign in to your Nexus Chess account." },
+      { property: "og:description", content: "Sign in to your Nine64 account." },
     ],
   }),
   pendingComponent: FormSkeleton,

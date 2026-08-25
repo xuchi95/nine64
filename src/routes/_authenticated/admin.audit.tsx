@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/admin/audit")({
       { property: "og:title", content: `Admin audit log — ${APP.name}` },
       {
         property: "og:description",
-        content: "Ai đã làm gì trên bảng điều khiển Fair Play của Nexus Chess, và vào lúc nào.",
+        content: "Ai đã làm gì trên bảng điều khiển Fair Play của Nine64, và vào lúc nào.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

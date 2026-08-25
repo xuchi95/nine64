@@ -27,7 +27,7 @@ export const Route = createFileRoute("/analysis")({
       {
         name: "description",
         content:
-          "Explore any position on the Nexus Chess analysis board and ask Stockfish for the best continuation.",
+          "Explore any position on the Nine64 analysis board and ask Stockfish for the best continuation.",
       },
       { property: "og:title", content: `Analysis board — ${APP.name}` },
       {
