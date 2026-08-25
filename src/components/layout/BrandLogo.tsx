@@ -30,11 +30,11 @@ export function BrandLogo({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "relative inline-grid shrink-0 [grid-template-areas:'logo'] [&>picture]:[grid-area:logo]",
+        "relative inline-grid shrink-0 [grid-template-areas:'logo'] [&>picture]:[grid-area:logo] [&>picture]:h-full",
         className,
       )}
     >
-      <picture className="opacity-100 transition-opacity duration-300 ease-out dark:opacity-0">
+      <picture className="block h-full w-auto opacity-100 transition-opacity duration-300 ease-out dark:opacity-0">
         <source srcSet={logoLight} type="image/svg+xml" />
         <img
           src={RASTER.light.src}
@@ -44,7 +44,7 @@ export function BrandLogo({ className }: { className?: string }) {
           draggable={false}
         />
       </picture>
-      <picture className="opacity-0 transition-opacity duration-300 ease-out dark:opacity-100">
+      <picture className="block h-full w-auto opacity-0 transition-opacity duration-300 ease-out dark:opacity-100">
         <source srcSet={logoDark} type="image/svg+xml" />
         <img
           src={RASTER.dark.src}
