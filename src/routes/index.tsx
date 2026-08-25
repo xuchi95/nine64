@@ -327,16 +327,41 @@ function GamesSparkline() {
 
 const BACK_RANK: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
 
+/** Hero board follows light/dark by swapping to the matching theme variant. */
+const DARK_VARIANT: Record<string, string> = {
+  walnut: "night",
+  heritage: "ember",
+  amber: "ember",
+  marble: "slate",
+  blue: "midnight",
+  slate: "midnight",
+};
+const LIGHT_VARIANT: Record<string, string> = {
+  night: "walnut",
+  ember: "heritage",
+  midnight: "blue",
+};
+const DARK_SET: Record<string, string> = { classic: "nocturne", heritage: "nocturne" };
+const LIGHT_SET: Record<string, string> = { nocturne: "classic" };
+
 function StartBoard() {
   const settings = useSettings();
-  const theme = getBoardTheme(settings.boardTheme);
-  const pieceSet = getPieceSet(settings.pieceSet);
+  const isNight = settings.appearance === "dark";
+  const themeId = isNight
+    ? (DARK_VARIANT[settings.boardTheme] ?? settings.boardTheme)
+    : (LIGHT_VARIANT[settings.boardTheme] ?? settings.boardTheme);
+  const setId = isNight
+    ? (DARK_SET[settings.pieceSet] ?? settings.pieceSet)
+    : (LIGHT_SET[settings.pieceSet] ?? settings.pieceSet);
+  const theme = getBoardTheme(themeId);
+  const pieceSet = getPieceSet(setId);
 
   return (
     <div
-      className="overflow-hidden rounded-xl shadow-2xl"
+      className="board-fade overflow-hidden rounded-xl shadow-2xl"
       style={{ border: `1px solid ${theme.frame}` }}
     >
+
       <div className="grid grid-cols-8">
         {Array.from({ length: 64 }, (_, i) => {
           const rank = i >> 3;
