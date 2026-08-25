@@ -77,18 +77,16 @@ function Home() {
           </div>
 
           <div className="min-w-0">
-            <p className="font-mono text-2xs uppercase tracking-[0.28em] text-primary">
-              Stockfish 18 · in-browser
-            </p>
-            <h1 className="mt-4 font-display text-[clamp(2rem,7vw,2.5rem)] font-extrabold leading-[1.03] tracking-tight sm:text-5xl md:text-4xl lg:text-[3.25rem]">
+            <h1 className="font-display text-[clamp(2.15rem,7.5vw,2.75rem)] font-extrabold leading-[1.03] tracking-tight sm:text-[3.25rem] md:text-[2.75rem] lg:text-[3.5rem]">
               Play Chess Online
               <br />
               <span className="text-primary">on a board built to win.</span>
             </h1>
-            <p className="mt-4 max-w-md text-sm text-muted-foreground sm:text-base">
+            <p className="mt-5 max-w-md text-sm text-muted-foreground sm:text-base">
               {BOT_LEVELS.length} bot levels, ranked online games and a review that
               actually teaches you.
             </p>
+
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
