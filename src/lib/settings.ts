@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS: Settings = {
   animations: true,
   animationMs: 160,
   soundEnabled: true,
+  shatterSound: true,
   sfxVolume: 0.6,
   autoQueen: false,
   premove: true,
