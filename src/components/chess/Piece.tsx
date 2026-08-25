@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { cn } from "@/lib/utils";
 import type { PieceSet } from "@/lib/chess/themes";
 
 export type PieceType = "p" | "n" | "b" | "r" | "q" | "k";
