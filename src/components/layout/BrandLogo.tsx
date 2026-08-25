@@ -19,7 +19,7 @@ const RASTER = {
 } as const;
 
 const IMG_CLASS =
-  "h-full w-auto select-none transition-opacity duration-300 ease-out will-change-[opacity] motion-reduce:transition-none";
+  "block h-full w-auto max-h-full select-none [grid-area:logo] transition-opacity duration-300 ease-out will-change-[opacity] motion-reduce:transition-none";
 
 /**
  * Nexus wordmark. Both variants are stacked in the same grid cell and
@@ -30,31 +30,26 @@ export function BrandLogo({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "relative inline-grid shrink-0 [grid-template-areas:'logo'] [&>picture]:[grid-area:logo] [&>picture]:h-full",
+        "relative inline-grid h-9 shrink-0 overflow-hidden [grid-template-areas:'logo']",
         className,
       )}
     >
-      <picture className="block h-full w-auto opacity-100 transition-opacity duration-300 ease-out dark:opacity-0">
-        <source srcSet={logoLight} type="image/svg+xml" />
-        <img
-          src={RASTER.light.src}
-          srcSet={RASTER.light.srcSet}
-          alt={`${APP.name} logo`}
-          className={IMG_CLASS}
-          draggable={false}
-        />
-      </picture>
-      <picture className="block h-full w-auto opacity-0 transition-opacity duration-300 ease-out dark:opacity-100">
-        <source srcSet={logoDark} type="image/svg+xml" />
-        <img
-          src={RASTER.dark.src}
-          srcSet={RASTER.dark.srcSet}
-          alt=""
-          aria-hidden
-          className={IMG_CLASS}
-          draggable={false}
-        />
-      </picture>
+      <img
+        src={logoLight}
+        srcSet={RASTER.light.srcSet}
+        alt={`${APP.name} logo`}
+        className={cn(IMG_CLASS, "opacity-100 dark:opacity-0")}
+        draggable={false}
+      />
+      <img
+        src={logoDark}
+        srcSet={RASTER.dark.srcSet}
+        alt=""
+        aria-hidden
+        className={cn(IMG_CLASS, "opacity-0 dark:opacity-100")}
+        draggable={false}
+      />
     </span>
   );
 }
+
