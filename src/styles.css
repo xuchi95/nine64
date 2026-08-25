@@ -183,7 +183,15 @@
     -webkit-tap-highlight-color: transparent;
     /* Tăng cỡ chữ toàn site (~16px -> 19px) */
     font-size: 118.75%;
+    /* Không bao giờ để trang rộng hơn màn hình: tràn ngang khiến webview
+       (Messenger/Chrome mobile) tự thu/phóng lại trang mỗi khi layout đổi,
+       làm bàn cờ "nhảy" và phóng to sau mỗi nước đi. */
+    overflow-x: hidden;
+    max-width: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
+
 
   /* Mobile: hạ nhẹ root size để chữ không bị chật/ngắt dòng xấu. */
   @media (max-width: 640px) {
