@@ -20,7 +20,10 @@ type MatchmakingState =
   | { kind: "idle" }
   | { kind: "searching"; queueId: string }
   | { kind: "found"; gameId: string; opponent: MatchOpponent | null; deadline: number }
+  | { kind: "accepting"; gameId: string; opponent: MatchOpponent | null; deadline: number }
   | { kind: "matched"; gameId: string };
+
+const PENDING_KEY = "nine64.pendingMatch";
 
 export function useMatchmaking() {
   const { user } = useAuth();
