@@ -5,7 +5,7 @@ import type { Game, GameMove } from "@/lib/database.types";
 import { useAuth } from "@/lib/auth";
 
 export interface OnlineGameDetail extends Game {
-  moves: GameMove[];
+  moves?: GameMove[];
 }
 
 export function useOnlineGames() {
