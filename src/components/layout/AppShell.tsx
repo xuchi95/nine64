@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Check,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { APP } from "@/config/app";
 import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
