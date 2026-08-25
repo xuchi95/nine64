@@ -354,13 +354,24 @@ export function ChessBoard(props: ChessBoardProps) {
     /** Snap to a whole pixel so the 8x8 grid never lands on sub-pixel seams. */
     const apply = (raw: number) => {
       if (!raw) return;
-      const next = Math.round(raw);
+      // Bàn cờ không bao giờ được rộng hơn màn hình: nếu một panel nào đó
+      // làm trang tràn ngang, w-full sẽ đo ra giá trị lớn hơn viewport và
+      // webview mobile sẽ thu/phóng lại trang (hiệu ứng "nhảy" khi đi cờ).
+      const viewport =
+        typeof window === "undefined"
+          ? raw
+          : Math.min(
+              window.visualViewport?.width ?? window.innerWidth,
+              document.documentElement.clientWidth || window.innerWidth,
+            );
+      const next = Math.round(Math.min(raw, viewport || raw));
       // Ignore sub-pixel churn (scrollbar/zoom/theme repaint) that would
       // otherwise re-render the whole board and look like a layout jump.
       if (Math.abs(next - last) < 1) return;
       last = next;
       setSize(next);
     };
+
 
     const measure = () => {
       raf = 0;
