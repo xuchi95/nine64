@@ -1,15 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { APP } from "@/config/app";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({
-    meta: [
-      { title: `Điều khoản sử dụng — ${APP.name}` },
-      { name: "description", content: `Điều khoản sử dụng của ${APP.name}.` },
-      { property: "og:title", content: `Điều khoản sử dụng — ${APP.name}` },
-      { property: "og:description", content: `Điều khoản sử dụng của ${APP.name}.` },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      path: "/terms",
+      title: `Điều khoản sử dụng — ${APP.name}`,
+      description:
+        "Điều khoản sử dụng nền tảng cờ vua Nine64: tài khoản, fair play, nội dung và giới hạn trách nhiệm.",
+    }),
   component: TermsPage,
 });
 
