@@ -115,12 +115,42 @@ export function ChessBoard(props: ChessBoardProps) {
   const [promotion, setPromotion] = useState<{ from: string; to: string } | null>(null);
   const [tracked, setTracked] = useState<TrackedPiece[]>([]);
   const trackedRef = useRef<TrackedPiece[]>([]);
+  /** ids currently travelling — get a lift + elevated stacking while in flight */
+  const [travelling, setTravelling] = useState<Set<number>>(() => new Set());
+  /** captured pieces kept on screen for a short fade-out */
+  const [ghosts, setGhosts] = useState<Ghost[]>([]);
+
+  const animOn = settings.animations;
+  const transitionMs = animOn ? settings.animationMs : 0;
 
   useEffect(() => {
-    const next = trackPieces(trackedRef.current, pieces);
-    trackedRef.current = next;
-    setTracked(next);
-  }, [pieces]);
+    const { result, movedIds, removed } = trackPieces(trackedRef.current, pieces);
+    trackedRef.current = result;
+    setTracked(result);
+    if (!transitionMs) return;
+
+    if (movedIds.length) {
+      setTravelling(new Set(movedIds));
+      const t = window.setTimeout(() => setTravelling(new Set()), transitionMs + 60);
+      var clearTravel: number | undefined = t;
+    }
+    let clearGhost: number | undefined;
+    if (removed.length) {
+      const batch = removed.map((p) => ({ ...p, key: ++ghostCounter }));
+      setGhosts((g) => [...g, ...batch]);
+      const keys = new Set(batch.map((b) => b.key));
+      clearGhost = window.setTimeout(
+        () => setGhosts((g) => g.filter((x) => !keys.has(x.key))),
+        transitionMs + 120,
+      );
+    }
+    return () => {
+      if (clearTravel) window.clearTimeout(clearTravel);
+      if (clearGhost) window.clearTimeout(clearGhost);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pieces, transitionMs]);
+
 
   useEffect(() => {
     const el = containerRef.current;
