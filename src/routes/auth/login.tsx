@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { APP } from "@/config/app";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
@@ -37,16 +36,20 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formInfo, setFormInfo] = useState<string | null>(null);
 
   const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setFormError(null);
+    setFormInfo(null);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message || t("study.login.signInFailed"));
+      setFormError(error.message || t("study.login.signInFailed"));
       return;
     }
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -55,11 +58,10 @@ function LoginPage() {
       const factor = factors?.totp?.[0];
       if (factor) {
         setMfaFactorId(factor.id);
-        toast.info(t("study.login.mfaEnterToFinish"));
+        setFormInfo(t("study.login.mfaEnterToFinish"));
         return;
       }
     }
-    toast.success(t("study.login.welcomeToast"));
     navigate({ to: redirectTo, replace: true });
   }
 
@@ -67,10 +69,11 @@ function LoginPage() {
     e.preventDefault();
     if (!mfaFactorId) return;
     setLoading(true);
+    setFormError(null);
     const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
     if (challenge.error || !challenge.data) {
       setLoading(false);
-      toast.error(challenge.error?.message ?? t("study.login.mfaChallengeFailed"));
+      setFormError(challenge.error?.message ?? t("study.login.mfaChallengeFailed"));
       return;
     }
     const { error } = await supabase.auth.mfa.verify({
@@ -80,10 +83,9 @@ function LoginPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(t("study.login.mfaCodeInvalid"));
+      setFormError(t("study.login.mfaCodeInvalid"));
       return;
     }
-    toast.success(t("study.login.welcomeToast"));
     navigate({ to: redirectTo, replace: true });
   }
 
@@ -97,6 +99,12 @@ function LoginPage() {
               {t("study.login.mfaSubtitle")}
             </p>
           </div>
+          {formInfo ? (
+            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">{formInfo}</p>
+          ) : null}
+          {formError ? (
+            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="mfa-code">{t("study.login.mfaCode")}</Label>
             <Input
@@ -138,6 +146,10 @@ function LoginPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("study.login.welcomeBack", { app: APP.name })}</p>
       </div>
 
+
+          {formError ? (
+            <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-2">
@@ -200,7 +212,7 @@ function LoginPage() {
               });
               setLoading(false);
               if (result.error) {
-                toast.error(result.error.message || t("study.login.googleFailed"));
+                setFormError(result.error.message || t("study.login.googleFailed"));
               }
             }}
             disabled={loading}

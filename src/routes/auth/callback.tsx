@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
@@ -16,11 +15,9 @@ function CallbackPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
       if (error || !data.session) {
-        toast.error(error?.message || t("study.callback.failed"));
         navigate({ to: "/auth/login", replace: true });
         return;
       }
-      toast.success(t("study.callback.success"));
       navigate({ to: "/", replace: true });
     });
   }, [navigate, t]);
