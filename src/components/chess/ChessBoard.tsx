@@ -4,7 +4,7 @@ import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { playSound } from "@/lib/sound";
-import { findCheckAttacks } from "@/lib/chess/checkGeometry";
+import { findCheckAttacks, squaresBetween } from "@/lib/chess/checkGeometry";
 
 
 export interface BoardPiece {
@@ -150,6 +150,35 @@ export function ChessBoard(props: ChessBoardProps) {
   const raySquares = useMemo(
     () => new Set(checkAttacks.flatMap((a) => a.ray)),
     [checkAttacks],
+  );
+
+  /**
+   * Defenders: pieces of the side to move that can legally capture a checking
+   * piece, plus the path they would travel. Only meaningful on interactive
+   * boards where `legalTargets` is a real rules query.
+   */
+  const defences = useMemo(() => {
+    if (!interactive || !checkSquare || checkAttacks.length === 0) return [];
+    const out: { from: string; to: string; path: string[] }[] = [];
+    for (const attack of checkAttacks) {
+      for (const p of pieces) {
+        if (p.color !== props.turn) continue;
+        if (p.square === attack.from) continue;
+        if (!legalTargets(p.square).includes(attack.from)) continue;
+        out.push({
+          from: p.square,
+          to: attack.from,
+          path: squaresBetween(p.square, attack.from),
+        });
+      }
+    }
+    return out;
+  }, [interactive, checkSquare, checkAttacks, pieces, props.turn, legalTargets]);
+
+  const defenderSquares = useMemo(() => new Set(defences.map((d) => d.from)), [defences]);
+  const defencePathSquares = useMemo(
+    () => new Set(defences.flatMap((d) => d.path)),
+    [defences],
   );
 
 
@@ -423,6 +452,24 @@ export function ChessBoard(props: ChessBoardProps) {
                     style={{ backgroundColor: "rgba(255,140,70,0.16)" }}
                   />
                 )}
+                {defencePathSquares.has(square) && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{ backgroundColor: "rgba(80,220,140,0.14)" }}
+                  />
+                )}
+                {defenderSquares.has(square) && (
+                  <span
+                    aria-hidden
+                    className="animate-nexus-check-pulse absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(70,220,140,0.42) 22%, rgba(70,220,140,0.14) 62%, transparent 78%)",
+                      boxShadow: "inset 0 0 0 2px rgba(110,240,170,0.9)",
+                    }}
+                  />
+                )}
                 {isCheck && (
                   <span
                     className="animate-nexus-check-pulse absolute inset-0"
@@ -496,7 +543,37 @@ export function ChessBoard(props: ChessBoardProps) {
               >
                 <path d="M0,0 L10,5 L0,10 z" fill="rgba(255,120,60,0.9)" />
               </marker>
+              <marker
+                id="nexus-defend-arrow"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="4"
+                markerHeight="4"
+                orient="auto-start-reverse"
+              >
+                <path d="M0,0 L10,5 L0,10 z" fill="rgba(90,230,150,0.95)" />
+              </marker>
             </defs>
+            {defences.map((d) => {
+              const from = squareToXY(d.from);
+              const to = squareToXY(d.to);
+              const half = squareSize / 2;
+              return (
+                <line
+                  key={`def-${d.from}-${d.to}`}
+                  x1={from.x + half}
+                  y1={from.y + half}
+                  x2={to.x + half}
+                  y2={to.y + half}
+                  stroke="rgba(90,230,150,0.8)"
+                  strokeWidth={Math.max(2, squareSize * 0.045)}
+                  strokeLinecap="round"
+                  strokeDasharray={`${squareSize * 0.14} ${squareSize * 0.1}`}
+                  markerEnd="url(#nexus-defend-arrow)"
+                />
+              );
+            })}
             {checkAttacks.map((a) => {
               const from = squareToXY(a.from);
               const to = squareToXY(a.to);

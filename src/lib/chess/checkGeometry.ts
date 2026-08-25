@@ -117,3 +117,25 @@ export function findCheckAttacks(
 
   return attacks;
 }
+
+/**
+ * Squares strictly between two aligned squares (rank, file or diagonal).
+ * Returns an empty array when the squares are not aligned (knight hops, etc.).
+ */
+export function squaresBetween(from: string, to: string): string[] {
+  const a = coords(from);
+  const b = coords(to);
+  if (!a || !b) return [];
+  const [af, ar] = a;
+  const [bf, br] = b;
+  const df = bf - af;
+  const dr = br - ar;
+  const aligned = df === 0 || dr === 0 || Math.abs(df) === Math.abs(dr);
+  if (!aligned || (df === 0 && dr === 0)) return [];
+  const sf = Math.sign(df);
+  const sr = Math.sign(dr);
+  const steps = Math.max(Math.abs(df), Math.abs(dr));
+  const out: string[] = [];
+  for (let i = 1; i < steps; i++) out.push(nameOf(af + sf * i, ar + sr * i));
+  return out;
+}
