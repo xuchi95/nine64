@@ -11,6 +11,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
+import { BrandMark } from "@/components/layout/BrandMark";
 
 export const Route = createFileRoute("/auth/login")({
   head: () => ({
@@ -134,6 +135,7 @@ function LoginPage() {
       <div className="mx-auto max-w-md">
         <div className="panel p-6 sm:p-8">
           <div className="text-center">
+            <BrandMark className="mx-auto mb-4 size-14" />
             <h1 className="text-2xl font-bold">Sign in</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Welcome back to {APP.name}

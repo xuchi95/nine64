@@ -11,6 +11,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
+import { BrandMark } from "@/components/layout/BrandMark";
 
 export const Route = createFileRoute("/auth/register")({
   head: () => ({
@@ -61,7 +62,7 @@ function RegisterPage() {
       return;
     }
 
-    toast.success("Account created. Welcome to Nexus Chess!");
+    toast.success("Account created. Welcome to Nine64!");
     navigate({ to: redirectTo, replace: true });
   }
 
@@ -70,6 +71,7 @@ function RegisterPage() {
       <div className="mx-auto max-w-md">
         <div className="panel p-6 sm:p-8">
           <div className="text-center">
+            <BrandMark className="mx-auto mb-4 size-14" />
             <h1 className="text-2xl font-bold">Create account</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Join {APP.name} and start playing online
