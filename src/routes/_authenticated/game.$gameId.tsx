@@ -42,9 +42,9 @@ export const Route = createFileRoute("/_authenticated/game/$gameId")({
   head: () => ({
     meta: [
       { title: `Online game — ${APP.name}` },
-      { name: "description", content: "Realtime ranked chess match on Nexus Chess." },
+      { name: "description", content: "Realtime ranked chess match on Nine64." },
       { property: "og:title", content: `Online game — ${APP.name}` },
-      { property: "og:description", content: "Realtime ranked chess match on Nexus Chess." },
+      { property: "og:description", content: "Realtime ranked chess match on Nine64." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -554,7 +554,7 @@ function OnlineGamePage() {
   const pgn = useMemo(() => {
     if (!game) return "";
     const meta: Parameters<typeof buildPgn>[1] = {
-      event: "Nexus Chess online",
+      event: "Nine64 online",
       white: `White (${game.white_rating})`,
       black: `Black (${game.black_rating})`,
       result: result?.code ?? "*",

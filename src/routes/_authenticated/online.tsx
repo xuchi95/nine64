@@ -15,9 +15,9 @@ export const Route = createFileRoute("/_authenticated/online")({
   head: () => ({
     meta: [
       { title: `Play online — ${APP.name}` },
-      { name: "description", content: "Find a ranked opponent in real time on Nexus Chess." },
+      { name: "description", content: "Find a ranked opponent in real time on Nine64." },
       { property: "og:title", content: `Play online — ${APP.name}` },
-      { property: "og:description", content: "Ranked realtime matchmaking on Nexus Chess." },
+      { property: "og:description", content: "Ranked realtime matchmaking on Nine64." },
     ],
   }),
   pendingComponent: ListSkeleton,

@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/admin/fairplay/log")({
         content: "Toàn bộ quyết định Fair Play theo ván và theo người chơi kèm thời điểm, mức tin cậy và lý do.",
       },
       { property: "og:title", content: `Fair play decision log — ${APP.name}` },
-      { property: "og:description", content: "Nhật ký kiểm tra mọi quyết định Fair Play của Nexus Chess." },
+      { property: "og:description", content: "Nhật ký kiểm tra mọi quyết định Fair Play của Nine64." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

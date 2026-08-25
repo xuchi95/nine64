@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/account")({
       {
         name: "description",
         content:
-          "Quản lý hồ sơ, email, mật khẩu và xác thực hai bước TOTP cho tài khoản Nexus Chess của bạn.",
+          "Quản lý hồ sơ, email, mật khẩu và xác thực hai bước TOTP cho tài khoản Nine64 của bạn.",
       },
       { property: "og:title", content: `Tài khoản & bảo mật — ${APP.name}` },
       { property: "og:description", content: "Hồ sơ, email, mật khẩu và bảo mật 2 bước." },
@@ -168,7 +168,7 @@ function ProfileCard() {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           maxLength={32}
-          placeholder="Nexus player"
+          placeholder="Nine64 player"
         />
       </div>
       <Button type="submit" disabled={busy}>

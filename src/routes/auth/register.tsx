@@ -17,9 +17,9 @@ export const Route = createFileRoute("/auth/register")({
   head: () => ({
     meta: [
       { title: `Create account — ${APP.name}` },
-      { name: "description", content: "Create a Nexus Chess account to play online, track your rating and review your games." },
+      { name: "description", content: "Create a Nine64 account to play online, track your rating and review your games." },
       { property: "og:title", content: `Create account — ${APP.name}` },
-      { property: "og:description", content: "Create a Nexus Chess account." },
+      { property: "og:description", content: "Create a Nine64 account." },
     ],
   }),
   pendingComponent: FormSkeleton,
