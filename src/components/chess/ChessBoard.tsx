@@ -56,6 +56,17 @@ interface TrackResult {
   removed: TrackedPiece[];
 }
 
+/** Chebyshev distance between two algebraic squares. */
+function squareDistance(a: string, b: string): number {
+  const fa = a.charCodeAt(0);
+  const ra = a.charCodeAt(1);
+  const fb = b.charCodeAt(0);
+  const rb = b.charCodeAt(1);
+  return Math.max(Math.abs(fa - fb), Math.abs(ra - rb));
+}
+
+
+
 function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackResult {
   const remaining = [...prev];
   const result: TrackedPiece[] = [];
