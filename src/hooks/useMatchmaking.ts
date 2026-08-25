@@ -86,6 +86,7 @@ export function useMatchmaking() {
   /** A match exists: stop searching and ask the player to accept or decline. */
   const presentMatch = useCallback(
     async (gameId: string, via: "realtime" | "rpc") => {
+      if (acceptingRef.current) return;
       cleanup();
       playSound("matchFound");
       setState({
