@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Bot, Globe, Trash2, Users } from "lucide-react";
+import { Bot, Globe, Users } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
 import {
-  clearHistory,
-  deleteGame,
   historyStats,
+
   outcomeLabel,
   useGameHistory,
   type SavedGame,
@@ -78,17 +77,10 @@ function GamesPage() {
               : "Saved on this device only — sign in to sync them to your account."}
           </p>
         </div>
-        {localGames.length > 0 && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (window.confirm("Delete every saved bot / local game, on this device and in your account? This cannot be undone.")) clearHistory();
-            }}
-          >
-            <Trash2 className="size-4" /> Clear archive
-          </Button>
-        )}
+        {/* Lịch sử ván đấu là bản ghi vĩnh viễn — người chơi không được xoá. */}
+        <p className="text-xs text-muted-foreground">Archive is permanent — games can't be deleted.</p>
       </div>
+
 
       <div className="mt-5 grid gap-3 sm:grid-cols-4">
         <Stat label="Total" value={String(items.length)} />
@@ -185,17 +177,10 @@ function LocalGameRow({ game }: { game: SavedGame }) {
         </span>
       )}
       <span className={cn("shrink-0 rounded px-2 py-1 text-xs font-semibold", tone)}>{label}</span>
-      <button
-        type="button"
-        aria-label="Delete game"
-        onClick={() => deleteGame(game.id)}
-        className="shrink-0 rounded-md p-2 text-muted-foreground transition-colors hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </button>
     </li>
   );
 }
+
 
 function OnlineGameRow({ game }: { game: OnlineGameDetail }) {
   const { user } = useAuth();
