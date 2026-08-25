@@ -20,7 +20,7 @@ export const Clock = memo(function Clock({
 }) {
   if (!enabled) {
     return (
-      <div className="tabular rounded-md border border-border bg-surface-2 px-3 py-1.5 text-lg text-muted-foreground">
+      <div className="tabular rounded-md border border-border bg-surface-2 px-3 py-1.5 text-lg tracking-tight text-muted-foreground/70">
         --:--
       </div>
     );
@@ -30,11 +30,11 @@ export const Clock = memo(function Clock({
     <div
       aria-label="Clock"
       className={cn(
-        "tabular rounded-md border px-3 py-1.5 text-lg font-semibold transition-colors",
+        "tabular rounded-md border px-3 py-1.5 text-xl font-bold leading-none tracking-tight transition-colors",
         active
-          ? "border-primary/60 bg-primary/15 text-foreground"
+          ? "border-primary bg-primary text-primary-foreground shadow-sm"
           : "border-border bg-surface-2 text-muted-foreground",
-        low && active && "border-destructive/70 bg-destructive/20 text-destructive",
+        low && active && "animate-pulse border-destructive bg-destructive text-destructive-foreground",
       )}
     >
       {format(seconds)}
