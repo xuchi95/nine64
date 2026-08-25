@@ -63,11 +63,11 @@ export function Piece({ type, color, set, size, className, glow = false }: Props
       aria-hidden="true"
       focusable="false"
       style={{
-        transform: glow ? "scale(1.07)" : "scale(1)",
+        transform: glow ? "scale(1.08)" : "scale(1)",
         filter: glow
           ? isDark
-            ? "drop-shadow(0 0 2.5px rgba(255,215,120,0.95)) drop-shadow(0 0 7px rgba(255,255,255,0.55)) drop-shadow(0 2px 2px rgba(0,0,0,0.55))"
-            : "drop-shadow(0 0 2.5px rgba(0,0,0,0.65)) drop-shadow(0 0 7px rgba(255,200,90,0.45)) drop-shadow(0 2px 2px rgba(0,0,0,0.35))"
+            ? "drop-shadow(0 0 3px rgba(255,215,120,1)) drop-shadow(0 0 10px rgba(255,255,255,0.7)) drop-shadow(0 2px 2px rgba(0,0,0,0.55))"
+            : "drop-shadow(0 0 3px rgba(0,0,0,0.8)) drop-shadow(0 0 10px rgba(255,200,90,0.6)) drop-shadow(0 2px 2px rgba(0,0,0,0.35))"
           : isDark
             ? "drop-shadow(0 0 1.4px rgba(255,255,255,0.5)) drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.5))"
             : "drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.38))",
