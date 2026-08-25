@@ -88,6 +88,10 @@ export default {
     "study.analysis.forcedMate": "Forced mate in {n}",
     "study.analysis.mainLineFor": "Main line for {color}",
     "study.analysis.pickLineHint": "Click a line to highlight it on the board.",
+    "study.analysis.autoHighlight": "Auto-highlight winning line",
+    "study.analysis.autoHighlightHint": "Turn off to guess first, then compare with the engine arrows.",
+    "study.analysis.arrowsOff": "Arrows are off",
+
 
     "study.endgame.title": "Endgame recognition",
     "study.endgame.phase.opening": "Opening",
