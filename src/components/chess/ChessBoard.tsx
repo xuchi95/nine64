@@ -33,7 +33,14 @@ export interface ChessBoardProps {
   turn: PieceColor;
 }
 
-import { FILES, RANKS, isDarkSquare, squareSurface } from "./boardSurface";
+import {
+  FILES,
+  PIECE_SCALE,
+  RANKS,
+  isDarkSquare,
+  pieceBoxStyle,
+  squareSurface,
+} from "./boardSurface";
 
 interface TrackedPiece extends BoardPiece {
   id: number;
@@ -957,23 +964,18 @@ export function ChessBoard(props: ChessBoardProps) {
                 isDragged ? "z-30" : isTravelling ? "z-20" : undefined,
               )}
               style={{
-                width: squareSize,
-                height: squareSize,
+                // Shared placement helper — identical maths on every board.
+                ...pieceBoxStyle(`${x}px`, `${y}px`, `${squareSize}px`),
                 // Only transform/opacity animate here, so the whole move stays
                 // on the compositor and holds a full frame budget (>60FPS).
-                transform: `translate3d(${x}px, ${y}px, 0)`,
                 transition: isDragged ? "none" : `transform ${transitionMs}ms ${travelEase}`,
                 willChange: isDragged || isTravelling ? "transform" : "auto",
-                backfaceVisibility: "hidden",
               }}
             >
               <div
                 style={{
-                  transform: isDragged
-                    ? "scale(1.1) translateZ(0)"
-                    : isTravelling
-                      ? "scale(1.06) translateZ(0)"
-                      : "scale(1) translateZ(0)",
+                  transform:
+                    PIECE_SCALE[isDragged ? "dragging" : isTravelling ? "travelling" : "idle"],
                   transition: `transform ${Math.max(90, Math.round(transitionMs * 0.6))}ms ease-out`,
                 }}
               >

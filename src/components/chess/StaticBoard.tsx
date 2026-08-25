@@ -1,6 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { Piece, type PieceColor, type PieceType } from "./Piece";
-import { FILES, RANKS, isDarkSquare, squareSurface } from "./boardSurface";
+import {
+  FILES,
+  PIECE_SCALE,
+  RANKS,
+  isDarkSquare,
+  pieceBoxStylePct,
+  squareSurface,
+} from "./boardSurface";
 import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { cn } from "@/lib/utils";
 import type { BoardPiece } from "./ChessBoard";
@@ -79,52 +86,65 @@ export interface StaticBoardProps {
   className?: string;
 }
 
-/** Squares only. Memoised so resizing never touches this subtree. */
+/** Squares + piece layer. Memoised so resizing never touches this subtree. */
 const BoardGrid = memo(function BoardGrid({
   pieces,
   boardTheme,
   pieceSet,
   orientation,
 }: Omit<StaticBoardProps, "className"> & { orientation: PieceColor }) {
+  const theme = getBoardTheme(boardTheme);
+
   const cells = useMemo(() => {
-    const theme = getBoardTheme(boardTheme);
-    const set = getPieceSet(pieceSet);
     // Two shared style objects instead of 64 freshly allocated ones.
     const surfaces = [squareSurface(theme, false), squareSurface(theme, true)] as const;
     const files = orientation === "w" ? FILES : [...FILES].reverse();
     const ranks = orientation === "w" ? RANKS : [...RANKS].reverse();
-    const bySquare = new Map(pieces.map((p) => [p.square, p]));
-
     return ranks.flatMap((rank) =>
-      files.map((file) => {
-        const square = `${file}${rank}`;
-        const piece = bySquare.get(square);
-        return (
-          <div
-            key={square}
-            data-square={square}
-            className="relative aspect-square"
-            style={surfaces[isDarkSquare(file, rank) ? 1 : 0]}
-          >
-            {piece && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Piece
-                  type={piece.type}
-                  color={piece.color}
-                  set={set}
-                  size={100}
-                  className="h-full w-full"
-                />
-              </div>
-            )}
-          </div>
-        );
-      }),
+      files.map((file) => (
+        <div
+          key={`${file}${rank}`}
+          data-cell={`${file}${rank}`}
+          aria-label={`${file}${rank}`}
+          className="relative aspect-square"
+          style={surfaces[isDarkSquare(file, rank) ? 1 : 0]}
+        />
+      )),
     );
-  }, [pieces, boardTheme, pieceSet, orientation]);
+  }, [theme, orientation]);
 
-  return <div className="grid grid-cols-8">{cells}</div>;
+  // Pieces live in their own absolute layer, placed with the exact same
+  // translate3d box + scale wrapper the interactive board uses.
+  const layer = useMemo(() => {
+    const set = getPieceSet(pieceSet);
+    return pieces.map((piece) => (
+      <div
+        key={piece.square}
+        data-square={piece.square}
+        className="pointer-events-none"
+        style={pieceBoxStylePct(piece.square, orientation)}
+      >
+        <div className="h-full w-full" style={{ transform: PIECE_SCALE.idle }}>
+          <Piece
+            type={piece.type}
+            color={piece.color}
+            set={set}
+            size={100}
+            className="h-full w-full"
+          />
+        </div>
+      </div>
+    ));
+  }, [pieces, pieceSet, orientation]);
+
+  return (
+    <div className="relative">
+      <div className="grid grid-cols-8">{cells}</div>
+      <div className="pointer-events-none absolute inset-0">{layer}</div>
+    </div>
+  );
 });
+
 
 /**
  * Non-interactive board surface (hero art, previews, thumbnails).

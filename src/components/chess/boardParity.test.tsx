@@ -1,6 +1,7 @@
 import { describe, expect, it, afterEach, beforeAll } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { ChessBoard, type BoardPiece } from "./ChessBoard";
+import { PIECE_SCALE, squareToIndex } from "./boardSurface";
 import { StaticBoard, START_PIECES } from "./StaticBoard";
 import { FILES, RANKS } from "./boardSurface";
 import {
@@ -86,7 +87,7 @@ describe("hero board matches the real board", () => {
 
     const hero = renderHero(theme, set);
     for (const sq of SQUARES) {
-      const cell = hero.container.querySelector<HTMLElement>(`[data-square="${sq}"]`);
+      const cell = hero.container.querySelector<HTMLElement>(`[data-cell="${sq}"]`);
       expect(cell, `hero board missing ${sq}`).toBeTruthy();
       expect(surfaceOf(cell!), `square ${sq}`).toBe(realSurfaces.get(sq));
     }
@@ -126,7 +127,7 @@ describe("hero board matches the real board", () => {
 
         const hero = renderHero(t.id, s.id);
         for (const sq of SQUARES) {
-          const cell = hero.container.querySelector<HTMLElement>(`[data-square="${sq}"]`)!;
+          const cell = hero.container.querySelector<HTMLElement>(`[data-cell="${sq}"]`)!;
           expect(surfaceOf(cell), `${t.id}/${s.id} ${sq}`).toBe(realSurfaces.get(sq));
         }
         expect(
@@ -140,7 +141,7 @@ describe("hero board matches the real board", () => {
 
   it("scales fluidly so it cannot drift on any screen size", () => {
     const hero = renderHero(theme, set);
-    const cells = hero.container.querySelectorAll<HTMLElement>("[data-square]");
+    const cells = hero.container.querySelectorAll<HTMLElement>("[data-cell]");
     expect(cells.length).toBe(64);
     cells.forEach((c) => {
       // No fixed pixel sizing: the grid derives square size from its container,
@@ -152,6 +153,27 @@ describe("hero board matches the real board", () => {
     expect(hero.container.querySelector(".grid")!.className).toContain("grid-cols-8");
     hero.container.querySelectorAll("svg").forEach((svg) => {
       expect(svg.getAttribute("viewBox")).toBeTruthy();
+    });
+  });
+
+  it("places pieces with the same transform pipeline as the real board", () => {
+    const real = renderReal(START_PIECES, theme, set);
+    const realBox = real.container.querySelector<HTMLElement>('[data-square="e1"]')!;
+    expect(realBox.style.transform).toMatch(/^translate3d\(/);
+    expect((realBox.firstElementChild as HTMLElement).style.transform).toBe(PIECE_SCALE.idle);
+    cleanup();
+
+    const hero = renderHero(theme, set);
+    const boxes = hero.container.querySelectorAll<HTMLElement>("[data-square]");
+    expect(boxes.length).toBe(START_PIECES.length);
+    boxes.forEach((box) => {
+      const sq = box.dataset["square"]!;
+      const { col, row } = squareToIndex(sq, "w");
+      expect(box.style.transform, sq).toBe(`translate3d(${col * 100}%, ${row * 100}%, 0)`);
+      expect(box.style.width).toBe("12.5%");
+      expect(box.style.height).toBe("12.5%");
+      expect(box.style.position).toBe("absolute");
+      expect((box.firstElementChild as HTMLElement).style.transform).toBe(PIECE_SCALE.idle);
     });
   });
 });
