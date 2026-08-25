@@ -239,6 +239,56 @@ function Analysis() {
           </GamePanel>
 
           <GamePanel
+            title="Eval trend"
+            meta={
+              scanning ? (
+                <span className="flex items-center gap-1.5 text-[0.66rem] font-semibold text-primary">
+                  <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                  {scanProgress}%
+                </span>
+              ) : trend.length > 0 ? (
+                <span className="tabular rounded bg-surface-2 px-1.5 py-0.5 text-[0.66rem] font-semibold text-primary">
+                  {(() => {
+                    const last = [...trend].reverse().find((v) => v !== null) ?? 0;
+                    return `${last >= 0 ? "+" : ""}${(last / 100).toFixed(2)}`;
+                  })()}
+                </span>
+              ) : null
+            }
+            bodyClassName="flex flex-col gap-3 p-3"
+          >
+            {trend.length > 0 ? (
+              <EvalGraph
+                startEval={0}
+                evals={trend}
+                activeIndex={trend.length - 1}
+                onSelect={(i) => {
+                  const fen = i < 0 ? undefined : game.moves[i]?.fen;
+                  if (!fen) return;
+                  setFenInput(fen);
+                  setLines([]);
+                  if (game.loadFen(fen)) setLoadError(null);
+                }}
+              />
+            ) : (
+              <p className="px-1 py-3 text-center text-xs text-muted-foreground">
+                {game.moves.length === 0
+                  ? "Đi vài nước rồi quét để xem xu hướng tốt/xấu."
+                  : "Quét eval để vẽ biểu đồ đường theo từng nước."}
+              </p>
+            )}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={scanTrend}
+              disabled={scanning || game.moves.length === 0}
+            >
+              <LineChart className="size-4" /> {scanning ? "Đang quét…" : "Quét eval từng nước"}
+            </Button>
+          </GamePanel>
+
+
+          <GamePanel
             title="Moves"
             meta={game.moves.length > 0 ? `${Math.ceil(game.moves.length / 2)} lượt` : undefined}
             className="max-h-[340px]"
