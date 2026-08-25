@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Circle, Dumbbell, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
 import { SEVERITY_META } from "@/lib/coach/types";
@@ -30,18 +31,18 @@ export const Route = createFileRoute("/drills/")({
 });
 
 function DrillsError({ reset }: { error: Error; reset: () => void }) {
+  const { t } = useT();
   return (
     <AppShell>
       <div className="panel mt-4 p-6 text-center">
-        <h1 className="font-display text-xl font-bold">Không tải được trang bài tập</h1>
+        <h1 className="font-display text-xl font-bold">{t("study.drills.errorTitle")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Có một ván trong kho lưu trữ khiến danh sách bài tập lỗi. Thử tải lại, hoặc mở lại từ
-          trang ván của tôi.
+          {t("study.drills.errorBody")}
         </p>
         <div className="mt-4 flex justify-center gap-2">
-          <Button onClick={() => reset()}>Thử lại</Button>
+          <Button onClick={() => reset()}>{t("study.drills.retry")}</Button>
           <Button variant="outline" asChild>
-            <Link to="/games">Ván của tôi</Link>
+            <Link to="/games">{t("study.drills.myGames")}</Link>
           </Button>
         </div>
       </div>
@@ -52,6 +53,7 @@ function DrillsError({ reset }: { error: Error; reset: () => void }) {
 type Filter = "todo" | "done" | "all";
 
 function DrillsPage() {
+  const { t } = useT();
   const games = useGameHistory();
   const done = useDrillProgress();
   const [filter, setFilter] = useState<Filter>("todo");
@@ -73,10 +75,9 @@ function DrillsPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">Bài tập của bạn</h1>
+          <h1 className="font-display text-2xl font-bold">{t("study.drills.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sinh tự động từ những lỗi trầm trọng nhất trong các ván đã phân tích. Đánh dấu khi bạn
-            luyện xong.
+            {t("study.drills.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -87,7 +88,7 @@ function DrillsPage() {
               variant={filter === f ? "default" : "outline"}
               onClick={() => setFilter(f)}
             >
-              {f === "todo" ? "Chưa xong" : f === "done" ? "Đã xong" : "Tất cả"}
+              {f === "todo" ? t("study.drills.filterTodo") : f === "done" ? t("study.drills.filterDone") : t("study.drills.filterAll")}
             </Button>
           ))}
         </div>
@@ -96,7 +97,7 @@ function DrillsPage() {
       <div className="panel mt-4 p-4">
         <div className="flex items-center justify-between text-sm">
           <span className="font-semibold">
-            Tiến độ luyện tập{" "}
+            {t("study.drills.progressLabel")}{" "}
             <span className="tabular text-muted-foreground">
               {completed}/{drills.length}
             </span>
@@ -113,7 +114,7 @@ function DrillsPage() {
             className="mt-2"
             onClick={() => clearDrillProgress()}
           >
-            <RotateCcw className="size-4" /> Đặt lại tiến độ
+            <RotateCcw className="size-4" /> {t("study.drills.resetProgress")}
           </Button>
         )}
       </div>
@@ -122,11 +123,18 @@ function DrillsPage() {
         <div className="panel mt-4 p-6 text-center">
           <Dumbbell className="mx-auto size-6 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">
-            Chưa có bài tập nào. Hãy chạy engine review (hoặc phân tích sâu) cho một ván trong{" "}
-            <Link to="/games" className="text-primary underline">
-              ván của tôi
-            </Link>{" "}
-            để hệ thống tìm ra lỗi và tạo bài tập.
+            {(() => {
+              const [before, after] = t("study.drills.emptyBody", { link: "\u0000" }).split("\u0000");
+              return (
+                <>
+                  {before}
+                  <Link to="/games" className="text-primary underline">
+                    {t("study.drills.myGamesLink")}
+                  </Link>
+                  {after}
+                </>
+              );
+            })()}
           </p>
         </div>
       ) : (
@@ -137,8 +145,8 @@ function DrillsPage() {
           {shown.length === 0 && (
             <li className="panel p-6 text-center text-sm text-muted-foreground">
               {filter === "todo"
-                ? "Bạn đã luyện xong toàn bộ bài tập hiện có. Chơi thêm ván mới để tạo bài tập mới."
-                : "Chưa có bài tập nào trong mục này."}
+                ? t("study.drills.allDoneTodo")
+                : t("study.drills.noneInSection")}
             </li>
           )}
         </ul>
@@ -148,13 +156,14 @@ function DrillsPage() {
 }
 
 function DrillRow({ drill, doneAt }: { drill: Drill; doneAt: string | null }) {
+  const { t } = useT();
   const meta = SEVERITY_META[drill.severity] ?? SEVERITY_META.moderate;
   return (
     <li className={`panel border p-4 ${doneAt ? "opacity-60" : ""} ${meta.ring}`}>
       <div className="flex items-start gap-3">
         <button
           type="button"
-          aria-label={doneAt ? "Bỏ đánh dấu đã luyện" : "Đánh dấu đã luyện xong"}
+          aria-label={doneAt ? t("study.drills.markUndone") : t("study.drills.markDone")}
           aria-pressed={!!doneAt}
           onClick={() => setDrillDone(drill.id, !doneAt)}
           className="mt-0.5 shrink-0 text-primary transition-transform hover:scale-110"
@@ -182,7 +191,7 @@ function DrillRow({ drill, doneAt }: { drill: Drill; doneAt: string | null }) {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">{drill.problem}</p>
           <p className="mt-2 text-sm">
-            <span className="font-semibold">Cần luyện: </span>
+            <span className="font-semibold">{t("study.drills.needsPractice")}</span>
             {drill.task}
           </p>
 
@@ -193,10 +202,12 @@ function DrillRow({ drill, doneAt }: { drill: Drill; doneAt: string | null }) {
               params={{ gameId: drill.gameId }}
               className="text-primary underline"
             >
-              Mở ván{drill.ply !== null ? ` tại ${drill.moveLabel} ${drill.san ?? ""}` : ""}
+              {drill.ply !== null
+                ? t("study.drills.openGameAt", { move: drill.moveLabel, san: drill.san ?? "" })
+                : t("study.drills.openGame")}
             </Link>
             {doneAt && (
-              <span>Đã luyện {new Date(doneAt).toLocaleDateString("vi-VN")}</span>
+              <span>{t("study.drills.practicedOn", { date: new Date(doneAt).toLocaleDateString("vi-VN") })}</span>
             )}
           </div>
         </div>
