@@ -33,6 +33,8 @@ import {
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useSwipeToClose } from "@/hooks/useSwipeToClose";
+import { CookieBanner } from "@/components/layout/CookieBanner";
+import { resetCookieConsent } from "@/lib/cookieConsent";
 
 const MAIN_NAV = [
   { to: "/", label: "Home" },
