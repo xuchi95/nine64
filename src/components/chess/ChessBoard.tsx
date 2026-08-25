@@ -3,6 +3,7 @@ import { Piece, type PieceColor, type PieceType } from "./Piece";
 import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/sound";
 
 export interface BoardPiece {
   square: string;
@@ -230,11 +231,21 @@ export function ChessBoard(props: ChessBoardProps) {
     }
 
     if (!selectable) {
+      if (selected) {
+        setSelected(null);
+        playSound("deselect");
+      }
+      return;
+    }
+
+    if (selected === square) {
       setSelected(null);
+      playSound("deselect");
       return;
     }
 
     setSelected(square);
+    playSound("select");
     const rect = containerRef.current!.getBoundingClientRect();
     setDragging({
       id: piece!.id,
@@ -260,6 +271,9 @@ export function ChessBoard(props: ChessBoardProps) {
     if (target && target !== from) {
       const moved = attemptMove(from, target);
       if (moved) setSelected(null);
+    } else if (target === from) {
+      // Thả lại đúng ô cũ — chỉ một tap rất nhẹ, quân vẫn đang được chọn.
+      playSound("deselect");
     }
   };
 
