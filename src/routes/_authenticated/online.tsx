@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -119,8 +119,11 @@ function OnlinePage() {
           </CardContent>
         </Card>
 
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-          {t("play.online.signedInAs", { email: user?.email ?? "" })}
+        <div className="mt-4 flex flex-col items-center gap-2 text-center text-sm text-muted-foreground">
+          <span>{t("play.online.signedInAs", { email: user?.email ?? "" })}</span>
+          <Link to="/online/diagnostics" className="font-semibold text-brass underline">
+            {t("play.mmDiag.title")}
+          </Link>
         </div>
       </div>
     </AppShell>
