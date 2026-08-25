@@ -300,6 +300,7 @@ export default {
     "play.variants.random-army.name": "Đội hình ngẫu nhiên",
     "play.variants.random-army.blurb": "Hàng cuối ngẫu nhiên nhưng đối xứng hai bên.",
   },
+  en: {
   
     // ---------- Home ----------
     "play.home.title1": "Play Chess Online",
