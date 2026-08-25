@@ -22,6 +22,8 @@ export interface ChessBoardProps {
   needsPromotion: (from: string, to: string) => boolean;
   lastMove?: { from: string; to: string } | null;
   checkSquare?: string | null;
+  /** explicit mate flag from the rules engine; falls back to a board-side check */
+  checkmate?: boolean;
   interactive?: boolean;
   /** premove currently armed (rendered as a ghost highlight) */
   premove?: { from: string; to: string } | null;
@@ -96,6 +98,7 @@ export function ChessBoard(props: ChessBoardProps) {
     needsPromotion,
     lastMove,
     checkSquare,
+    checkmate,
     interactive = true,
     premove,
     onPremove,
@@ -138,9 +141,10 @@ export function ChessBoard(props: ChessBoardProps) {
    * Only trusted on interactive boards, where `legalTargets` is a real query.
    */
   const isCheckmate =
-    interactive &&
-    !!checkSquare &&
-    !pieces.some((p) => p.color === props.turn && legalTargets(p.square).length > 0);
+    checkmate ??
+    (interactive &&
+      !!checkSquare &&
+      !pieces.some((p) => p.color === props.turn && legalTargets(p.square).length > 0));
 
   const [mateDismissed, setMateDismissed] = useState(false);
   const matePlayedRef = useRef(false);
