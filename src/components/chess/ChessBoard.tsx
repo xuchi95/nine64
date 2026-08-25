@@ -4,7 +4,7 @@ import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { playSound } from "@/lib/sound";
-import { findCheckAttacks } from "@/lib/chess/checkGeometry";
+import { findCheckAttacks, squaresBetween } from "@/lib/chess/checkGeometry";
 
 
 export interface BoardPiece {
