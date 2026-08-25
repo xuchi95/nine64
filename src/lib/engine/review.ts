@@ -23,6 +23,8 @@ interface PositionEval {
   winPercent: number;
   /** White-POV centipawns. */
   cpWhite: number | null;
+  /** Centipawns from the moving side's perspective. */
+  cpMover: number | null;
   bestUci: string | null;
   mateIn: number | null;
   candidates: number[];
@@ -43,6 +45,7 @@ function terminalEval(fen: string): PositionEval | null {
     return {
       winPercent: 0,
       cpWhite,
+      cpMover: -MATE_CP,
       bestUci: null,
       mateIn: null,
       candidates: [],
@@ -54,6 +57,7 @@ function terminalEval(fen: string): PositionEval | null {
     return {
       winPercent: 50,
       cpWhite: 0,
+      cpMover: 0,
       bestUci: null,
       mateIn: null,
       candidates: [],
@@ -73,6 +77,7 @@ function fromLines(fen: string, lines: EngineLine[], legalMoves: number): Positi
   return {
     winPercent: cpToWinPercent(cpMover),
     cpWhite: best ? (blackToMove ? -cpMover : cpMover) : null,
+    cpMover: best ? cpMover : null,
     bestUci: best?.move ?? null,
     mateIn: best?.mateIn ?? null,
     candidates: lines.map((l) => cpToWinPercent(scoreOf(l))),
@@ -176,6 +181,12 @@ export async function reviewGame({
     const before = evalBefore?.winPercent ?? 50;
     const bestAfter = before; // engine best keeps the mover at its evaluated win%
     const after = evalAfter ? 100 - evalAfter.winPercent : before;
+    const cpBest = evalBefore?.cpMover ?? null;
+    const cpAfterMover = evalAfter?.cpMover ?? null;
+    const cpLoss =
+      cpBest === null || cpAfterMover === null
+        ? null
+        : Math.min(1000, Math.max(0, Math.round(cpBest - -cpAfterMover)));
     const uci = `${move.from}${move.to}`;
     const isBestMove = !!evalBefore?.bestUci && evalBefore.bestUci.slice(0, 4) === uci;
     const seeValue = see(fenBefore, move.from, move.to);
@@ -185,7 +196,8 @@ export async function reviewGame({
       after,
       bestAfter,
       isBestMove,
-      secondBestAfter: evalBefore?.candidates?.[1] ?? null,
+      secondBestAfter:
+        (evalBefore?.candidates?.length ?? 0) >= 2 ? evalBefore!.candidates[1]! : null,
       see: seeValue,
       complexity,
       inBook: book.includes(move.san),
@@ -240,6 +252,7 @@ export async function reviewGame({
       bestUci: evalBefore?.bestUci ?? null,
       label: classification.label,
       loss: Math.round(classification.loss * 10) / 10,
+      cpLoss,
       accuracy: Math.round(classification.accuracy * 10) / 10,
       weight: classification.weight,
       complexity,
@@ -257,10 +270,11 @@ export async function reviewGame({
   const bySide = (color: "w" | "b") => plies.filter((p) => p.color === color);
   const accuracyFor = (color: "w" | "b") =>
     weightedAccuracy(bySide(color).map((p) => ({ accuracy: p.accuracy, weight: p.weight })));
+  /** Average centipawn loss — the metric `ratingFromAcpl` is calibrated on. */
   const acplFor = (color: "w" | "b") => {
-    const own = bySide(color);
+    const own = bySide(color).filter((p) => p.cpLoss !== null && p.cpLoss !== undefined);
     if (own.length === 0) return 0;
-    return Math.round((own.reduce((a, p) => a + p.loss, 0) / own.length) * 10) / 10;
+    return Math.round((own.reduce((a, p) => a + (p.cpLoss ?? 0), 0) / own.length) * 10) / 10;
   };
   const labelsFor = (color: "w" | "b") =>
     summarizeLabels(bySide(color).map((p) => p.label as MoveLabel));

@@ -71,7 +71,7 @@ function pickLabel(input: ClassifyInput, loss: number): MoveLabel {
     isBestMove &&
     secondBestAfter !== null &&
     secondBestAfter !== undefined &&
-    after - secondBestAfter >= 12 &&
+    input.bestAfter - secondBestAfter >= 12 &&
     loss <= 2
   ) {
     return "great";

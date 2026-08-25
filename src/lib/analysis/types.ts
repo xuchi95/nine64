@@ -18,6 +18,8 @@ export interface PlyAnalysis {
   label: MoveLabel;
   /** Win-percentage loss versus the engine move. */
   loss: number;
+  /** Centipawn loss versus the engine move (mover POV). Null when unknown. */
+  cpLoss?: number | null;
   accuracy: number;
   weight: number;
   complexity: number;

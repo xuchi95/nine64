@@ -74,6 +74,9 @@ export class StockfishEngine {
   private ready = false;
   private queue: ((line: string) => void)[] = [];
   private lineHandlers = new Set<(line: string) => void>();
+  /** Serialises searches: UCI is a single-position protocol, so overlapping
+   * `go` commands would mix candidate lines from two different positions. */
+  private chain: Promise<unknown> = Promise.resolve();
   readonly capability: EngineCapability;
 
   constructor(private mode: PerformanceMode = "balanced") {
@@ -132,7 +135,17 @@ export class StockfishEngine {
     await this.waitFor((l) => l.startsWith("readyok"), 20000);
   }
 
-  async search(req: SearchRequest): Promise<EngineLine[]> {
+  /** Public entry point — queued so callers never interleave two searches. */
+  search(req: SearchRequest): Promise<EngineLine[]> {
+    const run = this.chain.then(
+      () => this.runSearch(req),
+      () => this.runSearch(req),
+    );
+    this.chain = run.catch(() => undefined);
+    return run;
+  }
+
+  private async runSearch(req: SearchRequest): Promise<EngineLine[]> {
     await this.init();
     const multiPv = Math.max(1, req.multiPv ?? 1);
 
@@ -161,7 +174,8 @@ export class StockfishEngine {
       const pvIndex = Number(/ multipv (\d+)/.exec(line)?.[1] ?? 1);
       const pvMatch = / pv (.+)$/.exec(line);
       if (!pvMatch) return;
-      const pv = (pvMatch[1] ?? "").trim().split(/\s+/);
+      const pv = (pvMatch[1] ?? "").trim().split(/\s+/).filter((m) => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m));
+      if (pv.length === 0) return;
       const cpMatch = / score cp (-?\d+)/.exec(line);
       const mateMatch = / score mate (-?\d+)/.exec(line);
       lines.set(pvIndex, {
@@ -189,12 +203,15 @@ export class StockfishEngine {
       this.lineHandlers.delete(collector);
     }
 
+    // Terminal position: Stockfish answers `bestmove (none)` with no usable pv.
+    const legalBest = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(best) ? best : "";
     const result = [...lines.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
-    if (result.length === 0 && best) {
-      return [{ move: best, cp: null, mateIn: null, depth: 0, pv: [best] }];
+    if (result.length === 0 && !legalBest) return [];
+    if (result.length === 0 && legalBest) {
+      return [{ move: legalBest, cp: null, mateIn: null, depth: 0, pv: [legalBest] }];
     }
-    if (best && result[0] && result[0].move !== best) {
-      const idx = result.findIndex((r) => r.move === best);
+    if (legalBest && result[0] && result[0].move !== legalBest) {
+      const idx = result.findIndex((r) => r.move === legalBest);
       if (idx > 0) {
         const hit = result.splice(idx, 1)[0]!;
         result.unshift(hit);
