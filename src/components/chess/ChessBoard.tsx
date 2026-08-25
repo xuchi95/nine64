@@ -452,6 +452,24 @@ export function ChessBoard(props: ChessBoardProps) {
                     style={{ backgroundColor: "rgba(255,140,70,0.16)" }}
                   />
                 )}
+                {defencePathSquares.has(square) && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{ backgroundColor: "rgba(80,220,140,0.14)" }}
+                  />
+                )}
+                {defenderSquares.has(square) && (
+                  <span
+                    aria-hidden
+                    className="animate-nexus-check-pulse absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(70,220,140,0.42) 22%, rgba(70,220,140,0.14) 62%, transparent 78%)",
+                      boxShadow: "inset 0 0 0 2px rgba(110,240,170,0.9)",
+                    }}
+                  />
+                )}
                 {isCheck && (
                   <span
                     className="animate-nexus-check-pulse absolute inset-0"
