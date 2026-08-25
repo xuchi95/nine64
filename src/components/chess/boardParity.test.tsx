@@ -3,7 +3,12 @@ import { cleanup, render } from "@testing-library/react";
 import { ChessBoard, type BoardPiece } from "./ChessBoard";
 import { StaticBoard, START_PIECES } from "./StaticBoard";
 import { FILES, RANKS } from "./boardSurface";
-import { BOARD_THEMES, PIECE_SETS } from "@/lib/chess/themes";
+import {
+  BOARD_THEMES,
+  PIECE_SETS,
+  resolveBoardThemeId,
+  resolvePieceSetId,
+} from "@/lib/chess/themes";
 import { updateSettings } from "@/lib/settings";
 
 beforeAll(() => {
@@ -36,8 +41,9 @@ function svgMarkup(root: Element | null | undefined) {
     .replace(/\s(width|height)="[^"]*"/g, "");
 }
 
+/** Light mode keeps the theme ids literal, so both boards resolve the same way. */
 function renderReal(pieces: BoardPiece[], boardTheme: string, pieceSet: string) {
-  updateSettings({ boardTheme, pieceSet });
+  updateSettings({ boardTheme, pieceSet, appearance: "light" });
   return render(
     <ChessBoard
       pieces={pieces}
@@ -53,7 +59,14 @@ function renderReal(pieces: BoardPiece[], boardTheme: string, pieceSet: string) 
 }
 
 function renderHero(boardTheme: string, pieceSet: string) {
-  return render(<StaticBoard pieces={START_PIECES} boardTheme={boardTheme} pieceSet={pieceSet} />);
+  // The hero board consumes the same resolver the real board uses internally.
+  return render(
+    <StaticBoard
+      pieces={START_PIECES}
+      boardTheme={resolveBoardThemeId(boardTheme, "light")}
+      pieceSet={resolvePieceSetId(pieceSet, "light")}
+    />,
+  );
 }
 
 describe("hero board matches the real board", () => {
