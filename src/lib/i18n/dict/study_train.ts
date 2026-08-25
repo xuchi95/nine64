@@ -12,7 +12,7 @@ export default {
     "study.train.themeFocusSuffix": " (tập trung vào \"{theme}\")",
     "study.train.taskCritical": "Mở {where} trong bàn phân tích, tự tìm nước tốt hơn trong 2 phút rồi so với engine{theme}.",
     "study.train.taskSerious": "Thực hiện lại {where} 3 lần liên tiếp không gợi ý, nêu kế hoạch trước mỗi nước đi{theme}.",
-    "study.train.taskModerate": "Kiểm tra lại {where}: liệt kê mọi nước ăn quân hoặc chiếu của đối thủ trước khi đi.",
+    "study.train.taskModerate": "Kiểm tra lại {where}: liệt kê mọi nước bắt quân hoặc chiếu của đối thủ trước khi đi.",
     "study.train.taskBasic": "Xem lại {where} và ghi chú nguyên nhân chọn sai.",
     "study.train.weekLabel": "Tuần {date}",
     "study.train.motifFork": "Đòn đôi",

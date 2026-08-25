@@ -40,7 +40,7 @@ export default {
     "study.insights.colAvgLoss": "Mất TB",
     "study.insights.open": "Mở",
     "study.insights.metaTitle": "Insights & lộ trình luyện tập — {app}",
-    "study.insights.metaDescription": "Cây khai cuộc cá nhân, phân tích điểm yếu, dự báo Elo và bot luyện tập riêng cho từng giai đoạn.",
+    "study.insights.metaDescription": "Cây khai cuộc cá nhân, phân tích điểm yếu, dự báo hệ số và bot luyện tập riêng cho từng giai đoạn.",
 
     // ---- Progress ----
     "study.progress.title": "Tiến bộ theo thời gian",
@@ -159,9 +159,9 @@ export default {
     "study.analysis.depth": "Độ sâu {depth}",
     "study.analysis.searching": "Đang tính",
     "study.analysis.checkmateBy": "Chiếu hết — {color} thắng.",
-    "study.analysis.stalemate": "Hết cờ — hòa (hết nước đi).",
-    "study.analysis.insufficientMaterial": "Hòa — không đủ quân chiếu hết.",
-    "study.analysis.draw": "Hòa.",
+    "study.analysis.stalemate": "Hết nước đi — hoà.",
+    "study.analysis.insufficientMaterial": "Hoà — không đủ quân chiếu hết.",
+    "study.analysis.draw": "Hoà.",
     "study.analysis.thinking": "Stockfish đang tính toán...",
     "study.analysis.runAnalysisHint": "Chạy phân tích để xem các nước đi tối ưu.",
     "study.analysis.evalTrend": "Biểu đồ đánh giá",
@@ -332,7 +332,7 @@ export default {
     "study.drillsLib.taskCriticalTheme": "; ôn lại chủ đề \"{theme}\"",
     "study.drillsLib.taskSerious": "Thực hiện lại {where} 3 lần liên tiếp không gợi ý, nêu kế hoạch trước khi đi{themeSuffix}.",
     "study.drillsLib.taskSeriousTheme": " (tập trung \"{theme}\")",
-    "study.drillsLib.taskModerate": "Kiểm tra lại {where}: liệt kê mọi nước ăn quân hoặc chiếu trước khi đi.",
+    "study.drillsLib.taskModerate": "Kiểm tra lại {where}: liệt kê mọi nước bắt quân hoặc chiếu trước khi đi.",
     "study.drillsLib.taskBasic": "Xem lại {where} và ghi chú nguyên nhân chọn sai.",
     "study.drillsLib.wherePosition": "thế cờ này",
     "study.drillsLib.whereMove": "nước {move} {san}",
@@ -391,7 +391,7 @@ export default {
     "study.insights.colAvgLoss": "Avg loss",
     "study.insights.open": "Open",
     "study.insights.metaTitle": "Insights & lộ trình luyện tập — {app}",
-    "study.insights.metaDescription": "Cây khai cuộc cá nhân, hồ sơ điểm yếu theo từng giai đoạn, dự báo elo và bot phù hợp để luyện đúng chỗ yếu.",
+    "study.insights.metaDescription": "Cây khai cuộc cá nhân, hồ sơ điểm yếu theo từng giai đoạn, dự báo hệ số và bot phù hợp để luyện đúng chỗ yếu.",
 
     // ---- Progress ----
     "study.progress.title": "Progress over time",
