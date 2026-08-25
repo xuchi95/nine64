@@ -406,6 +406,23 @@ export function ChessBoard(props: ChessBoardProps) {
                 {selected === square && (
                   <span className="absolute inset-0" style={{ backgroundColor: theme.selected }} />
                 )}
+                {attackerSquares.has(square) && (
+                  <span
+                    className="animate-nexus-check-pulse absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(255,176,60,0.55) 20%, rgba(255,150,40,0.18) 62%, transparent 78%)",
+                      boxShadow: "inset 0 0 0 2px rgba(255,190,80,0.95)",
+                    }}
+                  />
+                )}
+                {raySquares.has(square) && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{ backgroundColor: "rgba(255,140,70,0.16)" }}
+                  />
+                )}
                 {isCheck && (
                   <span
                     className="animate-nexus-check-pulse absolute inset-0"
@@ -416,6 +433,7 @@ export function ChessBoard(props: ChessBoardProps) {
                     }}
                   />
                 )}
+
                 {settings.showLegalMoves && isTarget && !isCapture && (
                   <span
                     className="absolute rounded-full"
