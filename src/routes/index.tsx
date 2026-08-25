@@ -23,6 +23,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
+import { Piece, type PieceType, type PieceColor } from "@/components/chess/Piece";
+import { getBoardTheme, getPieceSet } from "@/lib/chess/themes";
+import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -357,7 +360,7 @@ function StartBoard() {
             >
               {type && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Piece type={type} color={color} set={pieceSet} size="100%" />
+                  <Piece type={type} color={color} set={pieceSet} size={100} className="h-full w-full" />
                 </div>
               )}
             </div>
