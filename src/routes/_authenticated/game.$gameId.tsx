@@ -619,7 +619,7 @@ function OnlineGamePage() {
             clock={clock}
             active={turn !== myColor && live}
           />
-          <div className="mt-2">
+          <div className="my-3">
             <ChessBoard
               pieces={pieces}
               orientation={orientation}
@@ -658,12 +658,12 @@ function OnlineGamePage() {
         <div className="space-y-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
+              <span className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 {game.variant} · {formatTimeControl(game.time_control)}
               </span>
               <span
                 className={cn(
-                  "rounded px-2 py-0.5 text-xs font-medium",
+                  "rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
                   live && "bg-emerald-500/15 text-emerald-400",
                   !live && resultView.tone === "win" && "bg-emerald-500/15 text-emerald-400",
                   !live && resultView.tone === "loss" && "bg-destructive/15 text-destructive",
@@ -699,12 +699,12 @@ function OnlineGamePage() {
           )}
 
           {live && (
-            <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1 gap-2" onClick={() => void offerDraw()}>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => void offerDraw()}>
                 <Hand className="size-4" />
                 Draw
               </Button>
-              <Button variant="destructive" className="flex-1 gap-2" onClick={() => void resign()}>
+              <Button variant="outline" className="gap-2" onClick={() => void resign()}>
                 <Flag className="size-4" />
                 Resign
               </Button>
@@ -716,14 +716,14 @@ function OnlineGamePage() {
           </Card>
 
           <Card className="space-y-2 p-4">
-            <h3 className="text-sm font-semibold">Share this game</h3>
+            <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">Share this game</h3>
             <p className="text-xs text-muted-foreground">
               Copy the PGN, or send a turn-by-turn link your opponent can open on another device.
             </p>
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="secondary"
+                variant="outline"
                 className="flex-1 gap-2"
                 onClick={() => void copy(pgn, "PGN")}
               >
@@ -732,7 +732,7 @@ function OnlineGamePage() {
               </Button>
               <Button
                 size="sm"
-                variant="secondary"
+                variant="outline"
                 className="flex-1 gap-2"
                 onClick={() =>
                   void copy(
