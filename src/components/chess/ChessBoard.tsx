@@ -35,11 +35,27 @@ interface TrackedPiece extends BoardPiece {
   id: number;
 }
 
-let idCounter = 0;
+interface Ghost extends BoardPiece {
+  id: number;
+  key: number;
+}
 
-function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackedPiece[] {
+let idCounter = 0;
+let ghostCounter = 0;
+
+interface TrackResult {
+  result: TrackedPiece[];
+  /** ids of pieces that changed square in this update (animate the travel) */
+  movedIds: number[];
+  /** pieces that left the board (animate the capture) */
+  removed: TrackedPiece[];
+}
+
+function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackResult {
   const remaining = [...prev];
   const result: TrackedPiece[] = [];
+  const movedIds: number[] = [];
+  const prevSquares = new Map(prev.map((p) => [p.id, p.square]));
   const takeExact = (p: BoardPiece): TrackedPiece | null => {
     const i = remaining.findIndex(
       (r) => r.square === p.square && r.type === p.type && r.color === p.color,
@@ -61,10 +77,13 @@ function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackedPiece[] {
   }
   for (const p of pending) {
     const similar = takeSimilar(p);
-    result.push({ ...p, id: similar ? similar.id : ++idCounter });
+    const id = similar ? similar.id : ++idCounter;
+    if (similar && prevSquares.get(id) !== p.square) movedIds.push(id);
+    result.push({ ...p, id });
   }
-  return result;
+  return { result, movedIds, removed: remaining };
 }
+
 
 export function ChessBoard(props: ChessBoardProps) {
   const {
