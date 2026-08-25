@@ -123,6 +123,18 @@ export function ChessBoard(props: ChessBoardProps) {
 
   const transitionMs = settings.animations ? settings.animationMs : 0;
 
+  /** Check alert: a banner + board frame flash each time a new check appears. */
+  const [checkAlert, setCheckAlert] = useState(0);
+  const prevCheckRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (checkSquare && checkSquare !== prevCheckRef.current) {
+      setCheckAlert((n) => n + 1);
+    }
+    prevCheckRef.current = checkSquare ?? null;
+  }, [checkSquare]);
+
+
+
 
   useEffect(() => {
     const { result, movedIds, removed } = trackPieces(trackedRef.current, pieces);
