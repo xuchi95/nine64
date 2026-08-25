@@ -557,7 +557,7 @@ export function ChessBoard(props: ChessBoardProps) {
 
                 {settings.showLegalMoves && isTarget && !isCapture && (
                   <span
-                    className="absolute rounded-full"
+                    className={cn("absolute", cb ? "rotate-45" : "rounded-full")}
                     style={{
                       width: squareSize * 0.28,
                       height: squareSize * 0.28,
@@ -567,6 +567,19 @@ export function ChessBoard(props: ChessBoardProps) {
                     }}
                   />
                 )}
+                {cb && settings.showLegalMoves && isCapture && (
+                  <span
+                    aria-hidden
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-black leading-none text-white"
+                    style={{
+                      fontSize: Math.max(12, squareSize * 0.34),
+                      textShadow: "0 0 4px rgba(0,0,0,0.9)",
+                    }}
+                  >
+                    {"\u2715"}
+                  </span>
+                )}
+
                 {settings.showLegalMoves && isCapture && (
                   <span
                     className="absolute rounded-full"
