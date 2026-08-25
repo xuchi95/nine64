@@ -450,6 +450,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          matched_game_id: string | null
           rating: number
           status: string
           time_control: string
@@ -460,6 +461,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          matched_game_id?: string | null
           rating?: number
           status?: string
           time_control?: string
@@ -470,6 +472,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          matched_game_id?: string | null
           rating?: number
           status?: string
           time_control?: string
@@ -477,7 +480,15 @@ export type Database = {
           user_id?: string
           variant?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "matchmaking_queue_matched_game_id_fkey"
+            columns: ["matched_game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -769,6 +780,15 @@ export type Database = {
           _white_time_ms: number
         }
         Returns: Json
+      }
+      create_online_match: {
+        Args: {
+          _initial_fen: string
+          _queue_id: string
+          _user_id: string
+          _white_is_requester: boolean
+        }
+        Returns: string
       }
       find_match: { Args: { _queue_id: string }; Returns: string }
       glicko2_update: {

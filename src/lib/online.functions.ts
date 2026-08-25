@@ -1,22 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Game, GameMove, MatchmakingQueue, Notification } from "@/lib/database.types";
-
-const QUEUE_SCHEMA = z.object({
-  variant: z.string().min(1),
-  timeControl: z.string().min(1),
-});
-
-const MOVE_SCHEMA = z.object({
-  gameId: z.string().uuid(),
-  san: z.string().min(1),
-  uci: z.string().min(2),
-  fen: z.string().min(10),
-  baseFen: z.string().min(10),
-  whiteTimeMs: z.number().int().min(0),
-  blackTimeMs: z.number().int().min(0),
-});
+import {
+  FINISH_GAME_SCHEMA,
+  GAME_ID_SCHEMA,
+  MOVE_SCHEMA,
+  NOTIFICATION_ID_SCHEMA,
+  QUEUE_SCHEMA,
+  TRY_MATCH_SCHEMA,
+  startingFenForVariant,
+} from "@/lib/online.helpers";
 
 export type MoveConflictReason = "stale_position" | "not_your_turn" | "game_over";
 
@@ -30,83 +23,6 @@ export type MoveCommitResult = {
   blackTimeMs: number;
   ply: number;
 };
-
-
-const GAME_ID_SCHEMA = z.object({ gameId: z.string().uuid() });
-
-function timeControlToMs(timeControl: string): number {
-  switch (timeControl) {
-    case "blitz1m":
-      return 60_000;
-    case "blitz3m":
-      return 180_000;
-    case "blitz5m":
-      return 300_000;
-    case "rapid10m":
-      return 600_000;
-    case "rapid15m":
-      return 900_000;
-    case "rapid30m":
-      return 1_800_000;
-    default:
-      return 300_000;
-  }
-}
-
-const STANDARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-function shuffleStrings(arr: string[]): string[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = a[i]!;
-    a[i] = a[j]!;
-    a[j] = tmp;
-  }
-  return a;
-}
-
-function generateChess960Fen(): string {
-  const lightSquares = [1, 3, 5, 7];
-  const darkSquares = [0, 2, 4, 6];
-  const b1 = lightSquares[Math.floor(Math.random() * lightSquares.length)]!;
-  const b2 = darkSquares[Math.floor(Math.random() * darkSquares.length)]!;
-
-  const remaining = [0, 1, 2, 3, 4, 5, 6, 7].filter((i) => i !== b1 && i !== b2);
-  let pieces: string[];
-  do {
-    pieces = shuffleStrings(
-      remaining.map((i) => {
-        if (i === 0 || i === 7) return "r";
-        if (i === 1 || i === 6) return "n";
-        if (i === 2 || i === 5) return "b";
-        if (i === 3) return "q";
-        return "k";
-      }),
-    );
-  } while (!isValid960BackRank(pieces));
-
-  const rank = new Array(8).fill("");
-  rank[b1] = "b";
-  rank[b2] = "b";
-  let idx = 0;
-  for (let i = 0; i < 8; i++) {
-    if (!rank[i]) rank[i] = pieces[idx++];
-  }
-  return `${rank.join("")}/pppppppp/8/8/8/8/PPPPPPPP/${rank.join("").toUpperCase()} w KQkq - 0 1`;
-}
-
-function isValid960BackRank(pieces: string[]): boolean {
-  const kingIndex = pieces.indexOf("k");
-  const rookLeft = pieces.indexOf("r");
-  const rookRight = pieces.lastIndexOf("r");
-  return kingIndex > rookLeft && kingIndex < rookRight;
-}
-
-function startingFenForVariant(variant: string): string {
-  return variant === "chess960" ? generateChess960Fen() : STANDARD_FEN;
-}
-
 export const joinQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => QUEUE_SCHEMA.parse(input))
@@ -159,105 +75,66 @@ export const leaveQueue = createServerFn({ method: "POST" })
 
 export const tryMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ queueId: z.string().uuid() }).parse(input))
+  .inputValidator((input) => TRY_MATCH_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
-    // Matchmaking must bypass RLS so it can see other users' queue rows.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = context.supabase;
 
-    const { data: myEntry, error: myError } = await supabaseAdmin
+    // Validate ownership through the authenticated request client. This keeps
+    // the security boundary tied to the caller's session before privileged
+    // match creation is used for cross-user writes.
+    const { data: myEntry, error: myError } = await supabase
       .from("matchmaking_queue")
       .select("*")
       .eq("id", data.queueId)
       .eq("user_id", context.userId)
-      .single();
+      .maybeSingle();
 
-    if (myError || !myEntry) throw new Error(myError?.message || "Queue entry not found");
+    if (myError) throw new Error(myError.message);
+    if (!myEntry) throw new Error("Queue entry not found");
+    const matchedGameId = myEntry.matched_game_id;
+    if (myEntry.status === "matched" && typeof matchedGameId === "string") {
+      const { data: matchedGame, error: matchedGameError } = await supabase
+        .from("games")
+        .select("*")
+        .eq("id", matchedGameId)
+        .maybeSingle();
+
+      if (matchedGameError) throw new Error(matchedGameError.message);
+      return { game: (matchedGame as Game | null) ?? null };
+    }
     if (myEntry.status !== "waiting") return { game: null as Game | null };
 
     const entry = myEntry as MatchmakingQueue;
 
-    // Priority matchmaking: closest rating + similar uncertainty, window widens
-    // with wait time, and rematches with the last two opponents are avoided.
-    const rpc = supabaseAdmin.rpc as unknown as (
+    // Match creation must be atomic across two queue rows, one game row and two
+    // notifications. The server validates the caller first, then invokes the
+    // service-only RPC so the database can lock both queue rows consistently.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const startFen = startingFenForVariant(entry.variant);
+    const adminRpc = supabaseAdmin.rpc as unknown as (
       fn: string,
       args: Record<string, unknown>,
     ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-    const { data: matchId, error: matchError } = await rpc("find_match", {
+    const { data: gameId, error: matchError } = await adminRpc("create_online_match", {
       _queue_id: entry.id,
+      _user_id: context.userId,
+      _initial_fen: startFen,
+      _white_is_requester: Math.random() < 0.5,
     });
 
     if (matchError) throw new Error(matchError.message);
-    if (!matchId || typeof matchId !== "string") {
+    if (!gameId || typeof gameId !== "string") {
       return { game: null as Game | null };
     }
 
-    const { data: opponentRow, error: oppError } = await supabaseAdmin
-      .from("matchmaking_queue")
+    const { data: game, error: gameError } = await supabase
+      .from("games")
       .select("*")
-      .eq("id", matchId)
-      .eq("status", "waiting")
+      .eq("id", gameId)
       .maybeSingle();
 
-    if (oppError) throw new Error(oppError.message);
-    if (!opponentRow) return { game: null as Game | null };
-
-    const opponent = opponentRow as MatchmakingQueue;
-
-
-    // Decide colors randomly
-    const whiteIsMe = Math.random() < 0.5;
-    const whiteId = whiteIsMe ? context.userId : opponent.user_id;
-    const blackId = whiteIsMe ? opponent.user_id : context.userId;
-    const whiteRating = whiteIsMe ? entry.rating : opponent.rating;
-    const blackRating = whiteIsMe ? opponent.rating : entry.rating;
-    const initialMs = timeControlToMs(entry.time_control);
-
-    const startFen = startingFenForVariant(entry.variant);
-    const { data: game, error: gameError } = await supabaseAdmin
-      .from("games")
-      .insert({
-        white_id: whiteId,
-        black_id: blackId,
-        white_rating: whiteRating,
-        black_rating: blackRating,
-        variant: entry.variant,
-        time_control: entry.time_control,
-        status: "active",
-        initial_fen: startFen,
-        current_fen: startFen,
-        white_time_ms: initialMs,
-        black_time_ms: initialMs,
-      })
-      .select()
-      .single();
-
-    if (gameError || !game) throw new Error(gameError?.message || "Failed to create game");
-
-    // Mark both queue entries as matched
-    await supabaseAdmin
-      .from("matchmaking_queue")
-      .update({ status: "matched" })
-      .in("id", [entry.id, opponent.id]);
-
-    // Notify both players
-    await supabaseAdmin.from("notifications").insert([
-      {
-        user_id: opponent.user_id,
-        type: "match_found",
-        title: "Match found",
-        body: `Your ${entry.time_control} ${entry.variant} game is ready.`,
-        data: { game_id: game.id },
-      },
-      {
-        user_id: context.userId,
-        type: "match_found",
-        title: "Match found",
-        body: `Your ${entry.time_control} ${entry.variant} game is ready.`,
-        data: { game_id: game.id },
-      },
-    ]);
-
+    if (gameError || !game) throw new Error(gameError?.message || "Failed to load created game");
     return { game: game as Game };
   });
 
@@ -374,17 +251,7 @@ export const makeMove = createServerFn({ method: "POST" })
 
 export const finishGame = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z
-      .object({
-        gameId: z.string().uuid(),
-        result: z.enum(["1-0", "0-1", "1/2-1/2", "*"]),
-        winnerId: z.string().uuid().nullable(),
-        endReason: z.string().min(1),
-        finalFen: z.string().min(10),
-      })
-      .parse(input),
-  )
+  .inputValidator((input) => FINISH_GAME_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
     const supabase = context.supabase;
 
@@ -468,7 +335,7 @@ export const getNotifications = createServerFn({ method: "GET" })
 
 export const markNotificationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .inputValidator((input) => NOTIFICATION_ID_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("notifications")

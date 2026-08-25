@@ -33,6 +33,39 @@ export function useMatchmaking() {
     }
   }, []);
 
+  const findGameAfterMatch = useCallback(
+    async (queue: MatchmakingQueue) => {
+      try {
+        if (queue.matched_game_id) {
+          playSound("matchFound");
+          cleanup();
+          setState({ kind: "matched", gameId: queue.matched_game_id });
+          void navigate({ to: "/game/$gameId", params: { gameId: queue.matched_game_id } });
+          return;
+        }
+        if (!user?.id) return;
+        const { data: rows } = await supabase
+          .from("games")
+          .select("id")
+          .or(`white_id.eq.${user.id},black_id.eq.${user.id}`)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        const gameId = rows?.[0]?.id;
+        if (gameId) {
+          playSound("matchFound");
+          cleanup();
+          setState({ kind: "matched", gameId });
+          void navigate({ to: "/game/$gameId", params: { gameId } });
+        }
+      } catch {
+        // ignore
+      }
+    },
+    [cleanup, navigate, user?.id],
+  );
+
   const startSearch = useCallback(
     async (variant: string, timeControl: string) => {
       if (!user) return;
@@ -57,8 +90,7 @@ export function useMatchmaking() {
             (payload) => {
               const row = payload.new as MatchmakingQueue;
               if (row.status === "matched") {
-                // The game was created by the server; we need to find it.
-                void findGameAfterMatch(entry.id);
+                void findGameAfterMatch(row);
               }
             },
           )
@@ -80,38 +112,13 @@ export function useMatchmaking() {
           }
           pollingRef.current = window.setTimeout(poll, 2000);
         };
-        pollingRef.current = window.setTimeout(poll, 1500);
+        void poll();
       } catch (e) {
         setState({ kind: "idle" });
         throw e;
       }
     },
-    [cleanup, joinFn, leaveFn, matchFn, navigate, user],
-  );
-
-  const findGameAfterMatch = useCallback(
-    async (queueId: string) => {
-      try {
-        const { data: rows } = await supabase
-          .from("games")
-          .select("id")
-          .or(`white_id.eq.${user?.id},black_id.eq.${user?.id}`)
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        const gameId = rows?.[0]?.id;
-        if (gameId) {
-          playSound("matchFound");
-          cleanup();
-          setState({ kind: "matched", gameId });
-          void navigate({ to: "/game/$gameId", params: { gameId } });
-        }
-      } catch {
-        // ignore
-      }
-    },
-    [cleanup, navigate, user?.id],
+    [cleanup, findGameAfterMatch, joinFn, matchFn, navigate, user],
   );
 
   const stopSearch = useCallback(async () => {
