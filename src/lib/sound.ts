@@ -206,35 +206,74 @@ export function playShatter(promotion = false) {
     osc.stop(start + dur + 0.02);
   });
 
-  // Promotion: the shards are "reforged" — a bright ascending arpeggio that
-  // resolves as the new piece finishes rising on the board.
+  // Promotion "reforge". Visual timeline (both animations start on the same
+  // frame as this sound):
+  //   nexus-promote-gather 560ms → shards visible at 25% (140ms) and are fully
+  //   absorbed at 100% (560ms).
+  //   nexus-promote-rise   560ms → the new piece peaks at 55% (~310ms) and
+  //   settles at 560ms.
+  // So: the ascending arpeggio runs across the gather window (140→450ms), and
+  // the resolving chime + bloom land at ~450-560ms, exactly when the shards
+  // vanish into the piece as it settles.
   if (promotion) {
-    const notes = [523, 659, 784, 1046, 1319];
+    const GATHER = 0.14; // shards become visible and start being pulled in
+    const ABSORB = 0.45; // shards collapse into the piece / rise resolves
+
+    // Rising arpeggio tracking the shards flying inwards.
+    const notes = [523, 659, 784, 1046];
+    const step = (ABSORB - GATHER) / notes.length;
     notes.forEach((freq, i) => {
       const osc = audio.createOscillator();
       const g = audio.createGain();
-      const start = now + 0.16 + i * 0.065;
-      const dur = i === notes.length - 1 ? 0.42 : 0.16;
+      const start = now + GATHER + i * step;
+      const dur = step * 1.6;
       osc.type = "triangle";
       osc.frequency.setValueAtTime(freq, start);
       g.gain.setValueAtTime(0.0001, start);
-      g.gain.exponentialRampToValueAtTime(0.16, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.1 + i * 0.02, start + 0.015);
       g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
       osc.connect(g).connect(master);
       osc.start(start);
       osc.stop(start + dur + 0.03);
     });
-    // Warm shimmer underneath the arpeggio.
+
+    // Resolving chime exactly on absorption, ringing out as the piece settles.
+    const chime = audio.createOscillator();
+    const chimeGain = audio.createGain();
+    chime.type = "triangle";
+    chime.frequency.setValueAtTime(1319, now + ABSORB);
+    chimeGain.gain.setValueAtTime(0.0001, now + ABSORB);
+    chimeGain.gain.exponentialRampToValueAtTime(0.2, now + ABSORB + 0.02);
+    chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + ABSORB + 0.5);
+    chime.connect(chimeGain).connect(master);
+    chime.start(now + ABSORB);
+    chime.stop(now + ABSORB + 0.54);
+
+    // Low bloom for the "forged" impact on the same beat.
+    const bloom = audio.createOscillator();
+    const bloomGain = audio.createGain();
+    bloom.type = "sine";
+    bloom.frequency.setValueAtTime(196, now + ABSORB);
+    bloom.frequency.exponentialRampToValueAtTime(392, now + ABSORB + 0.12);
+    bloomGain.gain.setValueAtTime(0.0001, now + ABSORB);
+    bloomGain.gain.exponentialRampToValueAtTime(0.16, now + ABSORB + 0.02);
+    bloomGain.gain.exponentialRampToValueAtTime(0.0001, now + ABSORB + 0.34);
+    bloom.connect(bloomGain).connect(master);
+    bloom.start(now + ABSORB);
+    bloom.stop(now + ABSORB + 0.38);
+
+    // Warm shimmer swelling with the gather and peaking on absorption.
     const shimmer = audio.createOscillator();
     const shimmerGain = audio.createGain();
     shimmer.type = "sine";
-    shimmer.frequency.setValueAtTime(261, now + 0.16);
-    shimmer.frequency.exponentialRampToValueAtTime(523, now + 0.6);
-    shimmerGain.gain.setValueAtTime(0.0001, now + 0.16);
-    shimmerGain.gain.exponentialRampToValueAtTime(0.1, now + 0.26);
-    shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.72);
+    shimmer.frequency.setValueAtTime(261, now + GATHER);
+    shimmer.frequency.exponentialRampToValueAtTime(523, now + ABSORB);
+    shimmerGain.gain.setValueAtTime(0.0001, now + GATHER);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.1, now + ABSORB);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.78);
     shimmer.connect(shimmerGain).connect(master);
-    shimmer.start(now + 0.16);
-    shimmer.stop(now + 0.76);
+    shimmer.start(now + GATHER);
+    shimmer.stop(now + 0.82);
   }
+
 }
