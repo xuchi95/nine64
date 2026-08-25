@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { ChevronLeft, ChevronRight, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Play, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
+import { GamePanel } from "@/components/game/GamePanel";
+import { gameLabelClass } from "@/components/game/GameLayout";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { APP } from "@/config/app";
@@ -139,56 +142,100 @@ function Analysis() {
         </div>
 
         <div className="space-y-3">
-          <div className="panel p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Engine lines
-            </h2>
+          <GamePanel
+            title="Engine lines"
+            meta={
+              lines.length > 0 ? (
+                <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[0.66rem] font-semibold text-primary">
+                  Depth {Math.max(...lines.map((l) => l.depth))}
+                </span>
+              ) : analysing ? (
+                <span className="flex items-center gap-1.5 text-[0.66rem] font-semibold text-primary">
+                  <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                  Searching
+                </span>
+              ) : null
+            }
+            bodyClassName="p-3"
+          >
             {lines.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="px-1 py-4 text-center text-xs text-muted-foreground">
                 {analysing
-                  ? "Stockfish is searching…"
-                  : "Run an analysis to see the top continuations."}
+                  ? "Stockfish đang tính toán…"
+                  : "Chạy phân tích để xem các nước tiếp theo tốt nhất."}
               </p>
             ) : (
-              <ul className="mt-3 space-y-2">
-                {lines.map((l, i) => (
-                  <li key={i} className="rounded-md border border-border bg-surface-2 p-2 text-sm">
-                    <span className="tabular mr-2 font-semibold text-primary">
-                      {l.mateIn !== null
-                        ? `M${Math.abs(l.mateIn)}`
-                        : `${(l.cp ?? 0) >= 0 ? "+" : ""}${((l.cp ?? 0) / 100).toFixed(2)}`}
-                    </span>
-                    <span className="text-muted-foreground">depth {l.depth}</span>
-                    <p className="mt-1 truncate font-mono text-xs">{l.pv.slice(0, 8).join(" ")}</p>
-                  </li>
-                ))}
+              <ul className="space-y-1">
+                {lines.map((l, i) => {
+                  const score =
+                    l.mateIn !== null
+                      ? `M${Math.abs(l.mateIn)}`
+                      : `${(l.cp ?? 0) >= 0 ? "+" : ""}${((l.cp ?? 0) / 100).toFixed(2)}`;
+                  return (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 rounded-lg p-2 transition-colors duration-200 hover:bg-surface-2"
+                    >
+                      <span
+                        className={cn(
+                          "tabular mt-px min-w-[3rem] rounded px-1.5 py-0.5 text-center text-[0.68rem] font-bold",
+                          i === 0
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-surface-2 text-muted-foreground",
+                        )}
+                      >
+                        {score}
+                      </span>
+                      <p className="min-w-0 flex-1 text-xs leading-relaxed text-foreground/85">
+                        <span className="font-semibold text-foreground">
+                          {l.pv.slice(0, 2).join(" ")}
+                        </span>{" "}
+                        {l.pv.slice(2, 8).join(" ")}
+                      </p>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-          </div>
+          </GamePanel>
 
-          <div className="panel flex max-h-[340px] flex-col overflow-hidden">
-            <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Moves
-            </div>
+          <GamePanel
+            title="Moves"
+            meta={game.moves.length > 0 ? `${Math.ceil(game.moves.length / 2)} lượt` : undefined}
+            className="max-h-[340px]"
+          >
             <MoveList moves={game.moves} />
-          </div>
+          </GamePanel>
 
-          <div className="panel space-y-2 p-4">
-            <label className="text-xs uppercase tracking-wider text-muted-foreground" htmlFor="fen">
-              Load FEN
-            </label>
+          <GamePanel title="Load FEN" bodyClassName="flex flex-col gap-3 p-4">
             <Input
               id="fen"
               value={fenInput}
               onChange={(e) => setFenInput(e.target.value)}
               placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+              className="tabular bg-surface-2 text-xs"
             />
-            <Button variant="secondary" className="w-full" onClick={handleLoadFen}>
+            <Button className="w-full" onClick={handleLoadFen}>
               Load position
             </Button>
-            {loadError && <p className="text-xs text-destructive">{loadError}</p>}
-            <p className="tabular break-all text-xs text-muted-foreground">{game.fen}</p>
-          </div>
+            {loadError && <p className="text-xs font-medium text-destructive">{loadError}</p>}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className={gameLabelClass}>Current position</span>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(game.fen)}
+                  className="flex items-center gap-1 rounded px-1 py-0.5 text-[0.66rem] font-semibold text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <Copy className="size-3" /> Copy
+                </button>
+              </div>
+              <code className="tabular block break-all rounded-md border border-border bg-surface-2 p-2 text-[0.7rem] leading-tight text-muted-foreground">
+                {game.fen}
+              </code>
+            </div>
+          </GamePanel>
+
         </div>
       </div>
     </AppShell>
