@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Info } from "lucide-react";
 import { Piece } from "@/components/chess/Piece";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import {
@@ -7,7 +7,7 @@ import {
   type BoardTheme,
   type PieceSet,
 } from "@/lib/chess/themes";
-import { updateSettings } from "@/lib/settings";
+import { updateSettings, useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_PIECES = [
@@ -47,6 +47,8 @@ function MiniBoard({ theme, set }: { theme: BoardTheme; set: PieceSet }) {
 /** Board + piece theme switcher with live mini-board previews. */
 export function BoardThemePicker({ className }: { className?: string }) {
   const { theme: activeTheme, pieceSet: activeSet } = useBoardStyle();
+  const settings = useSettings();
+  const anyAuto = settings.boardThemeAuto || settings.pieceSetAuto;
 
   return (
     <section className={cn("panel p-4 sm:p-5", className)}>
@@ -61,6 +63,30 @@ export function BoardThemePicker({ className }: { className?: string }) {
           {activeTheme.name} · {activeSet.name}
         </p>
       </div>
+
+      {anyAuto && (
+        <div className="mt-4 flex items-start justify-between gap-3 rounded-lg border border-primary/30 bg-primary/10 p-3 sm:p-4">
+          <div className="flex items-start gap-2.5">
+            <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-sm leading-relaxed text-foreground">
+              {settings.boardThemeAuto && settings.pieceSetAuto
+                ? "Board and piece themes are currently auto-matched to your light/dark mode."
+                : settings.boardThemeAuto
+                  ? "Board theme is currently auto-matched to your light/dark mode."
+                  : "Piece set is currently auto-matched to your light/dark mode."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              updateSettings({ boardThemeAuto: false, pieceSetAuto: false })
+            }
+            className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Manual
+          </button>
+        </div>
+      )}
 
       <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Boards
