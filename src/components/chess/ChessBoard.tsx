@@ -1124,15 +1124,26 @@ export function ChessBoard(props: ChessBoardProps) {
           >
             <defs>
               <marker
-                id="nine64-arrow-head"
+                id="nine64-arrow-strong"
                 viewBox="0 0 10 10"
-                refX="7"
+                refX="8"
                 refY="5"
-                markerWidth="4"
-                markerHeight="4"
+                markerWidth="3"
+                markerHeight="3"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#f5c451" />
+              </marker>
+              <marker
+                id="nine64-arrow-soft"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="3.4"
+                markerHeight="3.4"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#8fd8ff" />
               </marker>
             </defs>
             {arrows.map((a, i) => {
@@ -1173,7 +1184,7 @@ export function ChessBoard(props: ChessBoardProps) {
                     strokeWidth={squareSize * (strong ? 0.14 : 0.09)}
                     strokeLinecap="round"
                     opacity={opacity}
-                    markerEnd="url(#nine64-arrow-head)"
+                    markerEnd={strong ? "url(#nine64-arrow-strong)" : "url(#nine64-arrow-soft)"}
                   />
                   {!strong && (
                     <text
