@@ -123,6 +123,18 @@ export function ChessBoard(props: ChessBoardProps) {
 
   const transitionMs = settings.animations ? settings.animationMs : 0;
 
+  /** Check alert: a banner + board frame flash each time a new check appears. */
+  const [checkAlert, setCheckAlert] = useState(0);
+  const prevCheckRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (checkSquare && checkSquare !== prevCheckRef.current) {
+      setCheckAlert((n) => n + 1);
+    }
+    prevCheckRef.current = checkSquare ?? null;
+  }, [checkSquare]);
+
+
+
 
   useEffect(() => {
     const { result, movedIds, removed } = trackPieces(trackedRef.current, pieces);
@@ -349,10 +361,11 @@ export function ChessBoard(props: ChessBoardProps) {
                 )}
                 {isCheck && (
                   <span
-                    className="absolute inset-0"
+                    className="animate-nexus-check-pulse absolute inset-0"
                     style={{
                       background:
                         "radial-gradient(circle, rgba(220,60,50,0.85) 8%, rgba(220,60,50,0.25) 55%, transparent 72%)",
+                      boxShadow: "inset 0 0 0 2px rgba(255,90,80,0.9)",
                     }}
                   />
                 )}
@@ -472,6 +485,24 @@ export function ChessBoard(props: ChessBoardProps) {
             </div>
           );
         })}
+
+        {checkSquare && (
+          <>
+            <span
+              key={`frame-${checkAlert}`}
+              aria-hidden
+              className="animate-nexus-check-frame pointer-events-none absolute inset-0 z-30 rounded-md"
+            />
+            <div
+              key={`banner-${checkAlert}`}
+              role="status"
+              aria-live="assertive"
+              className="animate-nexus-check-banner pointer-events-none absolute left-1/2 top-3 z-40 -translate-x-1/2 rounded-full border border-red-400/60 bg-red-600/90 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-white shadow-lg"
+            >
+              Check!
+            </div>
+          </>
+        )}
 
 
         {promotion && (
