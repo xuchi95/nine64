@@ -68,11 +68,23 @@ function trackPieces(prev: TrackedPiece[], next: BoardPiece[]): TrackResult {
     if (i === -1) return null;
     return remaining.splice(i, 1)[0] ?? null;
   };
+  // Pick the closest same-type piece so a pawn appearing on d6 is matched with
+  // the pawn that was on e5 (en passant) rather than an unrelated pawn.
   const takeSimilar = (p: BoardPiece): TrackedPiece | null => {
-    const i = remaining.findIndex((r) => r.type === p.type && r.color === p.color);
-    if (i === -1) return null;
-    return remaining.splice(i, 1)[0] ?? null;
+    let best = -1;
+    let bestDist = Infinity;
+    remaining.forEach((r, i) => {
+      if (r.type !== p.type || r.color !== p.color) return;
+      const d = squareDistance(r.square, p.square);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    });
+    if (best === -1) return null;
+    return remaining.splice(best, 1)[0] ?? null;
   };
+
 
   const pending: BoardPiece[] = [];
   for (const p of next) {
