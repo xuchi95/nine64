@@ -441,6 +441,7 @@ function PlayAi() {
               needsPromotion={game.needsPromotion}
               lastMove={game.lastMove}
               checkSquare={game.checkSquare}
+              checkmate={game.result?.reason === "Checkmate"}
               interactive={!game.result}
               turn={game.turn}
               premove={premove}

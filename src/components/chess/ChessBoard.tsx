@@ -22,6 +22,8 @@ export interface ChessBoardProps {
   needsPromotion: (from: string, to: string) => boolean;
   lastMove?: { from: string; to: string } | null;
   checkSquare?: string | null;
+  /** explicit mate flag from the rules engine; falls back to a board-side check */
+  checkmate?: boolean;
   interactive?: boolean;
   /** premove currently armed (rendered as a ghost highlight) */
   premove?: { from: string; to: string } | null;
@@ -96,6 +98,7 @@ export function ChessBoard(props: ChessBoardProps) {
     needsPromotion,
     lastMove,
     checkSquare,
+    checkmate,
     interactive = true,
     premove,
     onPremove,
@@ -132,6 +135,33 @@ export function ChessBoard(props: ChessBoardProps) {
     }
     prevCheckRef.current = checkSquare ?? null;
   }, [checkSquare]);
+
+  /**
+   * Checkmate = the side to move is in check and has no legal target anywhere.
+   * Only trusted on interactive boards, where `legalTargets` is a real query.
+   */
+  const isCheckmate =
+    checkmate ??
+    (interactive &&
+      !!checkSquare &&
+      !pieces.some((p) => p.color === props.turn && legalTargets(p.square).length > 0));
+
+  const [mateDismissed, setMateDismissed] = useState(false);
+  const matePlayedRef = useRef(false);
+  useEffect(() => {
+    if (!isCheckmate) {
+      matePlayedRef.current = false;
+      setMateDismissed(false);
+      return;
+    }
+    if (!matePlayedRef.current) {
+      matePlayedRef.current = true;
+      playSound("checkmate");
+    }
+  }, [isCheckmate]);
+
+  const winnerLabel = props.turn === "w" ? "Black" : "White";
+
 
 
 
@@ -491,18 +521,52 @@ export function ChessBoard(props: ChessBoardProps) {
             <span
               key={`frame-${checkAlert}`}
               aria-hidden
-              className="animate-nexus-check-frame pointer-events-none absolute inset-0 z-30 rounded-md"
+              className={cn(
+                "pointer-events-none absolute inset-0 z-30 rounded-md",
+                isCheckmate ? "animate-nexus-mate-frame" : "animate-nexus-check-frame",
+              )}
             />
             <div
-              key={`banner-${checkAlert}`}
+              key={`banner-${checkAlert}-${isCheckmate ? "mate" : "check"}`}
               role="status"
               aria-live="assertive"
-              className="animate-nexus-check-banner pointer-events-none absolute left-1/2 top-3 z-40 -translate-x-1/2 rounded-full border border-red-400/60 bg-red-600/90 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-white shadow-lg"
+              className={cn(
+                "animate-nexus-check-banner pointer-events-none absolute left-1/2 top-3 z-40 -translate-x-1/2 rounded-full border px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-white shadow-lg",
+                isCheckmate
+                  ? "border-amber-300/70 bg-red-700/95"
+                  : "border-red-400/60 bg-red-600/90",
+              )}
             >
-              Check!
+              {isCheckmate ? "Checkmate!" : "Check!"}
             </div>
           </>
         )}
+
+        {isCheckmate && !mateDismissed && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-[2px]">
+            <div
+              role="alertdialog"
+              aria-label="Game over"
+              className="panel animate-nexus-pop max-w-[85%] px-6 py-5 text-center"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-400">
+                Checkmate
+              </p>
+              <p className="mt-2 text-xl font-bold">{winnerLabel} wins</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The king is in check with no legal moves left.
+              </p>
+              <button
+                type="button"
+                onClick={() => setMateDismissed(true)}
+                className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                View board
+              </button>
+            </div>
+          </div>
+        )}
+
 
 
         {promotion && (
