@@ -131,6 +131,9 @@
   --sidebar-accent-foreground: oklch(0.28 0.01 264);
   --sidebar-border: oklch(0.88 0.006 90);
   --sidebar-ring: oklch(0.55 0.12 70);
+
+  --shadow-panel: 0 1px 0 0 oklch(1 0 0 / 80%) inset, 0 10px 24px -20px oklch(0 0 0 / 30%);
+  --shadow-piece: 0 2px 3px oklch(0 0 0 / 18%);
 }
 
 @layer base {

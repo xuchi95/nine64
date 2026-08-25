@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Moon, Sun } from "lucide-react";
+import { useSettings, updateSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,7 +28,10 @@ export function GameLayout({
       <div className="order-1 lg:order-2">
         <div className="mx-auto w-full max-w-[720px] space-y-3">{board}</div>
       </div>
-      <div className="order-3 space-y-4">{right}</div>
+      <div className="order-3 space-y-3 lg:order-3">
+        <GameThemeToggle />
+        {right}
+      </div>
     </div>
   );
 }
@@ -63,7 +68,7 @@ export function StatusPill({ tone, children }: { tone: StatusTone; children: Rea
       className={cn(
         "rounded px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
         tone === "live" && "bg-primary/15 text-primary",
-        tone === "win" && "bg-emerald-500/15 text-emerald-400",
+        tone === "win" && "bg-success/15 text-success",
         tone === "loss" && "bg-destructive/15 text-destructive",
         tone === "draw" && "bg-muted text-muted-foreground",
         tone === "neutral" && "bg-surface-2 text-muted-foreground",
@@ -87,11 +92,59 @@ export function GameNotice({
       className={cn(
         "rounded-md border px-3 py-2 text-xs font-medium",
         tone === "info" && "border-border bg-surface-2 text-muted-foreground",
-        tone === "warning" && "border-amber-500/40 bg-amber-500/10 text-amber-300",
+        tone === "warning" && "border-warning/40 bg-warning/10 text-warning",
         tone === "error" && "border-destructive/50 bg-destructive/10 text-destructive",
       )}
     >
       {children}
+    </div>
+  );
+}
+
+/** In-game appearance switch (dark / light) shared by every play surface. */
+export function GameThemeToggle({ className }: { className?: string }) {
+  const settings = useSettings();
+  const isDark = settings.appearance === "dark";
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-md border border-border bg-surface-2/60 px-2.5 py-1.5",
+        className,
+      )}
+    >
+      <span className={gameLabelClass}>Giao diện</span>
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          aria-pressed={isDark}
+          onClick={() => updateSettings({ appearance: "dark" })}
+          className={cn(
+            "flex size-7 items-center justify-center rounded transition-colors",
+            isDark
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:bg-surface hover:text-foreground",
+          )}
+          title="Chế độ tối"
+        >
+          <Moon className="size-4" />
+          <span className="sr-only">Chế độ tối</span>
+        </button>
+        <button
+          type="button"
+          aria-pressed={!isDark}
+          onClick={() => updateSettings({ appearance: "light" })}
+          className={cn(
+            "flex size-7 items-center justify-center rounded transition-colors",
+            !isDark
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:bg-surface hover:text-foreground",
+          )}
+          title="Chế độ sáng"
+        >
+          <Sun className="size-4" />
+          <span className="sr-only">Chế độ sáng</span>
+        </button>
+      </div>
     </div>
   );
 }
