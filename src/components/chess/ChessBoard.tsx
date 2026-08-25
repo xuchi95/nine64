@@ -543,7 +543,37 @@ export function ChessBoard(props: ChessBoardProps) {
               >
                 <path d="M0,0 L10,5 L0,10 z" fill="rgba(255,120,60,0.9)" />
               </marker>
+              <marker
+                id="nexus-defend-arrow"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="4"
+                markerHeight="4"
+                orient="auto-start-reverse"
+              >
+                <path d="M0,0 L10,5 L0,10 z" fill="rgba(90,230,150,0.95)" />
+              </marker>
             </defs>
+            {defences.map((d) => {
+              const from = squareToXY(d.from);
+              const to = squareToXY(d.to);
+              const half = squareSize / 2;
+              return (
+                <line
+                  key={`def-${d.from}-${d.to}`}
+                  x1={from.x + half}
+                  y1={from.y + half}
+                  x2={to.x + half}
+                  y2={to.y + half}
+                  stroke="rgba(90,230,150,0.8)"
+                  strokeWidth={Math.max(2, squareSize * 0.045)}
+                  strokeLinecap="round"
+                  strokeDasharray={`${squareSize * 0.14} ${squareSize * 0.1}`}
+                  markerEnd="url(#nexus-defend-arrow)"
+                />
+              );
+            })}
             {checkAttacks.map((a) => {
               const from = squareToXY(a.from);
               const to = squareToXY(a.to);
