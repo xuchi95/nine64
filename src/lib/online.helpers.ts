@@ -21,6 +21,14 @@ export const TRY_MATCH_SCHEMA = z.object({ queueId: z.string().uuid() });
 
 export const NOTIFICATION_ID_SCHEMA = z.object({ id: z.string().uuid() });
 
+export const FINISH_GAME_SCHEMA = z.object({
+  gameId: z.string().uuid(),
+  result: z.enum(["1-0", "0-1", "1/2-1/2", "*"]),
+  winnerId: z.string().uuid().nullable(),
+  endReason: z.string().min(1),
+  finalFen: z.string().min(10),
+});
+
 export const STANDARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 export function timeControlToMs(timeControl: string): number {

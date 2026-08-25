@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Game, GameMove, MatchmakingQueue, Notification } from "@/lib/database.types";
 import {
+  FINISH_GAME_SCHEMA,
   GAME_ID_SCHEMA,
   MOVE_SCHEMA,
   NOTIFICATION_ID_SCHEMA,
@@ -250,17 +251,7 @@ export const makeMove = createServerFn({ method: "POST" })
 
 export const finishGame = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z
-      .object({
-        gameId: z.string().uuid(),
-        result: z.enum(["1-0", "0-1", "1/2-1/2", "*"]),
-        winnerId: z.string().uuid().nullable(),
-        endReason: z.string().min(1),
-        finalFen: z.string().min(10),
-      })
-      .parse(input),
-  )
+  .inputValidator((input) => FINISH_GAME_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
     const supabase = context.supabase;
 
