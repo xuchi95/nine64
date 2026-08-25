@@ -12,6 +12,10 @@ export default {
     "study.analysis.forcedMate": "Chiếu hết bắt buộc sau {n} nước",
     "study.analysis.mainLineFor": "Biến chính cho {color}",
     "study.analysis.pickLineHint": "Bấm một phương án để tô biến đó lên bàn cờ.",
+    "study.analysis.autoHighlight": "Tự tô biến thắng",
+    "study.analysis.autoHighlightHint": "Tắt để tự so sánh trước khi xem mũi tên của máy.",
+    "study.analysis.arrowsOff": "Mũi tên đang tắt",
+
 
     // ---------- Endgame recognition ----------
     "study.endgame.title": "Nhận diện tàn cuộc",
@@ -84,6 +88,10 @@ export default {
     "study.analysis.forcedMate": "Forced mate in {n}",
     "study.analysis.mainLineFor": "Main line for {color}",
     "study.analysis.pickLineHint": "Click a line to highlight it on the board.",
+    "study.analysis.autoHighlight": "Auto-highlight winning line",
+    "study.analysis.autoHighlightHint": "Turn off to guess first, then compare with the engine arrows.",
+    "study.analysis.arrowsOff": "Arrows are off",
+
 
     "study.endgame.title": "Endgame recognition",
     "study.endgame.phase.opening": "Opening",

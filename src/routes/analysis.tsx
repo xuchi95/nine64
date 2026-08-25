@@ -12,6 +12,8 @@ import { gameLabelClass } from "@/components/game/GameLayout";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { APP } from "@/config/app";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { StockfishEngine, type EngineLine } from "@/lib/engine/stockfish";
@@ -56,7 +58,35 @@ function Analysis() {
   const [scanProgress, setScanProgress] = useState(0);
   const [activeLine, setActiveLine] = useState(0);
   const [showArrows, setShowArrows] = useState(true);
+  /** When off, the engine never auto-draws arrows so you can guess first. */
+  const [autoHighlight, setAutoHighlight] = useState(true);
   const engineRef = useRef<StockfishEngine | null>(null);
+
+  // Remember the preference across visits.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("nine64.analysis.autoHighlight");
+      if (saved === "0") {
+        setAutoHighlight(false);
+        setShowArrows(false);
+      }
+    } catch {
+      /* private mode */
+    }
+  }, []);
+
+  const toggleAutoHighlight = useCallback(() => {
+    setAutoHighlight((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem("nine64.analysis.autoHighlight", next ? "1" : "0");
+      } catch {
+        /* private mode */
+      }
+      setShowArrows(next);
+      return next;
+    });
+  }, []);
 
 
   const game = useChessGame({ variant: "standard", timeControl: null });
@@ -130,7 +160,7 @@ function Analysis() {
       // Auto-highlight: jump to the first decisive line, else the top line.
       const winIndex = result.findIndex((l) => isWinningScore(l.cp, l.mateIn));
       setActiveLine(winIndex >= 0 ? winIndex : 0);
-      setShowArrows(true);
+      setShowArrows(autoHighlight);
     } catch (e) {
       setLoadError((e as Error).message);
     } finally {
@@ -228,7 +258,23 @@ function Analysis() {
               <Play className="size-4" /> {analysing ? t("study.analysis.analysing") : t("study.analysis.analysePosition")}
             </Button>
           </div>
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-1 px-3 py-2">
+            <div className="min-w-0">
+              <Label htmlFor="auto-highlight" className="text-xs font-semibold text-foreground">
+                {t("study.analysis.autoHighlight")}
+              </Label>
+              <p className="mt-0.5 text-2xs text-muted-foreground">
+                {t("study.analysis.autoHighlightHint")}
+              </p>
+            </div>
+            <Switch
+              id="auto-highlight"
+              checked={autoHighlight}
+              onCheckedChange={toggleAutoHighlight}
+            />
+          </div>
         </div>
+
 
         <div className="space-y-3">
           <GamePanel
@@ -312,7 +358,9 @@ function Analysis() {
                   <span className="text-2xs text-muted-foreground">
                     {arrows.length > 0
                       ? t("study.analysis.highlightOn")
-                      : t("study.analysis.pickLineHint")}
+                      : showArrows
+                        ? t("study.analysis.pickLineHint")
+                        : t("study.analysis.arrowsOff")}
                   </span>
                   <Button
                     size="sm"
