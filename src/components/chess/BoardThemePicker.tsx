@@ -1,14 +1,13 @@
 import { Check } from "lucide-react";
 import { Piece } from "@/components/chess/Piece";
+import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import {
   BOARD_THEMES,
   PIECE_SETS,
-  getBoardTheme,
-  getPieceSet,
   type BoardTheme,
   type PieceSet,
 } from "@/lib/chess/themes";
-import { updateSettings, useSettings } from "@/lib/settings";
+import { updateSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_PIECES = [
