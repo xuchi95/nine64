@@ -78,17 +78,10 @@ function GamesPage() {
               : "Saved on this device only — sign in to sync them to your account."}
           </p>
         </div>
-        {localGames.length > 0 && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (window.confirm("Delete every saved bot / local game, on this device and in your account? This cannot be undone.")) clearHistory();
-            }}
-          >
-            <Trash2 className="size-4" /> Clear archive
-          </Button>
-        )}
+        {/* Lịch sử ván đấu là bản ghi vĩnh viễn — người chơi không được xoá. */}
+        <p className="text-xs text-muted-foreground">Archive is permanent — games can't be deleted.</p>
       </div>
+
 
       <div className="mt-5 grid gap-3 sm:grid-cols-4">
         <Stat label="Total" value={String(items.length)} />
