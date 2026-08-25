@@ -66,7 +66,7 @@ export default {
     "study.endgame.tech.philidor": "Bên phòng ngự hướng tới thế Philidor (phòng ngự hàng thứ ba).",
     "study.endgame.tech.activeRook": "Giữ Xe chủ động; Xe bị động là nguồn gốc thất bại.",
     "study.endgame.tech.rookBehindPawn": "Đặt Xe sau Tốt thông, của mình hay của đối phương.",
-    "study.endgame.tech.drawTendency": "Tượng khác màu ô nghiêng về hoà, kể cả khi hơn một tốt.",
+    "study.endgame.tech.drawTendency": "Tượng khác màu ô nghiêng về hoà, kể cả khi hơn một Tốt.",
     "study.endgame.tech.twoWeaknesses": "Muốn thắng phải tạo hai điểm yếu ở hai cánh.",
     "study.endgame.tech.perpetualRisk": "Cảnh giác chiếu liên tục — kiểm tra an toàn Vua trước mỗi nước.",
     "study.endgame.tech.centralizeQueen": "Đưa Hậu ra trung tâm để vừa tấn công vừa che chắn.",
