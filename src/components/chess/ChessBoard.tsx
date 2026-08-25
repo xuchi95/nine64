@@ -486,6 +486,24 @@ export function ChessBoard(props: ChessBoardProps) {
           );
         })}
 
+        {checkSquare && (
+          <>
+            <span
+              key={`frame-${checkAlert}`}
+              aria-hidden
+              className="animate-nexus-check-frame pointer-events-none absolute inset-0 z-30 rounded-md"
+            />
+            <div
+              key={`banner-${checkAlert}`}
+              role="status"
+              aria-live="assertive"
+              className="animate-nexus-check-banner pointer-events-none absolute left-1/2 top-3 z-40 -translate-x-1/2 rounded-full border border-red-400/60 bg-red-600/90 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-white shadow-lg"
+            >
+              Check!
+            </div>
+          </>
+        )}
+
 
         {promotion && (
           <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/65 backdrop-blur-[2px]">
