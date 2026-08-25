@@ -34,20 +34,20 @@ export function PlayerCard({
   return (
     <div
       className={cn(
-        "panel relative flex items-center gap-3 overflow-hidden p-3.5 pl-4 transition-colors",
+        "panel group/player relative flex items-center gap-3 overflow-hidden p-3.5 pl-4 transition-[border-color,background-color,box-shadow,transform] duration-300 ease-out hover:-translate-y-[1px] hover:border-primary/40 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none",
         active && "border-primary/70 bg-primary/[0.04]",
       )}
     >
       <span
         aria-hidden
         className={cn(
-          "absolute inset-y-0 left-0 w-[3px] transition-colors",
-          active ? "bg-primary" : "bg-transparent",
+          "absolute inset-y-0 left-0 w-[3px] origin-top scale-y-100 transition-[background-color,transform] duration-300",
+          active ? "bg-primary" : "bg-transparent group-hover/player:bg-primary/30",
         )}
       />
       <div
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-md border transition-colors",
+          "flex size-10 shrink-0 items-center justify-center rounded-md border transition-[background-color,border-color,color,transform] duration-300 group-hover/player:scale-[1.04] motion-reduce:transform-none",
           active
             ? "border-primary/40 bg-primary/15 text-primary"
             : "border-border bg-surface-2 text-muted-foreground",
