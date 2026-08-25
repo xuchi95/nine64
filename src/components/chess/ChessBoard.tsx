@@ -31,7 +31,13 @@ export interface ChessBoardProps {
   /** premove currently armed (rendered as a ghost highlight) */
   premove?: { from: string; to: string } | null;
   onPremove?: (from: string, to: string) => void;
+  /**
+   * Analysis overlay: engine variation drawn as arrows. `ply` 0 is the move to
+   * play now (drawn boldest); deeper plies fade out.
+   */
+  arrows?: { from: string; to: string; ply: number }[];
   turn: PieceColor;
+
 }
 
 import {
@@ -134,7 +140,9 @@ export function ChessBoard(props: ChessBoardProps) {
     interactive = true,
     premove,
     onPremove,
+    arrows,
   } = props;
+
 
   const settings = useSettings();
   const { theme, pieceSet } = useBoardStyle();
@@ -1106,7 +1114,100 @@ export function ChessBoard(props: ChessBoardProps) {
 
 
 
+        {arrows && arrows.length > 0 && (
+          <svg
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-30"
+            width={size}
+            height={size}
+            viewBox={`0 0 ${size} ${size}`}
+          >
+            <defs>
+              <marker
+                id="nine64-arrow-strong"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="3"
+                markerHeight="3"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#f5c451" />
+              </marker>
+              <marker
+                id="nine64-arrow-soft"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="3.4"
+                markerHeight="3.4"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#8fd8ff" />
+              </marker>
+            </defs>
+            {arrows.map((a, i) => {
+              const from = squareToXY(a.from);
+              const to = squareToXY(a.to);
+              const half = squareSize / 2;
+              const x1 = from.x + half;
+              const y1 = from.y + half;
+              const x2 = to.x + half;
+              const y2 = to.y + half;
+              const dx = x2 - x1;
+              const dy = y2 - y1;
+              const len = Math.hypot(dx, dy) || 1;
+              // Stop short of the target centre so the head sits inside the square.
+              const trim = Math.min(half * 0.62, len * 0.3);
+              const ex = x2 - (dx / len) * trim;
+              const ey = y2 - (dy / len) * trim;
+              const strong = a.ply === 0;
+              const opacity = strong ? 0.95 : Math.max(0.28, 0.7 - a.ply * 0.14);
+              return (
+                <g key={`${a.from}${a.to}${i}`} style={{ color: strong ? "#f5c451" : "#8fd8ff" }}>
+                  <line
+                    x1={x1}
+                    y1={y1}
+                    x2={ex}
+                    y2={ey}
+                    stroke="rgba(0,0,0,0.45)"
+                    strokeWidth={squareSize * (strong ? 0.19 : 0.13)}
+                    strokeLinecap="round"
+                    opacity={opacity * 0.6}
+                  />
+                  <line
+                    x1={x1}
+                    y1={y1}
+                    x2={ex}
+                    y2={ey}
+                    stroke="currentColor"
+                    strokeWidth={squareSize * (strong ? 0.14 : 0.09)}
+                    strokeLinecap="round"
+                    opacity={opacity}
+                    markerEnd={strong ? "url(#nine64-arrow-strong)" : "url(#nine64-arrow-soft)"}
+                  />
+                  {!strong && (
+                    <text
+                      x={ex}
+                      y={ey}
+                      dy={squareSize * 0.06}
+                      textAnchor="middle"
+                      fontSize={squareSize * 0.24}
+                      fontWeight="700"
+                      fill="currentColor"
+                      opacity={opacity}
+                    >
+                      {a.ply + 1}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        )}
+
         {promotion && (
+
           <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/65 backdrop-blur-[2px]">
             <div className="panel animate-nexus-pop flex gap-1 p-2">
               {(["q", "r", "b", "n"] as const).map((p) => (
