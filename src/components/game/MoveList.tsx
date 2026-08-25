@@ -41,7 +41,7 @@ export function MoveList({
   });
 
   return (
-    <div className="max-h-full overflow-y-auto">
+    <div ref={listRef} className="max-h-full overflow-y-auto overscroll-contain">
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-10 bg-surface">
           <tr className="text-left text-2xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -64,7 +64,6 @@ export function MoveList({
           ))}
         </tbody>
       </table>
-      <div ref={endRef} />
     </div>
   );
 }
