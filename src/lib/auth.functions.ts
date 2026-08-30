@@ -31,17 +31,18 @@ export const updateProfile = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const update: { updated_at: string; display_name?: string; avatar_url?: string | null } = {
-      updated_at: new Date().toISOString(),
-    };
-    if (data.displayName !== undefined) update["display_name"] = data.displayName;
-    if (data.avatarUrl !== undefined) update["avatar_url"] = data.avatarUrl || null;
-
-    const { error } = await context.supabase.from("profiles").update(update).eq("id", context.userId);
+    // Direct UPDATE on profiles is revoked; the allowlisted RPC is the only path.
+    const { data: result, error } = await context.supabase.rpc("update_my_profile", {
+      _display_name: data.displayName ?? (null as unknown as string),
+      _avatar_url: data.avatarUrl ?? (null as unknown as string),
+    });
 
     if (error) throw new Error(error.message);
+    const payload = (result ?? {}) as { ok?: boolean; code?: string };
+    if (!payload.ok) throw new Error(payload.code ?? "PROFILE_UPDATE_FAILED");
     return { ok: true };
   });
+
 
 export const hasRole = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
