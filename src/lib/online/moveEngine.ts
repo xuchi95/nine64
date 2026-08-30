@@ -1,5 +1,4 @@
 import { Chess } from "chess.js";
-import { timeControlIncrementMs } from "@/lib/chess/timeControls";
 
 /** Stable, client-facing error codes for the canonical move pipeline. */
 export type MoveErrorCode =
@@ -75,40 +74,4 @@ export function applyIntent(
 
 export function sideToMoveFromFen(fen: string): "w" | "b" {
   return fen.split(" ")[1] === "b" ? "b" : "w";
-}
-
-export interface ClockInput {
-  timeControl: string;
-  whiteTimeMs: number;
-  blackTimeMs: number;
-  moverIsWhite: boolean;
-  lastMoveAtMs: number | null;
-  nowMs: number;
-}
-
-export interface ClockOutput {
-  whiteTimeMs: number;
-  blackTimeMs: number;
-  flagged: boolean;
-}
-
-/**
- * Server-authoritative clocks: deduct wall-clock time from the mover, then add
- * the increment. Clients never send clock values.
- */
-export function computeClocks(input: ClockInput): ClockOutput {
-  const elapsed =
-    input.lastMoveAtMs === null ? 0 : Math.max(0, input.nowMs - input.lastMoveAtMs);
-  const increment = timeControlIncrementMs(input.timeControl);
-
-  const moverRemaining = input.moverIsWhite ? input.whiteTimeMs : input.blackTimeMs;
-  const afterElapsed = moverRemaining - elapsed;
-  const flagged = afterElapsed <= 0;
-  const next = Math.max(0, afterElapsed) + (flagged ? 0 : increment);
-
-  return {
-    whiteTimeMs: input.moverIsWhite ? next : input.whiteTimeMs,
-    blackTimeMs: input.moverIsWhite ? input.blackTimeMs : next,
-    flagged,
-  };
 }

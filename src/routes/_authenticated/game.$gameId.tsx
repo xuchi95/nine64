@@ -17,8 +17,9 @@ import {
 import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getGame, getGameMoves, makeMove, finishGame } from "@/lib/online.functions";
-import type { MoveErrorCode, MoveOutcome } from "@/lib/online.functions";
+import { getGameMoves, makeMove, finishGame, syncGame } from "@/lib/online.functions";
+import type { GameSnapshot, MoveErrorCode, MoveOutcome } from "@/lib/online.functions";
+import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
 import type { Game, GameMove } from "@/lib/database.types";
 import type { Color } from "@/hooks/useChessGame";
@@ -69,7 +70,7 @@ const REALTIME_TIMEOUT_MS = 6000;
 function OnlineGamePage() {
   const { gameId } = useParams({ from: "/_authenticated/game/$gameId" });
   const { user } = useAuth();
-  const getGameFn = useServerFn(getGame);
+  const syncGameFn = useServerFn(syncGame);
   const getMovesFn = useServerFn(getGameMoves);
   const makeMoveFn = useServerFn(makeMove);
   const finishGameFn = useServerFn(finishGame);
@@ -80,6 +81,7 @@ function OnlineGamePage() {
   const [error, setError] = useState<string | null>(null);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const [clock, setClock] = useState({ w: 0, b: 0 });
+  const [awaitingFlag, setAwaitingFlag] = useState(false);
   const [boardRev, setBoardRev] = useState(0);
   const [syncMode, setSyncMode] = useState<SyncMode>("connecting");
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null);
@@ -89,10 +91,23 @@ function OnlineGamePage() {
 
   const gameRef = useRef<Chess>(new Chess());
   const finishedRef = useRef(false);
-  const tickRef = useRef<number>(Date.now());
   const inFlightRef = useRef(false);
-  const clockRef = useRef({ w: 0, b: 0 });
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
+  /**
+   * Canonical clock base captured from the server. The UI only extrapolates
+   * from it with a monotonic timer; it never writes clocks anywhere.
+   */
+  const clockBaseRef = useRef<{
+    w: number;
+    b: number;
+    active: "w" | "b";
+    /** ms already elapsed on the active side at the moment of the snapshot */
+    elapsedAtSync: number;
+    /** performance.now() when the snapshot was applied */
+    localAt: number;
+    running: boolean;
+  }>({ w: 0, b: 0, active: "w", elapsedAtSync: 0, localAt: 0, running: false });
+
 
 
   const myColor: PieceColor | null = useMemo(() => {
@@ -119,47 +134,69 @@ function OnlineGamePage() {
   const result = useMemo(() => (game ? normalizeResult(game) : null), [game]);
   const resultView = useMemo(() => resultLabel(result, myColor), [result, myColor]);
 
-  const applyServerState = useCallback((g: Game, ms: GameMove[]) => {
-    setGame(g);
-    setMoves(ms.slice().sort((a, b) => a.move_number - b.move_number));
+  const applyServerState = useCallback(
+    (g: Game, ms: GameMove[], serverNow: string, activeSide: "w" | "b") => {
+      setGame(g);
+      setMoves(ms.slice().sort((a, b) => a.move_number - b.move_number));
 
-    const chess = new Chess();
-    try {
-      chess.load(g.initial_fen || g.current_fen);
-    } catch {
-      chess.reset();
-    }
-    for (const m of ms.slice().sort((a, b) => a.move_number - b.move_number)) {
+      const chess = new Chess();
       try {
-        chess.move(m.san);
+        chess.load(g.initial_fen || g.current_fen);
       } catch {
-        // ignore invalid moves
+        chess.reset();
       }
-    }
-    gameRef.current = chess;
-    setClock({ w: g.white_time_ms, b: g.black_time_ms });
-    tickRef.current = Date.now();
-    setBoardRev((v) => v + 1);
-    setPendingMove(null);
+      for (const m of ms.slice().sort((a, b) => a.move_number - b.move_number)) {
+        try {
+          chess.move(m.san);
+        } catch {
+          // ignore invalid moves
+        }
+      }
+      gameRef.current = chess;
 
-    const last = ms[ms.length - 1];
-    if (last) setLastMove({ from: last.uci.slice(0, 2), to: last.uci.slice(2, 4) });
-    if (g.status === "completed") {
-      if (!finishedRef.current) playSound(g.result === "1/2-1/2" ? "draw" : "checkmate");
-      finishedRef.current = true;
-    }
-    setLastSyncAt(Date.now());
-  }, []);
+      // Canonical clock base: remaining ms per side at the start of the active
+      // turn, plus how much of that turn the *server* says already elapsed.
+      const anchor = g.turn_started_at ?? g.last_move_at ?? g.created_at;
+      const running = g.status === "active" && g.clock_state === "running";
+      const elapsedAtSync = running
+        ? Math.max(0, Date.parse(serverNow) - Date.parse(anchor))
+        : 0;
+      clockBaseRef.current = {
+        w: g.white_time_ms,
+        b: g.black_time_ms,
+        active: activeSide,
+        elapsedAtSync,
+        localAt: performance.now(),
+        running,
+      };
+      setClock({
+        w: activeSide === "w" ? Math.max(0, g.white_time_ms - elapsedAtSync) : g.white_time_ms,
+        b: activeSide === "b" ? Math.max(0, g.black_time_ms - elapsedAtSync) : g.black_time_ms,
+      });
+      setAwaitingFlag(false);
+      setBoardRev((v) => v + 1);
+      setPendingMove(null);
+
+      const last = ms[ms.length - 1];
+      if (last) setLastMove({ from: last.uci.slice(0, 2), to: last.uci.slice(2, 4) });
+      if (g.status === "completed") {
+        if (!finishedRef.current) playSound(g.result === "1/2-1/2" ? "draw" : "checkmate");
+        finishedRef.current = true;
+      }
+      setLastSyncAt(Date.now());
+    },
+    [],
+  );
 
   const refresh = useCallback(
     async (opts?: { showSpinner?: boolean }) => {
       if (opts?.showSpinner) setSyncing(true);
       try {
-        const [g, ms] = await Promise.all([
-          getGameFn({ data: { gameId } }) as Promise<Game>,
+        const [snap, ms] = await Promise.all([
+          syncGameFn({ data: { gameId } }) as Promise<GameSnapshot>,
           getMovesFn({ data: { gameId } }) as Promise<GameMove[]>,
         ]);
-        applyServerState(g, ms);
+        applyServerState(snap.game, ms, snap.serverNow, snap.activeSide);
         setError(null);
         setSyncMode((mode) => (mode === "offline" ? "fallback" : mode));
       } catch (e) {
@@ -170,8 +207,9 @@ function OnlineGamePage() {
         if (opts?.showSpinner) setSyncing(false);
       }
     },
-    [applyServerState, gameId, getGameFn, getMovesFn],
+    [applyServerState, gameId, getMovesFn, syncGameFn],
   );
+
 
   useEffect(() => {
     void (async () => {
@@ -244,24 +282,60 @@ function OnlineGamePage() {
     return () => window.clearInterval(id);
   }, [game, refresh, syncMode]);
 
-  // Shared clock ticking (wall-clock based so realtime and fallback agree)
+  // Display-only countdown: extrapolated from the canonical server base with a
+  // monotonic timer. Nothing here is ever written back to the database.
   useEffect(() => {
     if (!game || game.status !== "active") return;
-    tickRef.current = Date.now();
     const id = window.setInterval(() => {
-      const now = Date.now();
-      const delta = now - tickRef.current;
-      tickRef.current = now;
-      const turn = gameRef.current.turn() as "w" | "b";
-      setClock((prev) => ({ ...prev, [turn]: Math.max(0, prev[turn] - delta) }));
+      const base = clockBaseRef.current;
+      if (!base.running) return;
+      const next = deriveDisplayClock(
+        {
+          whiteTimeMs: base.w,
+          blackTimeMs: base.b,
+          activeSide: base.active,
+          elapsedAtSyncMs: base.elapsedAtSync,
+          running: base.running,
+        },
+        performance.now() - base.localAt,
+      );
+      setClock({ w: next.w, b: next.b });
+      if (next.expired) setAwaitingFlag(true);
     }, 100);
     return () => window.clearInterval(id);
   }, [game, boardRev]);
 
-  // Keep a ref of the live clock so conflict retries use fresh values
+  // When the estimated countdown hits zero we ask the server to rule on it.
+  // The client never declares a winner by itself.
   useEffect(() => {
-    clockRef.current = clock;
-  }, [clock]);
+    if (!awaitingFlag || !game || game.status !== "active") return;
+    let cancelled = false;
+    const id = window.setInterval(() => {
+      if (cancelled) return;
+      void refresh().catch(() => undefined);
+    }, 1500);
+    void refresh().catch(() => undefined);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [awaitingFlag, game, refresh]);
+
+  // Resync canonical state on reconnect and when the tab regains focus.
+  useEffect(() => {
+    const resync = () => {
+      if (document.visibilityState === "hidden") return;
+      void refresh().catch(() => undefined);
+    };
+    window.addEventListener("focus", resync);
+    window.addEventListener("online", resync);
+    document.addEventListener("visibilitychange", resync);
+    return () => {
+      window.removeEventListener("focus", resync);
+      window.removeEventListener("online", resync);
+      document.removeEventListener("visibilitychange", resync);
+    };
+  }, [refresh]);
 
   const finishIfOver = useCallback(
     async (reason: string, winner: Color | "draw") => {
@@ -288,12 +362,6 @@ function OnlineGamePage() {
     [finishGameFn, game],
   );
 
-  // Flag fall detection (same rule in realtime and fallback mode)
-  useEffect(() => {
-    if (!game || game.status !== "active" || finishedRef.current) return;
-    if (clock.w <= 0) void finishIfOver("White flagged", "b");
-    else if (clock.b <= 0) void finishIfOver("Black flagged", "w");
-  }, [clock, finishIfOver, game]);
 
   const submitMove = useCallback(
     async (args: {
@@ -301,7 +369,6 @@ function OnlineGamePage() {
       to: string;
       promotion?: "q" | "r" | "b" | "n";
       expectedVersion: number;
-      previousClock: { w: number; b: number };
     }): Promise<void> => {
       if (!game || !myColor) return;
       inFlightRef.current = true;
@@ -333,16 +400,17 @@ function OnlineGamePage() {
       } catch (e: unknown) {
         gameRef.current.undo();
         setLastMove(null);
-        setClock(args.previousClock);
         setPendingMove(null);
         setBoardRev((v) => v + 1);
         setError(e instanceof Error ? e.message : "Move failed");
+        await refresh().catch(() => undefined);
       } finally {
         inFlightRef.current = false;
       }
     },
     [game, makeMoveFn, myColor, refresh],
   );
+
 
   const handleMove = useCallback(
     (from: string, to: string, promotion?: "q" | "r" | "b" | "n") => {
@@ -367,13 +435,9 @@ function OnlineGamePage() {
         return false;
       }
 
-      const previousClock = { ...clock };
-      const nextClock = { ...clock };
-      nextClock[myColor] = Math.max(0, nextClock[myColor]) + spec.incrementMs;
-      tickRef.current = Date.now();
-
+      // Board preview only. The clock keeps running on the current base until
+      // the server returns the canonical clocks for the committed move.
       setLastMove({ from: move.from, to: move.to });
-      setClock(nextClock);
       setPendingMove(move.san);
       setBoardRev((v) => v + 1);
       playMoveSound(gameRef.current, move);
@@ -383,13 +447,13 @@ function OnlineGamePage() {
         to,
         ...(promotion ? { promotion } : {}),
         expectedVersion: game.version ?? 0,
-        previousClock,
       });
 
       return true;
     },
-    [clock, game, myColor, spec.incrementMs, submitMove],
+    [game, myColor, submitMove],
   );
+
 
 
   const canMoveFrom = useCallback(
@@ -582,7 +646,13 @@ function OnlineGamePage() {
                 {conflict}
               </GameNotice>
             )}
+            {awaitingFlag && game?.status === "active" && (
+              <GameNotice tone="warning">
+                Hết giờ trên màn hình — đang chờ máy chủ xác nhận kết quả…
+              </GameNotice>
+            )}
             {error && <GameNotice tone="error">{error}</GameNotice>}
+
           </>
         }
         board={

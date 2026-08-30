@@ -12,17 +12,24 @@ import {
 } from "@/lib/online.helpers";
 import {
   applyIntent,
-  computeClocks,
   sideToMoveFromFen,
   type MoveErrorCode,
 } from "@/lib/online/moveEngine";
 
 export type { MoveErrorCode } from "@/lib/online/moveEngine";
 
-/** Canonical result of a move attempt. */
+/** Canonical result of a move attempt. Clocks always come from the server. */
 export type MoveOutcome =
-  | { ok: true; game: Game; move: GameMove }
-  | { ok: false; code: MoveErrorCode; game?: Game };
+  | { ok: true; game: Game; move: GameMove; serverNow: string }
+  | { ok: false; code: MoveErrorCode; game?: Game; serverNow?: string };
+
+/** Canonical clock snapshot the UI counts down from. */
+export type GameSnapshot = {
+  game: Game;
+  serverNow: string;
+  activeSide: "w" | "b";
+};
+
 export const joinQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => QUEUE_SCHEMA.parse(input))
@@ -299,35 +306,14 @@ export const makeMove = createServerFn({ method: "POST" })
     );
     if (!canonical) return { ok: false, code: "ILLEGAL_MOVE", game: snapshot };
 
-    const now = Date.now();
-    const clocks = computeClocks({
-      timeControl: snapshot.time_control,
-      whiteTimeMs: snapshot.white_time_ms,
-      blackTimeMs: snapshot.black_time_ms,
-      moverIsWhite: isWhite,
-      lastMoveAtMs: snapshot.last_move_at ? Date.parse(snapshot.last_move_at) : null,
-      nowMs: now,
-    });
-
-    let status: "active" | "completed" = "active";
-    let result: "*" | "1-0" | "0-1" | "1/2-1/2" = "*";
-    let winnerId: string | null = null;
+    let outcome: "none" | "checkmate" | "draw" = "none";
     let endReason: string | null = null;
 
-    if (clocks.flagged) {
-      status = "completed";
-      result = isWhite ? "0-1" : "1-0";
-      winnerId = isWhite ? snapshot.black_id : snapshot.white_id;
-      endReason = isWhite ? "White flagged" : "Black flagged";
-    } else if (canonical.isCheckmate) {
-      status = "completed";
-      result = isWhite ? "1-0" : "0-1";
-      winnerId = context.userId;
+    if (canonical.isCheckmate) {
+      outcome = "checkmate";
       endReason = "Checkmate";
     } else if (canonical.isDraw) {
-      status = "completed";
-      result = "1/2-1/2";
-      winnerId = null;
+      outcome = "draw";
       endReason = canonical.isStalemate
         ? "Stalemate"
         : canonical.isInsufficientMaterial
@@ -337,8 +323,9 @@ export const makeMove = createServerFn({ method: "POST" })
             : "Draw";
     }
 
-    // Atomic commit: the RPC re-locks the row, re-checks version/turn, inserts
-    // the move and bumps the version by exactly one in a single transaction.
+    // Atomic commit: the RPC re-locks the row, re-checks version/turn, derives
+    // both clocks from the *database* timestamp, inserts the move and bumps the
+    // version by exactly one in a single transaction. No caller-supplied clock.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: raw, error: rpcError } = await supabaseAdmin.rpc("commit_move_internal", {
       _game_id: data.gameId,
@@ -347,12 +334,8 @@ export const makeMove = createServerFn({ method: "POST" })
       _san: canonical.san,
       _uci: canonical.uci,
       _fen: canonical.fen,
-      _white_time_ms: Math.round(clocks.whiteTimeMs),
-      _black_time_ms: Math.round(clocks.blackTimeMs),
-      _status: status,
-      _result: result,
+      _outcome: outcome,
       // Generated types don't model nullable args; the RPC treats NULL as "unchanged".
-      _winner_id: winnerId as unknown as string,
       _end_reason: endReason as unknown as string,
     });
 
@@ -363,15 +346,20 @@ export const makeMove = createServerFn({ method: "POST" })
       code?: MoveErrorCode;
       game?: Game;
       move?: GameMove;
+      server_now?: string;
     };
+
+    const serverNow = payload.server_now ?? new Date().toISOString();
 
     if (!payload.ok || !payload.game || !payload.move) {
       return {
         ok: false,
         code: payload.code ?? "INTERNAL_ERROR",
         game: payload.game ?? snapshot,
+        serverNow,
       };
     }
+
 
     const committedGame = payload.game;
     const opponentId = isWhite ? snapshot.black_id : snapshot.white_id;
@@ -382,7 +370,7 @@ export const makeMove = createServerFn({ method: "POST" })
       });
       if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
 
-      const title = result === "1/2-1/2" ? "Game drawn" : "Game over";
+      const title = committedGame.result === "1/2-1/2" ? "Game drawn" : "Game over";
       await supabase.from("notifications").insert([
         {
           user_id: snapshot.white_id,
@@ -409,7 +397,7 @@ export const makeMove = createServerFn({ method: "POST" })
       });
     }
 
-    return { ok: true, game: committedGame, move: payload.move };
+    return { ok: true, game: committedGame, move: payload.move, serverNow };
   });
 
 
@@ -505,4 +493,35 @@ export const markNotificationRead = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Canonical clock/state sync. The UI never trusts its own clock: it renders a
+ * countdown derived from these server values plus a local monotonic delta.
+ * Also finalizes an expired game on the spot (idempotent), so a flag fall is
+ * resolved as soon as anyone looks at the board.
+ */
+export const syncGame = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_ID_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<GameSnapshot> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: raw, error } = await supabaseAdmin.rpc("finalize_game_timeout", {
+      _game_id: data.gameId,
+    });
+    if (error) throw new Error(error.message);
+
+    const payload = (raw ?? {}) as { game?: Game; server_now?: string; code?: string };
+    if (!payload.game) throw new Error("Game not found");
+
+    const game = payload.game;
+    if (game.white_id !== context.userId && game.black_id !== context.userId) {
+      throw new Error("Not a participant");
+    }
+
+    return {
+      game,
+      serverNow: payload.server_now ?? new Date().toISOString(),
+      activeSide: sideToMoveFromFen(game.current_fen),
+    };
   });
