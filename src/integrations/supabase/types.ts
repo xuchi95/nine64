@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -397,6 +397,7 @@ export type Database = {
           time_control: string
           updated_at: string
           variant: string
+          version: number
           white_id: string
           white_rating: number
           white_time_ms: number
@@ -418,6 +419,7 @@ export type Database = {
           time_control?: string
           updated_at?: string
           variant?: string
+          version?: number
           white_id: string
           white_rating: number
           white_time_ms?: number
@@ -439,6 +441,7 @@ export type Database = {
           time_control?: string
           updated_at?: string
           variant?: string
+          version?: number
           white_id?: string
           white_rating?: number
           white_time_ms?: number
@@ -769,15 +772,20 @@ export type Database = {
     }
     Functions: {
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
-      commit_move: {
+      commit_move_internal: {
         Args: {
-          _base_fen: string
           _black_time_ms: number
+          _end_reason: string
+          _expected_version: number
           _fen: string
           _game_id: string
+          _result: string
           _san: string
+          _status: string
           _uci: string
+          _user_id: string
           _white_time_ms: number
+          _winner_id: string
         }
         Returns: Json
       }
