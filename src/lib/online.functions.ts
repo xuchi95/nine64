@@ -343,7 +343,8 @@ export const makeMove = createServerFn({ method: "POST" })
       if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
 
       const title = committedGame.result === "1/2-1/2" ? "Game drawn" : "Game over";
-      await supabase.from("notifications").insert([
+      await supabaseAdmin.from("notifications").insert([
+
         {
           user_id: snapshot.white_id,
           type: "game_over",
