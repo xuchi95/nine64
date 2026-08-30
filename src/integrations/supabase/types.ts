@@ -838,6 +838,28 @@ export type Database = {
         }
         Returns: undefined
       }
+      queue_heartbeat: { Args: { _queue_id: string }; Returns: undefined }
+      queue_join: {
+        Args: { _time_control: string; _variant: string }
+        Returns: {
+          created_at: string
+          id: string
+          matched_game_id: string | null
+          rating: number
+          status: string
+          time_control: string
+          updated_at: string
+          user_id: string
+          variant: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matchmaking_queue"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      queue_leave: { Args: never; Returns: undefined }
       security_probe_alerts: {
         Args: { _threshold?: number; _window_minutes?: number }
         Returns: {
@@ -850,6 +872,10 @@ export type Database = {
         }[]
       }
       tc_increment_ms: { Args: { _time_control: string }; Returns: number }
+      update_my_profile: {
+        Args: { _avatar_url?: string; _display_name?: string }
+        Returns: Json
+      }
       update_ratings_after_game: {
         Args: { _game_id: string }
         Returns: undefined
