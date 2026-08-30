@@ -89,14 +89,12 @@ export const tryMatch = createServerFn({ method: "POST" })
 
     // Heartbeat this browser tab's search. The database matcher ignores stale
     // waiting rows so abandoned tabs cannot absorb fresh players into phantom games.
-    const { error: heartbeatError } = await supabase
-      .from("matchmaking_queue")
-      .update({ status: "waiting" })
-      .eq("id", entry.id)
-      .eq("user_id", context.userId)
-      .eq("status", "waiting");
+    const { error: heartbeatError } = await supabase.rpc("queue_heartbeat", {
+      _queue_id: entry.id,
+    });
 
     if (heartbeatError) throw new Error(heartbeatError.message);
+
 
     // Match creation must be atomic across two queue rows, one game row and two
     // notifications. The server validates the caller first, then invokes the
