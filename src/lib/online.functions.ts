@@ -387,41 +387,53 @@ export const finishGame = createServerFn({ method: "POST" })
       .single();
 
     if (gameError || !game) throw new Error(gameError?.message || "Game not found");
+    if (game.white_id !== context.userId && game.black_id !== context.userId) {
+      throw new Error("Forbidden");
+    }
     if (game.status === "completed") return { ok: true };
 
-    const { error } = await supabase
+    // The caller may only *declare* an agreed result; the winner is derived
+    // server-side and the canonical FEN is never taken from the client.
+    const result = data.result;
+    const winnerId =
+      result === "1-0" ? game.white_id : result === "0-1" ? game.black_id : null;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin
       .from("games")
       .update({
         status: "completed",
-        result: data.result,
-        winner_id: data.winnerId,
-        end_reason: data.endReason,
-        current_fen: data.finalFen,
+        result,
+        winner_id: winnerId,
+        end_reason: data.endReason.slice(0, 120),
+        clock_state: "stopped",
+        turn_started_at: null,
       })
-      .eq("id", data.gameId);
+      .eq("id", data.gameId)
+      .neq("status", "completed");
 
     if (error) throw new Error(error.message);
 
     // Glicko-2 rating update (rating, deviation and volatility) — service role only.
-    const draw = data.result === "1/2-1/2";
+    const draw = result === "1/2-1/2";
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", { _game_id: data.gameId });
     if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
 
-
     // Notify both players
-    const title = draw ? "Game drawn" : data.winnerId ? "You won!" : "Game over";
+    const title = draw ? "Game drawn" : winnerId ? "Game over" : "Game over";
     const body = draw
       ? "The game ended in a draw."
-      : data.winnerId
+      : winnerId
         ? "Check the result in My games."
         : "The game ended.";
 
-    await supabase.from("notifications").insert([
+    await supabaseAdmin.from("notifications").insert([
       { user_id: game.white_id, type: "game_over", title, body, data: { game_id: data.gameId } },
       { user_id: game.black_id, type: "game_over", title, body, data: { game_id: data.gameId } },
     ]);
+
 
     return { ok: true };
   });
