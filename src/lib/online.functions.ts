@@ -361,7 +361,7 @@ export const makeMove = createServerFn({ method: "POST" })
         },
       ]);
     } else {
-      await supabase.from("notifications").insert({
+      await supabaseAdmin.from("notifications").insert({
         user_id: opponentId,
         type: "move",
         title: "Your move",
