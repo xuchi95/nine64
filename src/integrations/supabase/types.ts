@@ -772,18 +772,6 @@ export type Database = {
     }
     Functions: {
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
-      commit_move: {
-        Args: {
-          _base_fen: string
-          _black_time_ms: number
-          _fen: string
-          _game_id: string
-          _san: string
-          _uci: string
-          _white_time_ms: number
-        }
-        Returns: Json
-      }
       commit_move_internal: {
         Args: {
           _black_time_ms: number

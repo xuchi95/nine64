@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.commit_move(uuid, text, text, text, text, integer, integer);
