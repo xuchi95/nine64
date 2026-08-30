@@ -43,6 +43,8 @@ export interface Game {
   last_move_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Monotonic canonical state counter, incremented by the server on every move. */
+  version: number;
 }
 
 export interface GameMove {

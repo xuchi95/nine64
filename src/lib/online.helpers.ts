@@ -5,15 +5,21 @@ export const QUEUE_SCHEMA = z.object({
   timeControl: z.string().min(1),
 });
 
-export const MOVE_SCHEMA = z.object({
-  gameId: z.string().uuid(),
-  san: z.string().min(1),
-  uci: z.string().min(2),
-  fen: z.string().min(10),
-  baseFen: z.string().min(10),
-  whiteTimeMs: z.number().int().min(0),
-  blackTimeMs: z.number().int().min(0),
-});
+const SQUARE = z.string().regex(/^[a-h][1-8]$/);
+
+/**
+ * Minimal move intent. The client may only express *what it wants to play*;
+ * SAN, UCI, FEN, clocks and results are derived server-side.
+ */
+export const MOVE_SCHEMA = z
+  .object({
+    gameId: z.string().uuid(),
+    from: SQUARE,
+    to: SQUARE,
+    promotion: z.enum(["q", "r", "b", "n"]).optional(),
+    expectedVersion: z.number().int().min(0),
+  })
+  .strict();
 
 export const GAME_ID_SCHEMA = z.object({ gameId: z.string().uuid() });
 

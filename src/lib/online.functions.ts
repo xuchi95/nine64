@@ -10,19 +10,19 @@ import {
   TRY_MATCH_SCHEMA,
   startingFenForVariant,
 } from "@/lib/online.helpers";
+import {
+  applyIntent,
+  computeClocks,
+  sideToMoveFromFen,
+  type MoveErrorCode,
+} from "@/lib/online/moveEngine";
 
-export type MoveConflictReason = "stale_position" | "not_your_turn" | "game_over";
+export type { MoveErrorCode } from "@/lib/online/moveEngine";
 
-export type MoveCommitResult = {
-  applied: boolean;
-  reason: "ok" | MoveConflictReason;
-  currentFen: string;
-  status: string;
-  result: string;
-  whiteTimeMs: number;
-  blackTimeMs: number;
-  ply: number;
-};
+/** Canonical result of a move attempt. */
+export type MoveOutcome =
+  | { ok: true; game: Game; move: GameMove }
+  | { ok: false; code: MoveErrorCode; game?: Game };
 export const joinQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => QUEUE_SCHEMA.parse(input))
@@ -257,86 +257,158 @@ export const getGameMoves = createServerFn({ method: "GET" })
     return (moves ?? []) as GameMove[];
   });
 
+/**
+ * Canonical move pipeline. The client only sends an intent; the server owns
+ * validation, SAN/UCI/FEN generation, clocks, result and version bumping.
+ */
 export const makeMove = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => MOVE_SCHEMA.parse(input))
-  .handler(async ({ data, context }): Promise<MoveCommitResult> => {
+  .handler(async ({ data, context }): Promise<MoveOutcome> => {
     const supabase = context.supabase;
 
     const { data: game, error: gameError } = await supabase
       .from("games")
       .select("*")
       .eq("id", data.gameId)
-      .single();
+      .maybeSingle();
 
-    if (gameError || !game) throw new Error(gameError?.message || "Game not found");
+    if (gameError) throw new Error(gameError.message);
+    if (!game) return { ok: false, code: "GAME_NOT_FOUND" };
 
     const isWhite = game.white_id === context.userId;
-    if (!isWhite && game.black_id !== context.userId) throw new Error("Not a player in this game");
+    const isBlack = game.black_id === context.userId;
+    if (!isWhite && !isBlack) return { ok: false, code: "NOT_A_PARTICIPANT" };
 
-    // Atomic, conflict-aware commit: the DB locks the game row, verifies the
-    // client's base position and assigns the ply number in one transaction.
-    const { data: raw, error: rpcError } = await supabase.rpc("commit_move", {
-      _game_id: data.gameId,
-      _base_fen: data.baseFen,
-      _san: data.san,
-      _uci: data.uci,
-      _fen: data.fen,
-      _white_time_ms: data.whiteTimeMs,
-      _black_time_ms: data.blackTimeMs,
-    });
-
-    if (rpcError) {
-      // Losing side of a unique-ply race: treat as a conflict, not a hard failure.
-      if (rpcError.code === "23505") {
-        const { data: fresh } = await supabase
-          .from("games")
-          .select("current_fen, status, result, white_time_ms, black_time_ms")
-          .eq("id", data.gameId)
-          .single();
-        const { count } = await supabase
-          .from("game_moves")
-          .select("*", { count: "exact", head: true })
-          .eq("game_id", data.gameId);
-        return {
-          applied: false,
-          reason: "stale_position",
-          currentFen: fresh?.current_fen ?? game.current_fen,
-          status: fresh?.status ?? game.status,
-          result: fresh?.result ?? game.result,
-          whiteTimeMs: fresh?.white_time_ms ?? game.white_time_ms,
-          blackTimeMs: fresh?.black_time_ms ?? game.black_time_ms,
-          ply: count ?? 0,
-        };
-      }
-      throw new Error(rpcError.message);
+    const snapshot = game as Game;
+    if (snapshot.status !== "active") {
+      return { ok: false, code: "GAME_NOT_ACTIVE", game: snapshot };
+    }
+    if (snapshot.version !== data.expectedVersion) {
+      return { ok: false, code: "STALE_GAME_VERSION", game: snapshot };
+    }
+    if ((sideToMoveFromFen(snapshot.current_fen) === "w") !== isWhite) {
+      return { ok: false, code: "NOT_YOUR_TURN", game: snapshot };
     }
 
-    const payload = (raw ?? {}) as Record<string, unknown>;
-    const outcome: MoveCommitResult = {
-      applied: payload["applied"] === true,
-      reason: (payload["reason"] as MoveCommitResult["reason"]) ?? "stale_position",
-      currentFen: (payload["current_fen"] as string) ?? game.current_fen,
-      status: (payload["status"] as string) ?? game.status,
-      result: (payload["result"] as string) ?? game.result,
-      whiteTimeMs: Number(payload["white_time_ms"] ?? game.white_time_ms),
-      blackTimeMs: Number(payload["black_time_ms"] ?? game.black_time_ms),
-      ply: Number(payload["ply"] ?? 0),
-    };
+    const canonical = applyIntent(
+      snapshot.current_fen,
+      data.from,
+      data.to,
+      data.promotion,
+    );
+    if (!canonical) return { ok: false, code: "ILLEGAL_MOVE", game: snapshot };
 
-    if (!outcome.applied) return outcome;
-
-    // Notify opponent
-    const opponentId = isWhite ? game.black_id : game.white_id;
-    await supabase.from("notifications").insert({
-      user_id: opponentId,
-      type: "move",
-      title: "Your move",
-      body: `Your opponent played ${data.san}.`,
-      data: { game_id: data.gameId },
+    const now = Date.now();
+    const clocks = computeClocks({
+      timeControl: snapshot.time_control,
+      whiteTimeMs: snapshot.white_time_ms,
+      blackTimeMs: snapshot.black_time_ms,
+      moverIsWhite: isWhite,
+      lastMoveAtMs: snapshot.last_move_at ? Date.parse(snapshot.last_move_at) : null,
+      nowMs: now,
     });
 
-    return outcome;
+    let status: "active" | "completed" = "active";
+    let result: "*" | "1-0" | "0-1" | "1/2-1/2" = "*";
+    let winnerId: string | null = null;
+    let endReason: string | null = null;
+
+    if (clocks.flagged) {
+      status = "completed";
+      result = isWhite ? "0-1" : "1-0";
+      winnerId = isWhite ? snapshot.black_id : snapshot.white_id;
+      endReason = isWhite ? "White flagged" : "Black flagged";
+    } else if (canonical.isCheckmate) {
+      status = "completed";
+      result = isWhite ? "1-0" : "0-1";
+      winnerId = context.userId;
+      endReason = "Checkmate";
+    } else if (canonical.isDraw) {
+      status = "completed";
+      result = "1/2-1/2";
+      winnerId = null;
+      endReason = canonical.isStalemate
+        ? "Stalemate"
+        : canonical.isInsufficientMaterial
+          ? "Insufficient material"
+          : canonical.isThreefold
+            ? "Threefold repetition"
+            : "Draw";
+    }
+
+    // Atomic commit: the RPC re-locks the row, re-checks version/turn, inserts
+    // the move and bumps the version by exactly one in a single transaction.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: raw, error: rpcError } = await supabaseAdmin.rpc("commit_move_internal", {
+      _game_id: data.gameId,
+      _user_id: context.userId,
+      _expected_version: data.expectedVersion,
+      _san: canonical.san,
+      _uci: canonical.uci,
+      _fen: canonical.fen,
+      _white_time_ms: Math.round(clocks.whiteTimeMs),
+      _black_time_ms: Math.round(clocks.blackTimeMs),
+      _status: status,
+      _result: result,
+      _winner_id: winnerId,
+      _end_reason: endReason,
+    });
+
+    if (rpcError) throw new Error(rpcError.message);
+
+    const payload = (raw ?? {}) as {
+      ok?: boolean;
+      code?: MoveErrorCode;
+      game?: Game;
+      move?: GameMove;
+    };
+
+    if (!payload.ok || !payload.game || !payload.move) {
+      return {
+        ok: false,
+        code: payload.code ?? "INTERNAL_ERROR",
+        game: payload.game ?? snapshot,
+      };
+    }
+
+    const committedGame = payload.game;
+    const opponentId = isWhite ? snapshot.black_id : snapshot.white_id;
+
+    if (committedGame.status === "completed") {
+      const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", {
+        _game_id: data.gameId,
+      });
+      if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
+
+      const title = result === "1/2-1/2" ? "Game drawn" : "Game over";
+      await supabase.from("notifications").insert([
+        {
+          user_id: snapshot.white_id,
+          type: "game_over",
+          title,
+          body: endReason ?? "The game ended.",
+          data: { game_id: data.gameId },
+        },
+        {
+          user_id: snapshot.black_id,
+          type: "game_over",
+          title,
+          body: endReason ?? "The game ended.",
+          data: { game_id: data.gameId },
+        },
+      ]);
+    } else {
+      await supabase.from("notifications").insert({
+        user_id: opponentId,
+        type: "move",
+        title: "Your move",
+        body: `Your opponent played ${canonical.san}.`,
+        data: { game_id: data.gameId },
+      });
+    }
+
+    return { ok: true, game: committedGame, move: payload.move };
   });
 
 

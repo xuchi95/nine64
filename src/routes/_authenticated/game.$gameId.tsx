@@ -18,7 +18,7 @@ import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getGame, getGameMoves, makeMove, finishGame } from "@/lib/online.functions";
-import type { MoveCommitResult } from "@/lib/online.functions";
+import type { MoveErrorCode, MoveOutcome } from "@/lib/online.functions";
 import { playSound } from "@/lib/sound";
 import type { Game, GameMove } from "@/lib/database.types";
 import type { Color } from "@/hooks/useChessGame";
@@ -52,6 +52,16 @@ export const Route = createFileRoute("/_authenticated/game/$gameId")({
   pendingComponent: BoardSkeleton,
   component: OnlineGamePage,
 });
+
+const CONFLICT_LABEL: Record<MoveErrorCode, string> = {
+  GAME_NOT_FOUND: "This game no longer exists.",
+  NOT_A_PARTICIPANT: "You are not a player in this game.",
+  GAME_NOT_ACTIVE: "The game already ended on the server.",
+  NOT_YOUR_TURN: "It was no longer your turn.",
+  ILLEGAL_MOVE: "That move is not legal in the canonical position.",
+  STALE_GAME_VERSION: "Your opponent's move landed first.",
+  INTERNAL_ERROR: "The server could not commit that move.",
+};
 
 const FALLBACK_POLL_MS = 2500;
 const REALTIME_TIMEOUT_MS = 6000;
@@ -134,7 +144,10 @@ function OnlineGamePage() {
 
     const last = ms[ms.length - 1];
     if (last) setLastMove({ from: last.uci.slice(0, 2), to: last.uci.slice(2, 4) });
-    if (g.status === "completed") finishedRef.current = true;
+    if (g.status === "completed") {
+      if (!finishedRef.current) playSound(g.result === "1/2-1/2" ? "draw" : "checkmate");
+      finishedRef.current = true;
+    }
     setLastSyncAt(Date.now());
   }, []);
 
@@ -184,35 +197,15 @@ function OnlineGamePage() {
       }
     };
 
+    // Realtime is a change *signal* only: never rebuild the board from the
+    // event payload — always pull the canonical snapshot from the server.
     const movesChannel = supabase
       .channel(`game_moves:${gameId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "game_moves", filter: `game_id=eq.${gameId}` },
-        (payload) => {
-          const move = payload.new as GameMove;
-          setLastSyncAt(Date.now());
-          setMoves((prev) => {
-            if (prev.some((m) => m.id === move.id)) return prev;
-            return [...prev, move].sort((a, b) => a.move_number - b.move_number);
-          });
-          setPendingMove(null);
-
-          if (gameRef.current.history().length < move.move_number) {
-            try {
-              const m = gameRef.current.move(move.san);
-              if (m) {
-                setLastMove({ from: m.from, to: m.to });
-                playMoveSound(gameRef.current, m);
-                setBoardRev((v) => v + 1);
-              }
-            } catch {
-              // out of sync — full refresh
-              void refresh();
-            }
-          }
-          setClock({ w: move.white_time_ms, b: move.black_time_ms });
-          tickRef.current = Date.now();
+        () => {
+          void refresh();
         },
       )
       .subscribe(onChannelStatus);
@@ -222,16 +215,8 @@ function OnlineGamePage() {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${gameId}` },
-        (payload) => {
-          const updated = payload.new as Game;
-          setLastSyncAt(Date.now());
-          setGame(updated);
-          setClock({ w: updated.white_time_ms, b: updated.black_time_ms });
-          tickRef.current = Date.now();
-          if (updated.status === "completed" && !finishedRef.current) {
-            finishedRef.current = true;
-            playSound(updated.result === "1/2-1/2" ? "draw" : "checkmate");
-          }
+        () => {
+          void refresh();
         },
       )
       .subscribe(onChannelStatus);
@@ -311,107 +296,40 @@ function OnlineGamePage() {
   }, [clock, finishIfOver, game]);
 
   const submitMove = useCallback(
-    async (
-      args: {
-        from: string;
-        to: string;
-        promotion?: "q" | "r" | "b" | "n";
-        san: string;
-        uci: string;
-        fen: string;
-        baseFen: string;
-        clock: { w: number; b: number };
-        previousClock: { w: number; b: number };
-      },
-      attempt: number,
-    ): Promise<void> => {
+    async (args: {
+      from: string;
+      to: string;
+      promotion?: "q" | "r" | "b" | "n";
+      expectedVersion: number;
+      previousClock: { w: number; b: number };
+    }): Promise<void> => {
       if (!game || !myColor) return;
       inFlightRef.current = true;
       try {
         const res = (await makeMoveFn({
           data: {
             gameId: game.id,
-            san: args.san,
-            uci: args.uci,
-            fen: args.fen,
-            baseFen: args.baseFen,
-            whiteTimeMs: Math.round(args.clock.w),
-            blackTimeMs: Math.round(args.clock.b),
+            from: args.from,
+            to: args.to,
+            ...(args.promotion ? { promotion: args.promotion } : {}),
+            expectedVersion: args.expectedVersion,
           },
-        })) as MoveCommitResult;
+        })) as MoveOutcome;
 
         setLastSyncAt(Date.now());
 
-        if (res.applied) {
-          setPendingMove(null);
+        if (res.ok) {
           setConflict(null);
-          if (syncMode !== "realtime") void refresh().catch(() => undefined);
-          if (gameRef.current.isCheckmate()) void finishIfOver("Checkmate", myColor);
-          else if (gameRef.current.isDraw()) void finishIfOver("Draw", "draw");
+          // Always adopt the canonical snapshot the server just committed.
+          await refresh().catch(() => undefined);
           return;
         }
 
-        // ---- Conflict: the server state moved on without our move ----
+        // ---- Rejected: resync canonical state, never blind-retry ----
         setPendingMove(null);
-        const label =
-          res.reason === "game_over"
-            ? "The game already ended on the server."
-            : res.reason === "not_your_turn"
-              ? "It was no longer your turn."
-              : "Your opponent's move landed first.";
-
-        // Rebuild the board from the authoritative server state.
+        const label = CONFLICT_LABEL[res.code] ?? "The server rejected that move.";
         await refresh({ showSpinner: true }).catch(() => undefined);
-
-        const canRetry =
-          attempt === 0 &&
-          res.reason === "stale_position" &&
-          res.status === "active" &&
-          gameRef.current.turn() === myColor;
-
-        if (canRetry) {
-          let replay: Move | null = null;
-          const baseFen = gameRef.current.fen();
-          try {
-            replay = gameRef.current.move({
-              from: args.from,
-              to: args.to,
-              promotion: args.promotion ?? "q",
-            });
-          } catch {
-            replay = null;
-          }
-          if (replay) {
-            const nextClock = { w: clockRef.current.w, b: clockRef.current.b };
-            nextClock[myColor] = Math.max(0, nextClock[myColor]) + spec.incrementMs;
-            tickRef.current = Date.now();
-            setLastMove({ from: replay.from, to: replay.to });
-            setClock(nextClock);
-            setPendingMove(replay.san);
-            setBoardRev((v) => v + 1);
-            setConflict(`${label} Re-sent your move on the new position.`);
-            toast.info("Move conflict resolved", {
-              description: `${label} Your move was replayed on the updated position.`,
-            });
-            await submitMove(
-              {
-                ...args,
-                san: replay.san,
-                fen: gameRef.current.fen(),
-                baseFen,
-                clock: nextClock,
-                previousClock: { ...clockRef.current },
-              },
-              attempt + 1,
-            );
-            return;
-          }
-        }
-
-        setConflict(`${label} Board resynced from the server — play again.`);
-        toast.warning("Move conflict", {
-          description: `${label} The board was resynced from the server.`,
-        });
+        setConflict(`${label} Board resynced from the server.`);
       } catch (e: unknown) {
         gameRef.current.undo();
         setLastMove(null);
@@ -423,7 +341,7 @@ function OnlineGamePage() {
         inFlightRef.current = false;
       }
     },
-    [finishIfOver, game, makeMoveFn, myColor, refresh, spec.incrementMs, syncMode],
+    [game, makeMoveFn, myColor, refresh],
   );
 
   const handleMove = useCallback(
@@ -437,7 +355,7 @@ function OnlineGamePage() {
         return false;
       }
 
-      const baseFen = gameRef.current.fen();
+      // Local preview only — the server re-derives SAN/FEN from the intent.
       let move: Move | null = null;
       try {
         move = gameRef.current.move({ from, to, promotion: promotion ?? "q" });
@@ -454,27 +372,19 @@ function OnlineGamePage() {
       nextClock[myColor] = Math.max(0, nextClock[myColor]) + spec.incrementMs;
       tickRef.current = Date.now();
 
-      const currentFen = gameRef.current.fen();
       setLastMove({ from: move.from, to: move.to });
       setClock(nextClock);
       setPendingMove(move.san);
       setBoardRev((v) => v + 1);
       playMoveSound(gameRef.current, move);
 
-      void submitMove(
-        {
-          from,
-          to,
-          ...(promotion ? { promotion } : {}),
-          san: move.san,
-          uci: `${from}${to}${promotion ?? ""}`,
-          fen: currentFen,
-          baseFen,
-          clock: nextClock,
-          previousClock,
-        },
-        0,
-      );
+      void submitMove({
+        from,
+        to,
+        ...(promotion ? { promotion } : {}),
+        expectedVersion: game.version ?? 0,
+        previousClock,
+      });
 
       return true;
     },
