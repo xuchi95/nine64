@@ -385,16 +385,19 @@ export type Database = {
           black_id: string
           black_rating: number
           black_time_ms: number
+          clock_state: string
           created_at: string
           current_fen: string
           end_reason: string | null
           id: string
+          increment_ms: number
           initial_fen: string
           last_move_at: string | null
           rated: boolean
           result: string
           status: string
           time_control: string
+          turn_started_at: string | null
           updated_at: string
           variant: string
           version: number
@@ -407,16 +410,19 @@ export type Database = {
           black_id: string
           black_rating: number
           black_time_ms?: number
+          clock_state?: string
           created_at?: string
           current_fen?: string
           end_reason?: string | null
           id?: string
+          increment_ms?: number
           initial_fen?: string
           last_move_at?: string | null
           rated?: boolean
           result?: string
           status?: string
           time_control?: string
+          turn_started_at?: string | null
           updated_at?: string
           variant?: string
           version?: number
@@ -429,16 +435,19 @@ export type Database = {
           black_id?: string
           black_rating?: number
           black_time_ms?: number
+          clock_state?: string
           created_at?: string
           current_fen?: string
           end_reason?: string | null
           id?: string
+          increment_ms?: number
           initial_fen?: string
           last_move_at?: string | null
           rated?: boolean
           result?: string
           status?: string
           time_control?: string
+          turn_started_at?: string | null
           updated_at?: string
           variant?: string
           version?: number
@@ -772,20 +781,17 @@ export type Database = {
     }
     Functions: {
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
+      clock_lag_grace_ms: { Args: never; Returns: number }
       commit_move_internal: {
         Args: {
-          _black_time_ms: number
           _end_reason: string
           _expected_version: number
           _fen: string
           _game_id: string
-          _result: string
+          _outcome: string
           _san: string
-          _status: string
           _uci: string
           _user_id: string
-          _white_time_ms: number
-          _winner_id: string
         }
         Returns: Json
       }
@@ -798,6 +804,8 @@ export type Database = {
         }
         Returns: string
       }
+      finalize_expired_games: { Args: { _limit?: number }; Returns: Json }
+      finalize_game_timeout: { Args: { _game_id: string }; Returns: Json }
       find_match: { Args: { _queue_id: string }; Returns: string }
       glicko2_update: {
         Args: {
@@ -841,6 +849,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      tc_increment_ms: { Args: { _time_control: string }; Returns: number }
       update_ratings_after_game: {
         Args: { _game_id: string }
         Returns: undefined

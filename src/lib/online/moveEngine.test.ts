@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyIntent, computeClocks, sideToMoveFromFen } from "./moveEngine";
+import { applyIntent,  sideToMoveFromFen } from "./moveEngine";
 
 const START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -50,37 +50,5 @@ describe("sideToMoveFromFen", () => {
   it("reads the side to move", () => {
     expect(sideToMoveFromFen(START)).toBe("w");
     expect(sideToMoveFromFen(applyIntent(START, "e2", "e4")!.fen)).toBe("b");
-  });
-});
-
-describe("computeClocks", () => {
-  const base = {
-    timeControl: "blitz3m",
-    whiteTimeMs: 180_000,
-    blackTimeMs: 180_000,
-    moverIsWhite: true,
-  };
-
-  it("deducts elapsed time and adds the increment for the mover only", () => {
-    const out = computeClocks({ ...base, lastMoveAtMs: 1_000, nowMs: 6_000 });
-    expect(out.whiteTimeMs).toBe(180_000 - 5_000 + 2_000);
-    expect(out.blackTimeMs).toBe(180_000);
-    expect(out.flagged).toBe(false);
-  });
-
-  it("flags when the mover runs out of time", () => {
-    const out = computeClocks({
-      ...base,
-      whiteTimeMs: 3_000,
-      lastMoveAtMs: 0,
-      nowMs: 10_000,
-    });
-    expect(out.flagged).toBe(true);
-    expect(out.whiteTimeMs).toBe(0);
-  });
-
-  it("does not deduct on the first move of a game", () => {
-    const out = computeClocks({ ...base, lastMoveAtMs: null, nowMs: 99_999 });
-    expect(out.whiteTimeMs).toBe(182_000);
   });
 });

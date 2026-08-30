@@ -45,6 +45,12 @@ export interface Game {
   updated_at: string;
   /** Monotonic canonical state counter, incremented by the server on every move. */
   version: number;
+  /** Server timestamp the active side's turn started (canonical clock anchor). */
+  turn_started_at: string | null;
+  clock_state: "not_started" | "running" | "stopped";
+  /** Canonical increment credited by the server after a legal move. */
+  increment_ms: number;
+
 }
 
 export interface GameMove {
