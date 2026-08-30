@@ -351,8 +351,9 @@ export const makeMove = createServerFn({ method: "POST" })
       _black_time_ms: Math.round(clocks.blackTimeMs),
       _status: status,
       _result: result,
-      _winner_id: winnerId,
-      _end_reason: endReason,
+      // Generated types don't model nullable args; the RPC treats NULL as "unchanged".
+      _winner_id: winnerId as unknown as string,
+      _end_reason: endReason as unknown as string,
     });
 
     if (rpcError) throw new Error(rpcError.message);
