@@ -34,51 +34,25 @@ export const joinQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => QUEUE_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
-    const supabase = context.supabase;
-
-    // Cancel any existing waiting entry for this user
-    await supabase
-      .from("matchmaking_queue")
-      .update({ status: "cancelled" })
-      .eq("user_id", context.userId)
-      .eq("status", "waiting");
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("rating")
-      .eq("id", context.userId)
-      .single();
-
-    if (profileError) throw new Error(profileError.message);
-
-    const { data: entry, error } = await supabase
-      .from("matchmaking_queue")
-      .insert({
-        user_id: context.userId,
-        rating: profile?.rating ?? 1200,
-        variant: data.variant,
-        time_control: data.timeControl,
-        status: "waiting",
-      })
-      .select()
-      .single();
+    // Queue rows are not client-writable: the RPC stamps rating, status and
+    // ownership from auth.uid() and enforces one waiting entry per user.
+    const { data: entry, error } = await context.supabase.rpc("queue_join", {
+      _variant: data.variant,
+      _time_control: data.timeControl,
+    });
 
     if (error) throw new Error(error.message);
-    return entry as MatchmakingQueue;
+    return entry as unknown as MatchmakingQueue;
   });
 
 export const leaveQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { error } = await context.supabase
-      .from("matchmaking_queue")
-      .update({ status: "cancelled" })
-      .eq("user_id", context.userId)
-      .eq("status", "waiting");
-
+    const { error } = await context.supabase.rpc("queue_leave");
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 export const tryMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
