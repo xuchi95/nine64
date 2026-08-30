@@ -205,7 +205,7 @@ function ProfileCard() {
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ data: { display_name: name } });
     if (!error) {
-      await supabase.from("profiles").update({ display_name: name }).eq("id", user!.id);
+      await supabase.rpc("update_my_profile", { _display_name: name });
     }
     setBusy(false);
     if (error) toast.error(error.message);

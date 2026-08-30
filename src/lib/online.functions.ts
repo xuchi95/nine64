@@ -34,51 +34,25 @@ export const joinQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => QUEUE_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
-    const supabase = context.supabase;
-
-    // Cancel any existing waiting entry for this user
-    await supabase
-      .from("matchmaking_queue")
-      .update({ status: "cancelled" })
-      .eq("user_id", context.userId)
-      .eq("status", "waiting");
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("rating")
-      .eq("id", context.userId)
-      .single();
-
-    if (profileError) throw new Error(profileError.message);
-
-    const { data: entry, error } = await supabase
-      .from("matchmaking_queue")
-      .insert({
-        user_id: context.userId,
-        rating: profile?.rating ?? 1200,
-        variant: data.variant,
-        time_control: data.timeControl,
-        status: "waiting",
-      })
-      .select()
-      .single();
+    // Queue rows are not client-writable: the RPC stamps rating, status and
+    // ownership from auth.uid() and enforces one waiting entry per user.
+    const { data: entry, error } = await context.supabase.rpc("queue_join", {
+      _variant: data.variant,
+      _time_control: data.timeControl,
+    });
 
     if (error) throw new Error(error.message);
-    return entry as MatchmakingQueue;
+    return entry as unknown as MatchmakingQueue;
   });
 
 export const leaveQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { error } = await context.supabase
-      .from("matchmaking_queue")
-      .update({ status: "cancelled" })
-      .eq("user_id", context.userId)
-      .eq("status", "waiting");
-
+    const { error } = await context.supabase.rpc("queue_leave");
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 export const tryMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -115,14 +89,12 @@ export const tryMatch = createServerFn({ method: "POST" })
 
     // Heartbeat this browser tab's search. The database matcher ignores stale
     // waiting rows so abandoned tabs cannot absorb fresh players into phantom games.
-    const { error: heartbeatError } = await supabase
-      .from("matchmaking_queue")
-      .update({ status: "waiting" })
-      .eq("id", entry.id)
-      .eq("user_id", context.userId)
-      .eq("status", "waiting");
+    const { error: heartbeatError } = await supabase.rpc("queue_heartbeat", {
+      _queue_id: entry.id,
+    });
 
     if (heartbeatError) throw new Error(heartbeatError.message);
+
 
     // Match creation must be atomic across two queue rows, one game row and two
     // notifications. The server validates the caller first, then invokes the
@@ -371,7 +343,8 @@ export const makeMove = createServerFn({ method: "POST" })
       if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
 
       const title = committedGame.result === "1/2-1/2" ? "Game drawn" : "Game over";
-      await supabase.from("notifications").insert([
+      await supabaseAdmin.from("notifications").insert([
+
         {
           user_id: snapshot.white_id,
           type: "game_over",
@@ -388,7 +361,7 @@ export const makeMove = createServerFn({ method: "POST" })
         },
       ]);
     } else {
-      await supabase.from("notifications").insert({
+      await supabaseAdmin.from("notifications").insert({
         user_id: opponentId,
         type: "move",
         title: "Your move",
@@ -414,41 +387,53 @@ export const finishGame = createServerFn({ method: "POST" })
       .single();
 
     if (gameError || !game) throw new Error(gameError?.message || "Game not found");
+    if (game.white_id !== context.userId && game.black_id !== context.userId) {
+      throw new Error("Forbidden");
+    }
     if (game.status === "completed") return { ok: true };
 
-    const { error } = await supabase
+    // The caller may only *declare* an agreed result; the winner is derived
+    // server-side and the canonical FEN is never taken from the client.
+    const result = data.result;
+    const winnerId =
+      result === "1-0" ? game.white_id : result === "0-1" ? game.black_id : null;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin
       .from("games")
       .update({
         status: "completed",
-        result: data.result,
-        winner_id: data.winnerId,
-        end_reason: data.endReason,
-        current_fen: data.finalFen,
+        result,
+        winner_id: winnerId,
+        end_reason: data.endReason.slice(0, 120),
+        clock_state: "stopped",
+        turn_started_at: null,
       })
-      .eq("id", data.gameId);
+      .eq("id", data.gameId)
+      .neq("status", "completed");
 
     if (error) throw new Error(error.message);
 
     // Glicko-2 rating update (rating, deviation and volatility) — service role only.
-    const draw = data.result === "1/2-1/2";
+    const draw = result === "1/2-1/2";
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", { _game_id: data.gameId });
     if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
 
-
     // Notify both players
-    const title = draw ? "Game drawn" : data.winnerId ? "You won!" : "Game over";
+    const title = draw ? "Game drawn" : winnerId ? "Game over" : "Game over";
     const body = draw
       ? "The game ended in a draw."
-      : data.winnerId
+      : winnerId
         ? "Check the result in My games."
         : "The game ended.";
 
-    await supabase.from("notifications").insert([
+    await supabaseAdmin.from("notifications").insert([
       { user_id: game.white_id, type: "game_over", title, body, data: { game_id: data.gameId } },
       { user_id: game.black_id, type: "game_over", title, body, data: { game_id: data.gameId } },
     ]);
+
 
     return { ok: true };
   });

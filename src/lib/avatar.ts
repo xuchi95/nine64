@@ -36,6 +36,15 @@ export function useAvatarUrl(path: string | null | undefined) {
 
 export type AvatarUploadResult = { path: string } | { error: string };
 
+async function setAvatarPath(path: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("update_my_profile", {
+    _avatar_url: path,
+  });
+  if (error) return error.message;
+  const payload = (data ?? {}) as { ok?: boolean; code?: string };
+  return payload.ok ? null : (payload.code ?? "PROFILE_UPDATE_FAILED");
+}
+
 export async function uploadAvatar(userId: string, file: File): Promise<AvatarUploadResult> {
   if (!ALLOWED.includes(file.type)) return { error: t("avatar.invalidType") };
   if (file.size > MAX_BYTES) return { error: t("avatar.tooLarge") };
@@ -48,20 +57,19 @@ export async function uploadAvatar(userId: string, file: File): Promise<AvatarUp
     .upload(path, file, { upsert: true, contentType: file.type });
   if (error) return { error: error.message };
 
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .update({ avatar_url: path })
-    .eq("id", userId);
-  if (profileError) return { error: profileError.message };
+  // profiles.avatar_url is only writable through the allowlisted RPC.
+  const profileError = await setAvatarPath(path);
+  if (profileError) return { error: profileError };
 
   await supabase.auth.updateUser({ data: { avatar_path: path } });
   return { path };
 }
 
-export async function removeAvatar(userId: string, path: string | null) {
+export async function removeAvatar(_userId: string, path: string | null) {
   if (path && !/^https?:\/\//.test(path)) {
     await supabase.storage.from(BUCKET).remove([path]);
   }
-  await supabase.from("profiles").update({ avatar_url: null }).eq("id", userId);
+  await setAvatarPath("");
   await supabase.auth.updateUser({ data: { avatar_path: null } });
 }
+
