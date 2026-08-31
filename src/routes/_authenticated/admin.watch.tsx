@@ -432,7 +432,7 @@ function AdminWatchPage() {
             {(data?.jobs ?? []).length === 0 && <p className="text-muted-foreground">—</p>}
             {(data?.jobs ?? []).map((j) => (
               <div key={j.id} className="flex flex-wrap items-center gap-2 rounded border border-border/60 px-2 py-1">
-                <Badge variant={j.status === "error" ? "destructive" : "secondary"}>{j.status}</Badge>
+                <Badge variant={j.status === "failed" ? "destructive" : "secondary"}>{j.status}</Badge>
                 <span className="font-mono text-xs">{j.kind}</span>
                 <span className="min-w-0 flex-1 truncate">{j.sourceName ?? "—"}</span>
                 <span className="font-mono text-xs text-muted-foreground">
