@@ -1,41 +1,62 @@
 import { expect, test } from "@playwright/test";
+import { goto } from "./helpers";
 
 test.describe("puzzles", () => {
-  test("puzzle page loads and grades against the full solution line", async ({ page }) => {
+  test("puzzle page loads without runtime errors", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
 
-    await page.goto("/puzzles", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("body")).toContainText(/puzzle|câu đố|chiến thuật|tactic/i);
+    await goto(page, "/puzzles");
+    await expect(page.locator("body")).toContainText(/câu đố|puzzle|chiến thuật|tactic/i);
     expect(errors.filter((m) => !/ResizeObserver/i.test(m))).toEqual([]);
   });
 
-  test("solver accepts the full principal line and alternates only", async ({ page }) => {
-    await page.goto("/puzzles", { waitUntil: "domcontentloaded" });
+  test("solver requires the full principal line, not just the first move", async ({ page }) => {
+    await goto(page, "/puzzles");
 
     const result = await page.evaluate(async () => {
-      const gen = await import("/src/lib/learn/puzzleGen.ts");
       const solver = await import("/src/lib/learn/puzzleSolver.ts");
-      const puzzles = gen.generateFromLibrary(1);
-      if (!puzzles.length) return { skipped: true } as const;
-      const puzzle = puzzles[0]!;
-      let state = solver.initialSolverState(puzzle);
-      const plies = solver.solverPlyCount(puzzle);
-      const first = puzzle.solution[0]!;
-      const wrong = solver.attemptMove(puzzle, state, { from: "a1", to: "a2" });
-      const right = solver.attemptMove(puzzle, state, first);
-      state = right.state;
+
+      // Mate in two: 1.Ra7+ Kb8 2.Rh8#
+      const puzzle = {
+        id: "e2e-mate-in-2",
+        fen: "7k/8/8/8/8/8/R7/6RK w - - 0 1",
+        solution: [
+          { uci: "a2a7", san: "Ra7" },
+          { uci: "h8g8", san: "Kg8" },
+          { uci: "g1g7", san: "Rg7#" },
+        ],
+        alternates: {} as Record<number, string[]>,
+        solutionSan: "Ra7",
+        color: "w" as const,
+        themes: [],
+        rating: 1500,
+        gameId: "e2e",
+        ply: 0,
+      };
+
+      let state = solver.initialSolverState(puzzle as never);
+      const plies = solver.solverPlyCount(puzzle as never);
+
+      const wrong = solver.attemptMove(puzzle as never, state, "g1", "g2");
+      const first = solver.attemptMove(puzzle as never, state, "a2", "a7");
+      state = { fen: first.fen, playedPlies: first.playedPlies, status: first.status, lastMove: first.lastMove };
+      const second = solver.attemptMove(puzzle as never, state, "g1", "g7");
+
       return {
-        skipped: false as const,
         plies,
         wrongStatus: wrong.status,
-        rightStatus: right.status,
+        firstStatus: first.status,
+        firstReply: first.replySan,
+        finalStatus: second.status,
       };
     });
 
-    if (result.skipped) test.skip(true, "no library puzzles available in this build");
-    expect(result.plies).toBeGreaterThan(0);
-    expect(result.wrongStatus).not.toBe("correct");
-    expect(["correct", "solved", "continue"]).toContain(String(result.rightStatus));
+    expect(result.plies).toBeGreaterThan(1);
+    expect(result.wrongStatus).toBe("wrong");
+    // First correct move must not finish the puzzle; the forced reply is auto-played.
+    expect(result.firstStatus).toBe("progress");
+    expect(result.firstReply).toBeTruthy();
+    expect(result.finalStatus).toBe("solved");
   });
 });
