@@ -29,6 +29,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as DrillsIndexRouteImport } from './routes/drills.index'
+import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
@@ -170,6 +171,11 @@ const AuthRegisterRoute = AuthRegisterRouteImport.update({
 const DrillsIndexRoute = DrillsIndexRouteImport.update({
   id: '/drills/',
   path: '/drills/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesIndexRoute = GamesIndexRouteImport.update({
@@ -428,6 +434,7 @@ export interface FileRoutesByFullPath {
   '/play/variants': typeof PlayVariantsRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
+  '/events/': typeof EventsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/play/': typeof PlayIndexRoute
@@ -491,6 +498,7 @@ export interface FileRoutesByTo {
   '/play/variants': typeof PlayVariantsRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills': typeof DrillsIndexRoute
+  '/events': typeof EventsIndexRoute
   '/games': typeof GamesIndexRoute
   '/learn': typeof LearnIndexRoute
   '/play': typeof PlayIndexRoute
@@ -556,6 +564,7 @@ export interface FileRoutesById {
   '/play/variants': typeof PlayVariantsRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
+  '/events/': typeof EventsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/play/': typeof PlayIndexRoute
@@ -621,6 +630,7 @@ export interface FileRouteTypes {
     | '/play/variants'
     | '/watch/$gameId'
     | '/drills/'
+    | '/events/'
     | '/games/'
     | '/learn/'
     | '/play/'
@@ -684,6 +694,7 @@ export interface FileRouteTypes {
     | '/play/variants'
     | '/watch/$gameId'
     | '/drills'
+    | '/events'
     | '/games'
     | '/learn'
     | '/play'
@@ -748,6 +759,7 @@ export interface FileRouteTypes {
     | '/play/variants'
     | '/watch/$gameId'
     | '/drills/'
+    | '/events/'
     | '/games/'
     | '/learn/'
     | '/play/'
@@ -809,6 +821,7 @@ export interface RootRouteChildren {
   PlayVariantsRoute: typeof PlayVariantsRoute
   WatchGameIdRoute: typeof WatchGameIdRoute
   DrillsIndexRoute: typeof DrillsIndexRoute
+  EventsIndexRoute: typeof EventsIndexRoute
   GamesIndexRoute: typeof GamesIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
@@ -965,6 +978,13 @@ declare module '@tanstack/react-router' {
       path: '/drills'
       fullPath: '/drills/'
       preLoaderRoute: typeof DrillsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/': {
+      id: '/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/': {
@@ -1356,6 +1376,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayVariantsRoute: PlayVariantsRoute,
   WatchGameIdRoute: WatchGameIdRoute,
   DrillsIndexRoute: DrillsIndexRoute,
+  EventsIndexRoute: EventsIndexRoute,
   GamesIndexRoute: GamesIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   PlayIndexRoute: PlayIndexRoute,

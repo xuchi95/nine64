@@ -18,7 +18,7 @@ import { deriveDisplayClock } from "@/lib/online/clock";
 import type { PieceColor } from "@/components/chess/Piece";
 import type { GameMove } from "@/lib/database.types";
 
-export const Route = createFileRoute("/_authenticated/watch/$gameId")({
+export const Route = createFileRoute("/_authenticated/watch/platform/$gameId")({
   head: () => ({
     meta: [
       { title: `Xem ván đấu — ${APP.name}` },
