@@ -142,7 +142,7 @@ function GameDetail() {
     () =>
       focus && cursor === focus.plyIndex - 1
         ? [{ from: focus.from, to: focus.to, ply: 0 }]
-        : undefined,
+        : [],
     [focus, cursor],
   );
 
