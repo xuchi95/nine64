@@ -25,9 +25,15 @@ import {
   abortGame,
   syncGame,
   getRatingEvent,
+  getDrawOffers,
+  offerDraw,
+  acceptDraw,
+  declineDraw,
+  cancelDraw,
 } from "@/lib/online.functions";
 import type {
   CommandOutcome,
+  DrawCommandOutcome,
   GameSnapshot,
   MoveErrorCode,
   MoveOutcome,
@@ -35,7 +41,7 @@ import type {
 } from "@/lib/online.functions";
 import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
-import type { Game, GameMove } from "@/lib/database.types";
+import type { DrawOffer, Game, GameMove } from "@/lib/database.types";
 import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
 import { Flag, Hand, Ban, Copy, Share2 } from "lucide-react";
@@ -90,6 +96,11 @@ function OnlineGamePage() {
   const claimTimeoutFn = useServerFn(claimTimeout);
   const abortGameFn = useServerFn(abortGame);
   const getRatingEventFn = useServerFn(getRatingEvent);
+  const getDrawOffersFn = useServerFn(getDrawOffers);
+  const offerDrawFn = useServerFn(offerDraw);
+  const acceptDrawFn = useServerFn(acceptDraw);
+  const declineDrawFn = useServerFn(declineDraw);
+  const cancelDrawFn = useServerFn(cancelDraw);
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
@@ -106,6 +117,11 @@ function OnlineGamePage() {
   const [pendingMove, setPendingMove] = useState<string | null>(null);
   const [conflict, setConflict] = useState<string | null>(null);
   const [commandBusy, setCommandBusy] = useState(false);
+  // Draw offers are server state; the UI only mirrors the canonical row.
+  const [drawPending, setDrawPending] = useState<DrawOffer | null>(null);
+  const [drawLatest, setDrawLatest] = useState<DrawOffer | null>(null);
+  const [drawBusy, setDrawBusy] = useState(false);
+  const [drawNotice, setDrawNotice] = useState<string | null>(null);
 
   const gameRef = useRef<Chess>(new Chess());
   const finishedRef = useRef(false);
@@ -366,6 +382,123 @@ function OnlineGamePage() {
       document.removeEventListener("visibilitychange", resync);
     };
   }, [refresh]);
+
+  const refreshDraw = useCallback(async () => {
+    try {
+      const res = (await getDrawOffersFn({ data: { gameId } })) as {
+        pending: DrawOffer | null;
+        latest: DrawOffer | null;
+      };
+      setDrawPending(res.pending);
+      setDrawLatest(res.latest);
+    } catch {
+      // Non-fatal: the next sync or realtime event retries.
+    }
+  }, [gameId, getDrawOffersFn]);
+
+  useEffect(() => {
+    void refreshDraw();
+  }, [refreshDraw]);
+
+  // Reconnect / refetch must restore a pending offer, so re-read on every sync.
+  useEffect(() => {
+    if (!game) return;
+    void refreshDraw();
+  }, [game?.version, game?.status, refreshDraw, game]);
+
+  useEffect(() => {
+    if (!gameId) return;
+    const ch = supabase
+      .channel(`draw:${gameId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "game_draw_offers", filter: `game_id=eq.${gameId}` },
+        () => {
+          void refreshDraw();
+          void refresh().catch(() => undefined);
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, [gameId, refresh, refreshDraw]);
+
+  const drawMessage = useCallback((out: DrawCommandOutcome): string | null => {
+    switch (out.code) {
+      case "OFFER_CREATED":
+      case "OFFER_EXISTS":
+        return "Đã gửi đề nghị hoà — đang chờ đối thủ phản hồi.";
+      case "OFFER_ALREADY_PENDING":
+        return "Đã có một đề nghị hoà đang chờ trong ván này.";
+      case "OFFER_COOLDOWN":
+        return `Vui lòng chờ ${Math.ceil((out.retryAfterMs ?? 30000) / 1000)} giây trước khi đề nghị hoà lại.`;
+      case "OFFER_EXPIRED":
+        return "Đề nghị hoà đã hết hạn.";
+      case "OFFER_NOT_PENDING":
+      case "OFFER_ALREADY_RESOLVED":
+        return "Đề nghị hoà đã được xử lý.";
+      case "DRAW_AGREED":
+        return "Hai bên đồng ý hoà.";
+      case "DECLINED":
+        return "Đã từ chối đề nghị hoà.";
+      case "CANCELLED":
+        return "Đã rút lại đề nghị hoà.";
+      case "STALE_GAME_VERSION":
+        return "Thế cờ vừa thay đổi — vui lòng thử lại.";
+      default:
+        return out.ok ? null : "Không thực hiện được thao tác hoà.";
+    }
+  }, []);
+
+  const runDraw = useCallback(
+    async (kind: "offer" | "accept" | "decline" | "cancel") => {
+      if (!game || !myColor || drawBusy) return;
+      setDrawBusy(true);
+      try {
+        let out: DrawCommandOutcome;
+        if (kind === "offer") {
+          out = (await offerDrawFn({
+            data: {
+              gameId: game.id,
+              expectedVersion: game.version ?? 0,
+              // Stable per (game, version, player): a retry never duplicates.
+              idempotencyKey: `draw:${game.id}:${game.version ?? 0}:${user?.id ?? "anon"}`,
+            },
+          })) as DrawCommandOutcome;
+        } else {
+          const offerId = drawPending?.id;
+          if (!offerId) return;
+          const fn =
+            kind === "accept" ? acceptDrawFn : kind === "decline" ? declineDrawFn : cancelDrawFn;
+          out = (await fn({
+            data: { gameId: game.id, offerId, expectedVersion: game.version ?? 0 },
+          })) as DrawCommandOutcome;
+        }
+        setDrawNotice(drawMessage(out));
+      } catch {
+        setDrawNotice("Không kết nối được máy chủ — vui lòng thử lại.");
+      } finally {
+        await refreshDraw();
+        await refresh().catch(() => undefined);
+        setDrawBusy(false);
+      }
+    },
+    [
+      acceptDrawFn,
+      cancelDrawFn,
+      declineDrawFn,
+      drawBusy,
+      drawMessage,
+      drawPending?.id,
+      game,
+      myColor,
+      offerDrawFn,
+      refresh,
+      refreshDraw,
+      user?.id,
+    ],
+  );
 
   /**
    * Terminal commands: the client only names the action and the version it saw.
@@ -694,6 +827,16 @@ function OnlineGamePage() {
                 Hết giờ trên màn hình — đang chờ máy chủ xác nhận kết quả…
               </GameNotice>
             )}
+            {drawPending && game?.status === "active" && (
+              <GameNotice tone={drawPending.offered_to === user?.id ? "warning" : "info"}>
+                {drawPending.offered_to === user?.id
+                  ? "Đối thủ đề nghị hoà — hãy chọn Chấp nhận hoặc Từ chối."
+                  : "Đã gửi đề nghị hoà — đang chờ đối thủ phản hồi."}
+              </GameNotice>
+            )}
+            {!drawPending && drawNotice && game?.status === "active" && (
+              <GameNotice tone="info">{drawNotice}</GameNotice>
+            )}
             {error && <GameNotice tone="error">{error}</GameNotice>}
 
           </>
@@ -738,13 +881,40 @@ function OnlineGamePage() {
 
             {live && (
               <GameActions>
-                <Button
-                  variant="outline"
-                  disabled
-                  title="Cầu hoà sẽ có ở bản cập nhật kế tiếp"
-                >
-                  <Hand className="size-4" /> Cầu hoà
-                </Button>
+                {drawPending && drawPending.offered_to === user?.id ? (
+                  <>
+                    <Button
+                      variant="default"
+                      disabled={drawBusy}
+                      onClick={() => void runDraw("accept")}
+                    >
+                      <Hand className="size-4" /> Chấp nhận hoà
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={drawBusy}
+                      onClick={() => void runDraw("decline")}
+                    >
+                      <Ban className="size-4" /> Từ chối hoà
+                    </Button>
+                  </>
+                ) : drawPending ? (
+                  <Button
+                    variant="outline"
+                    disabled={drawBusy}
+                    onClick={() => void runDraw("cancel")}
+                  >
+                    <Hand className="size-4" /> Rút lại đề nghị hoà
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    disabled={drawBusy}
+                    onClick={() => void runDraw("offer")}
+                  >
+                    <Hand className="size-4" /> Cầu hoà
+                  </Button>
+                )}
                 {moves.length === 0 && (
                   <Button variant="outline" disabled={commandBusy} onClick={() => void abort()}>
                     <Ban className="size-4" /> Huỷ ván
