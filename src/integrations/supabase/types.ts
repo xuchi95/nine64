@@ -311,6 +311,65 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_sources: {
+        Row: {
+          consecutive_failures: number
+          created_at: string
+          event_id: string | null
+          id: string
+          kind: string
+          last_attempt_at: string | null
+          last_error: string | null
+          last_success_at: string | null
+          name: string
+          poll_interval_seconds: number
+          status: string
+          token_hash: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          consecutive_failures?: number
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          kind?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          name: string
+          poll_interval_seconds?: number
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          consecutive_failures?: number
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          kind?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          name?: string
+          poll_interval_seconds?: number
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_sources_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_live_events: {
         Row: {
           ai_styled: boolean
@@ -621,6 +680,301 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           version?: number
+        }
+        Relationships: []
+      }
+      event_games: {
+        Row: {
+          black_clock_ms: number | null
+          black_name: string
+          black_player_id: string | null
+          black_rating: number | null
+          black_title: string | null
+          board: number
+          created_at: string
+          current_fen: string
+          eco: string | null
+          eval_cp: number | null
+          eval_mate: number | null
+          event_id: string
+          external_id: string
+          id: string
+          last_move_at: string | null
+          moves: Json
+          opening_name: string | null
+          pgn: string | null
+          ply_count: number
+          result: string
+          round_id: string | null
+          source_id: string | null
+          start_fen: string | null
+          started_at: string | null
+          status: string
+          termination: string | null
+          updated_at: string
+          white_clock_ms: number | null
+          white_name: string
+          white_player_id: string | null
+          white_rating: number | null
+          white_title: string | null
+        }
+        Insert: {
+          black_clock_ms?: number | null
+          black_name?: string
+          black_player_id?: string | null
+          black_rating?: number | null
+          black_title?: string | null
+          board?: number
+          created_at?: string
+          current_fen?: string
+          eco?: string | null
+          eval_cp?: number | null
+          eval_mate?: number | null
+          event_id: string
+          external_id: string
+          id?: string
+          last_move_at?: string | null
+          moves?: Json
+          opening_name?: string | null
+          pgn?: string | null
+          ply_count?: number
+          result?: string
+          round_id?: string | null
+          source_id?: string | null
+          start_fen?: string | null
+          started_at?: string | null
+          status?: string
+          termination?: string | null
+          updated_at?: string
+          white_clock_ms?: number | null
+          white_name?: string
+          white_player_id?: string | null
+          white_rating?: number | null
+          white_title?: string | null
+        }
+        Update: {
+          black_clock_ms?: number | null
+          black_name?: string
+          black_player_id?: string | null
+          black_rating?: number | null
+          black_title?: string | null
+          board?: number
+          created_at?: string
+          current_fen?: string
+          eco?: string | null
+          eval_cp?: number | null
+          eval_mate?: number | null
+          event_id?: string
+          external_id?: string
+          id?: string
+          last_move_at?: string | null
+          moves?: Json
+          opening_name?: string | null
+          pgn?: string | null
+          ply_count?: number
+          result?: string
+          round_id?: string | null
+          source_id?: string | null
+          start_fen?: string | null
+          started_at?: string | null
+          status?: string
+          termination?: string | null
+          updated_at?: string
+          white_clock_ms?: number | null
+          white_name?: string
+          white_player_id?: string | null
+          white_rating?: number | null
+          white_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_games_black_player_id_fkey"
+            columns: ["black_player_id"]
+            isOneToOne: false
+            referencedRelation: "event_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_games_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_games_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "event_rounds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_games_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_games_white_player_id_fkey"
+            columns: ["white_player_id"]
+            isOneToOne: false
+            referencedRelation: "event_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_players: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          event_id: string
+          federation: string | null
+          fide_id: string | null
+          id: string
+          name: string
+          rating: number | null
+          slug: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          event_id: string
+          federation?: string | null
+          fide_id?: string | null
+          id?: string
+          name: string
+          rating?: number | null
+          slug: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          event_id?: string
+          federation?: string | null
+          fide_id?: string | null
+          id?: string
+          name?: string
+          rating?: number | null
+          slug?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_players_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_rounds: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          name: string | null
+          number: number
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          name?: string | null
+          number: number
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          name?: string | null
+          number?: number
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rounds_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          featured: boolean
+          id: string
+          image_url: string | null
+          is_published: boolean
+          location: string | null
+          name: string
+          official_url: string | null
+          rounds_total: number
+          slug: string
+          starts_at: string
+          status: string
+          time_zone: string
+          tour: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          featured?: boolean
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          location?: string | null
+          name: string
+          official_url?: string | null
+          rounds_total?: number
+          slug: string
+          starts_at: string
+          status?: string
+          time_zone?: string
+          tour?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          featured?: boolean
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          location?: string | null
+          name?: string
+          official_url?: string | null
+          rounds_total?: number
+          slug?: string
+          starts_at?: string
+          status?: string
+          time_zone?: string
+          tour?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1288,6 +1642,45 @@ export type Database = {
           },
         ]
       }
+      ingestion_jobs: {
+        Row: {
+          created_at: string
+          detail: Json | null
+          duration_ms: number | null
+          error: string | null
+          id: string
+          items_processed: number
+          kind: string
+          source_id: string | null
+          source_name: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          items_processed?: number
+          kind: string
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          detail?: Json | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          items_processed?: number
+          kind?: string
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       learn_cards: {
         Row: {
           created_at: string
@@ -1571,6 +1964,138 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      news_articles: {
+        Row: {
+          author: string | null
+          content_html: string | null
+          created_at: string
+          event_id: string | null
+          external_guid: string | null
+          external_url: string | null
+          id: string
+          image_url: string | null
+          language: string
+          published_at: string | null
+          slug: string
+          source_id: string | null
+          source_name: string
+          status: string
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          content_html?: string | null
+          created_at?: string
+          event_id?: string | null
+          external_guid?: string | null
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          language?: string
+          published_at?: string | null
+          slug: string
+          source_id?: string | null
+          source_name?: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          content_html?: string | null
+          created_at?: string
+          event_id?: string | null
+          external_guid?: string | null
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          language?: string
+          published_at?: string | null
+          slug?: string
+          source_id?: string | null
+          source_name?: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_sources: {
+        Row: {
+          allowed_hosts: string[]
+          consecutive_failures: number
+          created_at: string
+          enabled: boolean
+          feed_url: string | null
+          homepage_url: string | null
+          id: string
+          kind: string
+          language: string
+          last_error: string | null
+          last_fetched_at: string | null
+          last_success_at: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_hosts?: string[]
+          consecutive_failures?: number
+          created_at?: string
+          enabled?: boolean
+          feed_url?: string | null
+          homepage_url?: string | null
+          id?: string
+          kind?: string
+          language?: string
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_success_at?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_hosts?: string[]
+          consecutive_failures?: number
+          created_at?: string
+          enabled?: boolean
+          feed_url?: string | null
+          homepage_url?: string | null
+          id?: string
+          kind?: string
+          language?: string
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_success_at?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       notification_outbox: {
         Row: {

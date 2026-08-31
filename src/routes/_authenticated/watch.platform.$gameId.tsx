@@ -18,7 +18,7 @@ import { deriveDisplayClock } from "@/lib/online/clock";
 import type { PieceColor } from "@/components/chess/Piece";
 import type { GameMove } from "@/lib/database.types";
 
-export const Route = createFileRoute("/_authenticated/watch/$gameId")({
+export const Route = createFileRoute("/_authenticated/watch/platform/$gameId")({
   head: () => ({
     meta: [
       { title: `Xem ván đấu — ${APP.name}` },
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/watch/$gameId")({
  * has passed. There is no code path here that can submit a move.
  */
 function SpectatorPage() {
-  const { gameId } = useParams({ from: "/_authenticated/watch/$gameId" });
+  const { gameId } = useParams({ from: "/_authenticated/watch/platform/$gameId" });
   const { t } = useT();
   const viewFn = useServerFn(getSpectatorView);
   const [view, setView] = useState<SpectatorView | null>(null);

@@ -480,7 +480,7 @@ function OnlinePage() {
         <div className="mt-4 flex flex-col items-center gap-2 text-center text-sm text-muted-foreground">
           <span>{t("play.online.signedInAs", { email: user?.email ?? "" })}</span>
           <div className="flex gap-4">
-            <Link to="/watch" className="inline-flex items-center gap-1 font-semibold text-brass underline">
+            <Link to="/watch/platform" className="inline-flex items-center gap-1 font-semibold text-brass underline">
               <Eye className="size-3.5" /> {t("play.online.watchLive")}
             </Link>
             <Link to="/online/diagnostics" className="font-semibold text-brass underline">

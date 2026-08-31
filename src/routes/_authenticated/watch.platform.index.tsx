@@ -11,7 +11,7 @@ import { listPublicGames, type PublicGameRow } from "@/lib/online.challenges.fun
 import { POOL_LABELS, parseTimeControl, type RatingPool } from "@/lib/online/timeControl";
 import { Eye } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/watch/")({
+export const Route = createFileRoute("/_authenticated/watch/platform/")({
   head: () => ({
     meta: [
       { title: `Xem trực tiếp — ${APP.name}` },
