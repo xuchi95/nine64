@@ -37,6 +37,8 @@ import { CookieBanner } from "@/components/layout/CookieBanner";
 import { resetCookieConsent } from "@/lib/cookieConsent";
 import { LanguageToggle } from "@/components/layout/LanguageToggle";
 import { useT } from "@/lib/i18n";
+import { useServerFn } from "@tanstack/react-start";
+import { getAdminAccess } from "@/lib/adminCenter.functions";
 
 const MAIN_NAV = [
   { to: "/", labelKey: "shell.nav.home" },
@@ -481,7 +483,45 @@ function NotificationBell() {
   );
 }
 
+/**
+ * "Quản trị" entry — only rendered when the server says the caller holds an
+ * admin-capable role. Frontend hiding is UX only: `/admin/*` server functions
+ * re-check the role and MFA level, so a typed URL is still rejected.
+ */
+function AdminMenuItem() {
+  const { t } = useT();
+  const accessFn = useServerFn(getAdminAccess);
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const access = (await accessFn()) as { role: string | null };
+        if (alive) setAllowed(access.role === "admin" || access.role === "moderator");
+      } catch {
+        if (alive) setAllowed(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [accessFn]);
+
+  if (!allowed) return null;
+
+  return (
+    <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-3.5 py-2.5">
+      <Link to="/admin" className="flex items-center">
+        <ShieldCheck className="mr-3 size-4 text-primary" />
+        <span className="flex-1">{t("adminc.title")}</span>
+      </Link>
+    </DropdownMenuItem>
+  );
+}
+
 function AuthHeader() {
+
   const { pathname } = useLocation();
   const { user, isLoading, signOut } = useAuth();
   const { t } = useT();
@@ -559,7 +599,9 @@ function AuthHeader() {
             </DropdownMenuItem>
           );
         })}
+        <AdminMenuItem />
         <DropdownMenuSeparator />
+
         <DropdownMenuItem
           onClick={signOut}
           className="cursor-pointer rounded-lg px-3.5 py-2.5 text-destructive focus:text-destructive"
