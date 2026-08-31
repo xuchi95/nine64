@@ -338,6 +338,102 @@ export async function playMove(args: {
   };
 }
 
+/**
+ * Engine opens the game when the player chose Black. Idempotent: a session
+ * that already has moves is returned unchanged, so a refresh never produces a
+ * second engine move.
+ */
+export async function engineOpeningMove(args: {
+  sessionId: string;
+  userId: string;
+  config: EngineConfig;
+  clock: { whiteMs: number; blackMs: number; whiteIncMs: number; blackIncMs: number } | null;
+}): Promise<SessionResult> {
+  const current = await getSession(args.sessionId, args.userId);
+  if (!current.ok) return current;
+  const session = current.snapshot;
+  if (session.status !== "active") return { ok: false, code: "SESSION_CLOSED", snapshot: session };
+  if (session.playerColor !== "b" || session.moves.length > 0) return { ok: true, snapshot: session };
+
+  const { requestBestMove, cloudEngineConfigured } = await import("./cloudEngine.server");
+  if (!cloudEngineConfigured()) return { ok: false, code: "ENGINE_NOT_CONFIGURED", snapshot: session };
+
+  const chess = new Chess(session.fen);
+  const reply = await requestBestMove({
+    fen: session.fen,
+    moves: [],
+    config: args.config,
+    clock: args.clock,
+    sessionId: args.sessionId,
+    requestId: `${args.sessionId}:open`,
+  });
+  if (reply.status !== "ok" || !reply.bestmove) {
+    return {
+      ok: false,
+      code: reply.status === "not_configured" ? "ENGINE_NOT_CONFIGURED" : "ENGINE_UNAVAILABLE",
+      snapshot: session,
+    };
+  }
+  let engineMove;
+  try {
+    engineMove = chess.move({
+      from: reply.bestmove.slice(0, 2),
+      to: reply.bestmove.slice(2, 4),
+      ...(reply.bestmove.length > 4 ? { promotion: reply.bestmove[4] } : {}),
+    });
+  } catch {
+    engineMove = null;
+  }
+  if (!engineMove) return { ok: false, code: "ENGINE_UNAVAILABLE", snapshot: session };
+
+  const moves: SessionMove[] = [
+    { san: engineMove.san, uci: reply.bestmove, fen: chess.fen(), by: "engine", ...(reply.timeMs ? { ms: reply.timeMs } : {}) },
+  ];
+  const engineMeta = {
+    name: "Nine64 Titan",
+    depth: reply.depth,
+    nodes: reply.nodes,
+    nps: reply.nps,
+    timeMs: reply.timeMs,
+    engineVersion: reply.engineVersion,
+  };
+  const committed = await commit({
+    sessionId: args.sessionId,
+    userId: args.userId,
+    expectedVersion: session.version,
+    idempotencyKey: `${args.sessionId}:open`,
+    fen: chess.fen(),
+    moves,
+    status: "active",
+    result: null,
+    endReason: null,
+    engineMeta,
+  });
+  if (!committed.ok) {
+    const fresh = await getSession(args.sessionId, args.userId);
+    return fresh.ok
+      ? { ok: true, snapshot: fresh.snapshot }
+      : { ok: false, code: (committed.code as SessionError) ?? "WRITE_FAILED" };
+  }
+  return {
+    ok: true,
+    snapshot: {
+      ...session,
+      fen: chess.fen(),
+      moves,
+      version: committed.version ?? session.version + 1,
+      engine: {
+        name: "Nine64 Titan",
+        depth: reply.depth,
+        nodes: reply.nodes,
+        nps: reply.nps,
+        timeMs: reply.timeMs,
+        engineVersion: reply.engineVersion,
+      },
+    },
+  };
+}
+
 export async function endSession(
   sessionId: string,
   userId: string,
@@ -346,9 +442,10 @@ export async function endSession(
   const current = await getSession(sessionId, userId);
   if (!current.ok) return current;
   const s = current.snapshot;
+  if (s.status !== "active") return { ok: true, snapshot: s };
   const db = await admin();
   const result = reason === "resign" ? (s.playerColor === "w" ? "0-1" : "1-0") : null;
-  await db
+  const { data: updated } = await db
     .from("bot_sessions")
     .update({
       status: reason === "resign" ? "finished" : "aborted",
@@ -358,7 +455,15 @@ export async function endSession(
       version: s.version + 1,
     } as never)
     .eq("id", sessionId)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .select("*")
+    .maybeSingle();
+  // Concurrent close: whoever lost the race still gets the canonical row.
+  if (!updated) {
+    const fresh = await getSession(sessionId, userId);
+    if (fresh.ok) return fresh;
+  }
   return {
     ok: true,
     snapshot: {
