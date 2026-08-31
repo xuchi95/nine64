@@ -36,7 +36,6 @@ import type {
 import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
 import type { Game, GameMove } from "@/lib/database.types";
-import type { Color } from "@/hooks/useChessGame";
 import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
 import { Flag, Hand, Ban, Copy, Share2 } from "lucide-react";
