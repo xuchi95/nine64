@@ -5,6 +5,7 @@ import {
   DRAW_OFFER_SCHEMA,
   DRAW_RESPONSE_SCHEMA,
   GAME_COMMAND_SCHEMA,
+  GAME_DELTA_SCHEMA,
   GAME_ID_SCHEMA,
   MOVE_SCHEMA,
   NOTIFICATION_ID_SCHEMA,
@@ -254,11 +255,15 @@ export const makeMove = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<MoveOutcome> => {
     const supabase = context.supabase;
 
+    // Only the columns the pre-flight validation needs. The canonical, full
+    // row always comes back from commit_move_internal, so pulling `*` here just
+    // shipped the whole (pgn-carrying) row across the wire on every move.
     const { data: game, error: gameError } = await supabase
       .from("games")
-      .select("*")
+      .select("id, white_id, black_id, status, version, current_fen, variant")
       .eq("id", data.gameId)
       .maybeSingle();
+
 
     if (gameError) throw new Error(gameError.message);
     if (!game) return { ok: false, code: "GAME_NOT_FOUND" };
@@ -267,16 +272,19 @@ export const makeMove = createServerFn({ method: "POST" })
     const isBlack = game.black_id === context.userId;
     if (!isWhite && !isBlack) return { ok: false, code: "NOT_A_PARTICIPANT" };
 
-    const snapshot = game as Game;
+    // Pre-flight snapshot: only the validation columns, so it is deliberately
+    // NOT returned to the client. Rejections make the client resync canonically.
+    const snapshot = game;
     if (snapshot.status !== "active") {
-      return { ok: false, code: "GAME_NOT_ACTIVE", game: snapshot };
+      return { ok: false, code: "GAME_NOT_ACTIVE" };
     }
     if (snapshot.version !== data.expectedVersion) {
-      return { ok: false, code: "STALE_GAME_VERSION", game: snapshot };
+      return { ok: false, code: "STALE_GAME_VERSION" };
     }
     if ((sideToMoveFromFen(snapshot.current_fen) === "w") !== isWhite) {
-      return { ok: false, code: "NOT_YOUR_TURN", game: snapshot };
+      return { ok: false, code: "NOT_YOUR_TURN" };
     }
+
 
     const canonical = applyIntent(
       snapshot.variant,
@@ -285,7 +293,7 @@ export const makeMove = createServerFn({ method: "POST" })
       data.to,
       data.promotion,
     );
-    if (!canonical) return { ok: false, code: "ILLEGAL_MOVE", game: snapshot };
+    if (!canonical) return { ok: false, code: "ILLEGAL_MOVE" };
 
     let outcome: "none" | "checkmate" | "draw" = "none";
     let endReason: string | null = null;
@@ -336,7 +344,7 @@ export const makeMove = createServerFn({ method: "POST" })
       return {
         ok: false,
         code: payload.code ?? "INTERNAL_ERROR",
-        game: payload.game ?? snapshot,
+        game: payload.game,
         serverNow,
       };
     }
@@ -352,12 +360,15 @@ export const makeMove = createServerFn({ method: "POST" })
       if (ratingError) console.error("Rating apply failed", ratingError.message);
     }
 
-    // Notifications were enqueued transactionally by the database (P0.8 outbox).
-    // This is only a best-effort low-latency delivery kick.
-    await kickNotificationOutbox();
+    // Hot path: the outbox drain is NOT awaited per move — it added a full
+    // extra admin round trip to every single move. Notifications were already
+    // enqueued transactionally by the database, and a move only produces one
+    // when the game ends, so kick the drain there and nowhere else.
+    if (committedGame.status === "completed") await kickNotificationOutbox();
 
     return { ok: true, game: committedGame, move: payload.move, serverNow };
   });
+
 
 
 /**
@@ -543,6 +554,57 @@ export const syncGame = createServerFn({ method: "POST" })
       activeSide: sideToMoveFromFen(game.current_fen),
     };
   });
+
+/** Snapshot + only the moves the client is missing. */
+export type GameDelta = GameSnapshot & {
+  /** Moves with move_number > sinceMoveNumber, ordered. Empty when in sync. */
+  moves: GameMove[];
+  /** True when the caller asked for a full reload (sinceMoveNumber < 0). */
+  full: boolean;
+};
+
+/**
+ * Single-round-trip sync for the live board (perf hot path).
+ *
+ * Replaces `syncGame` + `getGameMoves`: one HTTP request, one database call,
+ * and only the moves the client has not seen. The RPC reads the game row
+ * WITHOUT a lock and escalates to the locking timeout finalizer only when the
+ * flag has actually fallen, so concurrent syncs from both players and every
+ * spectator no longer serialize against each other or against move commits.
+ */
+export const syncGameState = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_DELTA_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<GameDelta> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: raw, error } = await supabaseAdmin.rpc("sync_game_state", {
+      _game_id: data.gameId,
+      _since_move: data.sinceMoveNumber,
+    });
+    if (error) throw new Error(error.message);
+
+    const payload = (raw ?? {}) as {
+      ok?: boolean;
+      game?: Game;
+      moves?: GameMove[];
+      server_now?: string;
+    };
+    if (!payload.ok || !payload.game) throw new Error("Game not found");
+
+    const game = payload.game;
+    if (game.white_id !== context.userId && game.black_id !== context.userId) {
+      throw new Error("Not a participant");
+    }
+
+    return {
+      game,
+      moves: payload.moves ?? [],
+      full: data.sinceMoveNumber < 0,
+      serverNow: payload.server_now ?? new Date().toISOString(),
+      activeSide: sideToMoveFromFen(game.current_fen),
+    };
+  });
+
 
 /** Canonical rating ledger entry for a finished game (never recomputed client-side). */
 export type RatingEvent = {

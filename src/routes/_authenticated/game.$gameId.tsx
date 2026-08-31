@@ -17,14 +17,14 @@ import {
 } from "@/components/game/GameLayout";
 import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
+import { sideToMoveFromFen } from "@/lib/online/moveEngine";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  getGameMoves,
   makeMove,
   resignGame,
   claimTimeout,
   abortGame,
-  syncGame,
+  syncGameState,
   getRatingEvent,
   getDrawOffers,
   offerDraw,
@@ -35,7 +35,7 @@ import {
 import type {
   CommandOutcome,
   DrawCommandOutcome,
-  GameSnapshot,
+  GameDelta,
   MoveErrorCode,
   MoveOutcome,
   RatingEvent,
@@ -96,8 +96,7 @@ const REALTIME_TIMEOUT_MS = 6000;
 function OnlineGamePage() {
   const { gameId } = useParams({ from: "/_authenticated/game/$gameId" });
   const { user } = useAuth();
-  const syncGameFn = useServerFn(syncGame);
-  const getMovesFn = useServerFn(getGameMoves);
+  const syncStateFn = useServerFn(syncGameState);
   const makeMoveFn = useServerFn(makeMove);
   const resignGameFn = useServerFn(resignGame);
   const claimTimeoutFn = useServerFn(claimTimeout);
@@ -147,6 +146,8 @@ function OnlineGamePage() {
   const gameRef = useRef<RulesPosition>(rulesFor("standard").createPosition());
   /** FEN captured before an optimistic move, used to roll the preview back. */
   const preMoveFenRef = useRef<string | null>(null);
+  /** Full canonical move list; delta syncs append to it. */
+  const movesRef = useRef<GameMove[]>([]);
   const finishedRef = useRef(false);
   const inFlightRef = useRef(false);
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
@@ -226,7 +227,10 @@ function OnlineGamePage() {
   const applyServerState = useCallback(
     (g: Game, ms: GameMove[], serverNow: string, activeSide: "w" | "b") => {
       setGame(g);
-      setMoves(ms.slice().sort((a, b) => a.move_number - b.move_number));
+      const sorted = ms.slice().sort((a, b) => a.move_number - b.move_number);
+      movesRef.current = sorted;
+      setMoves(sorted);
+
 
       const rules = rulesFor((g.variant ?? "standard") as VariantId);
       let chess: RulesPosition;
@@ -283,14 +287,21 @@ function OnlineGamePage() {
   );
 
   const refresh = useCallback(
-    async (opts?: { showSpinner?: boolean }) => {
+    async (opts?: { showSpinner?: boolean; full?: boolean }) => {
       if (opts?.showSpinner) setSyncing(true);
       try {
-        const [snap, ms] = await Promise.all([
-          syncGameFn({ data: { gameId } }) as Promise<GameSnapshot>,
-          getMovesFn({ data: { gameId } }) as Promise<GameMove[]>,
-        ]);
-        applyServerState(snap.game, ms, snap.serverNow, snap.activeSide);
+        // One round trip instead of syncGame + getGameMoves, and only the moves
+        // this client has not seen yet.
+        const known = movesRef.current;
+        const since =
+          opts?.full || known.length === 0
+            ? -1
+            : (known[known.length - 1]?.move_number ?? -1);
+        const delta = (await syncStateFn({
+          data: { gameId, sinceMoveNumber: since },
+        })) as GameDelta;
+        const merged = delta.full ? delta.moves : [...known, ...delta.moves];
+        applyServerState(delta.game, merged, delta.serverNow, delta.activeSide);
         setError(null);
         setSyncMode((mode) => (mode === "offline" ? "fallback" : mode));
       } catch (e) {
@@ -301,8 +312,9 @@ function OnlineGamePage() {
         if (opts?.showSpinner) setSyncing(false);
       }
     },
-    [applyServerState, gameId, getMovesFn, syncGameFn],
+    [applyServerState, gameId, syncStateFn],
   );
+
 
 
   useEffect(() => {
@@ -699,8 +711,20 @@ function OnlineGamePage() {
 
         if (res.ok) {
           setConflict(null);
-          // Always adopt the canonical snapshot the server just committed.
-          await refresh().catch(() => undefined);
+          // The commit response already IS the canonical snapshot + the new
+          // move, so apply it directly instead of paying another sync round
+          // trip right after every move.
+          const known = movesRef.current;
+          const merged =
+            known.some((m) => m.move_number === res.move.move_number)
+              ? known
+              : [...known, res.move];
+          applyServerState(
+            res.game,
+            merged,
+            res.serverNow,
+            sideToMoveFromFen(res.game.current_fen),
+          );
           return;
         }
 
@@ -728,7 +752,7 @@ function OnlineGamePage() {
         inFlightRef.current = false;
       }
     },
-    [game, makeMoveFn, myColor, refresh],
+    [applyServerState, game, makeMoveFn, myColor, refresh],
   );
 
 
