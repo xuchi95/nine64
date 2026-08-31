@@ -34,7 +34,7 @@ export function CookieBanner() {
     setVisible(false);
   };
 
-  return (
+  const dialog = (
     <div
       role="alertdialog"
       aria-modal="true"
@@ -61,5 +61,7 @@ export function CookieBanner() {
       </div>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }
 
