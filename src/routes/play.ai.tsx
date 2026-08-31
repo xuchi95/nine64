@@ -49,6 +49,22 @@ export const Route = createFileRoute("/play/ai")({
 });
 
 
+/** Maps a server error code to a user-facing message; never downgrades Titan. */
+function titanMessage(code: string | null, t: (key: string) => string): string {
+  switch (code) {
+    case "ENGINE_NOT_CONFIGURED":
+    case "PROFILE_DISABLED":
+      return t("play.ai.titanDisabled");
+    case "TOO_MANY_SESSIONS":
+      return t("play.ai.titanTooMany");
+    case "VERSION_CONFLICT":
+    case "SESSION_CLOSED":
+      return t("play.ai.titanConflict");
+    default:
+      return t("play.ai.titanUnavailable");
+  }
+}
+
 interface Config {
   level: number;
   personality: string;
@@ -149,7 +165,7 @@ function PlayAi() {
         try {
           const res = await startTitan({ data: { playerColor: color } });
           if (!res.ok) {
-            setEngineError(t(`play.ai.titan.${res.code}`, {}, t("play.ai.titan.unavailable")));
+            setEngineError(titanMessage(res.code, t));
             return;
           }
           titanRef.current = { id: res.snapshot.sessionId, version: res.snapshot.version };
@@ -163,7 +179,7 @@ function PlayAi() {
             game.makeMove(move.uci.slice(0, 2), move.uci.slice(2, 4), move.uci[4] as never);
           }
         } catch (err) {
-          setEngineError(err instanceof Error ? err.message : t("play.ai.titan.unavailable"));
+          setEngineError(err instanceof Error ? err.message : titanMessage(null, t));
         } finally {
           setTitanStarting(false);
         }
@@ -231,7 +247,7 @@ function PlayAi() {
           if (titanCancelled) return;
           if (!res.ok) {
             // Never silently downgrade to a weaker engine.
-            setEngineError(t(`play.ai.titan.${res.code}`, {}, t("play.ai.titan.unavailable")));
+            setEngineError(titanMessage(res.code, t));
             return;
           }
           titanRef.current = { id: session.id, version: res.snapshot.version };
@@ -247,7 +263,7 @@ function PlayAi() {
           applyPremove();
         } catch (err) {
           if (!titanCancelled) {
-            setEngineError(err instanceof Error ? err.message : t("play.ai.titan.unavailable"));
+            setEngineError(err instanceof Error ? err.message : titanMessage(null, t));
           }
         } finally {
           busy.current = false;
