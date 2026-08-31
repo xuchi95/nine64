@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import {
   ArrowLeft,
@@ -30,6 +30,7 @@ import { addPuzzles } from "@/lib/learn/store";
 import { useSettings } from "@/lib/settings";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { useT } from "@/lib/i18n";
+import type { AnalysisFocus } from "@/lib/analysis/presentation";
 
 export const Route = createFileRoute("/games/$gameId")({
   head: () => ({
@@ -65,12 +66,28 @@ function GameDetail() {
   const [orientation, setOrientation] = useState<Color>("w");
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [deep, setDeep] = useState(false);
+  /** Single engine suggestion currently drawn on the board. */
+  const [focus, setFocus] = useState<AnalysisFocus | null>(null);
   const cancelRef = useRef<{ cancelled: boolean }>({ cancelled: false });
+
+  /** Manual navigation always clears the suggestion arrow. */
+  const goto = useCallback((next: number | ((c: number) => number)) => {
+    setFocus(null);
+    setCursor(next);
+  }, []);
+
+  /** Jump to the position right BEFORE the mistake and draw one arrow. */
+  const showOnBoard = useCallback((next: AnalysisFocus | null) => {
+    setFocus(next);
+    if (next) setCursor(next.plyIndex - 1);
+  }, []);
 
   useEffect(() => {
     if (game) setCursor(game.moves.length - 1);
     if (game?.playerColor) setOrientation(game.playerColor);
+    setFocus(null);
   }, [game?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   useEffect(() => {
     const signal = cancelRef.current;
@@ -82,12 +99,13 @@ function GameDetail() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!game) return;
-      if (e.key === "ArrowLeft") setCursor((c) => Math.max(-1, c - 1));
-      if (e.key === "ArrowRight") setCursor((c) => Math.min(game.moves.length - 1, c + 1));
+      if (e.key === "ArrowLeft") goto((c) => Math.max(-1, c - 1));
+      if (e.key === "ArrowRight") goto((c) => Math.min(game.moves.length - 1, c + 1));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [game?.id, game?.moves.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game?.id, game?.moves.length, goto]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const fen = useMemo(() => {
     if (!game) return null;
@@ -118,6 +136,17 @@ function GameDetail() {
     }
     return { pieces, turn: chess.turn() as Color, checkSquare };
   }, [fen]);
+
+  /** Exactly one arrow, and only while the board sits on the matching position. */
+  const boardArrows = useMemo(
+    () =>
+      focus && cursor === focus.plyIndex - 1
+        ? [{ from: focus.from, to: focus.to, ply: 0 }]
+        : [],
+    [focus, cursor],
+  );
+
+
 
   if (!game) {
     return (
@@ -195,17 +224,18 @@ function GameDetail() {
               interactive={false}
               lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : null}
               checkSquare={position.checkSquare}
+              arrows={boardArrows}
             />
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="icon" aria-label={t("play.detail.firstMove")} onClick={() => setCursor(-1)}>
+            <Button variant="outline" size="icon" aria-label={t("play.detail.firstMove")} onClick={() => goto(-1)}>
               <SkipBack className="size-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
               aria-label={t("play.detail.prevMove")}
-              onClick={() => setCursor((c) => Math.max(-1, c - 1))}
+              onClick={() => goto((c) => Math.max(-1, c - 1))}
             >
               <ChevronLeft className="size-4" />
             </Button>
@@ -213,7 +243,7 @@ function GameDetail() {
               variant="outline"
               size="icon"
               aria-label={t("play.detail.nextMove")}
-              onClick={() => setCursor((c) => Math.min(game.moves.length - 1, c + 1))}
+              onClick={() => goto((c) => Math.min(game.moves.length - 1, c + 1))}
             >
               <ChevronRight className="size-4" />
             </Button>
@@ -221,7 +251,7 @@ function GameDetail() {
               variant="outline"
               size="icon"
               aria-label={t("play.detail.lastMove")}
-              onClick={() => setCursor(game.moves.length - 1)}
+              onClick={() => goto(game.moves.length - 1)}
             >
               <SkipForward className="size-4" />
             </Button>
@@ -266,7 +296,7 @@ function GameDetail() {
                   startEval={game.review.startEval}
                   evals={game.review.evals}
                   activeIndex={cursor}
-                  onSelect={setCursor}
+                  onSelect={goto}
                 />
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div className="rounded-md bg-surface-2 p-3">
@@ -349,15 +379,20 @@ function GameDetail() {
             )}
           </div>
 
-          <VariationPanel game={game} onSelectMove={setCursor} />
+          <CoachPanel game={game} onSelectMove={goto} />
 
-          <CoachPanel game={game} onSelectMove={setCursor} />
+          <VariationPanel
+            game={game}
+            onSelectMove={goto}
+            focus={focus}
+            onFocus={showOnBoard}
+          />
 
           <div className="panel flex max-h-[420px] flex-col overflow-hidden">
             <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("play.detail.moves")}
             </div>
-            <MoveList moves={game.moves} activeIndex={cursor} onSelect={setCursor} />
+            <MoveList moves={game.moves} activeIndex={cursor} onSelect={goto} />
           </div>
 
           <div className="panel space-y-2 p-4 text-sm">

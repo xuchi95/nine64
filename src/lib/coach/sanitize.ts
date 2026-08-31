@@ -27,10 +27,13 @@ export const COACH_DIGEST_SCHEMA = z.object({
   acpl: z.object({ player: z.number(), opponent: z.number() }).nullable().default(null),
   estimatedRating: z.number().nullable().default(null),
   labelCounts: z.record(z.string().max(40), z.number()).nullable().default(null),
+  reviewedAt: z.string().max(40).nullable().default(null),
   timeline: z.array(z.string().max(200)).max(L.maxTimelineEntries).default([]),
   keyMoments: z
     .array(
       z.object({
+        id: z.string().max(24).default(""),
+        plyIndex: z.number().int().min(0).max(2000).default(0),
         moveNumber: z.number().int().min(0).max(1000),
         san: z.string().max(12),
         label: z.string().max(40),
@@ -45,6 +48,7 @@ export const COACH_DIGEST_SCHEMA = z.object({
     .default([]),
   finalFen: z.string().max(L.maxFenChars).default(""),
 });
+
 
 export const COACH_REQUEST_SCHEMA = z.object({
   digest: COACH_DIGEST_SCHEMA,
@@ -70,11 +74,18 @@ export function sanitizeDigest(input: unknown): CoachDigest {
     timeline.push(line);
   }
 
+  // Key moment ids are canonical server-side identifiers: rebuild them from the
+  // ply index so the model can never introduce an id of its own choosing.
+  const keyMoments = parsed.keyMoments
+    .slice(0, L.maxKeyMoments)
+    .map((m) => ({ ...m, id: `ply-${m.plyIndex}` }));
+
   const digest = {
     ...parsed,
     timeline,
-    keyMoments: parsed.keyMoments.slice(0, L.maxKeyMoments),
+    keyMoments,
   } as unknown as CoachDigest;
+
 
   if (JSON.stringify(digest).length > L.maxTotalPayloadChars) {
     throw new CoachInputError("COACH_PAYLOAD_TOO_LARGE");
