@@ -41,6 +41,8 @@ function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [formInfo, setFormInfo] = useState<string | null>(null);
+  const guard = useServerFn(guardAuthAttempt);
+
 
   const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
 
