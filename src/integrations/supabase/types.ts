@@ -1052,6 +1052,246 @@ export type Database = {
         }
         Relationships: []
       }
+      learn_cards: {
+        Row: {
+          created_at: string
+          difficulty: number
+          due_at: string
+          id: string
+          lapses: number
+          last_review: string | null
+          lesson_id: string
+          reps: number
+          stability: number
+          step_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: number
+          due_at?: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          lesson_id: string
+          reps?: number
+          stability?: number
+          step_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number
+          due_at?: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          lesson_id?: string
+          reps?: number
+          stability?: number
+          step_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_cards_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "learn_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learn_content_versions: {
+        Row: {
+          actor: string | null
+          created_at: string
+          doc: Json
+          entity: string
+          entity_id: string
+          id: string
+          note: string | null
+          version: number
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          doc: Json
+          entity: string
+          entity_id: string
+          id?: string
+          note?: string | null
+          version: number
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          doc?: Json
+          entity?: string
+          entity_id?: string
+          id?: string
+          note?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      learn_courses: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          draft: Json
+          id: string
+          kind: string
+          published: Json | null
+          published_at: string | null
+          slug: string
+          sort_order: number
+          status: string
+          track: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          draft?: Json
+          id?: string
+          kind?: string
+          published?: Json | null
+          published_at?: string | null
+          slug: string
+          sort_order?: number
+          status?: string
+          track?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          draft?: Json
+          id?: string
+          kind?: string
+          published?: Json | null
+          published_at?: string | null
+          slug?: string
+          sort_order?: number
+          status?: string
+          track?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      learn_lessons: {
+        Row: {
+          chapter_id: string
+          course_id: string
+          created_at: string
+          created_by: string | null
+          draft: Json
+          id: string
+          published: Json | null
+          published_at: string | null
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          chapter_id?: string
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          draft?: Json
+          id?: string
+          published?: Json | null
+          published_at?: string | null
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          chapter_id?: string
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          draft?: Json
+          id?: string
+          published?: Json | null
+          published_at?: string | null
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "learn_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learn_progress: {
+        Row: {
+          attempts: number
+          best_score: number
+          completed_at: string | null
+          created_at: string
+          last_score: number
+          last_studied_at: string
+          lesson_id: string
+          mastery: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          best_score?: number
+          completed_at?: string | null
+          created_at?: string
+          last_score?: number
+          last_studied_at?: string
+          lesson_id: string
+          mastery?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          best_score?: number
+          completed_at?: string | null
+          created_at?: string
+          last_score?: number
+          last_studied_at?: string
+          lesson_id?: string
+          mastery?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "learn_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matchmaking_queue: {
         Row: {
           created_at: string

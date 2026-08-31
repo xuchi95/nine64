@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
+import { Route as EndgamesRouteImport } from './routes/endgames'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as OpeningsRouteImport } from './routes/openings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -30,6 +31,7 @@ import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as DrillsIndexRouteImport } from './routes/drills.index'
 import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
+import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayLocalRouteImport } from './routes/play.local'
@@ -39,6 +41,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
 import { Route as AuthenticatedAdminIntelligenceRouteImport } from './routes/_authenticated/admin.intelligence'
+import { Route as AuthenticatedAdminLearnRouteImport } from './routes/_authenticated/admin.learn'
 import { Route as AuthenticatedAdminOpeningsRouteImport } from './routes/_authenticated/admin.openings'
 import { Route as AuthenticatedAdminPuzzlesRouteImport } from './routes/_authenticated/admin.puzzles'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
@@ -47,6 +50,8 @@ import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedOnlineDiagnosticsRouteImport } from './routes/_authenticated/online.diagnostics'
 import { Route as AuthenticatedPuzzlesTrainRouteImport } from './routes/_authenticated/puzzles.train'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
+import { Route as LearnCourseSlugRouteImport } from './routes/learn.course.$slug'
+import { Route as LearnLessonSlugRouteImport } from './routes/learn.lesson.$slug'
 import { Route as AuthenticatedAdminFairplayIndexRouteImport } from './routes/_authenticated/admin.fairplay.index'
 import { Route as AuthenticatedAdminFairplayLogRouteImport } from './routes/_authenticated/admin.fairplay.log'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin.users.index'
@@ -77,6 +82,11 @@ const ContactRoute = ContactRouteImport.update({
 const CookiePolicyRoute = CookiePolicyRouteImport.update({
   id: '/cookie-policy',
   path: '/cookie-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EndgamesRoute = EndgamesRouteImport.update({
+  id: '/endgames',
+  path: '/endgames',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InsightsRoute = InsightsRouteImport.update({
@@ -160,6 +170,11 @@ const GamesGameIdRoute = GamesGameIdRouteImport.update({
   path: '/games/$gameId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LearnIndexRoute = LearnIndexRouteImport.update({
+  id: '/learn/',
+  path: '/learn/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayIndexRoute = PlayIndexRouteImport.update({
   id: '/play/',
   path: '/play/',
@@ -207,6 +222,11 @@ const AuthenticatedAdminIntelligenceRoute =
     path: '/admin/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminLearnRoute = AuthenticatedAdminLearnRouteImport.update({
+  id: '/admin/learn',
+  path: '/admin/learn',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminOpeningsRoute =
   AuthenticatedAdminOpeningsRouteImport.update({
     id: '/admin/openings',
@@ -251,6 +271,16 @@ const AuthenticatedPuzzlesTrainRoute =
 const GamesOnlineGameIdRoute = GamesOnlineGameIdRouteImport.update({
   id: '/games/online/$gameId',
   path: '/games/online/$gameId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearnCourseSlugRoute = LearnCourseSlugRouteImport.update({
+  id: '/learn/course/$slug',
+  path: '/learn/course/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearnLessonSlugRoute = LearnLessonSlugRouteImport.update({
+  id: '/learn/lesson/$slug',
+  path: '/learn/lesson/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminFairplayIndexRoute =
@@ -298,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/analysis': typeof AnalysisRoute
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -317,11 +348,13 @@ export interface FileRoutesByFullPath {
   '/play/share': typeof PlayShareRoute
   '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
+  '/learn/': typeof LearnIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/admin/learn': typeof AuthenticatedAdminLearnRoute
   '/admin/openings': typeof AuthenticatedAdminOpeningsRoute
   '/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -330,6 +363,8 @@ export interface FileRoutesByFullPath {
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
+  '/learn/course/$slug': typeof LearnCourseSlugRoute
+  '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -344,6 +379,7 @@ export interface FileRoutesByTo {
   '/analysis': typeof AnalysisRoute
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -363,11 +399,13 @@ export interface FileRoutesByTo {
   '/play/share': typeof PlayShareRoute
   '/drills': typeof DrillsIndexRoute
   '/games': typeof GamesIndexRoute
+  '/learn': typeof LearnIndexRoute
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/admin/learn': typeof AuthenticatedAdminLearnRoute
   '/admin/openings': typeof AuthenticatedAdminOpeningsRoute
   '/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -376,6 +414,8 @@ export interface FileRoutesByTo {
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
+  '/learn/course/$slug': typeof LearnCourseSlugRoute
+  '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -392,6 +432,7 @@ export interface FileRoutesById {
   '/analysis': typeof AnalysisRoute
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -411,11 +452,13 @@ export interface FileRoutesById {
   '/play/share': typeof PlayShareRoute
   '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
+  '/learn/': typeof LearnIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/_authenticated/admin/learn': typeof AuthenticatedAdminLearnRoute
   '/_authenticated/admin/openings': typeof AuthenticatedAdminOpeningsRoute
   '/_authenticated/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -424,6 +467,8 @@ export interface FileRoutesById {
   '/_authenticated/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/_authenticated/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
+  '/learn/course/$slug': typeof LearnCourseSlugRoute
+  '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -440,6 +485,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/contact'
     | '/cookie-policy'
+    | '/endgames'
     | '/insights'
     | '/openings'
     | '/privacy'
@@ -459,11 +505,13 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/drills/'
     | '/games/'
+    | '/learn/'
     | '/play/'
     | '/puzzles/'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
+    | '/admin/learn'
     | '/admin/openings'
     | '/admin/puzzles'
     | '/admin/security'
@@ -472,6 +520,8 @@ export interface FileRouteTypes {
     | '/online/diagnostics'
     | '/puzzles/train'
     | '/games/online/$gameId'
+    | '/learn/course/$slug'
+    | '/learn/lesson/$slug'
     | '/admin/'
     | '/admin/fairplay/log'
     | '/admin/users/$userId'
@@ -486,6 +536,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/contact'
     | '/cookie-policy'
+    | '/endgames'
     | '/insights'
     | '/openings'
     | '/privacy'
@@ -505,11 +556,13 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/drills'
     | '/games'
+    | '/learn'
     | '/play'
     | '/puzzles'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
+    | '/admin/learn'
     | '/admin/openings'
     | '/admin/puzzles'
     | '/admin/security'
@@ -518,6 +571,8 @@ export interface FileRouteTypes {
     | '/online/diagnostics'
     | '/puzzles/train'
     | '/games/online/$gameId'
+    | '/learn/course/$slug'
+    | '/learn/lesson/$slug'
     | '/admin'
     | '/admin/fairplay/log'
     | '/admin/users/$userId'
@@ -533,6 +588,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/contact'
     | '/cookie-policy'
+    | '/endgames'
     | '/insights'
     | '/openings'
     | '/privacy'
@@ -552,11 +608,13 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/drills/'
     | '/games/'
+    | '/learn/'
     | '/play/'
     | '/puzzles/'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
     | '/_authenticated/admin/intelligence'
+    | '/_authenticated/admin/learn'
     | '/_authenticated/admin/openings'
     | '/_authenticated/admin/puzzles'
     | '/_authenticated/admin/security'
@@ -565,6 +623,8 @@ export interface FileRouteTypes {
     | '/_authenticated/online/diagnostics'
     | '/_authenticated/puzzles/train'
     | '/games/online/$gameId'
+    | '/learn/course/$slug'
+    | '/learn/lesson/$slug'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/fairplay/log'
     | '/_authenticated/admin/users/$userId'
@@ -581,6 +641,7 @@ export interface RootRouteChildren {
   AnalysisRoute: typeof AnalysisRoute
   ContactRoute: typeof ContactRoute
   CookiePolicyRoute: typeof CookiePolicyRoute
+  EndgamesRoute: typeof EndgamesRoute
   InsightsRoute: typeof InsightsRoute
   OpeningsRoute: typeof OpeningsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -596,9 +657,12 @@ export interface RootRouteChildren {
   PlayShareRoute: typeof PlayShareRoute
   DrillsIndexRoute: typeof DrillsIndexRoute
   GamesIndexRoute: typeof GamesIndexRoute
+  LearnIndexRoute: typeof LearnIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PuzzlesIndexRoute: typeof PuzzlesIndexRoute
   GamesOnlineGameIdRoute: typeof GamesOnlineGameIdRoute
+  LearnCourseSlugRoute: typeof LearnCourseSlugRoute
+  LearnLessonSlugRoute: typeof LearnLessonSlugRoute
   ApiPublicFairplayClaimRoute: typeof ApiPublicFairplayClaimRoute
   ApiPublicFairplayFailRoute: typeof ApiPublicFairplayFailRoute
   ApiPublicFairplayResultRoute: typeof ApiPublicFairplayResultRoute
@@ -639,6 +703,13 @@ declare module '@tanstack/react-router' {
       path: '/cookie-policy'
       fullPath: '/cookie-policy'
       preLoaderRoute: typeof CookiePolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/endgames': {
+      id: '/endgames'
+      path: '/endgames'
+      fullPath: '/endgames'
+      preLoaderRoute: typeof EndgamesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/insights': {
@@ -753,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GamesGameIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/learn/': {
+      id: '/learn/'
+      path: '/learn'
+      fullPath: '/learn/'
+      preLoaderRoute: typeof LearnIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/play/': {
       id: '/play/'
       path: '/play'
@@ -816,6 +894,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIntelligenceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/learn': {
+      id: '/_authenticated/admin/learn'
+      path: '/admin/learn'
+      fullPath: '/admin/learn'
+      preLoaderRoute: typeof AuthenticatedAdminLearnRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/openings': {
       id: '/_authenticated/admin/openings'
       path: '/admin/openings'
@@ -870,6 +955,20 @@ declare module '@tanstack/react-router' {
       path: '/games/online/$gameId'
       fullPath: '/games/online/$gameId'
       preLoaderRoute: typeof GamesOnlineGameIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learn/course/$slug': {
+      id: '/learn/course/$slug'
+      path: '/learn/course/$slug'
+      fullPath: '/learn/course/$slug'
+      preLoaderRoute: typeof LearnCourseSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learn/lesson/$slug': {
+      id: '/learn/lesson/$slug'
+      path: '/learn/lesson/$slug'
+      fullPath: '/learn/lesson/$slug'
+      preLoaderRoute: typeof LearnLessonSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/fairplay/': {
@@ -943,6 +1042,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminEngineRoute: typeof AuthenticatedAdminEngineRoute
   AuthenticatedAdminIntelligenceRoute: typeof AuthenticatedAdminIntelligenceRoute
+  AuthenticatedAdminLearnRoute: typeof AuthenticatedAdminLearnRoute
   AuthenticatedAdminOpeningsRoute: typeof AuthenticatedAdminOpeningsRoute
   AuthenticatedAdminPuzzlesRoute: typeof AuthenticatedAdminPuzzlesRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
@@ -964,6 +1064,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminEngineRoute: AuthenticatedAdminEngineRoute,
   AuthenticatedAdminIntelligenceRoute: AuthenticatedAdminIntelligenceRoute,
+  AuthenticatedAdminLearnRoute: AuthenticatedAdminLearnRoute,
   AuthenticatedAdminOpeningsRoute: AuthenticatedAdminOpeningsRoute,
   AuthenticatedAdminPuzzlesRoute: AuthenticatedAdminPuzzlesRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
@@ -986,6 +1087,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalysisRoute: AnalysisRoute,
   ContactRoute: ContactRoute,
   CookiePolicyRoute: CookiePolicyRoute,
+  EndgamesRoute: EndgamesRoute,
   InsightsRoute: InsightsRoute,
   OpeningsRoute: OpeningsRoute,
   PrivacyRoute: PrivacyRoute,
@@ -1001,9 +1103,12 @@ const rootRouteChildren: RootRouteChildren = {
   PlayShareRoute: PlayShareRoute,
   DrillsIndexRoute: DrillsIndexRoute,
   GamesIndexRoute: GamesIndexRoute,
+  LearnIndexRoute: LearnIndexRoute,
   PlayIndexRoute: PlayIndexRoute,
   PuzzlesIndexRoute: PuzzlesIndexRoute,
   GamesOnlineGameIdRoute: GamesOnlineGameIdRoute,
+  LearnCourseSlugRoute: LearnCourseSlugRoute,
+  LearnLessonSlugRoute: LearnLessonSlugRoute,
   ApiPublicFairplayClaimRoute: ApiPublicFairplayClaimRoute,
   ApiPublicFairplayFailRoute: ApiPublicFairplayFailRoute,
   ApiPublicFairplayResultRoute: ApiPublicFairplayResultRoute,

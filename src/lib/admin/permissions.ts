@@ -16,6 +16,7 @@ export type AdminModule =
   | "intelligence"
   | "puzzles"
   | "openings"
+  | "learn"
   | "fairplay"
   | "fairplayLog"
   | "audit"
@@ -31,6 +32,7 @@ const MATRIX: Record<AdminRole, readonly AdminModule[]> = {
     "intelligence",
     "puzzles",
     "openings",
+    "learn",
     "fairplay",
     "fairplayLog",
     "audit",
@@ -61,6 +63,7 @@ export const ADMIN_MODULE_PATHS: Record<AdminModule, string> = {
   intelligence: "/admin/intelligence",
   puzzles: "/admin/puzzles",
   openings: "/admin/openings",
+  learn: "/admin/learn",
   fairplay: "/admin/fairplay",
   fairplayLog: "/admin/fairplay/log",
   audit: "/admin/audit",
