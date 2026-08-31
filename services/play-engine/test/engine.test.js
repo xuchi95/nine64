@@ -70,3 +70,14 @@ test("healthPayload reports starting before the pool is ready and never leaks en
   const serialized = JSON.stringify(out);
   assert.ok(!/PLAY_ENGINE|PRIVATE KEY|Bearer/i.test(serialized));
 });
+
+test("buildGoArgs reads the nested search block sent by the backend", () => {
+  assert.equal(buildGoArgs({ search: { policy: "depth", depth: 22 } }), "depth 22");
+  assert.equal(buildGoArgs({ search: { policy: "nodes", nodes: 500000 } }), "nodes 500000");
+  assert.equal(buildGoArgs({ search: { policy: "movetime", movetimeMs: 12000 } }), "movetime 12000");
+  assert.equal(
+    buildGoArgs({ search: { policy: "clock", wtimeMs: 60000, btimeMs: 45000, wincMs: 2000, bincMs: 2000 } }),
+    "wtime 60000 btime 45000 winc 2000 binc 2000",
+  );
+  assert.equal(buildGoArgs({}), "movetime 3000");
+});
