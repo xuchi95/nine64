@@ -1567,6 +1567,107 @@ export type Database = {
         }
         Relationships: []
       }
+      skill_definitions: {
+        Row: {
+          category: string
+          created_at: string
+          description_en: string
+          description_vi: string
+          enabled: boolean
+          key: string
+          mastery_xp: number
+          name_en: string
+          name_vi: string
+          sort_order: number
+          thresholds: Json
+          updated_at: string
+          updated_by: string | null
+          xp_per_event: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description_en?: string
+          description_vi?: string
+          enabled?: boolean
+          key: string
+          mastery_xp?: number
+          name_en: string
+          name_vi: string
+          sort_order?: number
+          thresholds?: Json
+          updated_at?: string
+          updated_by?: string | null
+          xp_per_event?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description_en?: string
+          description_vi?: string
+          enabled?: boolean
+          key?: string
+          mastery_xp?: number
+          name_en?: string
+          name_vi?: string
+          sort_order?: number
+          thresholds?: Json
+          updated_at?: string
+          updated_by?: string | null
+          xp_per_event?: number
+        }
+        Relationships: []
+      }
+      skill_events: {
+        Row: {
+          created_at: string
+          detail: Json
+          event_key: string
+          game_id: string | null
+          id: string
+          outcome: string
+          ply: number | null
+          skill_key: string
+          source: string
+          user_id: string
+          xp_delta: number
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          event_key: string
+          game_id?: string | null
+          id?: string
+          outcome: string
+          ply?: number | null
+          skill_key: string
+          source?: string
+          user_id: string
+          xp_delta?: number
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          event_key?: string
+          game_id?: string | null
+          id?: string
+          outcome?: string
+          ply?: number | null
+          skill_key?: string
+          source?: string
+          user_id?: string
+          xp_delta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_events_skill_key_fkey"
+            columns: ["skill_key"]
+            isOneToOne: false
+            referencedRelation: "skill_definitions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       system_incidents: {
         Row: {
           body: string
@@ -1737,6 +1838,56 @@ export type Database = {
         }
         Relationships: []
       }
+      training_cards: {
+        Row: {
+          created_at: string
+          fen: string
+          id: string
+          label: string
+          ply: number | null
+          skill_key: string | null
+          solution: Json
+          source_game_id: string | null
+          srs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fen: string
+          id?: string
+          label?: string
+          ply?: number | null
+          skill_key?: string | null
+          solution?: Json
+          source_game_id?: string | null
+          srs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fen?: string
+          id?: string
+          label?: string
+          ply?: number | null
+          skill_key?: string | null
+          solution?: Json
+          source_game_id?: string | null
+          srs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_cards_skill_key_fkey"
+            columns: ["skill_key"]
+            isOneToOne: false
+            referencedRelation: "skill_definitions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       user_admin_state: {
         Row: {
           created_at: string
@@ -1796,6 +1947,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_skill_progress: {
+        Row: {
+          created_at: string
+          last_event_at: string | null
+          level: number
+          negative_events: number
+          positive_events: number
+          skill_key: string
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          last_event_at?: string | null
+          level?: number
+          negative_events?: number
+          positive_events?: number
+          skill_key: string
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          last_event_at?: string | null
+          level?: number
+          negative_events?: number
+          positive_events?: number
+          skill_key?: string
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_skill_progress_skill_key_fkey"
+            columns: ["skill_key"]
+            isOneToOne: false
+            referencedRelation: "skill_definitions"
+            referencedColumns: ["key"]
+          },
+        ]
       }
     }
     Views: {
@@ -1859,6 +2054,43 @@ export type Database = {
           _user_id: string
         }
         Returns: Json
+      }
+      admin_upsert_skill_definition: {
+        Args: {
+          _category: string
+          _description_en: string
+          _description_vi: string
+          _enabled: boolean
+          _key: string
+          _mastery_xp: number
+          _name_en: string
+          _name_vi: string
+          _sort_order: number
+          _thresholds: Json
+          _xp_per_event: number
+        }
+        Returns: {
+          category: string
+          created_at: string
+          description_en: string
+          description_vi: string
+          enabled: boolean
+          key: string
+          mastery_xp: number
+          name_en: string
+          name_vi: string
+          sort_order: number
+          thresholds: Json
+          updated_at: string
+          updated_by: string | null
+          xp_per_event: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "skill_definitions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       ai_prompt_publish: {
         Args: {
@@ -2064,6 +2296,7 @@ export type Database = {
         }
       }
       queue_leave: { Args: never; Returns: undefined }
+      record_skill_events: { Args: { _events: Json }; Returns: Json }
       resign_game_internal: {
         Args: { _expected_version: number; _game_id: string; _user_id: string }
         Returns: Json
