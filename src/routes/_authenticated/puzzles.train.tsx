@@ -49,7 +49,7 @@ interface RunState {
 }
 
 function PuzzleTrainer() {
-  const t = useT();
+  const { t } = useT();
   const queueFn = useServerFn(getPuzzleQueue);
   const overviewFn = useServerFn(getPuzzleOverview);
   const submitFn = useServerFn(submitPuzzleAttempt);
