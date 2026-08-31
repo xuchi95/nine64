@@ -72,7 +72,6 @@ const NUMERIC_FIELDS: { key: NumericKey; label: string }[] = [
   { key: "personalityTolerance", label: "Personality tolerance (cp)" },
   { key: "perUserDailyMoves", label: "Per-user daily moves" },
   { key: "maxConcurrentGames", label: "Max concurrent games" },
-  { key: "maxCostPerDayUsd", label: "Max cost / day (USD)" },
   { key: "requestTimeoutMs", label: "Request timeout (ms)" },
   { key: "maxRetries", label: "Max retries" },
 ];
