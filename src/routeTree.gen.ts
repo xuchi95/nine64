@@ -30,6 +30,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as DrillsIndexRouteImport } from './routes/drills.index'
 import { Route as EventsIndexRouteImport } from './routes/events.index'
+import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
@@ -176,6 +177,11 @@ const DrillsIndexRoute = DrillsIndexRouteImport.update({
 const EventsIndexRoute = EventsIndexRouteImport.update({
   id: '/events/',
   path: '/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsSlugRoute = EventsSlugRouteImport.update({
+  id: '/events/$slug',
+  path: '/events/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesIndexRoute = GamesIndexRouteImport.update({
@@ -426,6 +432,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/events/$slug': typeof EventsSlugRoute
   '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/coach': typeof PlayCoachRoute
@@ -490,6 +497,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/events/$slug': typeof EventsSlugRoute
   '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/coach': typeof PlayCoachRoute
@@ -556,6 +564,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/events/$slug': typeof EventsSlugRoute
   '/games/$gameId': typeof GamesGameIdRoute
   '/play/ai': typeof PlayAiRoute
   '/play/coach': typeof PlayCoachRoute
@@ -622,6 +631,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/register'
+    | '/events/$slug'
     | '/games/$gameId'
     | '/play/ai'
     | '/play/coach'
@@ -686,6 +696,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/register'
+    | '/events/$slug'
     | '/games/$gameId'
     | '/play/ai'
     | '/play/coach'
@@ -751,6 +762,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/register'
+    | '/events/$slug'
     | '/games/$gameId'
     | '/play/ai'
     | '/play/coach'
@@ -813,6 +825,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
+  EventsSlugRoute: typeof EventsSlugRoute
   GamesGameIdRoute: typeof GamesGameIdRoute
   PlayAiRoute: typeof PlayAiRoute
   PlayCoachRoute: typeof PlayCoachRoute
@@ -985,6 +998,13 @@ declare module '@tanstack/react-router' {
       path: '/events'
       fullPath: '/events/'
       preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/$slug': {
+      id: '/events/$slug'
+      path: '/events/$slug'
+      fullPath: '/events/$slug'
+      preLoaderRoute: typeof EventsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/': {
@@ -1368,6 +1388,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
+  EventsSlugRoute: EventsSlugRoute,
   GamesGameIdRoute: GamesGameIdRoute,
   PlayAiRoute: PlayAiRoute,
   PlayCoachRoute: PlayCoachRoute,
