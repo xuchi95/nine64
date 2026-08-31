@@ -1,6 +1,12 @@
-import type { CoachDigest } from "./digest";
+import type { CoachDigest, CoachKeyMoment } from "./digest";
 import type { CoachMistake, CoachReport, MistakeSeverity } from "./types";
-import { COACH_MODEL, COACH_SCHEMA, coachSystem, buildCoachPrompt } from "./prompt";
+import {
+  COACH_MODEL,
+  COACH_OUTPUT_LIMITS as L,
+  COACH_SCHEMA,
+  coachSystem,
+  buildCoachPrompt,
+} from "./prompt";
 import { COACH_MODEL_LIMITS } from "@/lib/ratelimit/policy";
 
 const ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
@@ -18,39 +24,90 @@ interface RawReport {
   drills?: unknown;
 }
 
-function str(value: unknown, fallback = ""): string {
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+/** Trims to a hard character ceiling without cutting mid-word when avoidable. */
+export function cap(value: unknown, max: number, fallback = ""): string {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return fallback;
+  if (raw.length <= max) return raw;
+  const sliced = raw.slice(0, max);
+  const lastSpace = sliced.lastIndexOf(" ");
+  return (lastSpace > max * 0.6 ? sliced.slice(0, lastSpace) : sliced).trimEnd() + "…";
 }
 
-function strList(value: unknown, max = 8): string[] {
+function capList(value: unknown, maxItems: number, maxChars: number): string[] {
   if (!Array.isArray(value)) return [];
   return value
-    .map((v) => str(v))
+    .map((v) => cap(v, maxChars))
     .filter(Boolean)
-    .slice(0, max);
+    .slice(0, maxItems);
 }
 
-function toMistakes(value: unknown): CoachMistake[] {
+/**
+ * Maps model output onto canonical key moments.
+ *
+ * The model may only return a `momentId`; move number and SAN always come from
+ * the digest, so a hallucinated or forged reference is dropped instead of being
+ * shown to the player as a real move.
+ */
+export function toMistakes(value: unknown, moments: CoachKeyMoment[]): CoachMistake[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((raw) => {
-      const m = raw as Record<string, unknown>;
-      const severity = SEVERITIES.includes(m['severity'] as MistakeSeverity)
+  const byId = new Map(moments.map((m) => [m.id, m]));
+  const seen = new Set<string>();
+  const out: CoachMistake[] = [];
+
+  for (const raw of value) {
+    const m = raw as Record<string, unknown>;
+    const momentId = typeof m['momentId'] === "string" ? m['momentId'].trim() : "";
+    const moment = byId.get(momentId);
+    if (!moment || seen.has(momentId)) continue;
+    const title = cap(m['title'], L.mistakeTitle);
+    if (!title) continue;
+    seen.add(momentId);
+    out.push({
+      momentId: moment.id,
+      plyIndex: moment.plyIndex,
+      moveNumber: moment.moveNumber,
+      san: moment.san,
+      severity: SEVERITIES.includes(m['severity'] as MistakeSeverity)
         ? (m['severity'] as MistakeSeverity)
-        : "moderate";
-      const title = str(m['title']);
-      if (!title) return null;
-      return {
-        moveNumber: Number.isFinite(Number(m['moveNumber'])) ? Number(m['moveNumber']) : 0,
-        san: str(m['san'], "—"),
-        severity,
-        title,
-        whatHappened: str(m['whatHappened']),
-        betterPlan: str(m['betterPlan']),
-      } satisfies CoachMistake;
-    })
-    .filter((m): m is CoachMistake => m !== null)
-    .slice(0, 12);
+        : "moderate",
+      title,
+      whatHappened: cap(m['whatHappened'], L.whatHappened),
+      betterPlan: cap(m['betterPlan'], L.betterPlan),
+    });
+    if (out.length >= L.mistakes) break;
+  }
+  return out;
+}
+
+/** Normalises raw model JSON into a safe, capped CoachReport. */
+export function normalizeReport(
+  parsed: RawReport,
+  digest: CoachDigest,
+  locale: "vi" | "en",
+): CoachReport {
+  return {
+    createdAt: new Date().toISOString(),
+    side: digest.side,
+    sourceReviewedAt: digest.reviewedAt ?? null,
+    headline: cap(
+      parsed.headline,
+      L.headline,
+      locale === "en" ? "Game analysis" : "Phân tích ván đấu",
+    ),
+    verdict: cap(parsed.verdict, L.verdict),
+    levelImpression: cap(parsed.levelImpression, L.levelImpression),
+    phases: {
+      opening: cap(parsed.phases?.opening, L.phase),
+      middlegame: cap(parsed.phases?.middlegame, L.phase),
+      endgame: cap(parsed.phases?.endgame, L.phase),
+    },
+    strengths: capList(parsed.strengths, L.strengths, L.strength),
+    mistakes: toMistakes(parsed.mistakes, digest.keyMoments),
+    habits: capList(parsed.habits, L.habits, L.habit),
+    advice: capList(parsed.advice, L.advice, L.adviceItem),
+    drills: capList(parsed.drills, L.drills, L.drill),
+  };
 }
 
 /** Calls the Lovable AI gateway and normalises the coach report. */
@@ -116,21 +173,5 @@ export async function requestCoachReport(
     throw new Error(locale === "en" ? "AI returned unreadable data, please try again." : "AI trả về dữ liệu không đọc được, thử lại nhé.");
   }
 
-  return {
-    createdAt: new Date().toISOString(),
-    side: digest.side,
-    headline: str(parsed.headline, locale === "en" ? "Game analysis" : "Phân tích ván đấu"),
-    verdict: str(parsed.verdict),
-    levelImpression: str(parsed.levelImpression),
-    phases: {
-      opening: str(parsed.phases?.opening),
-      middlegame: str(parsed.phases?.middlegame),
-      endgame: str(parsed.phases?.endgame),
-    },
-    strengths: strList(parsed.strengths, 6),
-    mistakes: toMistakes(parsed.mistakes),
-    habits: strList(parsed.habits, 6),
-    advice: strList(parsed.advice, 6),
-    drills: strList(parsed.drills, 6),
-  };
+  return normalizeReport(parsed, digest, locale);
 }
