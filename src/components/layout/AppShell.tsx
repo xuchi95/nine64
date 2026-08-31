@@ -406,7 +406,7 @@ function MoreNav({ mobile }: { mobile?: boolean }) {
 
 function NotificationBell() {
   const { user } = useAuth();
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, error, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
   const { t } = useT();
 
@@ -443,6 +443,11 @@ function NotificationBell() {
           )}
         </div>
         <DropdownMenuSeparator />
+        {error && (
+          <div className="mx-2 mb-1 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-2 text-xs text-destructive">
+            {t("shell.notifications.error")}
+          </div>
+        )}
         {notifications.length === 0 ? (
           <div className="px-2.5 py-4 text-center text-sm text-muted-foreground">{t("shell.notifications.empty")}</div>
         ) : (
@@ -456,7 +461,7 @@ function NotificationBell() {
                 )}
                 onClick={() => {
                   void markRead(n.id);
-                  const gameId = (n.data as { game_id?: string } | null)?.game_id;
+                  const gameId = (n.data as { game_id?: string | null } | null)?.game_id;
                   if (gameId) {
                     void navigate({ to: "/game/$gameId", params: { gameId } });
                   }
