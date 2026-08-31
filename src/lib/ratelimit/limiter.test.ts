@@ -211,12 +211,13 @@ describe("AI coach payload guard", () => {
     expect(sanitizeDigest(base).side).toBe("w");
   });
 
-  it("truncates an oversized timeline before any gateway call", () => {
-    const digest = sanitizeDigest({
-      ...base,
-      timeline: Array.from({ length: 500 }, (_, i) => `${i}. Nf3 [ok]`),
-    });
-    expect(digest.timeline.length).toBeLessThanOrEqual(140);
+  it("rejects an oversized timeline before any gateway call", () => {
+    expect(() =>
+      sanitizeDigest({ ...base, timeline: Array.from({ length: 500 }, (_, i) => `${i}. Nf3 [ok]`) }),
+    ).toThrow();
+    // a timeline at the ceiling is still accepted
+    const ok = sanitizeDigest({ ...base, timeline: Array.from({ length: 100 }, () => "1. Nf3") });
+    expect(ok.timeline.length).toBe(100);
   });
 
   it("rejects an over-long FEN", () => {
