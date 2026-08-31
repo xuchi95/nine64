@@ -2,6 +2,27 @@ export default {
   vi: {
     "admin.adminOnly": "Trang này chỉ dành cho quản trị viên.",
 
+    // System console (secrets / limiter / CSP)
+    "admin.system.title": "Bảng điều khiển hệ thống",
+    "admin.system.subtitle": "Tình trạng biến môi trường, hạn mức chống spam và security header đang áp dụng.",
+    "admin.system.reload": "Tải lại",
+    "admin.system.secretsTitle": "Biến môi trường & secret",
+    "admin.system.secretsHint": "Chỉ hiển thị tên và trạng thái cấu hình — giá trị secret không bao giờ được đọc hay gửi ra trình duyệt.",
+    "admin.system.groupPublic": "Công khai",
+    "admin.system.groupServer": "Chỉ máy chủ",
+    "admin.system.set": "Đã cấu hình",
+    "admin.system.unset": "Chưa có",
+    "admin.system.limitsTitle": "Hạn mức chống spam (limiter)",
+    "admin.system.quota": "{limit} lượt / {window}s",
+    "admin.system.failClosed": "Chặn khi limiter lỗi",
+    "admin.system.failOpen": "Cho qua khi limiter lỗi",
+    "admin.system.live": "{buckets} khoá đang chạy · đỉnh {peak} · {blocked} bị chặn",
+    "admin.system.reset": "Đặt lại",
+    "admin.system.resetAll": "Đặt lại toàn bộ",
+    "admin.system.resetDone": "Đã xoá {count} bộ đếm ({action}).",
+    "admin.system.headersTitle": "Security header & CSP thực tế",
+    "admin.system.headerMeta": "Chế độ {mode} · host preview: {preview} · cho phép unsafe-eval (Turnstile): {eval}",
+
     // Fairplay action labels / messages (thresholds.ts)
     // Fair Play analysis jobs & complaints (P0.7)
     "admin.jobs.title": "Hàng đợi phân tích Fair Play",
@@ -224,6 +245,27 @@ export default {
   },
   en: {
     "admin.adminOnly": "This page is for administrators only.",
+
+    // System console (secrets / limiter / CSP)
+    "admin.system.title": "System console",
+    "admin.system.subtitle": "Environment variable status, abuse-protection quotas and the security headers in force.",
+    "admin.system.reload": "Reload",
+    "admin.system.secretsTitle": "Environment variables & secrets",
+    "admin.system.secretsHint": "Names and configuration status only — secret values are never read or sent to the browser.",
+    "admin.system.groupPublic": "Public",
+    "admin.system.groupServer": "Server only",
+    "admin.system.set": "Configured",
+    "admin.system.unset": "Missing",
+    "admin.system.limitsTitle": "Rate limiter quotas",
+    "admin.system.quota": "{limit} calls / {window}s",
+    "admin.system.failClosed": "Fails closed",
+    "admin.system.failOpen": "Fails open",
+    "admin.system.live": "{buckets} live keys · peak {peak} · {blocked} blocked",
+    "admin.system.reset": "Reset",
+    "admin.system.resetAll": "Reset all",
+    "admin.system.resetDone": "Cleared {count} counters ({action}).",
+    "admin.system.headersTitle": "Effective security headers & CSP",
+    "admin.system.headerMeta": "Mode {mode} · preview host: {preview} · unsafe-eval (Turnstile): {eval}",
 
     // Fair Play analysis jobs & complaints (P0.7)
     "admin.jobs.title": "Fair Play analysis queue",

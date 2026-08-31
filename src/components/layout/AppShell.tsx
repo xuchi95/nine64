@@ -595,6 +595,7 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   "/admin/fairplay/log": "shell.route.fairplayLog",
   "/admin/audit": "shell.route.auditLog",
   "/admin/security": "shell.route.security",
+  "/admin/system": "shell.route.system",
 
 };
 
