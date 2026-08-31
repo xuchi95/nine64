@@ -166,7 +166,12 @@ function PlayAi() {
       setTitanStarting(true);
       void (async () => {
         try {
-          const res = await startTitan({ data: { playerColor: color } });
+          const res = await startTitan({
+            data: {
+              playerColor: color,
+              variant: config.variant === "chess960" ? "chess960" : "standard",
+            },
+          });
           if (!res.ok) {
             setEngineError(titanMessage(res.code, t));
             return;

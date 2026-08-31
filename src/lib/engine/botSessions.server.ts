@@ -17,7 +17,7 @@
  */
 import { rulesFor } from "@/lib/chess/rules";
 import type { RulesPosition } from "@/lib/chess/rules";
-import { appMoveToEngineUci, engineUciToAppMove } from "@/lib/chess/rules";
+import { engineUciToAppMove } from "@/lib/chess/rules";
 import type { VariantId } from "@/config/variants";
 import { TITAN_SLUG, type EngineConfig } from "./profileTypes";
 

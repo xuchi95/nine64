@@ -30,7 +30,14 @@ export const getTitanStatus = createServerFn({ method: "GET" }).handler(async ()
 
 export const startTitanSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ playerColor: z.enum(["w", "b"]) }).parse(input))
+  .inputValidator((input) =>
+    z
+      .object({
+        playerColor: z.enum(["w", "b"]),
+        variant: z.enum(["standard", "chess960"]).default("standard"),
+      })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { titanProfile } = await import("@/lib/engine/profiles.server");
     const { cloudEngineConfigured } = await import("@/lib/engine/cloudEngine.server");
@@ -46,6 +53,7 @@ export const startTitanSession = createServerFn({ method: "POST" })
     const res = await createSession({
       userId: context.userId,
       playerColor: data.playerColor,
+      variant: data.variant,
       config: profile.config,
       level: TITAN_LEVEL,
     });
