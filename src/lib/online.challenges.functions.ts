@@ -108,7 +108,7 @@ export const createChallenge = createServerFn({ method: "POST" })
     const client = await admin();
     const { data: raw, error } = await client.rpc("challenge_create", {
       _user_id: context.userId,
-      _opponent_id: data.opponentId ?? null,
+      _opponent_id: (data.opponentId ?? null) as unknown as string,
       _variant: data.variant,
       _time_control: data.timeControl,
       _rated: data.rated,
@@ -116,12 +116,12 @@ export const createChallenge = createServerFn({ method: "POST" })
       _allow_takeback: data.allowTakeback ?? false,
       _spectate: data.spectate ?? "public",
       _spectator_delay: data.spectatorDelaySeconds ?? 0,
-      _rematch_of: data.rematchOf ?? null,
-      _message: data.message ?? null,
+      _rematch_of: (data.rematchOf ?? null) as unknown as string,
+      _message: (data.message ?? null) as unknown as string,
     });
     if (error) throw new Error(error.message);
 
-    const payload = (raw ?? {}) as RpcEnvelope<{ challenge?: Challenge }>;
+    const payload = (raw ?? {}) as unknown as RpcEnvelope<{ challenge?: Challenge }>;
     if (payload.ok) await kickOutbox();
     return { ok: payload.ok, code: payload.code, challenge: payload.challenge ?? null };
   });
@@ -155,7 +155,7 @@ export const respondChallenge = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    const payload = (raw ?? {}) as RpcEnvelope<{ challenge?: Challenge; game?: Game }>;
+    const payload = (raw ?? {}) as unknown as RpcEnvelope<{ challenge?: Challenge; game?: Game }>;
     if (payload.ok) await kickOutbox();
     return {
       ok: payload.ok,
@@ -197,7 +197,7 @@ export const requestTakeback = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    const payload = (raw ?? {}) as RpcEnvelope<{ request?: TakebackRequest; game?: Game }>;
+    const payload = (raw ?? {}) as unknown as RpcEnvelope<{ request?: TakebackRequest; game?: Game }>;
     if (payload.ok) await kickOutbox();
     return {
       ok: payload.ok,
@@ -220,7 +220,7 @@ export const respondTakeback = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    const payload = (raw ?? {}) as RpcEnvelope<{ request?: TakebackRequest; game?: Game }>;
+    const payload = (raw ?? {}) as unknown as RpcEnvelope<{ request?: TakebackRequest; game?: Game }>;
     return {
       ok: payload.ok,
       code: payload.code,
@@ -243,7 +243,7 @@ export const touchPresence = createServerFn({ method: "POST" })
       _user_id: context.userId,
     });
     if (error) throw new Error(error.message);
-    return (raw ?? { ok: false, code: "GAME_NOT_FOUND" }) as RpcEnvelope<{
+    return (raw ?? { ok: false, code: "GAME_NOT_FOUND" }) as unknown as RpcEnvelope<{
       server_now?: string;
       opponent_seen_at?: string | null;
     }>;
@@ -303,7 +303,7 @@ export const getSpectatorView = createServerFn({ method: "POST" })
       _viewer: context.userId,
     });
     if (error) throw new Error(error.message);
-    return (raw ?? { allowed: false, code: "GAME_NOT_FOUND" }) as SpectatorView;
+    return (raw ?? { allowed: false, code: "GAME_NOT_FOUND" }) as unknown as SpectatorView;
   });
 
 export type PublicGameRow = {
