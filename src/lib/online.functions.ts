@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Game, GameMove, MatchmakingQueue, Notification } from "@/lib/database.types";
+import type { DrawOffer, Game, GameMove, MatchmakingQueue, Notification } from "@/lib/database.types";
 import {
+  DRAW_OFFER_SCHEMA,
+  DRAW_RESPONSE_SCHEMA,
   GAME_COMMAND_SCHEMA,
   GAME_ID_SCHEMA,
   MOVE_SCHEMA,
@@ -594,4 +596,135 @@ export const getRatingEvent = createServerFn({ method: "GET" })
 
     if (error) throw new Error(error.message);
     return (row as RatingEvent | null) ?? null;
+  });
+
+// ===== P0.6: draw offers =========================================
+// Offering a draw never ends the game. Only the recipient accepting — or the
+// canonical rules engine — can produce a drawn result.
+
+export type DrawCommandCode =
+  | "OFFER_CREATED"
+  | "OFFER_EXISTS"
+  | "OFFER_ALREADY_PENDING"
+  | "OFFER_COOLDOWN"
+  | "OFFER_NOT_FOUND"
+  | "OFFER_NOT_PENDING"
+  | "OFFER_EXPIRED"
+  | "OFFER_ALREADY_RESOLVED"
+  | "NOT_OFFER_RECIPIENT"
+  | "NOT_OFFER_SENDER"
+  | "DRAW_AGREED"
+  | "DECLINED"
+  | "CANCELLED"
+  | "ALREADY_FINAL"
+  | "GAME_NOT_FOUND"
+  | "NOT_A_PARTICIPANT"
+  | "GAME_NOT_ACTIVE"
+  | "STALE_GAME_VERSION"
+  | "INVALID_INPUT";
+
+export type DrawCommandOutcome = {
+  ok: boolean;
+  code: DrawCommandCode;
+  offer: DrawOffer | null;
+  game: Game | null;
+  retryAfterMs?: number;
+};
+
+function toDrawOutcome(raw: unknown): DrawCommandOutcome {
+  const payload = (raw ?? {}) as {
+    ok?: boolean;
+    code?: DrawCommandCode;
+    offer?: DrawOffer;
+    game?: Game;
+    retry_after_ms?: number;
+  };
+  return {
+    ok: payload.ok ?? false,
+    code: payload.code ?? "GAME_NOT_FOUND",
+    offer: payload.offer ?? null,
+    game: payload.game ?? null,
+    ...(payload.retry_after_ms !== undefined ? { retryAfterMs: payload.retry_after_ms } : {}),
+  };
+}
+
+/** Current pending offer (if any) plus the latest resolved one, for the UI. */
+export const getDrawOffers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_ID_SCHEMA.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("game_draw_offers")
+      .select("*")
+      .eq("game_id", data.gameId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) throw new Error(error.message);
+    const offers = (rows ?? []) as DrawOffer[];
+    const pending =
+      offers.find((o) => o.status === "pending" && Date.parse(o.expires_at) > Date.now()) ?? null;
+    return { pending, latest: offers[0] ?? null };
+  });
+
+export const offerDraw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => DRAW_OFFER_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<DrawCommandOutcome> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: raw, error } = await supabaseAdmin.rpc("offer_draw_internal", {
+      _game_id: data.gameId,
+      _user_id: context.userId,
+      _expected_version: data.expectedVersion,
+      _idempotency_key: data.idempotencyKey,
+    });
+    if (error) throw new Error(error.message);
+    return toDrawOutcome(raw);
+  });
+
+export const acceptDraw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => DRAW_RESPONSE_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<DrawCommandOutcome> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: raw, error } = await supabaseAdmin.rpc("accept_draw_internal", {
+      _game_id: data.gameId,
+      _offer_id: data.offerId,
+      _user_id: context.userId,
+      _expected_version: data.expectedVersion,
+    });
+    if (error) throw new Error(error.message);
+    const out = toDrawOutcome(raw);
+    if (out.code === "DRAW_AGREED" && out.game) await notifyGameOver(out.game);
+    return out;
+  });
+
+export const declineDraw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => DRAW_RESPONSE_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<DrawCommandOutcome> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: raw, error } = await supabaseAdmin.rpc("respond_draw_internal", {
+      _game_id: data.gameId,
+      _offer_id: data.offerId,
+      _user_id: context.userId,
+      _action: "decline",
+    });
+    if (error) throw new Error(error.message);
+    return toDrawOutcome(raw);
+  });
+
+export const cancelDraw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => DRAW_RESPONSE_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<DrawCommandOutcome> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: raw, error } = await supabaseAdmin.rpc("respond_draw_internal", {
+      _game_id: data.gameId,
+      _offer_id: data.offerId,
+      _user_id: context.userId,
+      _action: "cancel",
+    });
+    if (error) throw new Error(error.message);
+    return toDrawOutcome(raw);
   });

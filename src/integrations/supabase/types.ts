@@ -289,6 +289,53 @@ export type Database = {
         }
         Relationships: []
       }
+      game_draw_offers: {
+        Row: {
+          created_at: string
+          expires_at: string
+          game_id: string
+          game_version: number
+          id: string
+          idempotency_key: string
+          offered_by: string
+          offered_to: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          game_id: string
+          game_version: number
+          id?: string
+          idempotency_key: string
+          offered_by: string
+          offered_to: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          game_id?: string
+          game_version?: number
+          id?: string
+          idempotency_key?: string
+          offered_by?: string
+          offered_to?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_draw_offers_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_fairplay: {
         Row: {
           created_at: string
@@ -873,6 +920,15 @@ export type Database = {
         Args: { _expected_version: number; _game_id: string; _user_id: string }
         Returns: Json
       }
+      accept_draw_internal: {
+        Args: {
+          _expected_version: number
+          _game_id: string
+          _offer_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
       apply_rating_once: { Args: { _game_id: string }; Returns: Json }
       claim_timeout_internal: {
@@ -902,6 +958,7 @@ export type Database = {
         }
         Returns: string
       }
+      expire_draw_offers: { Args: { _game_id: string }; Returns: undefined }
       finalize_expired_games: { Args: { _limit?: number }; Returns: Json }
       finalize_game_timeout: { Args: { _game_id: string }; Returns: Json }
       find_match: { Args: { _queue_id: string }; Returns: string }
@@ -936,6 +993,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      offer_draw_internal: {
+        Args: {
+          _expected_version: number
+          _game_id: string
+          _idempotency_key: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       queue_heartbeat: { Args: { _queue_id: string }; Returns: undefined }
       queue_join: {
         Args: { _time_control: string; _variant: string }
@@ -960,6 +1026,15 @@ export type Database = {
       queue_leave: { Args: never; Returns: undefined }
       resign_game_internal: {
         Args: { _expected_version: number; _game_id: string; _user_id: string }
+        Returns: Json
+      }
+      respond_draw_internal: {
+        Args: {
+          _action: string
+          _game_id: string
+          _offer_id: string
+          _user_id: string
+        }
         Returns: Json
       }
       security_probe_alerts: {
