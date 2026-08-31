@@ -36,7 +36,10 @@ export interface ChessBoardProps {
    * play now (drawn boldest); deeper plies fade out.
    */
   arrows?: { from: string; to: string; ply: number }[];
+  /** Coach overlay: squares the live coach wants the user to look at. */
+  highlightSquares?: string[];
   turn: PieceColor;
+
 
 }
 
@@ -141,7 +144,9 @@ export function ChessBoard(props: ChessBoardProps) {
     premove,
     onPremove,
     arrows,
+    highlightSquares,
   } = props;
+
 
 
   const settings = useSettings();
@@ -636,9 +641,17 @@ export function ChessBoard(props: ChessBoardProps) {
                 {isPremove && (
                   <span className="absolute inset-0" style={{ backgroundColor: "rgba(90,160,255,0.35)" }} />
                 )}
+                {highlightSquares?.includes(square) && (
+                  <span
+                    aria-hidden
+                    className="animate-nexus-check-pulse absolute inset-0"
+                    style={{ boxShadow: "inset 0 0 0 3px rgba(255,196,90,0.9)" }}
+                  />
+                )}
                 {selected === square && (
                   <span className="absolute inset-0" style={{ backgroundColor: theme.selected }} />
                 )}
+
                 {attackerSquares.has(square) && (
                   <span
                     className="animate-nexus-check-pulse absolute inset-0"

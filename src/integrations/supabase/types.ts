@@ -311,6 +311,57 @@ export type Database = {
         }
         Relationships: []
       }
+      coach_live_events: {
+        Row: {
+          ai_styled: boolean
+          coach_mode: string
+          created_at: string
+          id: string
+          local_game_id: string
+          loss_cp: number
+          move_number: number
+          personality: string
+          ply_index: number
+          retried: boolean
+          severity: string
+          skill_key: string
+          trigger_kind: string
+          user_id: string
+        }
+        Insert: {
+          ai_styled?: boolean
+          coach_mode: string
+          created_at?: string
+          id?: string
+          local_game_id: string
+          loss_cp?: number
+          move_number: number
+          personality: string
+          ply_index: number
+          retried?: boolean
+          severity: string
+          skill_key: string
+          trigger_kind: string
+          user_id: string
+        }
+        Update: {
+          ai_styled?: boolean
+          coach_mode?: string
+          created_at?: string
+          id?: string
+          local_game_id?: string
+          loss_cp?: number
+          move_number?: number
+          personality?: string
+          ply_index?: number
+          retried?: boolean
+          severity?: string
+          skill_key?: string
+          trigger_kind?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_requests: {
         Row: {
           created_at: string

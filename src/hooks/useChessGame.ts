@@ -214,6 +214,43 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
     [finish, timeControl, variant],
   );
 
+  /**
+   * Rewinds `plies` half-moves by replaying the remaining move list from the
+   * start position. Replay keeps the rules engine authoritative (no ad-hoc
+   * board surgery) and preserves variant metadata such as 960 castling rights.
+   * Used by the Live Play Coach "retry this move" flow.
+   */
+  const takeback = useCallback(
+    (plies = 1): boolean => {
+      if (resultRef.current) return false;
+      const keep = movesRef.current.length - plies;
+      if (keep < 0) return false;
+      const game = rulesFor(variant).createPosition(startFenRef.current);
+      const replayed: MoveRecord[] = [];
+      for (const m of movesRef.current.slice(0, keep)) {
+        const applied = game.move(m.from, m.to, m.san.includes("=")
+          ? (m.san.split("=")[1]?.[0]?.toLowerCase() as "q" | "r" | "b" | "n")
+          : undefined);
+        if (!applied) return false;
+        replayed.push({
+          san: applied.san,
+          from: applied.from,
+          to: applied.to,
+          color: applied.color,
+          fen: game.fen(),
+        });
+      }
+      gameRef.current = game;
+      movesRef.current = replayed;
+      setMoves(replayed);
+      setFen(game.fen());
+      const last = replayed[replayed.length - 1];
+      setLastMove(last ? { from: last.from, to: last.to } : null);
+      return true;
+    },
+    [variant],
+  );
+
   const resign = useCallback(
     (color: Color) => {
       finish({ winner: color === "w" ? "b" : "w", reason: "Resignation" });
@@ -308,6 +345,7 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
     needsPromotion,
     reset,
     loadFen,
+    takeback,
   };
 }
 

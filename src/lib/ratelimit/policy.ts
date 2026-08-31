@@ -10,6 +10,9 @@
 export type RateLimitAction =
   | "coach.burst"
   | "coach.daily"
+  | "coach.live.burst"
+  | "coach.live.daily"
+  | "coach.live.monthly"
   | "contact.ip"
   | "contact.email"
   | "auth.ip"
@@ -41,6 +44,12 @@ export const RATE_LIMIT_POLICY: Record<RateLimitAction, RateLimitRule> = {
   // AI Coach — the only endpoint that spends money per call.
   "coach.burst": { windowSeconds: 60, limit: 3, failClosed: true, scope: "user" },
   "coach.daily": { windowSeconds: 86_400, limit: 40, failClosed: true, scope: "user" },
+
+  // Live Play Coach — paid AI restyling only; deterministic coaching is free
+  // and keeps working when these limits are exhausted.
+  "coach.live.burst": { windowSeconds: 60, limit: 6, failClosed: true, scope: "user" },
+  "coach.live.daily": { windowSeconds: 86_400, limit: 60, failClosed: true, scope: "user" },
+  "coach.live.monthly": { windowSeconds: 2_592_000, limit: 600, failClosed: true, scope: "user" },
 
   // Contact form — unauthenticated, spammable, writes to the database.
   "contact.ip": { windowSeconds: 3_600, limit: 5, failClosed: true, scope: "ip-hmac" },
@@ -85,4 +94,9 @@ export const COACH_INPUT_LIMITS = {
 /** Server-side output ceilings — never client-controlled. */
 export const COACH_MODEL_LIMITS = {
   maxOutputTokens: 1_400,
+} as const;
+
+/** Live Play Coach restyling is a single short paragraph. */
+export const COACH_LIVE_MODEL_LIMITS = {
+  maxOutputTokens: 220,
 } as const;

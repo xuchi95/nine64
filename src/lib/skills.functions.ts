@@ -15,7 +15,7 @@ import type { SkillProgressRow } from "./skills/graph";
 const EventSchema = z.object({
   skillKey: z.enum(SKILL_KEYS as [string, ...string[]]),
   outcome: z.enum(["positive", "negative", "neutral"]),
-  source: z.enum(["review", "puzzle", "drill", "retry"]),
+  source: z.enum(["review", "puzzle", "drill", "retry", "live_coach"]),
   gameId: z.string().max(120).nullable().optional(),
   ply: z.number().int().min(0).max(2000).nullable().optional(),
   eventKey: z.string().min(3).max(200),
