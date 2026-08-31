@@ -8,18 +8,10 @@
  * Server-only module.
  */
 
-export type QueueId =
-  | "fairplay_jobs"
-  | "notification_outbox"
-  | "timeout_finalizer"
-  | "account_deletion";
+import { QUEUE_IDS, type QueueId } from "./queueTypes";
 
-export const QUEUE_IDS: readonly QueueId[] = [
-  "fairplay_jobs",
-  "notification_outbox",
-  "timeout_finalizer",
-  "account_deletion",
-];
+export { QUEUE_IDS };
+export type { QueueId };
 
 export interface QueueSummary {
   id: QueueId;
