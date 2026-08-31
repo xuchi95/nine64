@@ -344,7 +344,7 @@ export const makeMove = createServerFn({ method: "POST" })
       return {
         ok: false,
         code: payload.code ?? "INTERNAL_ERROR",
-        game: payload.game,
+        ...(payload.game ? { game: payload.game } : {}),
         serverNow,
       };
     }
