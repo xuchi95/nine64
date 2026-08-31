@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  Trophy,
   LayoutDashboard,
   Users,
   KeyRound,
@@ -40,6 +41,7 @@ const NAV: { module: AdminModule; icon: typeof Users; labelKey: string }[] = [
   { module: "puzzles", icon: Puzzle, labelKey: "adminc.nav.puzzles" },
   { module: "openings", icon: BookOpen, labelKey: "adminc.nav.openings" },
   { module: "learn", icon: GraduationCap, labelKey: "adminc.nav.learn" },
+  { module: "tournaments", icon: Trophy, labelKey: "adminc.nav.tournaments" },
 ];
 
 function isActive(pathname: string, to: string) {
