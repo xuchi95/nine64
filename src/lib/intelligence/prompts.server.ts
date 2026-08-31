@@ -6,50 +6,29 @@
  * admin can never point the coach at an arbitrary endpoint (SSRF).
  */
 import { COACH_MODEL, coachSystem } from "@/lib/coach/prompt";
+import {
+  PROMPT_KEYS,
+  ALLOWED_MODELS,
+  PROMPT_MAX_CHARS,
+  isPromptKey,
+  isAllowedModel,
+  type PromptKey,
+  type AllowedModel,
+  type PromptRow,
+  type PromptVersionRow,
+} from "./promptTypes";
 
-export const PROMPT_KEYS = ["coach_system_vi", "coach_system_en"] as const;
-export type PromptKey = (typeof PROMPT_KEYS)[number];
-
-export const ALLOWED_MODELS = [
-  "google/gemini-3-flash",
-  "google/gemini-3-pro",
-  "openai/gpt-5-mini",
-] as const;
-export type AllowedModel = (typeof ALLOWED_MODELS)[number];
-
-export const PROMPT_MAX_CHARS = 6_000;
-
-export function isPromptKey(key: string): key is PromptKey {
-  return (PROMPT_KEYS as readonly string[]).includes(key);
-}
-
-export function isAllowedModel(model: string): model is AllowedModel {
-  return (ALLOWED_MODELS as readonly string[]).includes(model);
-}
+export {
+  PROMPT_KEYS,
+  ALLOWED_MODELS,
+  PROMPT_MAX_CHARS,
+  isPromptKey,
+  isAllowedModel,
+};
+export type { PromptKey, AllowedModel, PromptRow, PromptVersionRow };
 
 export function defaultPromptBody(key: PromptKey): string {
   return coachSystem(key === "coach_system_en" ? "en" : "vi");
-}
-
-export interface PromptRow {
-  key: PromptKey;
-  body: string;
-  draftBody: string;
-  hasDraft: boolean;
-  version: number;
-  model: string;
-  reason: string | null;
-  publishedAt: string;
-  draftUpdatedAt: string | null;
-}
-
-export interface PromptVersionRow {
-  version: number;
-  body: string;
-  model: string;
-  reason: string;
-  changedBy: string | null;
-  createdAt: string;
 }
 
 async function admin() {
