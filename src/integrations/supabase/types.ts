@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_jobs: {
+        Row: {
+          created_at: string
+          grace_until: string
+          id: string
+          last_error: string | null
+          mode: string
+          processed_at: string | null
+          reason: string
+          requested_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grace_until: string
+          id?: string
+          last_error?: string | null
+          mode?: string
+          processed_at?: string | null
+          reason: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grace_until?: string
+          id?: string
+          last_error?: string | null
+          mode?: string
+          processed_at?: string | null
+          reason?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -49,6 +91,59 @@ export type Database = {
           {
             foreignKeyName: "admin_audit_log_target_game_id_fkey"
             columns: ["target_game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_rating_adjustments: {
+        Row: {
+          actor_id: string
+          created_at: string
+          delta: number
+          game_id: string | null
+          id: string
+          idempotency_key: string
+          peak_after: number
+          peak_before: number
+          rating_after: number
+          rating_before: number
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          delta: number
+          game_id?: string | null
+          id?: string
+          idempotency_key: string
+          peak_after: number
+          peak_before: number
+          rating_after: number
+          rating_before: number
+          reason: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          delta?: number
+          game_id?: string | null
+          id?: string
+          idempotency_key?: string
+          peak_after?: number
+          peak_before?: number
+          rating_after?: number
+          rating_before?: number
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_rating_adjustments_game_id_fkey"
+            columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
             referencedColumns: ["id"]
@@ -1091,6 +1186,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_admin_state: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          internal_note: string | null
+          reason: string | null
+          status: string
+          suspended_until: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          internal_note?: string | null
+          reason?: string | null
+          status?: string
+          suspended_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          internal_note?: string | null
+          reason?: string | null
+          status?: string
+          suspended_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1126,6 +1260,29 @@ export type Database = {
           _expected_version: number
           _game_id: string
           _offer_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      admin_apply_rating_adjustment: {
+        Args: {
+          _actor: string
+          _game_id?: string
+          _idempotency_key: string
+          _reason: string
+          _target_rating: number
+          _user_id: string
+        }
+        Returns: Json
+      }
+      admin_set_user_state: {
+        Args: {
+          _actor: string
+          _expected_version?: number
+          _internal_note?: string
+          _reason: string
+          _status: string
+          _suspended_until?: string
           _user_id: string
         }
         Returns: Json
