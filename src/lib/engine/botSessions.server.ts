@@ -40,6 +40,8 @@ export interface SessionSnapshot {
   status: "active" | "finished" | "aborted" | "expired";
   result: string | null;
   endReason: string | null;
+  /** Canonical starting array — for Chess960 this is NOT the standard FEN. */
+  initialFen: string;
   fen: string;
   moves: SessionMove[];
   version: number;
@@ -120,6 +122,7 @@ function toSnapshot(row: Record<string, unknown>): SessionSnapshot {
     status: (row["status"] as SessionSnapshot["status"]) ?? "active",
     result: (row["result"] as string | null) ?? null,
     endReason: (row["end_reason"] as string | null) ?? null,
+    initialFen: String(row["initial_fen"] ?? row["current_fen"]),
     fen: String(row["current_fen"]),
     moves: Array.isArray(row["moves"]) ? (row["moves"] as SessionMove[]) : [],
     version: Number(row["version"] ?? 0),

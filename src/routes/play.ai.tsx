@@ -178,7 +178,8 @@ function PlayAi() {
           }
           titanRef.current = { id: res.snapshot.sessionId, version: res.snapshot.version };
           setPlayerColor(color);
-          game.reset();
+          // The server owns the starting array (critical for Chess960).
+          game.loadFen(res.snapshot.initialFen);
           prevEval.current = 0;
           setPhase("playing");
           playSound("matchFound");
