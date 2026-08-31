@@ -76,7 +76,14 @@ export async function upsertReport(
 }
 
 /** Aggregate the player's recent reports + result patterns into a status row. */
-export async function refreshStatus(admin: Admin, userId: string) {
+export async function refreshStatus(
+  admin: Admin,
+  userId: string,
+  options: { autoLock?: boolean } = {},
+) {
+  // P0.7: machine evidence never locks a rating on its own. The trusted worker
+  // calls this with autoLock=false; only a moderator decision can lock.
+  const autoLock = options.autoLock ?? false;
   const { data: reports } = await admin
     .from("fairplay_reports")
     .select("game_id, score, probability, reasons, created_at")
@@ -121,6 +128,13 @@ export async function refreshStatus(admin: Admin, userId: string) {
   const collusion = detectCollusion(records);
 
   const shouldLock =
+    autoLock &&
+    (sequential.decision === "assisted" ||
+    peak >= THRESHOLDS.hold ||
+    collusion.boostingScore >= 80 ||
+    collusion.sandbaggingScore >= 80);
+
+  const reviewRequired =
     sequential.decision === "assisted" ||
     peak >= THRESHOLDS.hold ||
     collusion.boostingScore >= 80 ||
@@ -170,11 +184,13 @@ export async function refreshStatus(admin: Admin, userId: string) {
 
   const action = locked
     ? "rating_hold"
-    : peak >= THRESHOLDS.unrated
-      ? "unrated"
-      : peak >= THRESHOLDS.monitor
-        ? "monitor"
-        : "none";
+    : reviewRequired
+      ? "review_required"
+      : peak >= THRESHOLDS.unrated
+        ? "unrated"
+        : peak >= THRESHOLDS.monitor
+          ? "monitor"
+          : "none";
 
   const reasons = [
     ...new Set([
@@ -211,6 +227,7 @@ export async function refreshStatus(admin: Admin, userId: string) {
     sequential,
     collusion,
     reasons,
+    reviewRequired,
     lockExpiresAt: locked ? lockExpiresAt : null,
     lockHours: locked ? lockHours : 0,
   };

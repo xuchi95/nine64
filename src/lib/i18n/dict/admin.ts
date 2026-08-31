@@ -3,6 +3,20 @@ export default {
     "admin.adminOnly": "Trang này chỉ dành cho quản trị viên.",
 
     // Fairplay action labels / messages (thresholds.ts)
+    // Fair Play analysis jobs & complaints (P0.7)
+    "admin.jobs.title": "Hàng đợi phân tích Fair Play",
+    "admin.jobs.workerReady": "Worker đã cấu hình",
+    "admin.jobs.workerMissing": "Worker chưa cấu hình",
+    "admin.jobs.empty": "Chưa có tác vụ phân tích nào.",
+    "admin.jobs.retry": "Phân tích lại",
+    "admin.jobs.meta": "Phiên bản {analyzer} · Máy {engine} · Độ sâu {depth} · Lần thử {attempts}",
+    "admin.jobs.status.queued": "Đang chờ",
+    "admin.jobs.status.running": "Đang phân tích",
+    "admin.jobs.status.succeeded": "Hoàn tất",
+    "admin.jobs.status.failed": "Thất bại",
+    "admin.complaints.title": "Tố cáo từ người chơi",
+    "admin.complaints.hint": "Tố cáo chỉ là khiếu nại, không phải bằng chứng máy.",
+    "admin.complaints.empty": "Chưa có tố cáo nào.",
     "admin.action.none": "Bình thường",
     "admin.action.monitor": "Đang theo dõi",
     "admin.action.unrated": "Ván không tính điểm xếp hạng",
@@ -211,6 +225,20 @@ export default {
   en: {
     "admin.adminOnly": "This page is for administrators only.",
 
+    // Fair Play analysis jobs & complaints (P0.7)
+    "admin.jobs.title": "Fair Play analysis queue",
+    "admin.jobs.workerReady": "Worker configured",
+    "admin.jobs.workerMissing": "Worker not configured",
+    "admin.jobs.empty": "No analysis jobs yet.",
+    "admin.jobs.retry": "Re-analyse",
+    "admin.jobs.meta": "Version {analyzer} · Engine {engine} · Depth {depth} · Attempts {attempts}",
+    "admin.jobs.status.queued": "Queued",
+    "admin.jobs.status.running": "Running",
+    "admin.jobs.status.succeeded": "Succeeded",
+    "admin.jobs.status.failed": "Failed",
+    "admin.complaints.title": "Player reports",
+    "admin.complaints.hint": "Reports are complaints, not machine evidence.",
+    "admin.complaints.empty": "No reports yet.",
     "admin.action.none": "Normal",
     "admin.action.monitor": "Under monitoring",
     "admin.action.unrated": "Game not rated",

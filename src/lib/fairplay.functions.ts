@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertFairplayAdmin } from "@/lib/fairplay/adminGuard";
-import { evaluateGame, loadTurns, upsertReport, refreshStatus, enforce } from "@/lib/fairplay/apply.server";
 
 const turnSchema = z.object({
   ply: z.number().int().min(0),
@@ -16,15 +15,12 @@ const turnSchema = z.object({
   duplicateTab: z.boolean(),
 });
 
-const observationSchema = z.object({
-  ply: z.number().int().min(0),
-  isTop1: z.boolean(),
-  loss: z.number().min(0).max(100),
-  complexity: z.number().min(0).max(1),
-  accuracy: z.number().min(0).max(100),
-  spentMs: z.number().min(0).max(3_600_000).nullable(),
-});
-
+/**
+ * Behavioural telemetry from the player's own client. This is a weak signal,
+ * never evidence on its own: it is stored with the service identity after the
+ * server confirms the caller really played in that game, and the browser has
+ * no direct write path to the fair-play tables.
+ */
 export const submitFairplaySignals = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -37,7 +33,19 @@ export const submitFairplaySignals = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("fairplay_signals").upsert(
+    const { data: game, error: gameError } = await context.supabase
+      .from("games")
+      .select("id, white_id, black_id")
+      .eq("id", data.gameId)
+      .maybeSingle();
+    if (gameError) throw new Error(gameError.message);
+    if (!game) throw new Error("Game not found");
+    if (game.white_id !== context.userId && game.black_id !== context.userId) {
+      throw new Error("Forbidden");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("fairplay_signals").upsert(
       {
         game_id: data.gameId,
         user_id: context.userId,
@@ -51,68 +59,115 @@ export const submitFairplaySignals = createServerFn({ method: "POST" })
   });
 
 /**
- * Analyse one side of a finished game. Either player may submit the engine
- * analysis (cross-checking), but behavioural telemetry is always read from the
- * subject's own submission and the strongest verdict wins.
+ * A player complaint — a signal for human review, never a verdict. The subject
+ * is derived server-side from the game, so a reporter cannot target a bystander,
+ * and no confidence/sanction field is accepted from the client.
  */
-export const reportFairplayGame = createServerFn({ method: "POST" })
+export const submitPlayerReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
         gameId: z.string().uuid(),
-        subjectId: z.string().uuid(),
-        observations: z.array(observationSchema).min(1).max(400),
+        reason: z.enum(["engine_assistance", "sandbagging", "stalling", "abuse", "other"]),
+        note: z.string().max(1000).optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: game, error } = await context.supabase
-      .from("games")
-      .select("id, white_id, black_id, white_rating, black_rating, status")
-      .eq("id", data.gameId)
-      .maybeSingle();
+    const { data: result, error } = await context.supabase.rpc("submit_player_report", {
+      _game_id: data.gameId,
+      _reason: data.reason,
+      ...(data.note ? { _note: data.note } : {}),
+    });
     if (error) throw new Error(error.message);
-    if (!game) throw new Error("Game not found");
-    if (game.white_id !== context.userId && game.black_id !== context.userId) {
-      throw new Error("Forbidden");
-    }
-    if (game.white_id !== data.subjectId && game.black_id !== data.subjectId) {
-      throw new Error("Subject is not a player in this game");
-    }
+    return result as { ok: boolean; code: string };
+  });
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const rating = game.white_id === data.subjectId ? game.white_rating : game.black_rating;
-    const startedAt = Date.now();
-    const turns = await loadTurns(supabaseAdmin, data.gameId, data.subjectId);
-    const verdict = evaluateGame({ observations: data.observations, turns, rating });
-    const evalMs = Date.now() - startedAt;
+/** The reporter's own complaints (read-only). */
+export const listMyPlayerReports = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("player_reports")
+      .select("id, game_id, reason, status, created_at")
+      .eq("reporter_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 
-    const stored = await upsertReport(
-      supabaseAdmin,
-      { gameId: data.gameId, subjectId: data.subjectId, observations: data.observations, rating, evalMs },
-      verdict,
-    );
-    if (stored.stored) {
-      await enforce(supabaseAdmin, {
-        userId: data.subjectId,
-        gameId: data.gameId,
-        action: verdict.action,
-        score: verdict.score,
-      });
-    }
-    const status = await refreshStatus(supabaseAdmin, data.subjectId);
+/** Analysis queue health + worker configuration state for the admin console. */
+export const listFairplayJobs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        status: z.enum(["all", "queued", "running", "succeeded", "failed"]).default("all"),
+        limit: z.number().int().min(10).max(200).default(50),
+      })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertFairplayAdmin(context);
 
+    let query = context.supabase
+      .from("fairplay_jobs")
+      .select(
+        "id, game_id, analyzer_version, status, attempts, max_attempts, last_error, engine_version, depth, time_budget_ms, claimed_by, queued_at, started_at, finished_at",
+      )
+      .order("queued_at", { ascending: false })
+      .limit(data.limit);
+    if (data.status !== "all") query = query.eq("status", data.status);
+
+    const { data: jobs, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const { workerAuthConfigured } = await import("@/lib/fairplay/oidc.server");
     return {
-      score: stored.score,
-      action: verdict.action,
-      statusAction: status.action,
-      ratingLocked: status.locked,
-      lockExpiresAt: status.lockExpiresAt,
-      lockHours: status.lockHours,
-      evalMs,
-      self: data.subjectId === context.userId,
+      workerStatus: workerAuthConfigured() ? ("configured" as const) : ("not_configured" as const),
+      jobs: jobs ?? [],
     };
+  });
+
+export const retryFairplayJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ jobId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertFairplayAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("fairplay_retry_job", {
+      _job_id: data.jobId,
+    });
+    if (error) throw new Error(error.message);
+
+    const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    await recordAdminAction({
+      actorId: context.userId,
+      action: "fairplay_job_retry",
+      detail: { jobId: data.jobId },
+    });
+    return result as { ok: boolean; code: string };
+  });
+
+/** Player complaints, kept strictly separate from machine evidence. */
+export const listPlayerReports = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ subjectId: z.string().uuid().optional(), limit: z.number().int().min(10).max(200).default(50) }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertFairplayAdmin(context);
+    let query = context.supabase
+      .from("player_reports")
+      .select("id, reporter_id, subject_id, game_id, reason, note, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (data.subjectId) query = query.eq("subject_id", data.subjectId);
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
 
 export const getMyFairplayStatus = createServerFn({ method: "GET" })
