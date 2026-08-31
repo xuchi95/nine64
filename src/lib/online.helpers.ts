@@ -77,6 +77,11 @@ export function timeControlToMs(timeControl: string): number {
  * behind the registry until a Chess960 rule engine exists.
  */
 export function startingFenForVariant(variant: string): string {
+  if (!isOnlinePlayable(variant)) {
+    // Defence in depth: never hand back a position for a variant whose rules
+    // the server cannot validate, even if a caller bypasses QUEUE_SCHEMA.
+    throw new Error(`VARIANT_NOT_ONLINE_PLAYABLE:${variant}`);
+  }
   if (variant === "chess960" || variant === "random-army") {
     return generateChess960Position().fen;
   }
