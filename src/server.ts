@@ -2,6 +2,9 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { withSecurityHeaders, type HeaderContext } from "./lib/security/headers";
+import { assertServerEnv } from "./lib/security/env";
+import { createCspNonce, stampNonceInHtml } from "./lib/security/nonce";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -44,18 +47,46 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+function headerContext(request: Request, nonce: string): HeaderContext {
+  const url = new URL(request.url);
+  return {
+    url,
+    nonce,
+    production: process.env["NODE_ENV"] === "production",
+    supabaseUrl: process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"],
+  };
+}
+
+let envChecked = false;
+
+/** Runs once per isolate: env is injected per request on Workers. */
+function checkEnvOnce(): void {
+  if (envChecked) return;
+  envChecked = true;
+  assertServerEnv();
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    checkEnvOnce();
+    const nonce = createCspNonce();
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      const stamped = normalized.headers.get("content-type")?.includes("text/html")
+        ? stampNonceInHtml(normalized, nonce)
+        : normalized;
+      return withSecurityHeaders(stamped, headerContext(request, nonce));
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return withSecurityHeaders(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+        headerContext(request, nonce),
+      );
     }
   },
 };
