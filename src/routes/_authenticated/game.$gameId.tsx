@@ -40,17 +40,23 @@ import type {
   MoveOutcome,
   RatingEvent,
 } from "@/lib/online.functions";
+import {
+  getTakebackState,
+  requestTakeback,
+  respondTakeback,
+  touchPresence,
+  createChallenge,
+  type TakebackRequest,
+} from "@/lib/online.challenges.functions";
+import { parseTimeControl, timeControlLabel } from "@/lib/online/timeControl";
 import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
 import type { DrawOffer, Game, GameMove } from "@/lib/database.types";
 import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
-import { Flag, Hand, Ban, Copy, Share2 } from "lucide-react";
+import { Flag, Hand, Ban, Copy, Share2, Undo2, Swords, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
-import {
-  formatTimeControl,
-  timeControlSpec,
-} from "@/lib/chess/timeControls";
+import { timeControlSpec } from "@/lib/chess/timeControls";
 import { normalizeResult, resultLabel } from "@/lib/chess/gameResult";
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
@@ -102,6 +108,11 @@ function OnlineGamePage() {
   const acceptDrawFn = useServerFn(acceptDraw);
   const declineDrawFn = useServerFn(declineDraw);
   const cancelDrawFn = useServerFn(cancelDraw);
+  const getTakebackStateFn = useServerFn(getTakebackState);
+  const requestTakebackFn = useServerFn(requestTakeback);
+  const respondTakebackFn = useServerFn(respondTakeback);
+  const touchPresenceFn = useServerFn(touchPresence);
+  const createChallengeFn = useServerFn(createChallenge);
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
@@ -123,6 +134,14 @@ function OnlineGamePage() {
   const [drawLatest, setDrawLatest] = useState<DrawOffer | null>(null);
   const [drawBusy, setDrawBusy] = useState(false);
   const [drawNotice, setDrawNotice] = useState<string | null>(null);
+  // Takeback is server state too — casual games only, both players must agree.
+  const [takebackPending, setTakebackPending] = useState<TakebackRequest | null>(null);
+  const [takebackBusy, setTakebackBusy] = useState(false);
+  const [rematchBusy, setRematchBusy] = useState(false);
+  const [rematchSent, setRematchSent] = useState(false);
+  const [opponentSeenAt, setOpponentSeenAt] = useState<number | null>(null);
+  /** Armed premove: replayed the instant the server says it is our turn. */
+  const [premove, setPremove] = useState<{ from: string; to: string } | null>(null);
 
   // Rule engine is variant-driven: Chess960 never goes through chess.js.
   const gameRef = useRef<RulesPosition>(rulesFor("standard").createPosition());
@@ -195,7 +214,12 @@ function OnlineGamePage() {
       cancelled = true;
     };
   }, [game?.status, gameId, getRatingEventFn]);
-  const spec = useMemo(() => timeControlSpec(game?.time_control ?? "blitz5m"), [game?.time_control]);
+  const spec = useMemo(() => {
+    const parsed = parseTimeControl(game?.time_control ?? "blitz5m");
+    return parsed.valid
+      ? { baseMs: parsed.baseMs, incrementMs: parsed.incMs }
+      : timeControlSpec(game?.time_control ?? "blitz5m");
+  }, [game?.time_control]);
   const result = useMemo(() => (game ? normalizeResult(game) : null), [game]);
   const resultView = useMemo(() => resultLabel(result, myColor), [result, myColor]);
 
@@ -433,6 +457,102 @@ function OnlineGamePage() {
     };
   }, [gameId, refresh, refreshDraw]);
 
+  const refreshTakeback = useCallback(async () => {
+    try {
+      const res = (await getTakebackStateFn({ data: { gameId } })) as {
+        pending: TakebackRequest | null;
+      };
+      setTakebackPending(res.pending);
+    } catch {
+      // Non-fatal: the next sync retries.
+    }
+  }, [gameId, getTakebackStateFn]);
+
+  useEffect(() => {
+    if (!game?.allow_takeback) return;
+    void refreshTakeback();
+  }, [game?.allow_takeback, game?.version, refreshTakeback]);
+
+  useEffect(() => {
+    if (!gameId || !game?.allow_takeback) return;
+    const ch = supabase
+      .channel(`takeback:${gameId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "game_takeback_requests",
+          filter: `game_id=eq.${gameId}`,
+        },
+        () => {
+          void refreshTakeback();
+          void refresh().catch(() => undefined);
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, [game?.allow_takeback, gameId, refresh, refreshTakeback]);
+
+  const runTakeback = useCallback(
+    async (kind: "request" | "accept" | "decline" | "cancel") => {
+      if (!game || !myColor || takebackBusy) return;
+      setTakebackBusy(true);
+      try {
+        if (kind === "request") {
+          await requestTakebackFn({
+            data: {
+              gameId: game.id,
+              expectedVersion: game.version ?? 0,
+              idempotencyKey: `takeback:${game.id}:${game.version ?? 0}:${user?.id ?? "anon"}`,
+            },
+          });
+        } else if (takebackPending) {
+          await respondTakebackFn({
+            data: { gameId: game.id, requestId: takebackPending.id, action: kind },
+          });
+        }
+      } catch {
+        toast.error("Không gửi được yêu cầu đòi lại nước.");
+      } finally {
+        await refreshTakeback();
+        await refresh().catch(() => undefined);
+        setTakebackBusy(false);
+      }
+    },
+    [
+      game,
+      myColor,
+      refresh,
+      refreshTakeback,
+      requestTakebackFn,
+      respondTakebackFn,
+      takebackBusy,
+      takebackPending,
+      user?.id,
+    ],
+  );
+
+  /** Presence heartbeat: powers the "opponent disconnected" hint on both sides. */
+  useEffect(() => {
+    if (!gameId || !myColor || game?.status !== "active") return;
+    const beat = async () => {
+      try {
+        const res = (await touchPresenceFn({ data: { gameId } })) as {
+          opponent_seen_at?: string | null;
+        };
+        setOpponentSeenAt(res.opponent_seen_at ? Date.parse(res.opponent_seen_at) : null);
+      } catch {
+        // Presence is advisory only.
+      }
+    };
+    void beat();
+    const id = window.setInterval(() => void beat(), 15_000);
+    return () => window.clearInterval(id);
+  }, [game?.status, gameId, myColor, touchPresenceFn]);
+
   const drawMessage = useCallback((out: DrawCommandOutcome): string | null => {
     switch (out.code) {
       case "OFFER_CREATED":
@@ -657,6 +777,24 @@ function OnlineGamePage() {
 
 
 
+  // Premove: armed while the opponent thinks, replayed the moment the server
+  // confirms it is our turn. Illegal premoves are silently discarded.
+  useEffect(() => {
+    if (!premove) return;
+    if (!game || game.status !== "active" || !myColor) return;
+    if (gameRef.current.turn() !== myColor) return;
+    const armed = premove;
+    setPremove(null);
+    const legal = (() => {
+      try {
+        return gameRef.current.legalTargets(armed.from).includes(armed.to);
+      } catch {
+        return false;
+      }
+    })();
+    if (legal) handleMove(armed.from, armed.to);
+  }, [boardRev, game, handleMove, myColor, premove]);
+
   const canMoveFrom = useCallback(
     (square: string) => {
       if (!myColor || finishedRef.current || game?.status !== "active") return false;
@@ -735,6 +873,38 @@ function OnlineGamePage() {
     }
   }, []);
 
+  /** Rematch = a direct challenge to the same opponent with the same settings. */
+  const requestRematch = useCallback(async () => {
+    if (!game || !myColor || rematchBusy) return;
+    const opponentId = myColor === "w" ? game.black_id : game.white_id;
+    setRematchBusy(true);
+    try {
+      const out = (await createChallengeFn({
+        data: {
+          opponentId,
+          variant: game.variant,
+          timeControl: game.time_control,
+          rated: Boolean(game.rated),
+          // Colours swap on a rematch.
+          color: myColor === "w" ? "black" : "white",
+          allowTakeback: Boolean(game.allow_takeback),
+          spectate: (game.spectate ?? "public") as "public" | "private",
+          rematchOf: game.id,
+        },
+      })) as { ok: boolean };
+      if (out.ok) {
+        setRematchSent(true);
+        toast.success("Đã gửi lời mời tái đấu.");
+      } else {
+        toast.error("Không gửi được lời mời tái đấu.");
+      }
+    } catch {
+      toast.error("Không gửi được lời mời tái đấu.");
+    } finally {
+      setRematchBusy(false);
+    }
+  }, [createChallengeFn, game, myColor, rematchBusy]);
+
   const resign = useCallback(() => runCommand("resign"), [runCommand]);
   const abort = useCallback(() => runCommand("abort"), [runCommand]);
 
@@ -810,7 +980,14 @@ function OnlineGamePage() {
               bodyClassName="space-y-3.5 p-4"
             >
               <StatRow label="Variant" value={game.variant} />
-              <StatRow label="Time control" value={formatTimeControl(game.time_control)} mono />
+              <StatRow label="Time control" value={timeControlLabel(game.time_control)} mono />
+              <StatRow label="Pool" value={game.pool ?? "—"} />
+              {game.pace === "daily" && game.deadline_at && live && (
+                <StatRow
+                  label="Hạn nước đi"
+                  value={new Date(game.deadline_at).toLocaleString("vi-VN")}
+                />
+              )}
               <StatRow label="Sync" value={syncMode === "realtime" ? "Realtime" : "Backup"} />
               {result && <StatRow label="Result" value={`${result.reason} · ${result.code}`} />}
             </GamePanel>
@@ -838,6 +1015,18 @@ function OnlineGamePage() {
                   : "Đã gửi đề nghị hoà — đang chờ đối thủ phản hồi."}
               </GameNotice>
             )}
+            {takebackPending && game?.status === "active" && (
+              <GameNotice tone={takebackPending.requested_to === user?.id ? "warning" : "info"}>
+                {takebackPending.requested_to === user?.id
+                  ? "Đối thủ xin đòi lại nước — bạn có thể đồng ý hoặc từ chối."
+                  : "Đã gửi yêu cầu đòi lại nước — đang chờ đối thủ."}
+              </GameNotice>
+            )}
+            {live && opponentSeenAt !== null && Date.now() - opponentSeenAt > 45_000 && (
+              <GameNotice tone="warning">
+                Đối thủ có vẻ đã mất kết nối. Đồng hồ vẫn chạy theo giờ máy chủ.
+              </GameNotice>
+            )}
             {!drawPending && drawNotice && game?.status === "active" && (
               <GameNotice tone="info">{drawNotice}</GameNotice>
             )}
@@ -859,6 +1048,8 @@ function OnlineGamePage() {
               checkSquare={checkSquare}
               checkmate={isCheckmate}
               turn={turn}
+              premove={premove}
+              onPremove={(from, to) => setPremove({ from, to })}
               interactive={live}
             />
           </>
@@ -910,6 +1101,42 @@ function OnlineGamePage() {
                     <Hand className="size-4" /> Cầu hoà
                   </Button>
                 )}
+                {game.allow_takeback && !game.rated && moves.length > 0 && (
+                  takebackPending && takebackPending.requested_to === user?.id ? (
+                    <>
+                      <Button
+                        variant="default"
+                        disabled={takebackBusy}
+                        onClick={() => void runTakeback("accept")}
+                      >
+                        <Undo2 className="size-4" /> Đồng ý đòi lại
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={takebackBusy}
+                        onClick={() => void runTakeback("decline")}
+                      >
+                        <Ban className="size-4" /> Từ chối
+                      </Button>
+                    </>
+                  ) : takebackPending ? (
+                    <Button
+                      variant="outline"
+                      disabled={takebackBusy}
+                      onClick={() => void runTakeback("cancel")}
+                    >
+                      <Undo2 className="size-4" /> Rút yêu cầu đòi lại
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      disabled={takebackBusy}
+                      onClick={() => void runTakeback("request")}
+                    >
+                      <Undo2 className="size-4" /> Đòi lại nước
+                    </Button>
+                  )
+                )}
                 {moves.length === 0 && (
                   <Button variant="outline" disabled={commandBusy} onClick={() => void abort()}>
                     <Ban className="size-4" /> Huỷ ván
@@ -917,6 +1144,15 @@ function OnlineGamePage() {
                 )}
                 <Button variant="outline" disabled={commandBusy} onClick={() => void resign()}>
                   <Flag className="size-4" /> Xin thua
+                </Button>
+              </GameActions>
+            )}
+
+            {!live && myColor && (
+              <GameActions>
+                <Button disabled={rematchBusy || rematchSent} onClick={() => void requestRematch()}>
+                  <Swords className="size-4" />
+                  {rematchSent ? "Đã mời tái đấu" : "Tái đấu"}
                 </Button>
               </GameActions>
             )}

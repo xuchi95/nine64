@@ -22,7 +22,19 @@ export interface UserRole {
 
 export type GameStatus = "pending" | "active" | "completed" | "aborted";
 export type GameResult = "1-0" | "0-1" | "1/2-1/2" | "*";
-export type TimeControl = "blitz1m" | "blitz3m" | "blitz5m" | "rapid10m" | "rapid15m" | "rapid30m";
+/**
+ * Any control the database `tc_spec()` accepts: the legacy ids, the generic
+ * `base+increment` form (e.g. "180+2") and correspondence ("daily3").
+ */
+export type TimeControl = string;
+export type GamePace = "realtime" | "daily";
+export type RatingPoolName =
+  | "bullet"
+  | "blitz"
+  | "rapid"
+  | "classical"
+  | "daily"
+  | "chess960";
 
 export interface Game {
   id: string;
@@ -50,7 +62,26 @@ export interface Game {
   clock_state: "not_started" | "running" | "stopped";
   /** Canonical increment credited by the server after a legal move. */
   increment_ms: number;
-
+  /** Whether the result feeds a rating pool. */
+  rated: boolean;
+  /** Realtime clock or correspondence (daily) pacing. */
+  pace: GamePace;
+  /** Rating pool the result is booked into. */
+  pool: RatingPoolName;
+  /** Correspondence budget per move, in ms (0 for realtime games). */
+  daily_move_ms: number;
+  /** Correspondence deadline for the side to move. */
+  deadline_at: string | null;
+  /** Casual-only: both players may agree to undo the last move. */
+  allow_takeback: boolean;
+  takeback_count: number;
+  /** Spectator visibility and broadcast delay. */
+  spectate: "public" | "private";
+  spectator_delay_seconds: number;
+  rematch_of: string | null;
+  challenge_id: string | null;
+  white_seen_at: string | null;
+  black_seen_at: string | null;
 }
 
 export interface GameMove {

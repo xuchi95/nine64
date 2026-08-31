@@ -110,3 +110,47 @@ export const DRAW_RESPONSE_SCHEMA = z
     expectedVersion: z.number().int().min(0),
   })
   .strict();
+
+/**
+ * Custom challenge creation. Every field is re-validated by `challenge_create`
+ * in the database; the schema only keeps obvious garbage off the wire.
+ */
+export const CHALLENGE_CREATE_SCHEMA = z
+  .object({
+    opponentId: z.string().uuid().nullable().optional(),
+    variant: z.string().min(1).refine(isOnlinePlayable, {
+      message: "VARIANT_NOT_ONLINE_PLAYABLE",
+    }),
+    timeControl: z.string().min(1).max(20),
+    rated: z.boolean(),
+    color: z.enum(["white", "black", "random"]),
+    allowTakeback: z.boolean().optional(),
+    spectate: z.enum(["public", "private"]).optional(),
+    spectatorDelaySeconds: z.union([z.literal(0), z.literal(15), z.literal(30), z.literal(60)]).optional(),
+    rematchOf: z.string().uuid().nullable().optional(),
+    message: z.string().max(200).optional(),
+  })
+  .strict();
+
+export const CHALLENGE_RESPOND_SCHEMA = z
+  .object({
+    challengeId: z.string().uuid(),
+    action: z.enum(["accept", "decline", "cancel"]),
+  })
+  .strict();
+
+export const TAKEBACK_REQUEST_SCHEMA = z
+  .object({
+    gameId: z.string().uuid(),
+    expectedVersion: z.number().int().min(0),
+    idempotencyKey: z.string().min(8).max(100),
+  })
+  .strict();
+
+export const TAKEBACK_RESPOND_SCHEMA = z
+  .object({
+    gameId: z.string().uuid(),
+    requestId: z.string().uuid(),
+    action: z.enum(["accept", "decline", "cancel"]),
+  })
+  .strict();
