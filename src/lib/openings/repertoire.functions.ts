@@ -232,9 +232,9 @@ export const updateRepertoireMove = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const patch: Row = {};
-    if (data.kind) patch["kind"] = data.kind;
-    if (data.notes !== undefined) patch["notes"] = data.notes;
+    const patch: { kind?: string; notes?: string } = {};
+    if (data.kind) patch.kind = data.kind;
+    if (data.notes !== undefined) patch.notes = data.notes;
     const { data: updated, error } = await supabase
       .from("repertoire_moves")
       .update(patch)
