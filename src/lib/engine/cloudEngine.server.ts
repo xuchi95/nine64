@@ -26,12 +26,14 @@ export interface CloudEngineHealth {
 }
 
 export interface BestMoveRequest {
+  /** Exact CURRENT position to search. Canonical contract: never replay history. */
   fen: string;
-  moves: string[];
+  variant: "standard" | "chess960";
   config: EngineConfig;
   clock: { whiteMs: number; blackMs: number; whiteIncMs: number; blackIncMs: number } | null;
   sessionId: string;
   requestId: string;
+  newGame: boolean;
 }
 
 export interface BestMoveResult {
@@ -339,14 +341,17 @@ export async function requestBestMove(req: BestMoveRequest): Promise<BestMoveRes
       "/bestmove",
       {
         fen: req.fen,
-        moves: req.moves,
-        options: uciOptions(config),
+        // Canonical contract: the FEN is the position to search, so the engine
+        // never replays historical moves on top of it.
+        moves: [],
+        variant: req.variant,
+        options: { ...uciOptions(config), UCI_Chess960: req.variant === "chess960" },
         search,
         // Top-level fields the engine service reads directly.
         movetimeMs: config.timePolicy === "movetime" ? Math.min(config.moveTimeMs, config.maxMoveTimeMs) : undefined,
         clock: config.timePolicy === "clock" && req.clock ? req.clock : undefined,
         timeoutMs: config.requestTimeoutMs,
-        newGame: req.moves.length === 0,
+        newGame: req.newGame,
         sessionId: req.sessionId,
         requestId: req.requestId,
       },
