@@ -255,6 +255,15 @@ export default {
   en: {
     "admin.adminOnly": "This page is for administrators only.",
 
+    // Admin hub (/admin)
+    "admin.hub.title": "Admin console",
+    "admin.hub.subtitle": "Pick the admin area you want to work in.",
+    "admin.hub.fairplayDesc": "Flagged cases, algorithmic evidence and rating-hold actions.",
+    "admin.hub.logDesc": "Every Fair Play decision with time, confidence and reason.",
+    "admin.hub.auditDesc": "Who did what on the admin console, and when.",
+    "admin.hub.securityDesc": "Queries blocked by row-level security and probing alerts.",
+    "admin.hub.systemDesc": "Environment variable status, abuse quotas and security headers.",
+
     // System console (secrets / limiter / CSP)
     "admin.system.title": "System console",
     "admin.system.subtitle": "Environment variable status, abuse-protection quotas and the security headers in force.",
