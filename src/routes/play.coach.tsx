@@ -440,7 +440,7 @@ function PlayCoach() {
             />
             <PlayerCard
               player={{
-                name: t("coachLive.colorWhite") === "White" ? "You" : "Bạn",
+                name: t("play.ai.you"),
                 subtitle: playerColor === "w" ? t("coachLive.colorWhite") : t("coachLive.colorBlack"),
                 color: playerColor,
               }}

@@ -328,6 +328,8 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
     pieceAt: (square: string) => gameRef.current.pieceAt(square),
     legalMoveCount: () => gameRef.current.legalMoves().length,
     fen,
+    /** Position the current game started from (variant-aware). */
+    startFen: startFenRef.current,
     moves,
     board,
     result,
