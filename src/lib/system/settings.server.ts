@@ -20,6 +20,7 @@ import {
   parseSettingValue,
   publicSettingKeys,
   settingDefinition,
+  type SettingJson,
   type SettingKey,
   type SettingValues,
 } from "./registry";
@@ -49,8 +50,8 @@ export function __setSettingsCacheForTests(snapshot: Snapshot | null): void {
 export interface SettingRow {
   key: SettingKey;
   scope: string;
-  value: unknown;
-  draftValue: unknown;
+  value: SettingJson;
+  draftValue: SettingJson;
   hasDraft: boolean;
   version: number;
   reason: string | null;
@@ -79,8 +80,8 @@ async function fetchRows(): Promise<
       rows.push({
         key: typed,
         scope: r.scope as string,
-        value: r.value,
-        draftValue: r.draft_value ?? null,
+        value: r.value as SettingJson,
+        draftValue: (r.draft_value ?? null) as SettingJson,
         hasDraft: Boolean(r.has_draft),
         version: r.version as number,
         reason: (r.reason as string | null) ?? null,
@@ -147,12 +148,12 @@ export async function getSetting<K extends SettingKey>(key: K): Promise<SettingV
 
 /** Only the browser-safe subset. Server-only keys never leave the server. */
 export async function getPublicRuntimeSettings(): Promise<{
-  values: Record<string, unknown>;
+  values: Record<string, SettingJson>;
   degraded: boolean;
 }> {
   const snapshot = await loadSettings();
-  const out: Record<string, unknown> = {};
-  for (const key of publicSettingKeys()) out[key] = snapshot.values[key];
+  const out: Record<string, SettingJson> = {};
+  for (const key of publicSettingKeys()) out[key] = snapshot.values[key] as SettingJson;
   return { values: out, degraded: snapshot.degraded };
 }
 
@@ -173,7 +174,7 @@ export async function listSettingsForAdmin(): Promise<{
     return {
       key,
       scope: d.scope,
-      value: d.default,
+      value: d.default as SettingJson,
       draftValue: null,
       hasDraft: false,
       version: 0,
@@ -194,8 +195,8 @@ export interface SettingHistoryRow {
   id: string;
   key: string;
   version: number;
-  value: unknown;
-  previousValue: unknown;
+  value: SettingJson;
+  previousValue: SettingJson;
   reason: string;
   changedBy: string | null;
   rollbackOf: number | null;
@@ -219,8 +220,8 @@ export async function listSettingHistory(
     id: r.id as string,
     key: r.key as string,
     version: r.version as number,
-    value: r.value,
-    previousValue: r.previous_value ?? null,
+    value: r.value as SettingJson,
+    previousValue: (r.previous_value ?? null) as SettingJson,
     reason: r.reason as string,
     changedBy: (r.changed_by as string | null) ?? null,
     rollbackOf: (r.rollback_of as number | null) ?? null,

@@ -10,6 +10,15 @@
  */
 import { z } from "zod";
 
+/** JSON-serializable setting value (safe across the server-function boundary). */
+export type SettingJson =
+  | string
+  | number
+  | boolean
+  | null
+  | SettingJson[]
+  | { [key: string]: SettingJson };
+
 export type SettingScope = "public_runtime" | "server_only";
 export type SettingGroup = "features" | "operations" | "limits" | "content";
 
@@ -261,9 +270,9 @@ export function settingDefinition(key: SettingKey): SettingDefinition {
 }
 
 /** Parse an untrusted value for a key; returns null when it is not valid. */
-export function parseSettingValue(key: SettingKey, value: unknown): unknown | null {
+export function parseSettingValue(key: SettingKey, value: unknown): SettingJson | null {
   const result = settingDefinition(key).schema.safeParse(value);
-  return result.success ? result.data : null;
+  return result.success ? (result.data as SettingJson) : null;
 }
 
 export function defaultSettings(): SettingValues {

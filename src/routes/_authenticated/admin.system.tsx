@@ -86,7 +86,7 @@ function fmt(value: unknown): string {
 /* Setting editor                                                      */
 /* ------------------------------------------------------------------ */
 
-interface Row extends SystemSettingsPayload["rows"][number] {}
+type Row = SystemSettingsPayload["rows"][number];
 
 function SettingEditor({
   row,
