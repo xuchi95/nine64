@@ -7,7 +7,7 @@
  * `not_configured`.
  */
 import { TITAN_SLUG } from "./profileTypes";
-import { BENCHMARK_KINDS, type BenchmarkKind, type BenchmarkRow } from "./benchmarkTypes";
+import { BENCHMARK_KINDS, type BenchmarkKind, type BenchmarkRow, type Json } from "./benchmarkTypes";
 
 export { BENCHMARK_KINDS };
 export type { BenchmarkKind, BenchmarkRow };
@@ -33,13 +33,13 @@ export async function listBenchmarks(slug = TITAN_SLUG, limit = 50): Promise<Ben
       profileVersion: Number(row["profile_version"]),
       kind: row["kind"] as BenchmarkKind,
       engineVersion: String(row["engine_version"]),
-      hardware: (row["hardware"] ?? {}) as Record<string, unknown>,
+      hardware: (row["hardware"] ?? {}) as Record<string, Json>,
       nodes: row["nodes"] === null ? null : Number(row["nodes"]),
       nps: row["nps"] === null ? null : Number(row["nps"]),
       depth: row["depth"] === null ? null : Number(row["depth"]),
       score: row["score"] === null ? null : Number(row["score"]),
       passed: Boolean(row["passed"]),
-      result: (row["result"] ?? {}) as Record<string, unknown>,
+      result: (row["result"] ?? {}) as Record<string, Json>,
       createdAt: String(row["created_at"]),
     };
   });
@@ -71,7 +71,7 @@ export async function runBenchmark(args: {
       profile_version: profile.version,
       kind: args.kind,
       engine_version: run.engineVersion ?? "unknown",
-      hardware: ((run.detail["hardware"] ?? {}) as Record<string, unknown>) as never,
+      hardware: ((run.detail["hardware"] ?? {}) as Record<string, Json>) as never,
       nodes: run.nodes ?? null,
       nps: run.nps ?? null,
       depth: run.depth ?? null,
@@ -91,13 +91,13 @@ export async function runBenchmark(args: {
     profileVersion: Number(row["profile_version"]),
     kind: row["kind"] as BenchmarkKind,
     engineVersion: String(row["engine_version"]),
-    hardware: (row["hardware"] ?? {}) as Record<string, unknown>,
+    hardware: (row["hardware"] ?? {}) as Record<string, Json>,
     nodes: row["nodes"] === null ? null : Number(row["nodes"]),
     nps: row["nps"] === null ? null : Number(row["nps"]),
     depth: row["depth"] === null ? null : Number(row["depth"]),
     score: row["score"] === null ? null : Number(row["score"]),
     passed: Boolean(row["passed"]),
-    result: (row["result"] ?? {}) as Record<string, unknown>,
+    result: (row["result"] ?? {}) as Record<string, Json>,
     createdAt: String(row["created_at"]),
   }))[0]!;
   return { ok: true, row: mapped };
