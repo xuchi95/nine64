@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.opening_explorer_record(text, text, integer, text, integer, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.opening_explorer_record(text, text, integer, text, integer, integer) TO service_role;

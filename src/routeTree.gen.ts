@@ -39,6 +39,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
 import { Route as AuthenticatedAdminIntelligenceRouteImport } from './routes/_authenticated/admin.intelligence'
+import { Route as AuthenticatedAdminOpeningsRouteImport } from './routes/_authenticated/admin.openings'
 import { Route as AuthenticatedAdminPuzzlesRouteImport } from './routes/_authenticated/admin.puzzles'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin.system'
@@ -206,6 +207,12 @@ const AuthenticatedAdminIntelligenceRoute =
     path: '/admin/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminOpeningsRoute =
+  AuthenticatedAdminOpeningsRouteImport.update({
+    id: '/admin/openings',
+    path: '/admin/openings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminPuzzlesRoute =
   AuthenticatedAdminPuzzlesRouteImport.update({
     id: '/admin/puzzles',
@@ -315,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/admin/openings': typeof AuthenticatedAdminOpeningsRoute
   '/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -360,6 +368,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/admin/openings': typeof AuthenticatedAdminOpeningsRoute
   '/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -407,6 +416,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/_authenticated/admin/openings': typeof AuthenticatedAdminOpeningsRoute
   '/_authenticated/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -454,6 +464,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
+    | '/admin/openings'
     | '/admin/puzzles'
     | '/admin/security'
     | '/admin/system'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
+    | '/admin/openings'
     | '/admin/puzzles'
     | '/admin/security'
     | '/admin/system'
@@ -545,6 +557,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
     | '/_authenticated/admin/intelligence'
+    | '/_authenticated/admin/openings'
     | '/_authenticated/admin/puzzles'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/system'
@@ -803,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIntelligenceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/openings': {
+      id: '/_authenticated/admin/openings'
+      path: '/admin/openings'
+      fullPath: '/admin/openings'
+      preLoaderRoute: typeof AuthenticatedAdminOpeningsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/puzzles': {
       id: '/_authenticated/admin/puzzles'
       path: '/admin/puzzles'
@@ -923,6 +943,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminEngineRoute: typeof AuthenticatedAdminEngineRoute
   AuthenticatedAdminIntelligenceRoute: typeof AuthenticatedAdminIntelligenceRoute
+  AuthenticatedAdminOpeningsRoute: typeof AuthenticatedAdminOpeningsRoute
   AuthenticatedAdminPuzzlesRoute: typeof AuthenticatedAdminPuzzlesRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSystemRoute: typeof AuthenticatedAdminSystemRoute
@@ -943,6 +964,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminEngineRoute: AuthenticatedAdminEngineRoute,
   AuthenticatedAdminIntelligenceRoute: AuthenticatedAdminIntelligenceRoute,
+  AuthenticatedAdminOpeningsRoute: AuthenticatedAdminOpeningsRoute,
   AuthenticatedAdminPuzzlesRoute: AuthenticatedAdminPuzzlesRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSystemRoute: AuthenticatedAdminSystemRoute,
