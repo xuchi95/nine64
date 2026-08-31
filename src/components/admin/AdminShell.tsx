@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ScrollText,
   ListChecks,
+  Radio,
   ShieldAlert,
   Menu,
   ArrowLeft,
@@ -42,6 +43,7 @@ const NAV: { module: AdminModule; icon: typeof Users; labelKey: string }[] = [
   { module: "openings", icon: BookOpen, labelKey: "adminc.nav.openings" },
   { module: "learn", icon: GraduationCap, labelKey: "adminc.nav.learn" },
   { module: "tournaments", icon: Trophy, labelKey: "adminc.nav.tournaments" },
+  { module: "watch", icon: Radio, labelKey: "adminc.nav.watch" },
 ];
 
 function isActive(pathname: string, to: string) {

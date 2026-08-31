@@ -39,6 +39,8 @@ import { Route as PlayLocalRouteImport } from './routes/play.local'
 import { Route as PlayShareRouteImport } from './routes/play.share'
 import { Route as PlayVariantsRouteImport } from './routes/play.variants'
 import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
+import { Route as WatchIndexRouteImport } from './routes/watch.index'
+import { Route as WatchGameIdRouteImport } from './routes/watch.$gameId'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
@@ -54,8 +56,6 @@ import { Route as AuthenticatedOnlineDiagnosticsRouteImport } from './routes/_au
 import { Route as AuthenticatedPuzzlesTrainRouteImport } from './routes/_authenticated/puzzles.train'
 import { Route as AuthenticatedTournamentsIndexRouteImport } from './routes/_authenticated/tournaments.index'
 import { Route as AuthenticatedTournamentsSlugRouteImport } from './routes/_authenticated/tournaments.$slug'
-import { Route as AuthenticatedWatchIndexRouteImport } from './routes/_authenticated/watch.index'
-import { Route as AuthenticatedWatchGameIdRouteImport } from './routes/_authenticated/watch.$gameId'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
 import { Route as LearnCourseSlugRouteImport } from './routes/learn.course.$slug'
 import { Route as LearnLessonSlugRouteImport } from './routes/learn.lesson.$slug'
@@ -63,10 +63,14 @@ import { Route as AuthenticatedAdminFairplayIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminFairplayLogRouteImport } from './routes/_authenticated/admin.fairplay.log'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin.users.index'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
+import { Route as AuthenticatedWatchPlatformIndexRouteImport } from './routes/_authenticated/watch.platform.index'
+import { Route as AuthenticatedWatchPlatformGameIdRouteImport } from './routes/_authenticated/watch.platform.$gameId'
 import { Route as ApiPublicFairplayClaimRouteImport } from './routes/api/public/fairplay/claim'
 import { Route as ApiPublicFairplayFailRouteImport } from './routes/api/public/fairplay/fail'
 import { Route as ApiPublicFairplayResultRouteImport } from './routes/api/public/fairplay/result'
 import { Route as ApiPublicTournamentsTickRouteImport } from './routes/api/public/tournaments/tick'
+import { Route as ApiPublicWatchIngestRouteImport } from './routes/api/public/watch/ingest'
+import { Route as ApiPublicWatchTickRouteImport } from './routes/api/public/watch/tick'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -218,6 +222,16 @@ const PuzzlesIndexRoute = PuzzlesIndexRouteImport.update({
   path: '/puzzles/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WatchIndexRoute = WatchIndexRouteImport.update({
+  id: '/watch/',
+  path: '/watch/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchGameIdRoute = WatchGameIdRouteImport.update({
+  id: '/watch/$gameId',
+  path: '/watch/$gameId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -304,17 +318,6 @@ const AuthenticatedTournamentsSlugRoute =
     path: '/tournaments/$slug',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedWatchIndexRoute = AuthenticatedWatchIndexRouteImport.update({
-  id: '/watch/',
-  path: '/watch/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedWatchGameIdRoute =
-  AuthenticatedWatchGameIdRouteImport.update({
-    id: '/watch/$gameId',
-    path: '/watch/$gameId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const GamesOnlineGameIdRoute = GamesOnlineGameIdRouteImport.update({
   id: '/games/online/$gameId',
   path: '/games/online/$gameId',
@@ -354,6 +357,18 @@ const AuthenticatedAdminUsersUserIdRoute =
     path: '/admin/users/$userId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedWatchPlatformIndexRoute =
+  AuthenticatedWatchPlatformIndexRouteImport.update({
+    id: '/watch/platform/',
+    path: '/watch/platform/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWatchPlatformGameIdRoute =
+  AuthenticatedWatchPlatformGameIdRouteImport.update({
+    id: '/watch/platform/$gameId',
+    path: '/watch/platform/$gameId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicFairplayClaimRoute = ApiPublicFairplayClaimRouteImport.update({
   id: '/api/public/fairplay/claim',
   path: '/api/public/fairplay/claim',
@@ -375,6 +390,16 @@ const ApiPublicTournamentsTickRoute =
     path: '/api/public/tournaments/tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWatchIngestRoute = ApiPublicWatchIngestRouteImport.update({
+  id: '/api/public/watch/ingest',
+  path: '/api/public/watch/ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWatchTickRoute = ApiPublicWatchTickRouteImport.update({
+  id: '/api/public/watch/tick',
+  path: '/api/public/watch/tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -401,11 +426,13 @@ export interface FileRoutesByFullPath {
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
+  '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
+  '/watch/': typeof WatchIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -419,21 +446,23 @@ export interface FileRoutesByFullPath {
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/tournaments/$slug': typeof AuthenticatedTournamentsSlugRoute
-  '/watch/$gameId': typeof AuthenticatedWatchGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/learn/course/$slug': typeof LearnCourseSlugRoute
   '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/tournaments/': typeof AuthenticatedTournamentsIndexRoute
-  '/watch/': typeof AuthenticatedWatchIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/watch/platform/$gameId': typeof AuthenticatedWatchPlatformGameIdRoute
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
   '/api/public/tournaments/tick': typeof ApiPublicTournamentsTickRoute
+  '/api/public/watch/ingest': typeof ApiPublicWatchIngestRoute
+  '/api/public/watch/tick': typeof ApiPublicWatchTickRoute
   '/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
+  '/watch/platform/': typeof AuthenticatedWatchPlatformIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -460,11 +489,13 @@ export interface FileRoutesByTo {
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
+  '/watch/$gameId': typeof WatchGameIdRoute
   '/drills': typeof DrillsIndexRoute
   '/games': typeof GamesIndexRoute
   '/learn': typeof LearnIndexRoute
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
+  '/watch': typeof WatchIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -478,21 +509,23 @@ export interface FileRoutesByTo {
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/tournaments/$slug': typeof AuthenticatedTournamentsSlugRoute
-  '/watch/$gameId': typeof AuthenticatedWatchGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/learn/course/$slug': typeof LearnCourseSlugRoute
   '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/tournaments': typeof AuthenticatedTournamentsIndexRoute
-  '/watch': typeof AuthenticatedWatchIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/watch/platform/$gameId': typeof AuthenticatedWatchPlatformGameIdRoute
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
   '/api/public/tournaments/tick': typeof ApiPublicTournamentsTickRoute
+  '/api/public/watch/ingest': typeof ApiPublicWatchIngestRoute
+  '/api/public/watch/tick': typeof ApiPublicWatchTickRoute
   '/admin/fairplay': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
+  '/watch/platform': typeof AuthenticatedWatchPlatformIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -521,11 +554,13 @@ export interface FileRoutesById {
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
+  '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
+  '/watch/': typeof WatchIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -539,21 +574,23 @@ export interface FileRoutesById {
   '/_authenticated/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/_authenticated/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/_authenticated/tournaments/$slug': typeof AuthenticatedTournamentsSlugRoute
-  '/_authenticated/watch/$gameId': typeof AuthenticatedWatchGameIdRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/learn/course/$slug': typeof LearnCourseSlugRoute
   '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/tournaments/': typeof AuthenticatedTournamentsIndexRoute
-  '/_authenticated/watch/': typeof AuthenticatedWatchIndexRoute
   '/_authenticated/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/_authenticated/watch/platform/$gameId': typeof AuthenticatedWatchPlatformGameIdRoute
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
   '/api/public/tournaments/tick': typeof ApiPublicTournamentsTickRoute
+  '/api/public/watch/ingest': typeof ApiPublicWatchIngestRoute
+  '/api/public/watch/tick': typeof ApiPublicWatchTickRoute
   '/_authenticated/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
+  '/_authenticated/watch/platform/': typeof AuthenticatedWatchPlatformIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -582,11 +619,13 @@ export interface FileRouteTypes {
     | '/play/local'
     | '/play/share'
     | '/play/variants'
+    | '/watch/$gameId'
     | '/drills/'
     | '/games/'
     | '/learn/'
     | '/play/'
     | '/puzzles/'
+    | '/watch/'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -600,21 +639,23 @@ export interface FileRouteTypes {
     | '/online/diagnostics'
     | '/puzzles/train'
     | '/tournaments/$slug'
-    | '/watch/$gameId'
     | '/games/online/$gameId'
     | '/learn/course/$slug'
     | '/learn/lesson/$slug'
     | '/admin/'
     | '/tournaments/'
-    | '/watch/'
     | '/admin/fairplay/log'
     | '/admin/users/$userId'
+    | '/watch/platform/$gameId'
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
     | '/api/public/tournaments/tick'
+    | '/api/public/watch/ingest'
+    | '/api/public/watch/tick'
     | '/admin/fairplay/'
     | '/admin/users/'
+    | '/watch/platform/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -641,11 +682,13 @@ export interface FileRouteTypes {
     | '/play/local'
     | '/play/share'
     | '/play/variants'
+    | '/watch/$gameId'
     | '/drills'
     | '/games'
     | '/learn'
     | '/play'
     | '/puzzles'
+    | '/watch'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -659,21 +702,23 @@ export interface FileRouteTypes {
     | '/online/diagnostics'
     | '/puzzles/train'
     | '/tournaments/$slug'
-    | '/watch/$gameId'
     | '/games/online/$gameId'
     | '/learn/course/$slug'
     | '/learn/lesson/$slug'
     | '/admin'
     | '/tournaments'
-    | '/watch'
     | '/admin/fairplay/log'
     | '/admin/users/$userId'
+    | '/watch/platform/$gameId'
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
     | '/api/public/tournaments/tick'
+    | '/api/public/watch/ingest'
+    | '/api/public/watch/tick'
     | '/admin/fairplay'
     | '/admin/users'
+    | '/watch/platform'
   id:
     | '__root__'
     | '/'
@@ -701,11 +746,13 @@ export interface FileRouteTypes {
     | '/play/local'
     | '/play/share'
     | '/play/variants'
+    | '/watch/$gameId'
     | '/drills/'
     | '/games/'
     | '/learn/'
     | '/play/'
     | '/puzzles/'
+    | '/watch/'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
     | '/_authenticated/admin/intelligence'
@@ -719,21 +766,23 @@ export interface FileRouteTypes {
     | '/_authenticated/online/diagnostics'
     | '/_authenticated/puzzles/train'
     | '/_authenticated/tournaments/$slug'
-    | '/_authenticated/watch/$gameId'
     | '/games/online/$gameId'
     | '/learn/course/$slug'
     | '/learn/lesson/$slug'
     | '/_authenticated/admin/'
     | '/_authenticated/tournaments/'
-    | '/_authenticated/watch/'
     | '/_authenticated/admin/fairplay/log'
     | '/_authenticated/admin/users/$userId'
+    | '/_authenticated/watch/platform/$gameId'
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
     | '/api/public/tournaments/tick'
+    | '/api/public/watch/ingest'
+    | '/api/public/watch/tick'
     | '/_authenticated/admin/fairplay/'
     | '/_authenticated/admin/users/'
+    | '/_authenticated/watch/platform/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -758,11 +807,13 @@ export interface RootRouteChildren {
   PlayLocalRoute: typeof PlayLocalRoute
   PlayShareRoute: typeof PlayShareRoute
   PlayVariantsRoute: typeof PlayVariantsRoute
+  WatchGameIdRoute: typeof WatchGameIdRoute
   DrillsIndexRoute: typeof DrillsIndexRoute
   GamesIndexRoute: typeof GamesIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PuzzlesIndexRoute: typeof PuzzlesIndexRoute
+  WatchIndexRoute: typeof WatchIndexRoute
   GamesOnlineGameIdRoute: typeof GamesOnlineGameIdRoute
   LearnCourseSlugRoute: typeof LearnCourseSlugRoute
   LearnLessonSlugRoute: typeof LearnLessonSlugRoute
@@ -770,6 +821,8 @@ export interface RootRouteChildren {
   ApiPublicFairplayFailRoute: typeof ApiPublicFairplayFailRoute
   ApiPublicFairplayResultRoute: typeof ApiPublicFairplayResultRoute
   ApiPublicTournamentsTickRoute: typeof ApiPublicTournamentsTickRoute
+  ApiPublicWatchIngestRoute: typeof ApiPublicWatchIngestRoute
+  ApiPublicWatchTickRoute: typeof ApiPublicWatchTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -984,6 +1037,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PuzzlesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/watch/': {
+      id: '/watch/'
+      path: '/watch'
+      fullPath: '/watch/'
+      preLoaderRoute: typeof WatchIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watch/$gameId': {
+      id: '/watch/$gameId'
+      path: '/watch/$gameId'
+      fullPath: '/watch/$gameId'
+      preLoaderRoute: typeof WatchGameIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/admin'
@@ -1089,20 +1156,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTournamentsSlugRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/watch/': {
-      id: '/_authenticated/watch/'
-      path: '/watch'
-      fullPath: '/watch/'
-      preLoaderRoute: typeof AuthenticatedWatchIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/watch/$gameId': {
-      id: '/_authenticated/watch/$gameId'
-      path: '/watch/$gameId'
-      fullPath: '/watch/$gameId'
-      preLoaderRoute: typeof AuthenticatedWatchGameIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/games/online/$gameId': {
       id: '/games/online/$gameId'
       path: '/games/online/$gameId'
@@ -1152,6 +1205,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/watch/platform/': {
+      id: '/_authenticated/watch/platform/'
+      path: '/watch/platform'
+      fullPath: '/watch/platform/'
+      preLoaderRoute: typeof AuthenticatedWatchPlatformIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/watch/platform/$gameId': {
+      id: '/_authenticated/watch/platform/$gameId'
+      path: '/watch/platform/$gameId'
+      fullPath: '/watch/platform/$gameId'
+      preLoaderRoute: typeof AuthenticatedWatchPlatformGameIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/fairplay/claim': {
       id: '/api/public/fairplay/claim'
       path: '/api/public/fairplay/claim'
@@ -1178,6 +1245,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/tournaments/tick'
       fullPath: '/api/public/tournaments/tick'
       preLoaderRoute: typeof ApiPublicTournamentsTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/watch/ingest': {
+      id: '/api/public/watch/ingest'
+      path: '/api/public/watch/ingest'
+      fullPath: '/api/public/watch/ingest'
+      preLoaderRoute: typeof ApiPublicWatchIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/watch/tick': {
+      id: '/api/public/watch/tick'
+      path: '/api/public/watch/tick'
+      fullPath: '/api/public/watch/tick'
+      preLoaderRoute: typeof ApiPublicWatchTickRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1211,14 +1292,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
   AuthenticatedPuzzlesTrainRoute: typeof AuthenticatedPuzzlesTrainRoute
   AuthenticatedTournamentsSlugRoute: typeof AuthenticatedTournamentsSlugRoute
-  AuthenticatedWatchGameIdRoute: typeof AuthenticatedWatchGameIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedTournamentsIndexRoute: typeof AuthenticatedTournamentsIndexRoute
-  AuthenticatedWatchIndexRoute: typeof AuthenticatedWatchIndexRoute
   AuthenticatedAdminFairplayLogRoute: typeof AuthenticatedAdminFairplayLogRoute
   AuthenticatedAdminUsersUserIdRoute: typeof AuthenticatedAdminUsersUserIdRoute
+  AuthenticatedWatchPlatformGameIdRoute: typeof AuthenticatedWatchPlatformGameIdRoute
   AuthenticatedAdminFairplayIndexRoute: typeof AuthenticatedAdminFairplayIndexRoute
   AuthenticatedAdminUsersIndexRoute: typeof AuthenticatedAdminUsersIndexRoute
+  AuthenticatedWatchPlatformIndexRoute: typeof AuthenticatedWatchPlatformIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1238,14 +1319,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
   AuthenticatedPuzzlesTrainRoute: AuthenticatedPuzzlesTrainRoute,
   AuthenticatedTournamentsSlugRoute: AuthenticatedTournamentsSlugRoute,
-  AuthenticatedWatchGameIdRoute: AuthenticatedWatchGameIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedTournamentsIndexRoute: AuthenticatedTournamentsIndexRoute,
-  AuthenticatedWatchIndexRoute: AuthenticatedWatchIndexRoute,
   AuthenticatedAdminFairplayLogRoute: AuthenticatedAdminFairplayLogRoute,
   AuthenticatedAdminUsersUserIdRoute: AuthenticatedAdminUsersUserIdRoute,
+  AuthenticatedWatchPlatformGameIdRoute: AuthenticatedWatchPlatformGameIdRoute,
   AuthenticatedAdminFairplayIndexRoute: AuthenticatedAdminFairplayIndexRoute,
   AuthenticatedAdminUsersIndexRoute: AuthenticatedAdminUsersIndexRoute,
+  AuthenticatedWatchPlatformIndexRoute: AuthenticatedWatchPlatformIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1273,11 +1354,13 @@ const rootRouteChildren: RootRouteChildren = {
   PlayLocalRoute: PlayLocalRoute,
   PlayShareRoute: PlayShareRoute,
   PlayVariantsRoute: PlayVariantsRoute,
+  WatchGameIdRoute: WatchGameIdRoute,
   DrillsIndexRoute: DrillsIndexRoute,
   GamesIndexRoute: GamesIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   PlayIndexRoute: PlayIndexRoute,
   PuzzlesIndexRoute: PuzzlesIndexRoute,
+  WatchIndexRoute: WatchIndexRoute,
   GamesOnlineGameIdRoute: GamesOnlineGameIdRoute,
   LearnCourseSlugRoute: LearnCourseSlugRoute,
   LearnLessonSlugRoute: LearnLessonSlugRoute,
@@ -1285,6 +1368,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFairplayFailRoute: ApiPublicFairplayFailRoute,
   ApiPublicFairplayResultRoute: ApiPublicFairplayResultRoute,
   ApiPublicTournamentsTickRoute: ApiPublicTournamentsTickRoute,
+  ApiPublicWatchIngestRoute: ApiPublicWatchIngestRoute,
+  ApiPublicWatchTickRoute: ApiPublicWatchTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

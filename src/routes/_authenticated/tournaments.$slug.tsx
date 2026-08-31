@@ -213,7 +213,7 @@ function TournamentDetailPage() {
                   {p.result && <Badge variant="outline">{p.result}</Badge>}
                   {p.gameId && (
                     <Button asChild size="sm" variant="ghost">
-                      <Link to="/watch/$gameId" params={{ gameId: p.gameId }}>
+                      <Link to="/watch/platform/$gameId" params={{ gameId: p.gameId }}>
                         {t("tourney.watch")}
                       </Link>
                     </Button>
