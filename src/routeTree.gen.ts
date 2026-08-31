@@ -35,6 +35,7 @@ import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as NewsIndexRouteImport } from './routes/news.index'
+import { Route as NewsSlugRouteImport } from './routes/news.$slug'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayCoachRouteImport } from './routes/play.coach'
@@ -204,6 +205,11 @@ const LearnIndexRoute = LearnIndexRouteImport.update({
 const NewsIndexRoute = NewsIndexRouteImport.update({
   id: '/news/',
   path: '/news/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsSlugRoute = NewsSlugRouteImport.update({
+  id: '/news/$slug',
+  path: '/news/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayIndexRoute = PlayIndexRouteImport.update({
@@ -446,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRoute
   '/events/$slug': typeof EventsSlugRoute
   '/games/$gameId': typeof GamesGameIdRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/play/ai': typeof PlayAiRoute
   '/play/coach': typeof PlayCoachRoute
   '/play/local': typeof PlayLocalRoute
@@ -513,6 +520,7 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRoute
   '/events/$slug': typeof EventsSlugRoute
   '/games/$gameId': typeof GamesGameIdRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/play/ai': typeof PlayAiRoute
   '/play/coach': typeof PlayCoachRoute
   '/play/local': typeof PlayLocalRoute
@@ -582,6 +590,7 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRoute
   '/events/$slug': typeof EventsSlugRoute
   '/games/$gameId': typeof GamesGameIdRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/play/ai': typeof PlayAiRoute
   '/play/coach': typeof PlayCoachRoute
   '/play/local': typeof PlayLocalRoute
@@ -651,6 +660,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/events/$slug'
     | '/games/$gameId'
+    | '/news/$slug'
     | '/play/ai'
     | '/play/coach'
     | '/play/local'
@@ -718,6 +728,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/events/$slug'
     | '/games/$gameId'
+    | '/news/$slug'
     | '/play/ai'
     | '/play/coach'
     | '/play/local'
@@ -786,6 +797,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/events/$slug'
     | '/games/$gameId'
+    | '/news/$slug'
     | '/play/ai'
     | '/play/coach'
     | '/play/local'
@@ -851,6 +863,7 @@ export interface RootRouteChildren {
   AuthRegisterRoute: typeof AuthRegisterRoute
   EventsSlugRoute: typeof EventsSlugRoute
   GamesGameIdRoute: typeof GamesGameIdRoute
+  NewsSlugRoute: typeof NewsSlugRoute
   PlayAiRoute: typeof PlayAiRoute
   PlayCoachRoute: typeof PlayCoachRoute
   PlayLocalRoute: typeof PlayLocalRoute
@@ -1059,6 +1072,13 @@ declare module '@tanstack/react-router' {
       path: '/news'
       fullPath: '/news/'
       preLoaderRoute: typeof NewsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news/$slug': {
+      id: '/news/$slug'
+      path: '/news/$slug'
+      fullPath: '/news/$slug'
+      preLoaderRoute: typeof NewsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/play/': {
@@ -1430,6 +1450,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRegisterRoute: AuthRegisterRoute,
   EventsSlugRoute: EventsSlugRoute,
   GamesGameIdRoute: GamesGameIdRoute,
+  NewsSlugRoute: NewsSlugRoute,
   PlayAiRoute: PlayAiRoute,
   PlayCoachRoute: PlayCoachRoute,
   PlayLocalRoute: PlayLocalRoute,
