@@ -336,7 +336,6 @@ export const makeMove = createServerFn({ method: "POST" })
 
 
     const committedGame = payload.game;
-    const opponentId = isWhite ? snapshot.black_id : snapshot.white_id;
 
     if (committedGame.status === "completed") {
       // Single orchestration path; safe to call at-least-once (ledger-guarded).
@@ -344,34 +343,11 @@ export const makeMove = createServerFn({ method: "POST" })
         _game_id: data.gameId,
       });
       if (ratingError) console.error("Rating apply failed", ratingError.message);
-
-      const title = committedGame.result === "1/2-1/2" ? "Game drawn" : "Game over";
-      await supabaseAdmin.from("notifications").insert([
-
-        {
-          user_id: snapshot.white_id,
-          type: "game_over",
-          title,
-          body: endReason ?? "The game ended.",
-          data: { game_id: data.gameId },
-        },
-        {
-          user_id: snapshot.black_id,
-          type: "game_over",
-          title,
-          body: endReason ?? "The game ended.",
-          data: { game_id: data.gameId },
-        },
-      ]);
-    } else {
-      await supabaseAdmin.from("notifications").insert({
-        user_id: opponentId,
-        type: "move",
-        title: "Your move",
-        body: `Your opponent played ${canonical.san}.`,
-        data: { game_id: data.gameId },
-      });
     }
+
+    // Notifications were enqueued transactionally by the database (P0.8 outbox).
+    // This is only a best-effort low-latency delivery kick.
+    await kickNotificationOutbox();
 
     return { ok: true, game: committedGame, move: payload.move, serverNow };
   });
