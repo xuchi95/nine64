@@ -210,11 +210,18 @@ function ContactPage() {
                 </p>
               </div>
 
+              <TurnstileWidget action="contact" onToken={setCaptchaToken} />
+
               {status === "error" && (
                 <p className="text-sm text-destructive">{errorMsg}</p>
               )}
 
-              <Button type="submit" disabled={status === "loading"} className="w-full sm:w-auto">
+              <Button
+                type="submit"
+                disabled={status === "loading" || !captchaToken}
+                className="w-full sm:w-auto"
+              >
+
                 {status === "loading" ? (
                   <span className="flex items-center gap-2">
                     <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
