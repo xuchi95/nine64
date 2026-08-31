@@ -29,7 +29,7 @@ export function TrainingLab({
   onSelectMove: (ply: number) => void;
 }) {
   const { t } = useT();
-  const { settings } = useSettings();
+  const settings = useSettings();
   const color = game.playerColor ?? "w";
   const engineRef = useRef<StockfishEngine | null>(null);
 
@@ -146,8 +146,8 @@ function LabWorkbench({
     }
     const chess = new Chess();
     chess.load(ply.fenBefore);
-    chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] ?? "q" });
-    const lines = await engineRef.current.search({ fen: chess.fen(), movetime: 600, multiPv: 1 });
+    chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: (uci[4] as string | undefined) ?? "q" });
+    const lines = await engineRef.current.search({ fen: chess.fen(), moveTimeMs: 600, multiPv: 1 });
     const line = lines[0];
     if (!line) return 0;
     const cp = line.mateIn !== null ? (line.mateIn > 0 ? MATE_CP : -MATE_CP) : (line.cp ?? 0);
