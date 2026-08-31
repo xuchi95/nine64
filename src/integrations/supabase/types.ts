@@ -1316,6 +1316,47 @@ export type Database = {
           },
         ]
       }
+      game_chat_messages: {
+        Row: {
+          author_name: string
+          author_role: string
+          body: string
+          created_at: string
+          game_id: string
+          id: string
+          ply: number
+          user_id: string
+        }
+        Insert: {
+          author_name?: string
+          author_role?: string
+          body: string
+          created_at?: string
+          game_id: string
+          id?: string
+          ply?: number
+          user_id: string
+        }
+        Update: {
+          author_name?: string
+          author_role?: string
+          body?: string
+          created_at?: string
+          game_id?: string
+          id?: string
+          ply?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_chat_messages_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_draw_offers: {
         Row: {
           created_at: string

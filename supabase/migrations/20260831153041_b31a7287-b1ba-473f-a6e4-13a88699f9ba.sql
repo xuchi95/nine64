@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.game_chat_stamp_author() FROM PUBLIC, anon, authenticated;
