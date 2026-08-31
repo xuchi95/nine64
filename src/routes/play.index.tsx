@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bot, Users, LineChart, Swords, Globe, Trophy, Link2 } from "lucide-react";
+import { Bot, Users, LineChart, Swords, Globe, Trophy, Link2, GraduationCap } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP } from "@/config/app";
 import { GenericSkeleton } from "@/components/layout/PageSkeleton";
@@ -24,6 +24,12 @@ const AVAILABLE = [
     icon: Bot,
     titleKey: "play.hub.card.ai.title",
     textKey: "play.hub.card.ai.text",
+  },
+  {
+    to: "/play/coach",
+    icon: GraduationCap,
+    titleKey: "play.hub.card.coach.title",
+    textKey: "play.hub.card.coach.text",
   },
   {
     to: "/play/local",
