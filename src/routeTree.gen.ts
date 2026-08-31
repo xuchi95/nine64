@@ -45,6 +45,7 @@ import { Route as AuthenticatedOnlineDiagnosticsRouteImport } from './routes/_au
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
 import { Route as AuthenticatedAdminFairplayLogRouteImport } from './routes/_authenticated/admin.fairplay.log'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin.users.index'
+import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
 import { Route as ApiPublicFairplayClaimRouteImport } from './routes/api/public/fairplay/claim'
 import { Route as ApiPublicFairplayFailRouteImport } from './routes/api/public/fairplay/fail'
 import { Route as ApiPublicFairplayResultRouteImport } from './routes/api/public/fairplay/result'
@@ -236,6 +237,12 @@ const AuthenticatedAdminUsersIndexRoute =
     path: '/admin/users/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminUsersUserIdRoute =
+  AuthenticatedAdminUsersUserIdRouteImport.update({
+    id: '/admin/users/$userId',
+    path: '/admin/users/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicFairplayClaimRoute = ApiPublicFairplayClaimRouteImport.update({
   id: '/api/public/fairplay/claim',
   path: '/api/public/fairplay/claim',
@@ -287,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
+  '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
@@ -327,6 +335,7 @@ export interface FileRoutesByTo {
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
+  '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
@@ -369,6 +378,7 @@ export interface FileRoutesById {
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
+  '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/games/online/$gameId'
     | '/admin/'
     | '/admin/fairplay/log'
+    | '/admin/users/$userId'
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
@@ -451,6 +462,7 @@ export interface FileRouteTypes {
     | '/games/online/$gameId'
     | '/admin'
     | '/admin/fairplay/log'
+    | '/admin/users/$userId'
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
@@ -492,6 +504,7 @@ export interface FileRouteTypes {
     | '/games/online/$gameId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/fairplay/log'
+    | '/_authenticated/admin/users/$userId'
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
@@ -781,6 +794,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/users/$userId': {
+      id: '/_authenticated/admin/users/$userId'
+      path: '/admin/users/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/fairplay/claim': {
       id: '/api/public/fairplay/claim'
       path: '/api/public/fairplay/claim'
@@ -841,6 +861,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminSystemRoute: typeof AuthenticatedAdminSystemRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminUsersUserIdRoute: typeof AuthenticatedAdminUsersUserIdRoute
   AuthenticatedAdminUsersIndexRoute: typeof AuthenticatedAdminUsersIndexRoute
 }
 
@@ -855,6 +876,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminSystemRoute: AuthenticatedAdminSystemRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminUsersUserIdRoute: AuthenticatedAdminUsersUserIdRoute,
   AuthenticatedAdminUsersIndexRoute: AuthenticatedAdminUsersIndexRoute,
 }
 
