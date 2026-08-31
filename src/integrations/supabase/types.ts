@@ -262,6 +262,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          variant: string
           version: number
         }
         Insert: {
@@ -283,6 +284,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          variant?: string
           version?: number
         }
         Update: {
@@ -304,6 +306,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          variant?: string
           version?: number
         }
         Relationships: []
@@ -1809,6 +1812,7 @@ export type Database = {
           game_id: string
           id: string
           idempotency_key: string
+          pool: string
           result: string
           white_delta: number
           white_id: string
@@ -1834,6 +1838,7 @@ export type Database = {
           game_id: string
           id?: string
           idempotency_key: string
+          pool?: string
           result: string
           white_delta: number
           white_id: string
@@ -1859,6 +1864,7 @@ export type Database = {
           game_id?: string
           id?: string
           idempotency_key?: string
+          pool?: string
           result?: string
           white_delta?: number
           white_id?: string
@@ -2436,6 +2442,57 @@ export type Database = {
           },
         ]
       }
+      user_variant_ratings: {
+        Row: {
+          created_at: string
+          draws: number
+          games_played: number
+          id: string
+          last_rated_at: string | null
+          losses: number
+          peak_rating: number
+          pool: string
+          rating: number
+          rating_deviation: number
+          updated_at: string
+          user_id: string
+          volatility: number
+          wins: number
+        }
+        Insert: {
+          created_at?: string
+          draws?: number
+          games_played?: number
+          id?: string
+          last_rated_at?: string | null
+          losses?: number
+          peak_rating?: number
+          pool: string
+          rating?: number
+          rating_deviation?: number
+          updated_at?: string
+          user_id: string
+          volatility?: number
+          wins?: number
+        }
+        Update: {
+          created_at?: string
+          draws?: number
+          games_played?: number
+          id?: string
+          last_rated_at?: string | null
+          losses?: number
+          peak_rating?: number
+          pool?: string
+          rating?: number
+          rating_deviation?: number
+          updated_at?: string
+          user_id?: string
+          volatility?: number
+          wins?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2625,6 +2682,31 @@ export type Database = {
         }
         Returns: undefined
       }
+      ensure_variant_rating: {
+        Args: { _pool: string; _user_id: string }
+        Returns: {
+          created_at: string
+          draws: number
+          games_played: number
+          id: string
+          last_rated_at: string | null
+          losses: number
+          peak_rating: number
+          pool: string
+          rating: number
+          rating_deviation: number
+          updated_at: string
+          user_id: string
+          volatility: number
+          wins: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_variant_ratings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       expire_bot_sessions: { Args: { _idle_minutes?: number }; Returns: number }
       expire_draw_offers: { Args: { _game_id: string }; Returns: undefined }
       fairplay_analyzer_version: { Args: never; Returns: string }
@@ -2691,6 +2773,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_valid_chess960_start: { Args: { _fen: string }; Returns: boolean }
       log_security_event: {
         Args: {
           _detail?: Json
