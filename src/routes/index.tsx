@@ -141,7 +141,7 @@ function Home() {
           />
           <span aria-hidden className="w-px bg-border" />
           <Metric
-            value={`${VARIANTS.length}`.padStart(2, "0")}
+            value={`${VARIANTS.filter((v) => v.enabled).length}`.padStart(2, "0")}
             label={t("play.home.stat.variants")}
           />
         </section>

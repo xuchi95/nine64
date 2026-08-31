@@ -11,7 +11,7 @@ import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
 import { Button } from "@/components/ui/button";
 import { APP, type TimeControl } from "@/config/app";
-import { VARIANTS, type VariantId, variantName, variantBlurb } from "@/config/variants";
+import { localVariants, type VariantId, variantName, variantBlurb } from "@/config/variants";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
@@ -96,7 +96,7 @@ function LocalGame() {
               {t("play.local.variant")}
             </h2>
             <div className="mt-3 grid gap-2">
-              {VARIANTS.filter((v) => v.enabled).map((v) => (
+              {localVariants().map((v) => (
                 <button
                   key={v.id}
                   type="button"

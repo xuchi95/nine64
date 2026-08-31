@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { useT } from "@/lib/i18n";
 import { MatchFoundDialog } from "@/components/online/MatchFoundDialog";
+import { onlineVariants } from "@/config/variants";
 
 export const Route = createFileRoute("/_authenticated/online")({
   head: () => ({
@@ -34,10 +35,12 @@ function OnlinePage() {
   const [timeControl, setTimeControl] = useState("blitz5m");
   const searching = state.kind === "searching";
 
-  const VARIANTS = [
-    { id: "standard", name: t("play.online.variantStandard") },
-    { id: "chess960", name: t("play.online.variantChess960") },
-  ];
+  // Capability registry is the only source of truth: a variant appears here
+  // only when the server actually validates its rules online.
+  const VARIANTS = onlineVariants().map((v) => ({
+    id: v.id,
+    name: v.id === "chess960" ? t("play.online.variantChess960") : t("play.online.variantStandard"),
+  }));
 
   const TIME_CONTROLS = [
     { id: "blitz1m", name: "1+0", label: t("play.online.tcBullet1") },

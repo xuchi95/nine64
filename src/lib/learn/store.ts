@@ -6,7 +6,7 @@ import {
   type Rating,
 } from "@/lib/rating/glicko2";
 import { review as reviewCard, type Grade, type SrsState } from "./fsrs";
-import type { Puzzle } from "./puzzleGen";
+import { normalisePuzzle, type Puzzle } from "./puzzleGen";
 import type { ArmStats } from "./bandit";
 
 export interface LearnState {
@@ -44,7 +44,10 @@ export function hydrateLearn() {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<LearnState>;
       state = {
-        puzzles: Array.isArray(parsed.puzzles) ? parsed.puzzles : [],
+        // Puzzles persisted before multi-move solutions are migrated in place.
+        puzzles: Array.isArray(parsed.puzzles)
+          ? parsed.puzzles.map(normalisePuzzle).filter((p): p is Puzzle => p !== null)
+          : [],
         rating: parsed.rating ?? { ...DEFAULT_RATING },
         bandit: parsed.bandit ?? {},
       };
@@ -52,6 +55,7 @@ export function hydrateLearn() {
   } catch {
     /* corrupted storage — start clean */
   }
+
   emit();
   void pullFromCloud();
 }
@@ -80,7 +84,9 @@ async function syncToCloud() {
       id: p.id,
       user_id: userId,
       fen: p.fen,
-      solution: p.solution,
+      // The database column is a single UCI string; the full line lives locally
+      // and is rebuilt from the review when the puzzle is regenerated.
+      solution: p.solution[0]?.uci ?? "",
       solution_san: p.solutionSan,
       color: p.color,
       themes: p.themes,
@@ -115,22 +121,23 @@ async function pullFromCloud() {
     for (const row of data as unknown as Record<string, unknown>[]) {
       const id = String(row["id"]);
       if (local.has(id)) continue;
-      local.set(id, {
+      const puzzle = normalisePuzzle({
         id,
         fen: String(row["fen"]),
         solution: String(row["solution"]),
         solutionSan: (row["solution_san"] as string | null) ?? null,
-        color: row["color"] === "b" ? "b" : "w",
+        color: row["color"],
         themes: (row["themes"] as Puzzle["themes"]) ?? [],
-        rating: Number(row["rating"] ?? 1200),
+        rating: row["rating"],
         gameId: String(row["source_game_id"] ?? ""),
-        ply: Number(row["ply"] ?? 0),
-        swing: Number(row["swing"] ?? 0),
-        createdAt: String(row["created_at"] ?? new Date().toISOString()),
+        ply: row["ply"],
+        swing: row["swing"],
+        createdAt: row["created_at"],
         srs: row["srs"] as unknown as SrsState,
-        attempts: Number(row["attempts"] ?? 0),
-        solved: Number(row["solved"] ?? 0),
+        attempts: row["attempts"],
+        solved: row["solved"],
       });
+      if (puzzle) local.set(id, puzzle);
     }
     state = { ...state, puzzles: [...local.values()] };
     emit();

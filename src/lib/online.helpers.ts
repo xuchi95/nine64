@@ -1,9 +1,17 @@
 import { z } from "zod";
+import { isOnlinePlayable } from "@/config/variants";
+import { generateChess960Position } from "@/lib/chess/chess960";
+
 
 export const QUEUE_SCHEMA = z.object({
-  variant: z.string().min(1),
+  // Server-side capability gate: a variant may only be queued online when the
+  // rule engine actually validates its moves.
+  variant: z.string().min(1).refine(isOnlinePlayable, {
+    message: "VARIANT_NOT_ONLINE_PLAYABLE",
+  }),
   timeControl: z.string().min(1),
 });
+
 
 const SQUARE = z.string().regex(/^[a-h][1-8]$/);
 
@@ -59,69 +67,22 @@ export function timeControlToMs(timeControl: string): number {
   }
 }
 
-function pickOne<T>(items: T[]): T {
-  const value = items[Math.floor(Math.random() * items.length)];
-  if (value === undefined) throw new Error("Cannot pick from an empty list");
-  return value;
-}
-
-function shuffleStrings(arr: string[]): string[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const current = a[i];
-    const target = a[j];
-    if (current === undefined || target === undefined) continue;
-    a[i] = target;
-    a[j] = current;
-  }
-  return a;
-}
-
-function isValid960BackRank(pieces: string[]): boolean {
-  const kingIndex = pieces.indexOf("k");
-  const rookLeft = pieces.indexOf("r");
-  const rookRight = pieces.lastIndexOf("r");
-  return kingIndex > rookLeft && kingIndex < rookRight;
-}
-
-function generateChess960Fen(): string {
-  const lightSquares = [1, 3, 5, 7];
-  const darkSquares = [0, 2, 4, 6];
-  const b1 = pickOne(lightSquares);
-  const b2 = pickOne(darkSquares);
-
-  const remaining = [0, 1, 2, 3, 4, 5, 6, 7].filter((i) => i !== b1 && i !== b2);
-  let pieces: string[];
-  do {
-    pieces = shuffleStrings(
-      remaining.map((i) => {
-        if (i === 0 || i === 7) return "r";
-        if (i === 1 || i === 6) return "n";
-        if (i === 2 || i === 5) return "b";
-        if (i === 3) return "q";
-        return "k";
-      }),
-    );
-  } while (!isValid960BackRank(pieces));
-
-  const rank = Array.from({ length: 8 }, () => "");
-  rank[b1] = "b";
-  rank[b2] = "b";
-  let idx = 0;
-  for (let i = 0; i < 8; i++) {
-    if (rank[i]) continue;
-    const piece = pieces[idx];
-    if (piece === undefined) throw new Error("Invalid Chess960 back rank");
-    rank[i] = piece;
-    idx += 1;
-  }
-  return `${rank.join("")}/pppppppp/8/8/8/8/PPPPPPPP/${rank.join("").toUpperCase()} w KQkq - 0 1`;
-}
-
+/**
+ * Starting FEN for an online game.
+ *
+ * Only variants marked `onlinePlayable` in the capability registry can reach
+ * this function (QUEUE_SCHEMA rejects the rest), so the classical array is the
+ * canonical answer today. Shuffled back ranks come from
+ * `generateChess960Position` — never from an ad-hoc shuffle — and stay gated
+ * behind the registry until a Chess960 rule engine exists.
+ */
 export function startingFenForVariant(variant: string): string {
-  return variant === "chess960" ? generateChess960Fen() : STANDARD_FEN;
+  if (variant === "chess960" || variant === "random-army") {
+    return generateChess960Position().fen;
+  }
+  return STANDARD_FEN;
 }
+
 /** Draw offer commands. Idempotency key is supplied by the caller and reused on retry. */
 export const DRAW_OFFER_SCHEMA = z
   .object({
