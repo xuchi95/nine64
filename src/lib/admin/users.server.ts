@@ -684,7 +684,7 @@ export async function adjustRating(params: {
     _reason: params.reason,
     _actor: params.actorId,
     _idempotency_key: params.idempotencyKey,
-    _game_id: params.gameId ?? undefined,
+    ...(params.gameId ? { _game_id: params.gameId } : {}),
   });
   if (error) return fail("RATING_WRITE_FAILED", error.message);
   const res = data as { ok: boolean; code?: string; replayed?: boolean; adjustment?: Record<string, unknown> };
