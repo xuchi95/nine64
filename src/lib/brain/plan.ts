@@ -216,7 +216,7 @@ export function generateDailyPlan(ctx: PlanContext): DailyPlan {
   const ordered = [...candidates].sort((a, b) => b.priority - a.priority);
   const blocks: PlanBlock[] = [];
   const usedKinds = new Set<BlockKind>();
-  let remaining = ctx.budget;
+  let remaining: number = ctx.budget;
 
   for (const c of ordered) {
     if (remaining < 5) break;
