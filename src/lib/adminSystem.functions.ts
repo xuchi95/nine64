@@ -180,8 +180,8 @@ export const resetRateLimitAction = createServerFn({ method: "POST" })
       actorId: context.userId,
       action: "ratelimit_reset",
       note: data.action ?? "all",
-      detail: { action: data.action ?? "all", cleared: count ?? 0 },
+      detail: { action: data.action ?? "all", cleared: count },
     });
 
-    return { cleared: count ?? 0 };
+    return { cleared: count };
   });
