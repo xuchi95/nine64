@@ -111,7 +111,7 @@ function AdminWatchPage() {
   );
 
   return (
-    <AdminShell module="watch" title={t("wc.admin.title")} subtitle={t("wc.admin.subtitle")}>
+    <AdminShell module="watch" title={t("wc.admin.title")}>
       <div className="space-y-6">
         {message && (
           <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">{message}</div>
