@@ -27,13 +27,16 @@ export const TRY_MATCH_SCHEMA = z.object({ queueId: z.string().uuid() });
 
 export const NOTIFICATION_ID_SCHEMA = z.object({ id: z.string().uuid() });
 
-export const FINISH_GAME_SCHEMA = z.object({
-  gameId: z.string().uuid(),
-  result: z.enum(["1-0", "0-1", "1/2-1/2", "*"]),
-  winnerId: z.string().uuid().nullable(),
-  endReason: z.string().min(1),
-  finalFen: z.string().min(10),
-});
+/**
+ * Terminal commands carry no result, winner, reason or FEN: the server derives
+ * every canonical value itself. `expectedVersion` guards against replays.
+ */
+export const GAME_COMMAND_SCHEMA = z
+  .object({
+    gameId: z.string().uuid(),
+    expectedVersion: z.number().int().min(0),
+  })
+  .strict();
 
 export const STANDARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
