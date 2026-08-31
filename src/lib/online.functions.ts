@@ -375,71 +375,120 @@ export const makeMove = createServerFn({ method: "POST" })
   });
 
 
-export const finishGame = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input) => FINISH_GAME_SCHEMA.parse(input))
-  .handler(async ({ data, context }) => {
-    const supabase = context.supabase;
+/**
+ * Canonical terminal commands (P0.5). The client may only *name the action*;
+ * result, winner, end reason and final position are always derived server-side
+ * inside a locked transaction, applied exactly once, and rated via
+ * `apply_rating_once`.
+ */
+export type CommandCode =
+  | "RESIGNED"
+  | "ABORTED"
+  | "FLAGGED"
+  | "ALREADY_FINAL"
+  | "STILL_RUNNING"
+  | "GAME_NOT_FOUND"
+  | "NOT_A_PARTICIPANT"
+  | "GAME_NOT_ACTIVE"
+  | "STALE_GAME_VERSION"
+  | "ABORT_NOT_ALLOWED"
+  | "INVALID_INPUT";
 
-    const { data: game, error: gameError } = await supabase
-      .from("games")
-      .select("*")
-      .eq("id", data.gameId)
-      .single();
+export type CommandOutcome = {
+  ok: boolean;
+  code: CommandCode;
+  game: Game | null;
+  serverNow: string;
+};
 
-    if (gameError || !game) throw new Error(gameError?.message || "Game not found");
-    if (game.white_id !== context.userId && game.black_id !== context.userId) {
-      throw new Error("Forbidden");
-    }
-    if (game.status === "completed") return { ok: true };
+type RawCommandPayload = {
+  ok?: boolean;
+  code?: CommandCode;
+  game?: Game;
+  server_now?: string;
+};
 
-    // The caller may only *declare* an agreed result; the winner is derived
-    // server-side and the canonical FEN is never taken from the client.
-    const result = data.result;
-    const winnerId =
-      result === "1-0" ? game.white_id : result === "0-1" ? game.black_id : null;
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { error } = await supabaseAdmin
-      .from("games")
-      .update({
-        status: "completed",
-        result,
-        winner_id: winnerId,
-        end_reason: data.endReason.slice(0, 120),
-        clock_state: "stopped",
-        turn_started_at: null,
-      })
-      .eq("id", data.gameId)
-      .neq("status", "completed");
-
-    if (error) throw new Error(error.message);
-
-    // Glicko-2 rating update (rating, deviation and volatility) — service role only.
-    const draw = result === "1/2-1/2";
-
-    const { error: ratingError } = await supabaseAdmin.rpc("apply_rating_once", {
-      _game_id: data.gameId,
-    });
-    if (ratingError) console.error("Rating apply failed", ratingError.message);
-
-    // Notify both players
-    const title = draw ? "Game drawn" : winnerId ? "Game over" : "Game over";
-    const body = draw
-      ? "The game ended in a draw."
-      : winnerId
-        ? "Check the result in My games."
-        : "The game ended.";
-
-    await supabaseAdmin.from("notifications").insert([
-      { user_id: game.white_id, type: "game_over", title, body, data: { game_id: data.gameId } },
-      { user_id: game.black_id, type: "game_over", title, body, data: { game_id: data.gameId } },
-    ]);
-
-
-    return { ok: true };
+async function runGameCommand(
+  rpc: "resign_game_internal" | "claim_timeout_internal" | "abort_game_internal",
+  gameId: string,
+  userId: string,
+  expectedVersion: number,
+): Promise<CommandOutcome> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: raw, error } = await supabaseAdmin.rpc(rpc, {
+    _game_id: gameId,
+    _user_id: userId,
+    _expected_version: expectedVersion,
   });
+  if (error) throw new Error(error.message);
+
+  const payload = (raw ?? {}) as RawCommandPayload;
+  return {
+    ok: payload.ok ?? false,
+    code: payload.code ?? "GAME_NOT_FOUND",
+    game: payload.game ?? null,
+    serverNow: payload.server_now ?? new Date().toISOString(),
+  };
+}
+
+async function notifyGameOver(game: Game) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const title = game.result === "1/2-1/2" ? "Game drawn" : "Game over";
+  await supabaseAdmin.from("notifications").insert([
+    {
+      user_id: game.white_id,
+      type: "game_over",
+      title,
+      body: game.end_reason ?? "The game ended.",
+      data: { game_id: game.id },
+    },
+    {
+      user_id: game.black_id,
+      type: "game_over",
+      title,
+      body: game.end_reason ?? "The game ended.",
+      data: { game_id: game.id },
+    },
+  ]);
+}
+
+/** Resign: only the caller can lose; the opponent is derived by the server. */
+export const resignGame = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_COMMAND_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<CommandOutcome> => {
+    const out = await runGameCommand(
+      "resign_game_internal",
+      data.gameId,
+      context.userId,
+      data.expectedVersion,
+    );
+    if (out.code === "RESIGNED" && out.game) await notifyGameOver(out.game);
+    return out;
+  });
+
+/** Claim a flag fall. The ruling comes from the database clock, never the UI. */
+export const claimTimeout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_COMMAND_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<CommandOutcome> => {
+    const out = await runGameCommand(
+      "claim_timeout_internal",
+      data.gameId,
+      context.userId,
+      data.expectedVersion,
+    );
+    if (out.code === "FLAGGED" && out.game) await notifyGameOver(out.game);
+    return out;
+  });
+
+/** Abort: allowed only while the game has no committed move. Never rated. */
+export const abortGame = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_COMMAND_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<CommandOutcome> =>
+    runGameCommand("abort_game_internal", data.gameId, context.userId, data.expectedVersion),
+  );
 
 export const getMyGames = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
