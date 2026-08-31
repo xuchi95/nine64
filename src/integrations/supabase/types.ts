@@ -1227,6 +1227,191 @@ export type Database = {
         }
         Relationships: []
       }
+      opening_datasets: {
+        Row: {
+          active: boolean
+          attribution: string
+          created_at: string
+          eco_count: number
+          id: string
+          license: string
+          name: string
+          notes: string
+          slug: string
+          source_url: string
+          updated_at: string
+          updated_by: string | null
+          version: string
+        }
+        Insert: {
+          active?: boolean
+          attribution?: string
+          created_at?: string
+          eco_count?: number
+          id?: string
+          license?: string
+          name: string
+          notes?: string
+          slug: string
+          source_url?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: string
+        }
+        Update: {
+          active?: boolean
+          attribution?: string
+          created_at?: string
+          eco_count?: number
+          id?: string
+          license?: string
+          name?: string
+          notes?: string
+          slug?: string
+          source_url?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
+      opening_explorer_cache: {
+        Row: {
+          cache_key: string
+          expires_at: string
+          fen: string
+          fetched_at: string
+          filters: Json
+          hits: number
+          latency_ms: number
+          payload: Json
+          source: string
+        }
+        Insert: {
+          cache_key: string
+          expires_at: string
+          fen: string
+          fetched_at?: string
+          filters?: Json
+          hits?: number
+          latency_ms?: number
+          payload: Json
+          source: string
+        }
+        Update: {
+          cache_key?: string
+          expires_at?: string
+          fen?: string
+          fetched_at?: string
+          filters?: Json
+          hits?: number
+          latency_ms?: number
+          payload?: Json
+          source?: string
+        }
+        Relationships: []
+      }
+      opening_explorer_health: {
+        Row: {
+          breaker_trips: number
+          consecutive_failures: number
+          errors: number
+          hits: number
+          last_error: string | null
+          misses: number
+          open_until: string | null
+          rate_limited: number
+          requests: number
+          source: string
+          timeouts: number
+          total_latency_ms: number
+          updated_at: string
+        }
+        Insert: {
+          breaker_trips?: number
+          consecutive_failures?: number
+          errors?: number
+          hits?: number
+          last_error?: string | null
+          misses?: number
+          open_until?: string | null
+          rate_limited?: number
+          requests?: number
+          source: string
+          timeouts?: number
+          total_latency_ms?: number
+          updated_at?: string
+        }
+        Update: {
+          breaker_trips?: number
+          consecutive_failures?: number
+          errors?: number
+          hits?: number
+          last_error?: string | null
+          misses?: number
+          open_until?: string | null
+          rate_limited?: number
+          requests?: number
+          source?: string
+          timeouts?: number
+          total_latency_ms?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      opening_import_jobs: {
+        Row: {
+          created_at: string
+          dataset_id: string | null
+          failed: number
+          id: string
+          kind: string
+          last_error: string | null
+          params: Json
+          processed: number
+          requested_by: string | null
+          result: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dataset_id?: string | null
+          failed?: number
+          id?: string
+          kind?: string
+          last_error?: string | null
+          params?: Json
+          processed?: number
+          requested_by?: string | null
+          result?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dataset_id?: string | null
+          failed?: number
+          id?: string
+          kind?: string
+          last_error?: string | null
+          params?: Json
+          processed?: number
+          requested_by?: string | null
+          result?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opening_import_jobs_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "opening_datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_reports: {
         Row: {
           created_at: string
@@ -1884,6 +2069,230 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      repertoire_cards: {
+        Row: {
+          color: string
+          created_at: string
+          difficulty: number
+          due: string
+          expected_san: string
+          fen: string
+          id: string
+          lapses: number
+          last_review: string | null
+          move_id: string
+          path: string
+          repertoire_id: string
+          reps: number
+          stability: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          difficulty?: number
+          due?: string
+          expected_san: string
+          fen: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          move_id: string
+          path: string
+          repertoire_id: string
+          reps?: number
+          stability?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          difficulty?: number
+          due?: string
+          expected_san?: string
+          fen?: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          move_id?: string
+          path?: string
+          repertoire_id?: string
+          reps?: number
+          stability?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repertoire_cards_move_id_fkey"
+            columns: ["move_id"]
+            isOneToOne: false
+            referencedRelation: "repertoire_moves"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repertoire_cards_repertoire_id_fkey"
+            columns: ["repertoire_id"]
+            isOneToOne: false
+            referencedRelation: "repertoires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repertoire_lines: {
+        Row: {
+          created_at: string
+          eco: string | null
+          id: string
+          name: string
+          notes: string
+          opening_name: string | null
+          repertoire_id: string
+          root_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          eco?: string | null
+          id?: string
+          name?: string
+          notes?: string
+          opening_name?: string | null
+          repertoire_id: string
+          root_path?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          eco?: string | null
+          id?: string
+          name?: string
+          notes?: string
+          opening_name?: string | null
+          repertoire_id?: string
+          root_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repertoire_lines_repertoire_id_fkey"
+            columns: ["repertoire_id"]
+            isOneToOne: false
+            referencedRelation: "repertoires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repertoire_moves: {
+        Row: {
+          created_at: string
+          fen: string
+          id: string
+          is_own_move: boolean
+          kind: string
+          line_id: string
+          notes: string
+          parent_fen: string
+          parent_path: string
+          path: string
+          ply: number
+          repertoire_id: string
+          san: string
+          uci: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fen: string
+          id?: string
+          is_own_move?: boolean
+          kind?: string
+          line_id: string
+          notes?: string
+          parent_fen?: string
+          parent_path?: string
+          path: string
+          ply: number
+          repertoire_id: string
+          san: string
+          uci?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fen?: string
+          id?: string
+          is_own_move?: boolean
+          kind?: string
+          line_id?: string
+          notes?: string
+          parent_fen?: string
+          parent_path?: string
+          path?: string
+          ply?: number
+          repertoire_id?: string
+          san?: string
+          uci?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repertoire_moves_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "repertoire_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repertoire_moves_repertoire_id_fkey"
+            columns: ["repertoire_id"]
+            isOneToOne: false
+            referencedRelation: "repertoires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repertoires: {
+        Row: {
+          color: string
+          created_at: string
+          description: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       security_events: {
         Row: {
@@ -2793,6 +3202,17 @@ export type Database = {
           _game_id: string
           _idempotency_key: string
           _user_id: string
+        }
+        Returns: Json
+      }
+      opening_explorer_record: {
+        Args: {
+          _error?: string
+          _failure_threshold?: number
+          _latency_ms?: number
+          _open_seconds?: number
+          _outcome: string
+          _source: string
         }
         Returns: Json
       }
