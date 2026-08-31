@@ -56,6 +56,7 @@ import { Route as AuthenticatedAdminPuzzlesRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin.system'
 import { Route as AuthenticatedAdminTournamentsRouteImport } from './routes/_authenticated/admin.tournaments'
+import { Route as AuthenticatedAdminWatchRouteImport } from './routes/_authenticated/admin.watch'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as AuthenticatedOnlineDiagnosticsRouteImport } from './routes/_authenticated/online.diagnostics'
 import { Route as AuthenticatedPuzzlesTrainRouteImport } from './routes/_authenticated/puzzles.train'
@@ -319,6 +320,11 @@ const AuthenticatedAdminTournamentsRoute =
     path: '/admin/tournaments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminWatchRoute = AuthenticatedAdminWatchRouteImport.update({
+  id: '/admin/watch',
+  path: '/admin/watch',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedGameGameIdRoute = AuthenticatedGameGameIdRouteImport.update({
   id: '/game/$gameId',
   path: '/game/$gameId',
@@ -477,6 +483,7 @@ export interface FileRoutesByFullPath {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/tournaments': typeof AuthenticatedAdminTournamentsRoute
+  '/admin/watch': typeof AuthenticatedAdminWatchRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
@@ -545,6 +552,7 @@ export interface FileRoutesByTo {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/tournaments': typeof AuthenticatedAdminTournamentsRoute
+  '/admin/watch': typeof AuthenticatedAdminWatchRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
@@ -615,6 +623,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
   '/_authenticated/admin/tournaments': typeof AuthenticatedAdminTournamentsRoute
+  '/_authenticated/admin/watch': typeof AuthenticatedAdminWatchRoute
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/_authenticated/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
   '/_authenticated/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
@@ -685,6 +694,7 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/admin/system'
     | '/admin/tournaments'
+    | '/admin/watch'
     | '/game/$gameId'
     | '/online/diagnostics'
     | '/puzzles/train'
@@ -753,6 +763,7 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/admin/system'
     | '/admin/tournaments'
+    | '/admin/watch'
     | '/game/$gameId'
     | '/online/diagnostics'
     | '/puzzles/train'
@@ -822,6 +833,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/system'
     | '/_authenticated/admin/tournaments'
+    | '/_authenticated/admin/watch'
     | '/_authenticated/game/$gameId'
     | '/_authenticated/online/diagnostics'
     | '/_authenticated/puzzles/train'
@@ -1221,6 +1233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTournamentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/watch': {
+      id: '/_authenticated/admin/watch'
+      path: '/admin/watch'
+      fullPath: '/admin/watch'
+      preLoaderRoute: typeof AuthenticatedAdminWatchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/game/$gameId': {
       id: '/_authenticated/game/$gameId'
       path: '/game/$gameId'
@@ -1389,6 +1408,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSystemRoute: typeof AuthenticatedAdminSystemRoute
   AuthenticatedAdminTournamentsRoute: typeof AuthenticatedAdminTournamentsRoute
+  AuthenticatedAdminWatchRoute: typeof AuthenticatedAdminWatchRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
   AuthenticatedPuzzlesTrainRoute: typeof AuthenticatedPuzzlesTrainRoute
   AuthenticatedTournamentsSlugRoute: typeof AuthenticatedTournamentsSlugRoute
@@ -1416,6 +1436,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSystemRoute: AuthenticatedAdminSystemRoute,
   AuthenticatedAdminTournamentsRoute: AuthenticatedAdminTournamentsRoute,
+  AuthenticatedAdminWatchRoute: AuthenticatedAdminWatchRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
   AuthenticatedPuzzlesTrainRoute: AuthenticatedPuzzlesTrainRoute,
   AuthenticatedTournamentsSlugRoute: AuthenticatedTournamentsSlugRoute,
