@@ -4835,6 +4835,10 @@ export type Database = {
         Args: { _game_id: string; _note?: string; _reason: string }
         Returns: Json
       }
+      sync_game_state: {
+        Args: { _game_id: string; _since_move?: number }
+        Returns: Json
+      }
       takeback_request_internal: {
         Args: {
           _expected_version: number

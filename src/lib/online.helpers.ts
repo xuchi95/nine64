@@ -32,6 +32,13 @@ export const MOVE_SCHEMA = z
 
 export const GAME_ID_SCHEMA = z.object({ gameId: z.string().uuid() });
 
+/** Live-board delta sync: -1 asks for the full move list. */
+export const GAME_DELTA_SCHEMA = z.object({
+  gameId: z.string().uuid(),
+  sinceMoveNumber: z.number().int().min(-1).max(100_000).default(-1),
+});
+
+
 export const TRY_MATCH_SCHEMA = z.object({ queueId: z.string().uuid() });
 
 export const NOTIFICATION_ID_SCHEMA = z.object({ id: z.string().uuid() });

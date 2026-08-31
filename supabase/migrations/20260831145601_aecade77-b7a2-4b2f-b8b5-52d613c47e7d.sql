@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_game_state(uuid, integer) FROM anon, authenticated;
