@@ -884,6 +884,84 @@ export type Database = {
         }
         Relationships: []
       }
+      game_challenges: {
+        Row: {
+          allow_takeback: boolean
+          color: string
+          created_at: string
+          creator_id: string
+          expires_at: string
+          game_id: string | null
+          id: string
+          message: string | null
+          opponent_id: string | null
+          pace: string
+          rated: boolean
+          rematch_of: string | null
+          spectate: string
+          spectator_delay_seconds: number
+          status: string
+          time_control: string
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          allow_takeback?: boolean
+          color?: string
+          created_at?: string
+          creator_id: string
+          expires_at?: string
+          game_id?: string | null
+          id?: string
+          message?: string | null
+          opponent_id?: string | null
+          pace?: string
+          rated?: boolean
+          rematch_of?: string | null
+          spectate?: string
+          spectator_delay_seconds?: number
+          status?: string
+          time_control: string
+          updated_at?: string
+          variant?: string
+        }
+        Update: {
+          allow_takeback?: boolean
+          color?: string
+          created_at?: string
+          creator_id?: string
+          expires_at?: string
+          game_id?: string | null
+          id?: string
+          message?: string | null
+          opponent_id?: string | null
+          pace?: string
+          rated?: boolean
+          rematch_of?: string | null
+          spectate?: string
+          spectator_delay_seconds?: number
+          status?: string
+          time_control?: string
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_challenges_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_challenges_rematch_of_fkey"
+            columns: ["rematch_of"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_draw_offers: {
         Row: {
           created_at: string
@@ -1022,23 +1100,84 @@ export type Database = {
           },
         ]
       }
+      game_takeback_requests: {
+        Row: {
+          created_at: string
+          expires_at: string
+          game_id: string
+          game_version: number
+          id: string
+          idempotency_key: string
+          plies: number
+          requested_by: string
+          requested_to: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          game_id: string
+          game_version: number
+          id?: string
+          idempotency_key: string
+          plies: number
+          requested_by: string
+          requested_to: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          game_id?: string
+          game_version?: number
+          id?: string
+          idempotency_key?: string
+          plies?: number
+          requested_by?: string
+          requested_to?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_takeback_requests_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
+          allow_takeback: boolean
           black_id: string
           black_rating: number
+          black_seen_at: string | null
           black_time_ms: number
+          challenge_id: string | null
           clock_state: string
           created_at: string
           current_fen: string
+          daily_move_ms: number
+          deadline_at: string | null
           end_reason: string | null
           id: string
           increment_ms: number
           initial_fen: string
           last_move_at: string | null
+          pace: string
+          pool: string
           rated: boolean
           rating_applied_at: string | null
+          rematch_of: string | null
           result: string
+          spectate: string
+          spectator_delay_seconds: number
           status: string
+          takeback_count: number
           time_control: string
           turn_started_at: string | null
           updated_at: string
@@ -1046,25 +1185,37 @@ export type Database = {
           version: number
           white_id: string
           white_rating: number
+          white_seen_at: string | null
           white_time_ms: number
           winner_id: string | null
         }
         Insert: {
+          allow_takeback?: boolean
           black_id: string
           black_rating: number
+          black_seen_at?: string | null
           black_time_ms?: number
+          challenge_id?: string | null
           clock_state?: string
           created_at?: string
           current_fen?: string
+          daily_move_ms?: number
+          deadline_at?: string | null
           end_reason?: string | null
           id?: string
           increment_ms?: number
           initial_fen?: string
           last_move_at?: string | null
+          pace?: string
+          pool?: string
           rated?: boolean
           rating_applied_at?: string | null
+          rematch_of?: string | null
           result?: string
+          spectate?: string
+          spectator_delay_seconds?: number
           status?: string
+          takeback_count?: number
           time_control?: string
           turn_started_at?: string | null
           updated_at?: string
@@ -1072,25 +1223,37 @@ export type Database = {
           version?: number
           white_id: string
           white_rating: number
+          white_seen_at?: string | null
           white_time_ms?: number
           winner_id?: string | null
         }
         Update: {
+          allow_takeback?: boolean
           black_id?: string
           black_rating?: number
+          black_seen_at?: string | null
           black_time_ms?: number
+          challenge_id?: string | null
           clock_state?: string
           created_at?: string
           current_fen?: string
+          daily_move_ms?: number
+          deadline_at?: string | null
           end_reason?: string | null
           id?: string
           increment_ms?: number
           initial_fen?: string
           last_move_at?: string | null
+          pace?: string
+          pool?: string
           rated?: boolean
           rating_applied_at?: string | null
+          rematch_of?: string | null
           result?: string
+          spectate?: string
+          spectator_delay_seconds?: number
           status?: string
+          takeback_count?: number
           time_control?: string
           turn_started_at?: string | null
           updated_at?: string
@@ -1098,10 +1261,19 @@ export type Database = {
           version?: number
           white_id?: string
           white_rating?: number
+          white_seen_at?: string | null
           white_time_ms?: number
           winner_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "games_rematch_of_fkey"
+            columns: ["rematch_of"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       learn_cards: {
         Row: {
@@ -3321,6 +3493,31 @@ export type Database = {
         }
         Returns: Json
       }
+      challenge_create: {
+        Args: {
+          _allow_takeback: boolean
+          _color: string
+          _message: string
+          _opponent_id: string
+          _rated: boolean
+          _rematch_of: string
+          _spectate: string
+          _spectator_delay: number
+          _time_control: string
+          _user_id: string
+          _variant: string
+        }
+        Returns: Json
+      }
+      challenge_respond: {
+        Args: {
+          _action: string
+          _challenge_id: string
+          _initial_fen: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       claim_timeout_internal: {
         Args: { _expected_version: number; _game_id: string; _user_id: string }
         Returns: Json
@@ -3381,6 +3578,31 @@ export type Database = {
           _recipient: string
         }
         Returns: undefined
+      }
+      ensure_pool_rating: {
+        Args: { _pool: string; _user_id: string }
+        Returns: {
+          created_at: string
+          draws: number
+          games_played: number
+          id: string
+          last_rated_at: string | null
+          losses: number
+          peak_rating: number
+          pool: string
+          rating: number
+          rating_deviation: number
+          updated_at: string
+          user_id: string
+          volatility: number
+          wins: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_variant_ratings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       ensure_variant_rating: {
         Args: { _pool: string; _user_id: string }
@@ -3455,6 +3677,14 @@ export type Database = {
       finalize_expired_games: { Args: { _limit?: number }; Returns: Json }
       finalize_game_timeout: { Args: { _game_id: string }; Returns: Json }
       find_match: { Args: { _queue_id: string }; Returns: string }
+      game_spectator_view: {
+        Args: { _game_id: string; _viewer: string }
+        Returns: Json
+      }
+      game_touch_presence: {
+        Args: { _game_id: string; _user_id: string }
+        Returns: Json
+      }
       glicko2_update: {
         Args: {
           _opp_rating: number
@@ -3474,6 +3704,7 @@ export type Database = {
         Returns: boolean
       }
       is_valid_chess960_start: { Args: { _fen: string }; Returns: boolean }
+      list_public_games: { Args: { _limit?: number }; Returns: Json }
       log_security_event: {
         Args: {
           _detail?: Json
@@ -3538,6 +3769,7 @@ export type Database = {
         }
       }
       queue_leave: { Args: never; Returns: undefined }
+      rating_pool: { Args: { _tc: string; _variant: string }; Returns: string }
       record_skill_events: { Args: { _events: Json }; Returns: Json }
       resign_game_internal: {
         Args: { _expected_version: number; _game_id: string; _user_id: string }
@@ -3568,7 +3800,26 @@ export type Database = {
         Args: { _game_id: string; _note?: string; _reason: string }
         Returns: Json
       }
+      takeback_request_internal: {
+        Args: {
+          _expected_version: number
+          _game_id: string
+          _idempotency_key: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      takeback_respond_internal: {
+        Args: {
+          _action: string
+          _game_id: string
+          _request_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       tc_increment_ms: { Args: { _time_control: string }; Returns: number }
+      tc_spec: { Args: { _tc: string }; Returns: Json }
       titan_consume_move: {
         Args: {
           _idempotency_key: string
