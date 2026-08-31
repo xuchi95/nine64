@@ -49,19 +49,46 @@ function sanitizeOptions(raw) {
 }
 
 function buildGoArgs(body) {
-  const clock = body.clock;
-  if (clock && Number.isFinite(clock.whiteMs) && Number.isFinite(clock.blackMs)) {
+  // The backend sends a typed `search` block; legacy top-level fields stay supported.
+  const search = body.search && typeof body.search === "object" ? body.search : {};
+  const policy = typeof search.policy === "string" ? search.policy : null;
+
+  if (policy === "depth" && Number.isFinite(Number(search.depth))) {
+    return `depth ${Math.min(Math.max(Math.trunc(Number(search.depth)), 1), 60)}`;
+  }
+  if (policy === "nodes" && Number.isFinite(Number(search.nodes))) {
+    return `nodes ${Math.min(Math.max(Math.trunc(Number(search.nodes)), 1), 1_000_000_000)}`;
+  }
+
+  const clock =
+    body.clock && Number.isFinite(body.clock.whiteMs) && Number.isFinite(body.clock.blackMs)
+      ? body.clock
+      : Number.isFinite(Number(search.wtimeMs)) && Number.isFinite(Number(search.btimeMs))
+        ? {
+            whiteMs: Number(search.wtimeMs),
+            blackMs: Number(search.btimeMs),
+            whiteIncMs: Number(search.wincMs) || 0,
+            blackIncMs: Number(search.bincMs) || 0,
+          }
+        : null;
+
+  if (clock) {
     const parts = [
       `wtime ${Math.max(1, Math.trunc(clock.whiteMs))}`,
       `btime ${Math.max(1, Math.trunc(clock.blackMs))}`,
     ];
     if (clock.whiteIncMs) parts.push(`winc ${Math.trunc(clock.whiteIncMs)}`);
     if (clock.blackIncMs) parts.push(`binc ${Math.trunc(clock.blackIncMs)}`);
+    const cap = Number(search.maxMoveTimeMs);
+    if (Number.isFinite(cap) && cap > 0) parts.push(`movetime ${Math.min(Math.trunc(cap), 60_000)}`);
     return parts.join(" ");
   }
-  const movetime = Math.min(Math.max(Number(body.movetimeMs) || 3000, 50), 60_000);
+
+  const requested = Number(search.movetimeMs) || Number(body.movetimeMs) || 3000;
+  const movetime = Math.min(Math.max(requested, 50), 60_000);
   return `movetime ${movetime}`;
 }
+
 
 async function readBody(req, limit = 256 * 1024) {
   let size = 0;
