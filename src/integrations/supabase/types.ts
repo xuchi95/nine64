@@ -150,6 +150,164 @@ export type Database = {
           },
         ]
       }
+      ai_prompt_versions: {
+        Row: {
+          body: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          key: string
+          model: string
+          prompt_id: string
+          reason: string
+          version: number
+        }
+        Insert: {
+          body: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          key: string
+          model: string
+          prompt_id: string
+          reason: string
+          version: number
+        }
+        Update: {
+          body?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          key?: string
+          model?: string
+          prompt_id?: string
+          reason?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_prompt_versions_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "ai_prompts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_prompts: {
+        Row: {
+          body: string
+          created_at: string
+          draft_body: string
+          draft_updated_at: string | null
+          has_draft: boolean
+          id: string
+          key: string
+          model: string
+          published_at: string
+          reason: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          draft_body?: string
+          draft_updated_at?: string | null
+          has_draft?: boolean
+          id?: string
+          key: string
+          model?: string
+          published_at?: string
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          draft_body?: string
+          draft_updated_at?: string | null
+          has_draft?: boolean
+          id?: string
+          key?: string
+          model?: string
+          published_at?: string
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      bot_sessions: {
+        Row: {
+          created_at: string
+          current_fen: string
+          end_reason: string | null
+          engine_meta: Json
+          finished_at: string | null
+          id: string
+          initial_fen: string
+          last_activity_at: string
+          last_idempotency_key: string | null
+          last_snapshot: Json | null
+          level: number
+          moves: Json
+          player_color: string
+          profile_slug: string
+          result: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          current_fen: string
+          end_reason?: string | null
+          engine_meta?: Json
+          finished_at?: string | null
+          id?: string
+          initial_fen: string
+          last_activity_at?: string
+          last_idempotency_key?: string | null
+          last_snapshot?: Json | null
+          level: number
+          moves?: Json
+          player_color: string
+          profile_slug: string
+          result?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          current_fen?: string
+          end_reason?: string | null
+          engine_meta?: Json
+          finished_at?: string | null
+          id?: string
+          initial_fen?: string
+          last_activity_at?: string
+          last_idempotency_key?: string | null
+          last_snapshot?: Json | null
+          level?: number
+          moves?: Json
+          player_color?: string
+          profile_slug?: string
+          result?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       contact_requests: {
         Row: {
           created_at: string
@@ -186,6 +344,229 @@ export type Database = {
           subject?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      engine_benchmarks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          depth: number | null
+          engine_version: string
+          hardware: Json
+          id: string
+          kind: string
+          nodes: number | null
+          nps: number | null
+          passed: boolean
+          profile_slug: string
+          profile_version: number
+          result: Json
+          score: number | null
+          signature: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          depth?: number | null
+          engine_version: string
+          hardware?: Json
+          id?: string
+          kind: string
+          nodes?: number | null
+          nps?: number | null
+          passed?: boolean
+          profile_slug: string
+          profile_version: number
+          result?: Json
+          score?: number | null
+          signature?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          depth?: number | null
+          engine_version?: string
+          hardware?: Json
+          id?: string
+          kind?: string
+          nodes?: number | null
+          nps?: number | null
+          passed?: boolean
+          profile_slug?: string
+          profile_version?: number
+          result?: Json
+          score?: number | null
+          signature?: string | null
+        }
+        Relationships: []
+      }
+      engine_move_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          idempotency_key: string
+          last_error: string | null
+          latency_ms: number | null
+          ply: number
+          request: Json
+          response: Json | null
+          session_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          last_error?: string | null
+          latency_ms?: number | null
+          ply: number
+          request?: Json
+          response?: Json | null
+          session_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          last_error?: string | null
+          latency_ms?: number | null
+          ply?: number
+          request?: Json
+          response?: Json | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_move_jobs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "bot_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engine_profile_versions: {
+        Row: {
+          benchmark_id: string | null
+          changed_by: string | null
+          config: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          profile_id: string
+          reason: string
+          slug: string
+          status: string
+          stockfish_version: string
+          version: number
+        }
+        Insert: {
+          benchmark_id?: string | null
+          changed_by?: string | null
+          config: Json
+          created_at?: string
+          enabled: boolean
+          id?: string
+          profile_id: string
+          reason: string
+          slug: string
+          status: string
+          stockfish_version?: string
+          version: number
+        }
+        Update: {
+          benchmark_id?: string | null
+          changed_by?: string | null
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          profile_id?: string
+          reason?: string
+          slug?: string
+          status?: string
+          stockfish_version?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_profile_versions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "engine_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engine_profiles: {
+        Row: {
+          config: Json
+          created_at: string
+          draft_config: Json
+          draft_updated_at: string | null
+          enabled: boolean
+          has_draft: boolean
+          id: string
+          is_public: boolean
+          name: string
+          published_at: string
+          reason: string | null
+          runtime: string
+          slug: string
+          status: string
+          stockfish_version: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          draft_config?: Json
+          draft_updated_at?: string | null
+          enabled?: boolean
+          has_draft?: boolean
+          id?: string
+          is_public?: boolean
+          name: string
+          published_at?: string
+          reason?: string | null
+          runtime: string
+          slug: string
+          status?: string
+          stockfish_version?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          draft_config?: Json
+          draft_updated_at?: string | null
+          enabled?: boolean
+          has_draft?: boolean
+          id?: string
+          is_public?: boolean
+          name?: string
+          published_at?: string
+          reason?: string | null
+          runtime?: string
+          slug?: string
+          status?: string
+          stockfish_version?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
         }
         Relationships: []
       }
@@ -1430,6 +1811,21 @@ export type Database = {
       }
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
       apply_rating_once: { Args: { _game_id: string }; Returns: Json }
+      bot_session_commit: {
+        Args: {
+          _current_fen: string
+          _end_reason: string
+          _engine_meta: Json
+          _expected_version: number
+          _idempotency_key: string
+          _moves: Json
+          _result: string
+          _session_id: string
+          _status: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       claim_timeout_internal: {
         Args: { _expected_version: number; _game_id: string; _user_id: string }
         Returns: Json
@@ -1477,6 +1873,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      expire_bot_sessions: { Args: { _idle_minutes?: number }; Returns: number }
       expire_draw_offers: { Args: { _game_id: string }; Returns: undefined }
       fairplay_analyzer_version: { Args: never; Returns: string }
       fairplay_claim_jobs: {
