@@ -383,9 +383,9 @@ async function setState(params: {
     _status: params.status,
     _reason: params.reason,
     _actor: params.actorId,
-    _suspended_until: params.suspendedUntil ?? null,
-    _internal_note: params.internalNote ?? null,
-    _expected_version: params.expectedVersion ?? null,
+    _suspended_until: params.suspendedUntil ?? undefined,
+    _internal_note: params.internalNote ?? undefined,
+    _expected_version: params.expectedVersion ?? undefined,
   });
   if (error) return fail("STATE_WRITE_FAILED", error.message);
   const res = data as { ok: boolean; code?: string; state?: Record<string, unknown>; before?: unknown };
@@ -680,7 +680,7 @@ export async function adjustRating(params: {
     _reason: params.reason,
     _actor: params.actorId,
     _idempotency_key: params.idempotencyKey,
-    _game_id: params.gameId ?? null,
+    _game_id: params.gameId ?? undefined,
   });
   if (error) return fail("RATING_WRITE_FAILED", error.message);
   const res = data as { ok: boolean; code?: string; replayed?: boolean; adjustment?: Record<string, unknown> };
