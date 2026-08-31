@@ -411,25 +411,18 @@ async function runGameCommand(
   };
 }
 
-async function notifyGameOver(game: Game) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const title = game.result === "1/2-1/2" ? "Game drawn" : "Game over";
-  await supabaseAdmin.from("notifications").insert([
-    {
-      user_id: game.white_id,
-      type: "game_over",
-      title,
-      body: game.end_reason ?? "The game ended.",
-      data: { game_id: game.id },
-    },
-    {
-      user_id: game.black_id,
-      type: "game_over",
-      title,
-      body: game.end_reason ?? "The game ended.",
-      data: { game_id: game.id },
-    },
-  ]);
+/**
+ * Game-over notifications are enqueued transactionally by the database
+ * (notification_outbox). This only kicks the processor for low latency.
+ */
+async function kickNotificationOutbox() {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("process_notification_outbox", { _limit: 50 });
+    if (error) console.error("Notification outbox kick failed", error.message);
+  } catch (err) {
+    console.error("Notification outbox kick failed", err);
+  }
 }
 
 /** Resign: only the caller can lose; the opponent is derived by the server. */
@@ -443,7 +436,7 @@ export const resignGame = createServerFn({ method: "POST" })
       context.userId,
       data.expectedVersion,
     );
-    if (out.code === "RESIGNED" && out.game) await notifyGameOver(out.game);
+    if (out.code === "RESIGNED") await kickNotificationOutbox();
     return out;
   });
 
@@ -458,7 +451,7 @@ export const claimTimeout = createServerFn({ method: "POST" })
       context.userId,
       data.expectedVersion,
     );
-    if (out.code === "FLAGGED" && out.game) await notifyGameOver(out.game);
+    if (out.code === "FLAGGED") await kickNotificationOutbox();
     return out;
   });
 
@@ -673,7 +666,7 @@ export const acceptDraw = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const out = toDrawOutcome(raw);
-    if (out.code === "DRAW_AGREED" && out.game) await notifyGameOver(out.game);
+    if (out.code === "DRAW_AGREED") await kickNotificationOutbox();
     return out;
   });
 
