@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
-import { clickSquare, expectBoardVisible, playMove } from "./helpers";
+import { clickSquare, expectBoardVisible, goto, playMove } from "./helpers";
+
+async function startLocalGame(page: import("@playwright/test").Page) {
+  await goto(page, "/play/local");
+  await page.getByRole("button", { name: /^(bắt đầu|start game|start)$/i }).click();
+  await expectBoardVisible(page);
+}
 
 test.describe("standard chess — local board", () => {
   test("starts a game, plays legal moves and castles kingside", async ({ page }) => {
-    await page.goto("/play/local", { waitUntil: "domcontentloaded" });
-
-    await page.getByRole("button", { name: /start|bắt đầu|chơi/i }).last().click();
-    await expectBoardVisible(page);
+    await startLocalGame(page);
 
     // 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.O-O
     await playMove(page, "e2", "e4");
@@ -20,18 +23,16 @@ test.describe("standard chess — local board", () => {
     const body = page.locator("body");
     await expect(body).toContainText("e4");
     await expect(body).toContainText("Nf3");
-    // Castling is recorded in SAN, proving the rook moved with the king.
+    // Castling recorded in SAN proves the rook moved together with the king.
     await expect(body).toContainText(/O-O/);
   });
 
   test("rejects an illegal move instead of faking a position", async ({ page }) => {
-    await page.goto("/play/local", { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: /start|bắt đầu|chơi/i }).last().click();
-    await expectBoardVisible(page);
+    await startLocalGame(page);
 
-    // e2 -> e5 is illegal for a pawn on the first move.
+    // e2 -> e5 is illegal for a pawn on its first move.
     await playMove(page, "e2", "e5");
     await clickSquare(page, "a1");
-    await expect(page.locator("body")).not.toContainText(/\be5\b/);
+    await expect(page.locator("body")).toContainText(/chưa có nước đi|no moves yet/i);
   });
 });

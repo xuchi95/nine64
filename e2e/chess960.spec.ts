@@ -1,19 +1,18 @@
 import { expect, test } from "@playwright/test";
-import { pageText, SHUFFLE_VARIANT_TERMS } from "./helpers";
+import { goto, pageText, SHUFFLE_VARIANT_TERMS } from "./helpers";
 
 /**
- * Chess960 (and the Random Army variant that shares its shuffled back rank) is
- * intentionally disabled: the current rule engine cannot handle 960 castling,
- * so the platform must never offer it rather than produce illegal castling.
- * These tests are the regression guard for that contract.
+ * Chess960 (and Random Army, which shares its shuffled back rank) is
+ * intentionally disabled: the current rule engine does not implement 960
+ * castling, so the platform must never offer the variant rather than produce
+ * illegal castling. These tests guard that contract end to end.
  */
-const SURFACES = ["/play/local", "/play/ai", "/play", "/analysis"];
+const SURFACES = ["/play", "/play/local", "/play/ai", "/analysis"];
 
 test.describe("chess960 castling contract", () => {
   for (const path of SURFACES) {
     test(`no shuffled-back-rank variant is offered on ${path}`, async ({ page }) => {
-      await page.goto(path, { waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(500);
+      await goto(page, path);
       const text = await pageText(page);
       for (const term of SHUFFLE_VARIANT_TERMS) {
         expect(text, `${path} must not offer "${term}"`).not.toContain(term);
@@ -21,20 +20,27 @@ test.describe("chess960 castling contract", () => {
     });
   }
 
-  test("capability registry keeps chess960 unplayable and its rule engine unsupported", async ({ page }) => {
-    await page.goto("/play/local", { waitUntil: "domcontentloaded" });
+  test("capability registry keeps chess960 unplayable and its castling engine unsupported", async ({
+    page,
+  }) => {
+    await goto(page, "/play/local");
 
     const result = await page.evaluate(async () => {
       const variants = await import("/src/config/variants.ts");
       const rules = await import("/src/lib/chess/rules/index.ts");
+      const chess960 = await import("/src/lib/chess/chess960.ts");
       const ids = (list: Array<{ id: string }>) => list.map((v) => v.id);
-      let castlingError: string | null = null;
+
+      let castlingError = "";
       try {
-        const adapter = rules.rulesFor("chess960");
-        adapter.createGame();
+        rules.rulesFor("chess960").createPosition();
       } catch (err) {
-        castlingError = (err as Error).message;
+        castlingError = `${(err as { code?: string }).code ?? ""} ${(err as Error).message}`;
       }
+
+      // Position generation itself must stay deterministic and legal.
+      const start = chess960.generateChess960Position(518);
+
       return {
         local: ids(variants.localVariants()),
         bot: ids(variants.botVariants()),
@@ -42,7 +48,9 @@ test.describe("chess960 castling contract", () => {
         supported960: rules.rulesSupported("chess960"),
         supportedRandomArmy: rules.rulesSupported("random-army"),
         supportedStandard: rules.rulesSupported("standard"),
+        arbitraryCastling: rules.rulesFor("chess960").supportsArbitraryCastling,
         castlingError,
+        classicalIndexFen: start.fen,
       };
     });
 
@@ -54,6 +62,9 @@ test.describe("chess960 castling contract", () => {
     // No silent fallback to standard castling for shuffled positions.
     expect(result.supported960).toBe(false);
     expect(result.supportedRandomArmy).toBe(false);
-    expect(result.castlingError ?? "").toMatch(/RULES_ENGINE_UNAVAILABLE|castling/i);
+    expect(result.arbitraryCastling).toBe(false);
+    expect(result.castlingError).toMatch(/RULES_ENGINE_UNAVAILABLE/);
+    // Scharnagl index 518 is the classical start position.
+    expect(result.classicalIndexFen).toContain("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
   });
 });
