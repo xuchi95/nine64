@@ -20,6 +20,7 @@ export default {
     "adminc.nav.engine": "Máy cờ",
     "adminc.nav.intelligence": "Trí tuệ AI",
     "adminc.nav.puzzles": "Kho câu đố",
+    "adminc.nav.openings": "Khai cuộc",
 
     "adminc.dash.title": "Tổng quan vận hành",
     "adminc.dash.subtitle": "Số liệu thật từ cơ sở dữ liệu Nine64.",
