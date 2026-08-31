@@ -869,8 +869,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      abort_game_internal: {
+        Args: { _expected_version: number; _game_id: string; _user_id: string }
+        Returns: Json
+      }
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
       apply_rating_once: { Args: { _game_id: string }; Returns: Json }
+      claim_timeout_internal: {
+        Args: { _expected_version: number; _game_id: string; _user_id: string }
+        Returns: Json
+      }
       clock_lag_grace_ms: { Args: never; Returns: number }
       commit_move_internal: {
         Args: {
@@ -950,6 +958,10 @@ export type Database = {
         }
       }
       queue_leave: { Args: never; Returns: undefined }
+      resign_game_internal: {
+        Args: { _expected_version: number; _game_id: string; _user_id: string }
+        Returns: Json
+      }
       security_probe_alerts: {
         Args: { _threshold?: number; _window_minutes?: number }
         Returns: {
