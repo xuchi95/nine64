@@ -1,7 +1,13 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Brain, Lightbulb, ShieldAlert, Sparkles, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { coachGame } from "@/lib/coach.functions";
 import { buildCoachDigest } from "@/lib/coach/digest";
 import { SEVERITY_META, type CoachReport } from "@/lib/coach/types";
@@ -14,22 +20,36 @@ interface Props {
   onSelectMove?: (plyIndex: number) => void;
 }
 
+type Phase = "opening" | "middlegame" | "endgame";
+const PHASES: Phase[] = ["opening", "middlegame", "endgame"];
+
 export function CoachPanel({ game, onSelectMove }: Props) {
   const { t } = useT();
   const runCoach = useServerFn(coachGame);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("opening");
   const side = game.playerColor ?? "w";
   const report = game.coach ?? null;
 
-  const mistakes = useMemo(() => {
+  /** Up to three lessons — the rest stays in the turning points panel. */
+  const lessons = useMemo(() => {
     if (!report) return [];
-    return [...report.mistakes].sort(
-      (a, b) =>
-        SEVERITY_META[a.severity].order - SEVERITY_META[b.severity].order ||
-        a.moveNumber - b.moveNumber,
-    );
+    return [...report.mistakes]
+      .sort(
+        (a, b) =>
+          SEVERITY_META[b.severity].order - SEVERITY_META[a.severity].order ||
+          a.moveNumber - b.moveNumber,
+      )
+      .slice(0, 3);
   }, [report]);
+
+  /** The engine data moved on after this explanation was written. */
+  const stale = Boolean(
+    report?.sourceReviewedAt &&
+      game.review?.reviewedAt &&
+      report.sourceReviewedAt !== game.review.reviewedAt,
+  );
 
   async function generate() {
     setPending(true);
@@ -52,13 +72,17 @@ export function CoachPanel({ game, onSelectMove }: Props) {
     }
   }
 
+  const phaseText = report ? report.phases[phase] : "";
+  const phaseFallback =
+    phase === "endgame" ? t("game.coach.noEndgame") : t("game.coach.noPhaseNote");
+
   return (
-    <div className="panel p-4">
-      <div className="flex items-center justify-between gap-2">
+    <section className="panel p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          <Brain className="size-4 text-primary" /> {t("game.coach.title")}
+          <Brain className="size-4 text-primary" aria-hidden /> {t("game.coach.title")}
         </h2>
-        {report && (
+        {report && !stale && (
           <Button size="sm" variant="ghost" disabled={pending} onClick={() => void generate()}>
             {pending ? t("game.coach.analysing") : t("game.coach.reanalyse")}
           </Button>
@@ -78,7 +102,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
             {!game.review && t("game.coach.introReviewHint")}
           </p>
           <Button className="mt-3 w-full" disabled={pending} onClick={() => void generate()}>
-            <Sparkles className="size-4" />
+            <Sparkles className="size-4" aria-hidden />
             {pending ? t("game.coach.analysing") : t("game.coach.generate")}
           </Button>
         </div>
@@ -86,50 +110,86 @@ export function CoachPanel({ game, onSelectMove }: Props) {
 
       {report && (
         <div className="mt-3 space-y-4 text-sm">
+          {stale && (
+            <div className="rounded-md border border-warning/40 bg-warning/10 p-3">
+              <p className="text-xs text-warning">{t("game.coach.stale")}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                disabled={pending}
+                onClick={() => void generate()}
+              >
+                {pending ? t("game.coach.analysing") : t("game.coach.refresh")}
+              </Button>
+            </div>
+          )}
+
           <div className="rounded-md bg-surface-2 p-3">
             <p className="font-display text-base font-bold leading-snug">{report.headline}</p>
             {report.verdict && (
-              <p className="mt-2 text-muted-foreground whitespace-pre-line">{report.verdict}</p>
+              <p className="mt-2 whitespace-pre-line text-muted-foreground">{report.verdict}</p>
             )}
             {report.levelImpression && (
               <p className="mt-2 text-xs text-muted-foreground">{report.levelImpression}</p>
             )}
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3">
-            <PhaseCard label={t("game.coach.phaseOpening")} text={report.phases.opening} />
-            <PhaseCard label={t("game.coach.phaseMiddlegame")} text={report.phases.middlegame} />
-            <PhaseCard label={t("game.coach.phaseEndgame")} text={report.phases.endgame} />
+          {/* Phase notes as tabs: one full-width column, never three narrow ones. */}
+          <div>
+            <div role="tablist" aria-label={t("game.coach.title")} className="flex flex-wrap gap-1">
+              {PHASES.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  role="tab"
+                  id={`coach-phase-tab-${p}`}
+                  aria-selected={phase === p}
+                  aria-controls={`coach-phase-panel-${p}`}
+                  onClick={() => setPhase(p)}
+                  className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    phase === p
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t(
+                    p === "opening"
+                      ? "game.coach.phaseOpening"
+                      : p === "middlegame"
+                        ? "game.coach.phaseMiddlegame"
+                        : "game.coach.phaseEndgame",
+                  )}
+                </button>
+              ))}
+            </div>
+            <div
+              role="tabpanel"
+              id={`coach-phase-panel-${phase}`}
+              aria-labelledby={`coach-phase-tab-${phase}`}
+              className="mt-2 rounded-md border border-border bg-surface-2 p-3 text-muted-foreground"
+            >
+              {phaseText || phaseFallback}
+            </div>
           </div>
 
-          {report.strengths.length > 0 && (
-            <Section icon={<Target className="size-4 text-primary" />} title={t("game.coach.strengths")}>
-              <ul className="space-y-1">
-                {report.strengths.map((s, i) => (
-                  <li key={i} className="text-muted-foreground">
-                    • {s}
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
-
-          {mistakes.length > 0 && (
-            <Section
-              icon={<ShieldAlert className="size-4 text-destructive" />}
-              title={t("game.coach.mistakesTitle")}
-            >
+          {lessons.length > 0 && (
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <ShieldAlert className="size-4 text-destructive" aria-hidden />{" "}
+                {t("game.coach.lessons")}
+              </p>
               <ul className="space-y-2">
-                {mistakes.map((m, i) => {
+                {lessons.map((m, i) => {
                   const meta = SEVERITY_META[m.severity];
-                  const plyIndex = Math.max(
-                    0,
-                    (m.moveNumber - 1) * 2 + (side === "w" ? 0 : 1),
-                  );
+                  const plyIndex =
+                    m.plyIndex ?? Math.max(0, (m.moveNumber - 1) * 2 + (side === "w" ? 0 : 1));
                   return (
-                    <li key={i} className={`rounded-md border p-3 ${meta.ring}`}>
+                    <li key={m.momentId ?? i} className={`rounded-md border p-3 ${meta.ring}`}>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`text-xs font-semibold uppercase tracking-wider ${meta.tone}`}>
+                        <span
+                          className={`text-xs font-semibold uppercase tracking-wider ${meta.tone}`}
+                        >
                           {meta.title}
                         </span>
                         <button
@@ -146,7 +206,9 @@ export function CoachPanel({ game, onSelectMove }: Props) {
                       )}
                       {m.betterPlan && (
                         <p className="mt-1 text-muted-foreground">
-                          <span className="font-medium text-foreground">{t("game.coach.betterPlan")}</span>
+                          <span className="font-medium text-foreground">
+                            {t("game.coach.betterPlan")}
+                          </span>
                           {m.betterPlan}
                         </p>
                       )}
@@ -154,82 +216,86 @@ export function CoachPanel({ game, onSelectMove }: Props) {
                   );
                 })}
               </ul>
-            </Section>
+            </div>
           )}
 
-          {report.habits.length > 0 && (
-            <Section icon={<ShieldAlert className="size-4 text-warning" />} title={t("game.coach.habits")}>
-              <ul className="space-y-1">
-                {report.habits.map((h, i) => (
-                  <li key={i} className="text-muted-foreground">
-                    • {h}
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
-
-          {report.advice.length > 0 && (
-            <Section icon={<Lightbulb className="size-4 text-accent" />} title={t("game.coach.advice")}>
-              <ol className="space-y-1">
-                {report.advice.map((a, i) => (
-                  <li key={i} className="text-muted-foreground">
-                    {i + 1}. {a}
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
-
-          {report.drills.length > 0 && (
-            <Section icon={<Target className="size-4 text-primary" />} title={t("game.coach.drills")}>
-              <div className="flex flex-wrap gap-2">
-                {report.drills.map((d, i) => (
-                  <span
-                    key={i}
-                    className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs"
-                  >
-                    {d}
+          <Accordion type="single" collapsible className="w-full">
+            {report.strengths.length > 0 && (
+              <AccordionItem value="strengths">
+                <AccordionTrigger className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <Target className="size-4 text-primary" aria-hidden />{" "}
+                    {t("game.coach.strengths")}
                   </span>
-                ))}
-              </div>
-            </Section>
-          )}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ul className="space-y-1">
+                    {report.strengths.map((s, i) => (
+                      <li key={i} className="text-muted-foreground">
+                        • {s}
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
-          <p className="text-2xs text-muted-foreground">
-{t("game.coach.disclaimer")}
-          </p>
+            {report.habits.length > 0 && (
+              <AccordionItem value="habits">
+                <AccordionTrigger className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <ShieldAlert className="size-4 text-warning" aria-hidden />{" "}
+                    {t("game.coach.habits")}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ul className="space-y-1">
+                    {report.habits.map((h, i) => (
+                      <li key={i} className="text-muted-foreground">
+                        • {h}
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {(report.advice.length > 0 || report.drills.length > 0) && (
+              <AccordionItem value="advice">
+                <AccordionTrigger className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <Lightbulb className="size-4 text-accent" aria-hidden />{" "}
+                    {t("game.coach.advice")}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ol className="space-y-1">
+                    {report.advice.map((a, i) => (
+                      <li key={i} className="text-muted-foreground">
+                        {i + 1}. {a}
+                      </li>
+                    ))}
+                  </ol>
+                  {report.drills.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {report.drills.map((d, i) => (
+                        <span
+                          key={i}
+                          className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs"
+                        >
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
+
+          <p className="text-2xs text-muted-foreground">{t("game.coach.disclaimer")}</p>
         </div>
       )}
-    </div>
-  );
-}
-
-function PhaseCard({ label, text }: { label: string; text: string }) {
-  if (!text) return null;
-  return (
-    <div className="rounded-md border border-border bg-surface-2 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 text-muted-foreground">{text}</p>
-    </div>
-  );
-}
-
-function Section({
-  icon,
-  title,
-  children,
-}: {
-  icon: ReactNode;
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {icon} {title}
-      </p>
-      {children}
-    </div>
+    </section>
   );
 }
