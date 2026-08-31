@@ -37,6 +37,7 @@ import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayCoachRouteImport } from './routes/play.coach'
 import { Route as PlayLocalRouteImport } from './routes/play.local'
 import { Route as PlayShareRouteImport } from './routes/play.share'
+import { Route as PlayVariantsRouteImport } from './routes/play.variants'
 import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
@@ -205,6 +206,11 @@ const PlayLocalRoute = PlayLocalRouteImport.update({
 const PlayShareRoute = PlayShareRouteImport.update({
   id: '/play/share',
   path: '/play/share',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayVariantsRoute = PlayVariantsRouteImport.update({
+  id: '/play/variants',
+  path: '/play/variants',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PuzzlesIndexRoute = PuzzlesIndexRouteImport.update({
@@ -394,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/play/coach': typeof PlayCoachRoute
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
+  '/play/variants': typeof PlayVariantsRoute
   '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
@@ -452,6 +459,7 @@ export interface FileRoutesByTo {
   '/play/coach': typeof PlayCoachRoute
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
+  '/play/variants': typeof PlayVariantsRoute
   '/drills': typeof DrillsIndexRoute
   '/games': typeof GamesIndexRoute
   '/learn': typeof LearnIndexRoute
@@ -512,6 +520,7 @@ export interface FileRoutesById {
   '/play/coach': typeof PlayCoachRoute
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
+  '/play/variants': typeof PlayVariantsRoute
   '/drills/': typeof DrillsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
@@ -572,6 +581,7 @@ export interface FileRouteTypes {
     | '/play/coach'
     | '/play/local'
     | '/play/share'
+    | '/play/variants'
     | '/drills/'
     | '/games/'
     | '/learn/'
@@ -630,6 +640,7 @@ export interface FileRouteTypes {
     | '/play/coach'
     | '/play/local'
     | '/play/share'
+    | '/play/variants'
     | '/drills'
     | '/games'
     | '/learn'
@@ -689,6 +700,7 @@ export interface FileRouteTypes {
     | '/play/coach'
     | '/play/local'
     | '/play/share'
+    | '/play/variants'
     | '/drills/'
     | '/games/'
     | '/learn/'
@@ -745,6 +757,7 @@ export interface RootRouteChildren {
   PlayCoachRoute: typeof PlayCoachRoute
   PlayLocalRoute: typeof PlayLocalRoute
   PlayShareRoute: typeof PlayShareRoute
+  PlayVariantsRoute: typeof PlayVariantsRoute
   DrillsIndexRoute: typeof DrillsIndexRoute
   GamesIndexRoute: typeof GamesIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
@@ -955,6 +968,13 @@ declare module '@tanstack/react-router' {
       path: '/play/share'
       fullPath: '/play/share'
       preLoaderRoute: typeof PlayShareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/play/variants': {
+      id: '/play/variants'
+      path: '/play/variants'
+      fullPath: '/play/variants'
+      preLoaderRoute: typeof PlayVariantsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/puzzles/': {
@@ -1252,6 +1272,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayCoachRoute: PlayCoachRoute,
   PlayLocalRoute: PlayLocalRoute,
   PlayShareRoute: PlayShareRoute,
+  PlayVariantsRoute: PlayVariantsRoute,
   DrillsIndexRoute: DrillsIndexRoute,
   GamesIndexRoute: GamesIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
