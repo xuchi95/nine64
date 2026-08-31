@@ -74,11 +74,18 @@ export function sanitizeDigest(input: unknown): CoachDigest {
     timeline.push(line);
   }
 
+  // Key moment ids are canonical server-side identifiers: rebuild them from the
+  // ply index so the model can never introduce an id of its own choosing.
+  const keyMoments = parsed.keyMoments
+    .slice(0, L.maxKeyMoments)
+    .map((m) => ({ ...m, id: `ply-${m.plyIndex}` }));
+
   const digest = {
     ...parsed,
     timeline,
-    keyMoments: parsed.keyMoments.slice(0, L.maxKeyMoments),
+    keyMoments,
   } as unknown as CoachDigest;
+
 
   if (JSON.stringify(digest).length > L.maxTotalPayloadChars) {
     throw new CoachInputError("COACH_PAYLOAD_TOO_LARGE");
