@@ -19,7 +19,10 @@ import type { CoachDigest } from "@/lib/coach/digest";
 import { VariationPanel } from "./VariationPanel";
 import { CoachPanel } from "./CoachPanel";
 
-vi.mock("@tanstack/react-start", () => ({ useServerFn: () => vi.fn() }));
+vi.mock("@tanstack/react-start", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useServerFn: () => vi.fn(),
+}));
 
 const START = new Chess().fen();
 
