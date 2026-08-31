@@ -2,6 +2,15 @@ export default {
   vi: {
     "admin.adminOnly": "Trang này chỉ dành cho quản trị viên.",
 
+    // Admin hub (/admin)
+    "admin.hub.title": "Trung tâm quản trị",
+    "admin.hub.subtitle": "Chọn khu vực quản trị bạn muốn làm việc.",
+    "admin.hub.fairplayDesc": "Hồ sơ nghi vấn, bằng chứng thuật toán và xử lý khoá xếp hạng.",
+    "admin.hub.logDesc": "Mọi quyết định Fair Play kèm thời điểm, mức tin cậy và lý do.",
+    "admin.hub.auditDesc": "Ai đã làm gì trên bảng điều khiển quản trị, và vào lúc nào.",
+    "admin.hub.securityDesc": "Truy vấn bị phân quyền chặn và cảnh báo hành vi dò quyền.",
+    "admin.hub.systemDesc": "Trạng thái biến môi trường, hạn mức chống spam và security header.",
+
     // System console (secrets / limiter / CSP)
     "admin.system.title": "Bảng điều khiển hệ thống",
     "admin.system.subtitle": "Tình trạng biến môi trường, hạn mức chống spam và security header đang áp dụng.",
