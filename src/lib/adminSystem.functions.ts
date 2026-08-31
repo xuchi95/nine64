@@ -169,10 +169,11 @@ export const resetRateLimitAction = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const query = supabaseAdmin.from("rate_limit_counters").delete();
-    const { error, count } = data.action
-      ? await query.like("bucket_key", `${data.action}|%`).select("bucket_key", { count: "exact" })
-      : await query.neq("bucket_key", "").select("bucket_key", { count: "exact" });
+    const { data: deleted, error } = data.action
+      ? await query.like("bucket_key", `${data.action}|%`).select("bucket_key")
+      : await query.neq("bucket_key", "").select("bucket_key");
     if (error) throw new Error(error.message);
+    const count = deleted?.length ?? 0;
 
     const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
     await recordAdminAction({
