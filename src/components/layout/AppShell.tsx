@@ -48,6 +48,7 @@ const MAIN_NAV = [
 ] as const;
 
 const MORE_NAV = [
+  { to: "/skills", labelKey: "shell.nav.skills" },
   { to: "/openings", labelKey: "shell.nav.openings" },
   { to: "/drills", labelKey: "shell.nav.drills" },
   { to: "/progress", labelKey: "shell.nav.progress" },
@@ -625,6 +626,7 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   "/game": "shell.route.liveGame",
   "/games": "shell.route.myGames",
   "/puzzles": "shell.nav.puzzles",
+  "/skills": "shell.nav.skills",
   "/openings": "shell.nav.openings",
   "/drills": "shell.nav.drills",
   "/progress": "shell.nav.progress",
