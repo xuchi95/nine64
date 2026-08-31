@@ -82,8 +82,9 @@ describe("facts from the rules engine", () => {
     expect(hanging).toEqual({ square: "e5", piece: "n" });
   });
 
-  it("does not flag a defended piece", () => {
-    const hanging = findHangingPiece("4k3/8/5p2/4n3/3P4/8/8/4K3 w - - 0 1", "standard", "b");
+  it("does not flag a piece whose capture wins no material", () => {
+    // Knight on e5 defended by the f6 pawn, attacked only by an equal knight.
+    const hanging = findHangingPiece("4k3/8/5p2/4n3/8/3N4/8/4K3 w - - 0 1", "standard", "b");
     expect(hanging).toBeNull();
   });
 
@@ -115,7 +116,7 @@ describe("buildMoveFacts + buildMoment", () => {
       moveNumber: 1,
       bestUci: "e2e4",
       evalBeforeCp: 30,
-      evalAfterCp: -60,
+      evalAfterCp: -260,
       mateBefore: null,
       mateAgainst: null,
       history: [{ san: "h3", from: "h2", to: "h3", color: "w" }],
