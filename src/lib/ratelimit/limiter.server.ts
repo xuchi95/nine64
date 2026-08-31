@@ -104,6 +104,32 @@ function markResponse(retryAfterSeconds: number): void {
   }
 }
 
+type ConsumeFn = (args: {
+  key: string;
+  windowSeconds: number;
+  limit: number;
+  cost: number;
+}) => Promise<Record<string, unknown>>;
+
+const defaultConsume: ConsumeFn = async ({ key, windowSeconds, limit, cost }) => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.rpc("consume_rate_limit", {
+    _key: key,
+    _window_seconds: windowSeconds,
+    _limit: limit,
+    _cost: cost,
+  } as never);
+  if (error) throw new Error(error.message);
+  return (data ?? {}) as Record<string, unknown>;
+};
+
+let consume: ConsumeFn = defaultConsume;
+
+/** Test seam only: swaps the atomic counter backend. */
+export function __setRateLimitBackend(fn: ConsumeFn | null): void {
+  consume = fn ?? defaultConsume;
+}
+
 /** Raw check: returns the decision instead of throwing. */
 export async function checkRateLimit(
   action: RateLimitAction,
@@ -113,15 +139,12 @@ export async function checkRateLimit(
   const rule = ruleFor(action);
   const key = `${action}|${subject}`;
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin.rpc("consume_rate_limit", {
-      _key: key,
-      _window_seconds: rule.windowSeconds,
-      _limit: rule.limit,
-      _cost: options.cost ?? 1,
-    } as never);
-    if (error) throw new Error(error.message);
-    const payload = (data ?? {}) as Record<string, unknown>;
+    const payload = await consume({
+      key,
+      windowSeconds: rule.windowSeconds,
+      limit: rule.limit,
+      cost: options.cost ?? 1,
+    });
     return {
       allowed: Boolean(payload["allowed"]),
       limit: Number(payload["limit"] ?? rule.limit),
