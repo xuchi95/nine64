@@ -79,14 +79,58 @@ export interface MatchmakingQueue {
   updated_at: string;
 }
 
+/** Canonical notification event types, emitted by the server-side outbox. */
+export type NotificationEventType =
+  | "game_started"
+  | "match_found"
+  | "match_declined"
+  | "opponent_move"
+  | "move"
+  | "draw_offered"
+  | "draw_accepted"
+  | "draw_declined"
+  | "game_completed"
+  | "game_over"
+  | "system";
+
+/** Canonical payload shape: always snake_case, always the same keys. */
+export interface NotificationPayload {
+  event_type?: NotificationEventType;
+  game_id?: string | null;
+  actor_id?: string | null;
+  url?: string | null;
+  [key: string]: string | number | boolean | null | undefined;
+}
+
 export interface Notification {
   id: string;
   user_id: string;
-  type: "match_found" | "move" | "game_over" | "system";
+  type: NotificationEventType;
   title: string;
   body: string;
-  data: Record<string, string | number | boolean | null> | null;
+  data: NotificationPayload | null;
+  event_key: string | null;
   read: boolean;
+  created_at: string;
+}
+
+export type NotificationOutboxStatus = "queued" | "processing" | "delivered" | "failed";
+
+export interface NotificationOutboxEvent {
+  id: string;
+  event_type: NotificationEventType;
+  event_key: string;
+  schema_version: number;
+  game_id: string | null;
+  actor_id: string | null;
+  recipient_id: string;
+  payload: NotificationPayload;
+  status: NotificationOutboxStatus;
+  attempts: number;
+  max_attempts: number;
+  available_at: string;
+  processed_at: string | null;
+  last_error: string | null;
   created_at: string;
 }
 
