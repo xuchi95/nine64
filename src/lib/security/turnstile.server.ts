@@ -24,7 +24,14 @@ export class CaptchaError extends Error {
 }
 
 function secret(): string {
-  return process.env["TURNSTILE_SECRET_KEY"] ?? TURNSTILE_TEST_SECRET_PASS;
+  const configured = process.env["TURNSTILE_SECRET_KEY"];
+  if (configured) return configured;
+  // Production must never silently accept the always-pass test key.
+  if (process.env["NODE_ENV"] === "production") {
+    console.error("[turnstile] TURNSTILE_SECRET_KEY is not configured");
+    throw new CaptchaError("not_configured");
+  }
+  return TURNSTILE_TEST_SECRET_PASS;
 }
 
 /** True when a production secret is configured (test keys => development). */
