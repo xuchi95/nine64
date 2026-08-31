@@ -1089,6 +1089,14 @@ function OnlineGamePage() {
               <MoveJournal entries={journalEntries} statusLine={statusLine} />
             </GamePanel>
 
+            <GameChatPanel
+              gameId={gameId}
+              moveSans={moves.map((m) => m.san)}
+              ply={moves.length}
+              userId={user?.id ?? null}
+            />
+
+
             {live && (
               <GameActions>
                 {drawPending && drawPending.offered_to === user?.id ? (
