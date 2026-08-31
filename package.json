@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "typecheck": "tsgo --noEmit",
     "health": "bun run scripts/health-check.ts",
-    "health:dry": "bun run scripts/health-check.ts --dry"
+    "health:dry": "bun run scripts/health-check.ts --dry",
+    "e2e": "playwright test"
   },
   "overrides": {
     "rolldown": "1.2.1"
