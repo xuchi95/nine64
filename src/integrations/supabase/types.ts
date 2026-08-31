@@ -1809,6 +1809,17 @@ export type Database = {
         }
         Returns: Json
       }
+      ai_prompt_publish: {
+        Args: {
+          _actor: string
+          _body: string
+          _expected_version: number
+          _key: string
+          _model: string
+          _reason: string
+        }
+        Returns: Json
+      }
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
       apply_rating_once: { Args: { _game_id: string }; Returns: Json }
       bot_session_commit: {
@@ -1861,6 +1872,20 @@ export type Database = {
           _white_is_requester: boolean
         }
         Returns: string
+      }
+      engine_profile_publish: {
+        Args: {
+          _actor: string
+          _benchmark_id?: string
+          _config: Json
+          _enabled: boolean
+          _expected_version: number
+          _reason: string
+          _slug: string
+          _status: string
+          _stockfish_version?: string
+        }
+        Returns: Json
       }
       enqueue_notification: {
         Args: {
