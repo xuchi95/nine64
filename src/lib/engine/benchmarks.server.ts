@@ -8,7 +8,7 @@
  */
 import { TITAN_SLUG } from "./profileTypes";
 
-export const BENCHMARK_KINDS = ["bench", "speedtest", "tactics", "positions", "selfplay"] as const;
+export const BENCHMARK_KINDS = ["bench", "speedtest", "epd", "positions", "selfplay"] as const;
 export type BenchmarkKind = (typeof BENCHMARK_KINDS)[number];
 
 export interface BenchmarkRow {
@@ -86,14 +86,14 @@ export async function runBenchmark(args: {
       profile_version: profile.version,
       kind: args.kind,
       engine_version: run.engineVersion ?? "unknown",
-      hardware: (run.hardware ?? {}) as never,
+      hardware: ((run.detail["hardware"] ?? {}) as Record<string, unknown>) as never,
       nodes: run.nodes ?? null,
       nps: run.nps ?? null,
       depth: run.depth ?? null,
       score: run.score ?? null,
       passed: run.passed,
-      result: (run.raw ?? {}) as never,
-      signature: run.signature ?? null,
+      result: run.detail as never,
+      signature: run.engineVersion ?? null,
       created_by: args.actorId,
     } as never)
     .select("*")
@@ -130,7 +130,7 @@ export async function publishReadiness(slug = TITAN_SLUG): Promise<{
   const latest = await listBenchmarks(slug, 10);
   const reasons: string[] = [];
   const bench = latest.find((r) => r.kind === "bench");
-  const tactics = latest.find((r) => r.kind === "tactics");
+  const tactics = latest.find((r) => r.kind === "epd");
   if (!bench) reasons.push("missing_bench");
   else if (!bench.passed) reasons.push("bench_failed");
   if (!tactics) reasons.push("missing_tactics");
