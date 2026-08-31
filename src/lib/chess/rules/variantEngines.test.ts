@@ -116,8 +116,7 @@ describe("crazyhouse", () => {
     expect(promo?.promotion).toBe("q");
     expect(pos.pocket?.("w").r).toBe(1); // the captured rook
 
-    pos.move("h8", "g7"); // quiet black king move? no — black must respond
-    // Black king cannot take b8; use a fresh line where the rook recaptures.
+    // Fresh line where the rook recaptures the promoted queen.
     const pos2 = CrazyhouseRules.createPosition("1r5k/P7/8/8/8/8/8/4K3[] w - - 0 1");
     pos2.move("a7", "a8", "q");
     pos2.move("b8", "a8"); // rook takes the PROMOTED queen
