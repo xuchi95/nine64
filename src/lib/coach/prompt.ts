@@ -2,25 +2,55 @@ import type { CoachDigest } from "./digest";
 
 export const COACH_MODEL = "google/gemini-3-flash";
 
-const COACH_SYSTEM_VI = `Bạn là một chuyên gia bình luận và huấn luyện viên cờ vua chuyên nghiệp (trình độ FIDE Master).
-Bạn viết bằng TIẾNG VIỆT, giọng điệu của một nhà phân tích chuyên nghiệp: sắc sảo, thẳng thắn nhưng tôn trọng, dùng đúng thuật ngữ cờ vua (tempo, cấu trúc chốt, cột mở, trung tâm, phối hợp quân, an toàn vua, nước chờ, đổi quân có lợi...).
-Nguyên tắc:
-- Chỉ dựa vào dữ liệu ván đấu được cung cấp (nước đi, nhãn engine, mức thiệt hại win%, eval, motif). Tuyệt đối không bịa nước đi hay các biến thể không có trong dữ liệu.
-- Phân loại sai lầm theo mức độ: nước kém chính xác (lỗi cơ bản: chậm phát triển, đi quân hai lần, mất tempo), sai sót (mất ưu thế nhỏ), sai lầm (mất ưu thế lớn hoặc bỏ lỡ thắng), sai lầm nghiêm trọng (mất quân, bị chiếu hết, sụp đổ hoàn toàn).
-- Với mỗi lỗi: nói chuyện gì đã xảy ra và ý tưởng ĐÚNG lẽ ra nên làm (kế hoạch, không cần biến dài).
-- Lời khuyên phải cụ thể và làm được ngay, không nói chung chung kiểu "hãy tập nhiều hơn".
-- Viết tiếng Việt CÓ DẤU đầy đủ, đúng chính tả; tuyệt đối không viết tiếng Việt không dấu.
-- Không dùng emoji. Không markdown trong các trường văn bản.`;
+/** Hard output ceilings, mirrored in the JSON schema and re-applied server-side. */
+export const COACH_OUTPUT_LIMITS = {
+  headline: 90,
+  verdict: 450,
+  levelImpression: 200,
+  phase: 240,
+  strength: 160,
+  strengths: 3,
+  mistakes: 4,
+  mistakeTitle: 90,
+  whatHappened: 260,
+  betterPlan: 220,
+  habits: 3,
+  habit: 160,
+  advice: 3,
+  adviceItem: 180,
+  drills: 3,
+  drill: 80,
+} as const;
 
-const COACH_SYSTEM_EN = `You are an expert chess commentator and coach (FIDE Master strength, real coaching experience).
-You write in ENGLISH, in the voice of a professional analyst: sharp, direct but respectful, using precise chess terminology (tempo, pawn structure, open file, the centre, piece coordination, king safety, waiting move, favourable trade...).
-Principles:
-- Rely only on the supplied game data (moves, engine labels, win% loss, eval, motifs). Never invent moves or lines that are not in the data.
-- Classify mistakes by severity: basic (fundamental principle errors: slow development, moving a piece twice, losing tempo), moderate (small loss of advantage), serious (large loss of advantage/missed win), critical (losing material, getting mated, total collapse).
-- For each mistake: explain what happened and the correct idea that should have been played (a plan, no need for long lines).
-- Advice must be specific and actionable now, never generic like "practise more".
-- Write natural, correct English.
-- No emoji. No markdown inside text fields.`;
+const COACH_SYSTEM_VI = `Bạn là huấn luyện viên cờ vua đang nói chuyện trực tiếp với một người chơi khoảng 800–1600 Elo.
+Cách viết:
+- Câu ngắn, tự nhiên, thân thiện, dễ hiểu. Nói "quân của bạn", "khu vực quanh Vua", "trung tâm bàn cờ", "quân đang không được bảo vệ".
+- Nếu buộc phải dùng thuật ngữ (tempo, ghim quân, cột mở...), giải thích ngay bằng một cụm từ đơn giản trong ngoặc.
+- Không đưa chuỗi biến thể dài. Không liệt kê tọa độ hay ký hiệu nước cờ liên tiếp.
+- Không nhắc FEN, UCI, centipawn, độ sâu, win percentage hay bất kỳ số liệu máy nào trong phần giải thích.
+- Không lặp lại diễn biến ván đấu theo kiểu danh sách nước đi.
+Nội dung:
+- Chỉ dựa vào dữ liệu được cung cấp. Không bịa nước đi, không bịa biến.
+- Phân tích tối đa 4 sai lầm quan trọng nhất, mỗi sai lầm gồm: một tiêu đề ngắn, 1–2 câu "điều đã xảy ra", một câu "lần sau nên làm".
+- Mỗi sai lầm phải tham chiếu bằng momentId có sẵn trong danh sách. Tuyệt đối không tự viết số nước hay ký hiệu nước cờ.
+- Tôn trọng người chơi, không dùng từ ngữ xúc phạm hay chê bai.
+- Khi nói về trình độ, chỉ nói đây là ước lượng từ một ván duy nhất, không kết luận chắc chắn.
+- Viết tiếng Việt CÓ DẤU đầy đủ, đúng chính tả. Không emoji, không markdown.`;
+
+const COACH_SYSTEM_EN = `You are a chess coach talking directly to a player rated roughly 800–1600.
+How to write:
+- Short, natural, friendly sentences. Say "your pieces", "the area around your king", "the centre of the board", "a piece with nothing defending it".
+- If you must use a term (tempo, pin, open file...), explain it immediately in simple words in brackets.
+- No long variations. No strings of coordinates or move symbols.
+- Never mention FEN, UCI, centipawns, depth, win percentage or any engine number in your explanations.
+- Never replay the game as a move list.
+Content:
+- Use only the supplied data. Never invent moves or lines.
+- Cover at most 4 important mistakes; each has a short title, 1–2 sentences of "what happened", and one sentence of "what to do next time".
+- Reference each mistake by a momentId from the supplied list. Never write your own move number or move symbol.
+- Be respectful; never insult the player.
+- Any rating impression is an estimate from a single game — say so, don't state it as fact.
+- Natural, correct English. No emoji, no markdown.`;
 
 export function coachSystem(locale: "vi" | "en" = "vi"): string {
   return locale === "en" ? COACH_SYSTEM_EN : COACH_SYSTEM_VI;
@@ -37,35 +67,27 @@ export function buildCoachPrompt(d: CoachDigest, locale: "vi" | "en" = "vi"): st
   lines.push(`Khai cuộc: ${d.opening ?? "không xác định"}`);
   if (d.accuracy)
     lines.push(`Độ chính xác: người chơi ${d.accuracy.player}% - đối thủ ${d.accuracy.opponent}%`);
-  if (d.acpl) lines.push(`ACPL: người chơi ${d.acpl.player} - đối thủ ${d.acpl.opponent}`);
-  if (d.estimatedRating) lines.push(`Sức cờ ước tính (theo máy phân tích): ~${d.estimatedRating}`);
-  if (d.labelCounts) {
-    const counts = Object.entries(d.labelCounts)
-      .filter(([, n]) => n > 0)
-      .map(([k, n]) => `${k}:${n}`)
-      .join(", ");
-    if (counts) lines.push(`Phân loại nước đi của kỳ thủ: ${counts}`);
-  }
-  lines.push(`FEN cuối ván: ${d.finalFen}`);
+  if (d.estimatedRating) lines.push(`Sức cờ ước tính (chỉ từ một ván): ~${d.estimatedRating}`);
 
   if (d.keyMoments.length) {
     lines.push("");
-    lines.push("Các tình huống then chốt (theo máy phân tích):");
+    lines.push("Danh sách tình huống then chốt (chỉ được tham chiếu bằng momentId):");
     for (const k of d.keyMoments) {
       lines.push(
-        `- Nước ${k.moveNumber} ${k.san}: ${k.label}, mất ${k.lossPct}% win, eval sau nước ${k.evalAfter}, giai đoạn ${k.phase}` +
-          (k.bestMove ? `, máy gợi ý ${k.bestMove}` : "") +
+        `- momentId=${k.id}: ${k.label}, mất ${k.lossPct}% cơ hội thắng, giai đoạn ${k.phase}` +
           (k.motifs.length ? `, motif: ${k.motifs.join("/")}` : ""),
       );
     }
   }
 
   lines.push("");
-  lines.push("Diễn biến ván đấu:");
+  lines.push(
+    "Dữ liệu nội bộ (chỉ để bạn hiểu ván đấu, TUYỆT ĐỐI không chép lại hay liệt kê trong câu trả lời):",
+  );
   lines.push(d.timeline.join(" "));
   lines.push("");
   lines.push(
-    "Hãy viết bản phân tích cho người chơi này: nhận định tổng quan, đánh giá từng giai đoạn, điểm mạnh, danh sách lỗi sắp xếp từ cơ bản đến trầm trọng, thói quen xấu lặp lại, lời khuyên hành động và bài tập nên luyện.",
+    "Hãy viết bằng lời dễ hiểu: nhận định tổng quan ngắn gọn, một câu cho mỗi giai đoạn, tối đa 3 điểm mạnh, tối đa 4 sai lầm (mỗi sai lầm kèm momentId), tối đa 3 thói quen cần sửa, tối đa 3 lời khuyên và tối đa 3 bài tập. Không lặp lại cùng một ý ở nhiều phần.",
   );
   return lines.join("\n");
 }
@@ -79,38 +101,32 @@ function buildCoachPromptEn(d: CoachDigest): string {
   lines.push(`Opening: ${d.opening ?? "unknown"}`);
   if (d.accuracy)
     lines.push(`Accuracy: player ${d.accuracy.player}% - opponent ${d.accuracy.opponent}%`);
-  if (d.acpl) lines.push(`ACPL: player ${d.acpl.player} - opponent ${d.acpl.opponent}`);
-  if (d.estimatedRating) lines.push(`Estimated engine strength: ~${d.estimatedRating}`);
-  if (d.labelCounts) {
-    const counts = Object.entries(d.labelCounts)
-      .filter(([, n]) => n > 0)
-      .map(([k, n]) => `${k}:${n}`)
-      .join(", ");
-    if (counts) lines.push(`Player's move-label stats: ${counts}`);
-  }
-  lines.push(`Final FEN: ${d.finalFen}`);
+  if (d.estimatedRating) lines.push(`Rating impression from this single game: ~${d.estimatedRating}`);
 
   if (d.keyMoments.length) {
     lines.push("");
-    lines.push("Player's key moments (from engine data):");
+    lines.push("Key moments (reference them only by momentId):");
     for (const k of d.keyMoments) {
       lines.push(
-        `- Move ${k.moveNumber} ${k.san}: ${k.label}, lost ${k.lossPct}% win, eval after ${k.evalAfter}, phase ${k.phase}` +
-          (k.bestMove ? `, engine suggests ${k.bestMove}` : "") +
+        `- momentId=${k.id}: ${k.label}, lost ${k.lossPct}% of winning chances, phase ${k.phase}` +
           (k.motifs.length ? `, motifs: ${k.motifs.join("/")}` : ""),
       );
     }
   }
 
   lines.push("");
-  lines.push("Game narrative:");
+  lines.push(
+    "Internal data (for your understanding only — never copy or list it in your answer):",
+  );
   lines.push(d.timeline.join(" "));
   lines.push("");
   lines.push(
-    "Write the analysis for this player: overall verdict, phase-by-phase assessment, strengths, a list of mistakes ranked from minor to critical, recurring bad habits, actionable advice, and drills to practise.",
+    "Write in plain language: a short overall verdict, one sentence per phase, up to 3 strengths, up to 4 mistakes (each with its momentId), up to 3 habits, up to 3 pieces of advice and up to 3 drills. Do not repeat the same point in several sections.",
   );
   return lines.join("\n");
 }
+
+const L = COACH_OUTPUT_LIMITS;
 
 export const COACH_SCHEMA = {
   type: "object",
@@ -127,38 +143,42 @@ export const COACH_SCHEMA = {
     "drills",
   ],
   properties: {
-    headline: { type: "string", description: "Một câu tóm tắt ván đấu, tối đa 90 ký tự" },
-    verdict: { type: "string", description: "3-5 câu nhận định tổng quan của chuyên gia" },
-    levelImpression: { type: "string", description: "1-2 câu về trình độ hiện tại và điểm nghẽn" },
+    headline: { type: "string", maxLength: L.headline },
+    verdict: { type: "string", maxLength: L.verdict },
+    levelImpression: { type: "string", maxLength: L.levelImpression },
     phases: {
       type: "object",
       additionalProperties: false,
       required: ["opening", "middlegame", "endgame"],
       properties: {
-        opening: { type: "string" },
-        middlegame: { type: "string" },
-        endgame: { type: "string" },
+        opening: { type: "string", maxLength: L.phase },
+        middlegame: { type: "string", maxLength: L.phase },
+        endgame: { type: "string", maxLength: L.phase },
       },
     },
-    strengths: { type: "array", items: { type: "string" } },
+    strengths: {
+      type: "array",
+      maxItems: L.strengths,
+      items: { type: "string", maxLength: L.strength },
+    },
     mistakes: {
       type: "array",
+      maxItems: L.mistakes,
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["moveNumber", "san", "severity", "title", "whatHappened", "betterPlan"],
+        required: ["momentId", "severity", "title", "whatHappened", "betterPlan"],
         properties: {
-          moveNumber: { type: "integer" },
-          san: { type: "string" },
+          momentId: { type: "string", maxLength: 24 },
           severity: { type: "string", enum: ["basic", "moderate", "serious", "critical"] },
-          title: { type: "string" },
-          whatHappened: { type: "string" },
-          betterPlan: { type: "string" },
+          title: { type: "string", maxLength: L.mistakeTitle },
+          whatHappened: { type: "string", maxLength: L.whatHappened },
+          betterPlan: { type: "string", maxLength: L.betterPlan },
         },
       },
     },
-    habits: { type: "array", items: { type: "string" } },
-    advice: { type: "array", items: { type: "string" } },
-    drills: { type: "array", items: { type: "string" } },
+    habits: { type: "array", maxItems: L.habits, items: { type: "string", maxLength: L.habit } },
+    advice: { type: "array", maxItems: L.advice, items: { type: "string", maxLength: L.adviceItem } },
+    drills: { type: "array", maxItems: L.drills, items: { type: "string", maxLength: L.drill } },
   },
 } as const;
