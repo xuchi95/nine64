@@ -198,13 +198,15 @@ export const declineMatch = createServerFn({ method: "POST" })
         status: "waiting",
       });
 
-      await supabaseAdmin.from("notifications").insert({
-        user_id: opponentId,
-        type: "match_declined",
-        title: "Đối thủ đã từ chối ván",
-        body: "Ván ghép đã bị huỷ. Bạn được đưa trở lại hàng chờ để tìm đối thủ khác.",
-        data: { gameId: game.id, variant, timeControl },
+      await supabaseAdmin.rpc("enqueue_notification", {
+        _event_type: "match_declined",
+        _event_key: `match_declined:${game.id}:${opponentId}`,
+        _recipient: opponentId,
+        _game_id: game.id,
+        _actor_id: context.userId,
+        _payload: { variant, time_control: timeControl },
       });
+      await kickNotificationOutbox();
     }
 
     return { ok: true, aborted: abortable, variant, timeControl };
