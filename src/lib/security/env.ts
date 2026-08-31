@@ -25,7 +25,13 @@ export const SERVER_ENV_VARS = [
   "FAIRPLAY_WORKER_AUDIENCE",
   "FAIRPLAY_WORKER_SERVICE_ACCOUNTS",
   "COACH_MODEL",
+  // Nine64 Titan cloud engine (private Cloud Run + service-account OIDC).
+  "PLAY_ENGINE_URL",
+  "PLAY_ENGINE_AUDIENCE",
+  "PLAY_ENGINE_SA_EMAIL",
+  "PLAY_ENGINE_SA_PRIVATE_KEY",
 ] as const;
+
 
 /** Required for the server to boot at all. */
 const REQUIRED_ALWAYS = ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY"] as const;
