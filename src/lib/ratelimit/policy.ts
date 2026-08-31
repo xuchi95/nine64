@@ -27,7 +27,11 @@ export type RateLimitAction =
   | "titan.session"
   | "titan.move"
   | "engine.benchmark"
-  | "openings.explorer";
+  | "openings.explorer"
+  | "study.view"
+  | "study.embed"
+  | "study.og"
+  | "study.create";
 
 export interface RateLimitRule {
   /** Rolling window length in seconds. */
@@ -79,6 +83,13 @@ export const RATE_LIMIT_POLICY: Record<RateLimitAction, RateLimitRule> = {
 
   // Opening Explorer proxy — protects the upstream open database from abuse.
   "openings.explorer": { windowSeconds: 60, limit: 60, failClosed: false, scope: "ip-hmac" },
+
+  // Public share surfaces — unauthenticated and cacheable, so generous but
+  // bounded; the OG/embed endpoints also hit the database once per miss.
+  "study.view": { windowSeconds: 60, limit: 90, failClosed: false, scope: "ip-hmac" },
+  "study.embed": { windowSeconds: 60, limit: 120, failClosed: false, scope: "ip-hmac" },
+  "study.og": { windowSeconds: 60, limit: 60, failClosed: false, scope: "ip-hmac" },
+  "study.create": { windowSeconds: 3_600, limit: 40, failClosed: false, scope: "user" },
 };
 
 /** Hard ceilings for AI Coach input, enforced before any gateway call. */

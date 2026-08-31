@@ -3483,6 +3483,66 @@ export type Database = {
         }
         Relationships: []
       }
+      studies: {
+        Row: {
+          black: string | null
+          content: Json
+          created_at: string
+          description: string | null
+          engine_allowed: boolean
+          id: string
+          mode: string
+          owner_id: string
+          preview_fen: string
+          result: string | null
+          revoked: boolean
+          slug: string
+          title: string
+          updated_at: string
+          view_count: number
+          visibility: string
+          white: string | null
+        }
+        Insert: {
+          black?: string | null
+          content?: Json
+          created_at?: string
+          description?: string | null
+          engine_allowed?: boolean
+          id?: string
+          mode?: string
+          owner_id: string
+          preview_fen?: string
+          result?: string | null
+          revoked?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+          view_count?: number
+          visibility?: string
+          white?: string | null
+        }
+        Update: {
+          black?: string | null
+          content?: Json
+          created_at?: string
+          description?: string | null
+          engine_allowed?: boolean
+          id?: string
+          mode?: string
+          owner_id?: string
+          preview_fen?: string
+          result?: string | null
+          revoked?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+          visibility?: string
+          white?: string | null
+        }
+        Relationships: []
+      }
       system_incidents: {
         Row: {
           body: string
@@ -4466,6 +4526,7 @@ export type Database = {
         }
         Returns: Json
       }
+      bump_study_view: { Args: { _slug: string }; Returns: undefined }
       challenge_create: {
         Args: {
           _allow_takeback: boolean
@@ -4658,6 +4719,7 @@ export type Database = {
         Args: { _game_id: string; _user_id: string }
         Returns: Json
       }
+      get_study_by_slug: { Args: { _slug: string }; Returns: Json }
       glicko2_update: {
         Args: {
           _opp_rating: number
