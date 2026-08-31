@@ -65,12 +65,28 @@ function GameDetail() {
   const [orientation, setOrientation] = useState<Color>("w");
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [deep, setDeep] = useState(false);
+  /** Single engine suggestion currently drawn on the board. */
+  const [focus, setFocus] = useState<AnalysisFocus | null>(null);
   const cancelRef = useRef<{ cancelled: boolean }>({ cancelled: false });
+
+  /** Manual navigation always clears the suggestion arrow. */
+  const goto = useCallback((next: number | ((c: number) => number)) => {
+    setFocus(null);
+    setCursor(next);
+  }, []);
+
+  /** Jump to the position right BEFORE the mistake and draw one arrow. */
+  const showOnBoard = useCallback((next: AnalysisFocus | null) => {
+    setFocus(next);
+    if (next) setCursor(next.plyIndex - 1);
+  }, []);
 
   useEffect(() => {
     if (game) setCursor(game.moves.length - 1);
     if (game?.playerColor) setOrientation(game.playerColor);
+    setFocus(null);
   }, [game?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   useEffect(() => {
     const signal = cancelRef.current;
