@@ -744,6 +744,34 @@ function OnlineGamePage() {
               </GameActions>
             )}
 
+            {ratingEvent && myColor && (
+              <GamePanel title="Hệ số Glicko-2" bodyClassName="space-y-1.5 p-4">
+                <StatRow
+                  label="Trước ván"
+                  value={String(
+                    myColor === "w"
+                      ? ratingEvent.white_rating_before
+                      : ratingEvent.black_rating_before,
+                  )}
+                />
+                <StatRow
+                  label="Sau ván"
+                  value={String(
+                    myColor === "w"
+                      ? ratingEvent.white_rating_after
+                      : ratingEvent.black_rating_after,
+                  )}
+                />
+                <StatRow
+                  label="Thay đổi"
+                  value={(() => {
+                    const d = myColor === "w" ? ratingEvent.white_delta : ratingEvent.black_delta;
+                    return `${d > 0 ? "+" : ""}${d}`;
+                  })()}
+                />
+              </GamePanel>
+            )}
+
             <GamePanel title="Share this game" bodyClassName="space-y-2.5 p-4">
               <p className="text-xs text-muted-foreground">
                 Copy the PGN, or send a turn-by-turn link your opponent can open on another device.
