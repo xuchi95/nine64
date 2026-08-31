@@ -11,7 +11,7 @@ import type { Notification } from "@/lib/database.types";
  * only reads: it deduplicates realtime vs refetch, marks read optimistically
  * with rollback, and resyncs on reconnect/focus so nothing is silently lost.
  */
-function dedupe(list: Notification[]): Notification[] {
+export function dedupeNotifications(list: Notification[]): Notification[] {
   const seen = new Set<string>();
   const out: Notification[] = [];
   for (const n of list) {
@@ -38,7 +38,7 @@ export function useNotifications() {
     inFlight.current = true;
     try {
       const data = (await getFn({ data: undefined })) as Notification[];
-      setNotifications(dedupe(data));
+      setNotifications(dedupeNotifications(data));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "notifications_unavailable");
@@ -92,7 +92,7 @@ export function useNotifications() {
         (payload) => {
           const notification = payload.new as Notification;
           setNotifications((prev) => {
-            const next = dedupe([notification, ...prev]);
+            const next = dedupeNotifications([notification, ...prev]);
             if (next.length === prev.length) return prev; // duplicate delivery
             return next;
           });
