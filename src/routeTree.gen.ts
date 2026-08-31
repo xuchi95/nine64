@@ -22,6 +22,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
+import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
@@ -112,6 +113,11 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
 const AuthenticatedOnlineRoute = AuthenticatedOnlineRouteImport.update({
   id: '/online',
   path: '/online',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
+  '/skills': typeof AuthenticatedSkillsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
+  '/skills': typeof AuthenticatedSkillsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRouteWithChildren
+  '/_authenticated/skills': typeof AuthenticatedSkillsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/account'
     | '/online'
+    | '/skills'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/register'
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/account'
     | '/online'
+    | '/skills'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/register'
@@ -482,6 +493,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/account'
     | '/_authenticated/online'
+    | '/_authenticated/skills'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/register'
@@ -631,6 +643,13 @@ declare module '@tanstack/react-router' {
       path: '/online'
       fullPath: '/online'
       preLoaderRoute: typeof AuthenticatedOnlineRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/skills': {
+      id: '/_authenticated/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof AuthenticatedSkillsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/auth/callback': {
@@ -839,6 +858,7 @@ const AuthenticatedOnlineRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedOnlineRoute: typeof AuthenticatedOnlineRouteWithChildren
+  AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminEngineRoute: typeof AuthenticatedAdminEngineRoute
   AuthenticatedAdminIntelligenceRoute: typeof AuthenticatedAdminIntelligenceRoute
@@ -855,6 +875,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedOnlineRoute: AuthenticatedOnlineRouteWithChildren,
+  AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminEngineRoute: AuthenticatedAdminEngineRoute,
   AuthenticatedAdminIntelligenceRoute: AuthenticatedAdminIntelligenceRoute,

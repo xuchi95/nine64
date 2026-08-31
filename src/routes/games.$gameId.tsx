@@ -17,6 +17,8 @@ import { ChessBoard } from "@/components/chess/ChessBoard";
 import { EvalGraph } from "@/components/game/EvalGraph";
 import { MoveList } from "@/components/game/MoveList";
 import { CoachPanel } from "@/components/game/CoachPanel";
+import { HighlightsPanel } from "@/components/game/HighlightsPanel";
+import { TrainingLab } from "@/components/game/TrainingLab";
 import { VariationPanel } from "@/components/game/VariationPanel";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +29,8 @@ import { attachReview, formatEval, outcomeLabel, toPgn, useSavedGame } from "@/l
 import { reviewGame } from "@/lib/engine/review";
 import { generatePuzzles } from "@/lib/learn/puzzleGen";
 import { addPuzzles } from "@/lib/learn/store";
+import { detectSkillEvents } from "@/lib/skills/detect";
+import { recordSkillEvents } from "@/lib/skills.functions";
 import { useSettings } from "@/lib/settings";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { useT } from "@/lib/i18n";
@@ -183,6 +187,18 @@ function GameDetail() {
         signal: cancelRef.current,
       });
       attachReview(game.id, review);
+      // Skill events come from engine facts only and are deduplicated
+      // server-side by their stable event key, so re-running a review is safe.
+      if (review.plies?.length) {
+        const events = detectSkillEvents({
+          gameId: game.id,
+          plies: review.plies,
+          perspective: game.playerColor,
+        });
+        if (events.length > 0) {
+          void recordSkillEvents({ data: { events } }).catch(() => undefined);
+        }
+      }
       const created = addPuzzles(generatePuzzles({ ...game, review }));
       toast.success(t(deep ? "play.detail.deepReviewComplete" : "play.detail.reviewComplete"), {
         description:
@@ -379,7 +395,11 @@ function GameDetail() {
             )}
           </div>
 
+          <HighlightsPanel game={game} onSelectMove={goto} />
+
           <CoachPanel game={game} onSelectMove={goto} />
+
+          <TrainingLab game={game} onSelectMove={goto} />
 
           <VariationPanel
             game={game}
