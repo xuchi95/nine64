@@ -1186,6 +1186,125 @@ export type Database = {
         }
         Relationships: []
       }
+      system_incidents: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      system_setting_versions: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          key: string
+          previous_value: Json | null
+          reason: string
+          rollback_of: number | null
+          value: Json
+          version: number
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          key: string
+          previous_value?: Json | null
+          reason: string
+          rollback_of?: number | null
+          value: Json
+          version: number
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          key?: string
+          previous_value?: Json | null
+          reason?: string
+          rollback_of?: number | null
+          value?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_setting_versions_key_fkey"
+            columns: ["key"]
+            isOneToOne: false
+            referencedRelation: "system_settings"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          created_at: string
+          draft_updated_at: string | null
+          draft_value: Json | null
+          has_draft: boolean
+          key: string
+          published_at: string
+          reason: string | null
+          scope: string
+          updated_by: string | null
+          value: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          draft_updated_at?: string | null
+          draft_value?: Json | null
+          has_draft?: boolean
+          key: string
+          published_at?: string
+          reason?: string | null
+          scope: string
+          updated_by?: string | null
+          value: Json
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          draft_updated_at?: string | null
+          draft_value?: Json | null
+          has_draft?: boolean
+          key?: string
+          published_at?: string
+          reason?: string | null
+          scope?: string
+          updated_by?: string | null
+          value?: Json
+          version?: number
+        }
+        Relationships: []
+      }
       user_admin_state: {
         Row: {
           created_at: string
@@ -1272,6 +1391,28 @@ export type Database = {
           _reason: string
           _target_rating: number
           _user_id: string
+        }
+        Returns: Json
+      }
+      admin_publish_setting: {
+        Args: {
+          _actor: string
+          _expected_version?: number
+          _key: string
+          _reason: string
+          _rollback_of?: number
+          _scope: string
+          _value: Json
+        }
+        Returns: Json
+      }
+      admin_save_setting_draft: {
+        Args: {
+          _actor: string
+          _draft: Json
+          _expected_version?: number
+          _key: string
+          _scope: string
         }
         Returns: Json
       }

@@ -16,6 +16,7 @@ import { HistorySyncBridge } from "@/components/HistorySyncBridge";
 import { Toaster } from "@/components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
+import { MaintenanceGate } from "@/components/system/MaintenanceGate";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { IdlePreloader } from "@/components/layout/IdlePreloader";
@@ -163,7 +164,9 @@ function RootComponent() {
 
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <PageTransition>
-          <Outlet />
+          <MaintenanceGate>
+            <Outlet />
+          </MaintenanceGate>
         </PageTransition>
         <Toaster />
       </AuthProvider>
