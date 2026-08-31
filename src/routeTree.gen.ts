@@ -62,6 +62,7 @@ import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_aut
 import { Route as ApiPublicFairplayClaimRouteImport } from './routes/api/public/fairplay/claim'
 import { Route as ApiPublicFairplayFailRouteImport } from './routes/api/public/fairplay/fail'
 import { Route as ApiPublicFairplayResultRouteImport } from './routes/api/public/fairplay/result'
+import { Route as ApiPublicTournamentsTickRouteImport } from './routes/api/public/tournaments/tick'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -341,6 +342,12 @@ const ApiPublicFairplayResultRoute = ApiPublicFairplayResultRouteImport.update({
   path: '/api/public/fairplay/result',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTournamentsTickRoute =
+  ApiPublicTournamentsTickRouteImport.update({
+    id: '/api/public/tournaments/tick',
+    path: '/api/public/tournaments/tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
+  '/api/public/tournaments/tick': typeof ApiPublicTournamentsTickRoute
   '/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -447,6 +455,7 @@ export interface FileRoutesByTo {
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
+  '/api/public/tournaments/tick': typeof ApiPublicTournamentsTickRoute
   '/admin/fairplay': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -503,6 +512,7 @@ export interface FileRoutesById {
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
+  '/api/public/tournaments/tick': typeof ApiPublicTournamentsTickRoute
   '/_authenticated/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -559,6 +569,7 @@ export interface FileRouteTypes {
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
+    | '/api/public/tournaments/tick'
     | '/admin/fairplay/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
+    | '/api/public/tournaments/tick'
     | '/admin/fairplay'
     | '/admin/users'
   id:
@@ -668,6 +680,7 @@ export interface FileRouteTypes {
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
+    | '/api/public/tournaments/tick'
     | '/_authenticated/admin/fairplay/'
     | '/_authenticated/admin/users/'
   fileRoutesById: FileRoutesById
@@ -704,6 +717,7 @@ export interface RootRouteChildren {
   ApiPublicFairplayClaimRoute: typeof ApiPublicFairplayClaimRoute
   ApiPublicFairplayFailRoute: typeof ApiPublicFairplayFailRoute
   ApiPublicFairplayResultRoute: typeof ApiPublicFairplayResultRoute
+  ApiPublicTournamentsTickRoute: typeof ApiPublicTournamentsTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1079,6 +1093,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFairplayResultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tournaments/tick': {
+      id: '/api/public/tournaments/tick'
+      path: '/api/public/tournaments/tick'
+      fullPath: '/api/public/tournaments/tick'
+      preLoaderRoute: typeof ApiPublicTournamentsTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1176,6 +1197,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFairplayClaimRoute: ApiPublicFairplayClaimRoute,
   ApiPublicFairplayFailRoute: ApiPublicFairplayFailRoute,
   ApiPublicFairplayResultRoute: ApiPublicFairplayResultRoute,
+  ApiPublicTournamentsTickRoute: ApiPublicTournamentsTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
