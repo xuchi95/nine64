@@ -7,6 +7,7 @@ import {
   KeyRound,
   Cpu,
   Sparkles,
+  Puzzle,
   ShieldCheck,
   ScrollText,
   ListChecks,
@@ -34,6 +35,7 @@ const NAV: { module: AdminModule; icon: typeof Users; labelKey: string }[] = [
   { module: "system", icon: KeyRound, labelKey: "adminc.nav.system" },
   { module: "engine", icon: Cpu, labelKey: "adminc.nav.engine" },
   { module: "intelligence", icon: Sparkles, labelKey: "adminc.nav.intelligence" },
+  { module: "puzzles", icon: Puzzle, labelKey: "adminc.nav.puzzles" },
 ];
 
 function isActive(pathname: string, to: string) {

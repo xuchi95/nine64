@@ -155,9 +155,16 @@ function PuzzlesPage() {
             {t("study.puzzles.subtitle")}
           </p>
         </div>
-        <Button onClick={generate}>
-          <Sparkles className="size-4" /> {t("study.puzzles.generate")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/puzzles/train">
+              <Target className="size-4" /> {t("pz.title")}
+            </Link>
+          </Button>
+          <Button onClick={generate}>
+            <Sparkles className="size-4" /> {t("study.puzzles.generate")}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-4">
