@@ -209,6 +209,9 @@ function AdminFairplayPage() {
           <Button asChild variant="secondary" size="sm">
             <Link to="/admin/audit">{t("admin.fairplay.adminAuditLog")}</Link>
           </Button>
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/admin/system">{t("admin.system.title")}</Link>
+          </Button>
 
           <Button variant="secondary" size="sm" disabled={busy} onClick={() => void load()}>
             <RefreshCw className={cn("mr-2 size-4", busy && "animate-spin")} />
