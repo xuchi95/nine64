@@ -263,7 +263,16 @@ function SharePage() {
 
   return (
     <AppShell wide>
+      <div className="mx-auto mb-4 flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-lg border border-brass/40 bg-surface-1 px-4 py-3 text-sm">
+        <span className="text-muted-foreground">
+          Muốn lưu ván có chú giải, biến và nhiều chương với liên kết ngắn có thể thu hồi?
+        </span>
+        <a href="/studies" className="font-semibold text-brass underline">
+          Mở Study &amp; Chia sẻ →
+        </a>
+      </div>
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_340px]">
+
         <div>
           <div className="mb-2 flex items-center justify-between rounded-md border border-border/70 bg-surface-1 px-3 py-2 text-sm">
             <span className="font-medium">

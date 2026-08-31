@@ -16,6 +16,8 @@ export interface PageSeo {
   type?: string;
   /** Absolute image URL; defaults to the Nine64 social card. */
   image?: string;
+  /** MIME type of `image`; SVG cards pass "image/svg+xml". */
+  imageType?: string;
   imageAlt?: string;
   locale?: string;
   noindex?: boolean;
@@ -31,6 +33,7 @@ export function pageHead({
   description,
   type = "website",
   image = OG_IMAGE,
+  imageType = "image/png",
   imageAlt = OG_IMAGE_ALT,
   locale = "vi_VN",
   noindex = false,
@@ -51,7 +54,7 @@ export function pageHead({
       { property: "og:url", content: url },
       { property: "og:image", content: image },
       { property: "og:image:secure_url", content: image },
-      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:type", content: imageType },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: imageAlt },

@@ -24,6 +24,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
 import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
+import { Route as AuthenticatedStudiesRouteImport } from './routes/_authenticated/studies'
 import { Route as AuthenticatedTrainingPlanRouteImport } from './routes/_authenticated/training-plan'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -44,6 +45,7 @@ import { Route as PlayShareRouteImport } from './routes/play.share'
 import { Route as PlayVariantsRouteImport } from './routes/play.variants'
 import { Route as PlayersSlugRouteImport } from './routes/players.$slug'
 import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as WatchIndexRouteImport } from './routes/watch.index'
 import { Route as WatchGameIdRouteImport } from './routes/watch.$gameId'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -77,6 +79,8 @@ import { Route as ApiPublicFairplayResultRouteImport } from './routes/api/public
 import { Route as ApiPublicTournamentsTickRouteImport } from './routes/api/public/tournaments/tick'
 import { Route as ApiPublicWatchIngestRouteImport } from './routes/api/public/watch/ingest'
 import { Route as ApiPublicWatchTickRouteImport } from './routes/api/public/watch/tick'
+import { Route as ApiPublicStudySlugEmbedRouteImport } from './routes/api/public/study/$slug/embed'
+import { Route as ApiPublicStudySlugOgRouteImport } from './routes/api/public/study/$slug/og'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -150,6 +154,11 @@ const AuthenticatedOnlineRoute = AuthenticatedOnlineRouteImport.update({
 const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStudiesRoute = AuthenticatedStudiesRouteImport.update({
+  id: '/studies',
+  path: '/studies',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTrainingPlanRoute =
@@ -251,6 +260,11 @@ const PlayersSlugRoute = PlayersSlugRouteImport.update({
 const PuzzlesIndexRoute = PuzzlesIndexRouteImport.update({
   id: '/puzzles/',
   path: '/puzzles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WatchIndexRoute = WatchIndexRouteImport.update({
@@ -436,6 +450,16 @@ const ApiPublicWatchTickRoute = ApiPublicWatchTickRouteImport.update({
   path: '/api/public/watch/tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStudySlugEmbedRoute = ApiPublicStudySlugEmbedRouteImport.update({
+  id: '/api/public/study/$slug/embed',
+  path: '/api/public/study/$slug/embed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicStudySlugOgRoute = ApiPublicStudySlugOgRouteImport.update({
+  id: '/api/public/study/$slug/og',
+  path: '/api/public/study/$slug/og',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -452,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
   '/skills': typeof AuthenticatedSkillsRoute
+  '/studies': typeof AuthenticatedStudiesRoute
   '/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
@@ -465,6 +490,7 @@ export interface FileRoutesByFullPath {
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
   '/players/$slug': typeof PlayersSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
   '/events/': typeof EventsIndexRoute
@@ -505,6 +531,8 @@ export interface FileRoutesByFullPath {
   '/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
   '/watch/platform/': typeof AuthenticatedWatchPlatformIndexRoute
+  '/api/public/study/$slug/embed': typeof ApiPublicStudySlugEmbedRoute
+  '/api/public/study/$slug/og': typeof ApiPublicStudySlugOgRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -521,6 +549,7 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
   '/skills': typeof AuthenticatedSkillsRoute
+  '/studies': typeof AuthenticatedStudiesRoute
   '/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
@@ -534,6 +563,7 @@ export interface FileRoutesByTo {
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
   '/players/$slug': typeof PlayersSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills': typeof DrillsIndexRoute
   '/events': typeof EventsIndexRoute
@@ -574,6 +604,8 @@ export interface FileRoutesByTo {
   '/admin/fairplay': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
   '/watch/platform': typeof AuthenticatedWatchPlatformIndexRoute
+  '/api/public/study/$slug/embed': typeof ApiPublicStudySlugEmbedRoute
+  '/api/public/study/$slug/og': typeof ApiPublicStudySlugOgRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -592,6 +624,7 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRouteWithChildren
   '/_authenticated/skills': typeof AuthenticatedSkillsRoute
+  '/_authenticated/studies': typeof AuthenticatedStudiesRoute
   '/_authenticated/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
@@ -605,6 +638,7 @@ export interface FileRoutesById {
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
   '/players/$slug': typeof PlayersSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
   '/events/': typeof EventsIndexRoute
@@ -645,6 +679,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
   '/_authenticated/watch/platform/': typeof AuthenticatedWatchPlatformIndexRoute
+  '/api/public/study/$slug/embed': typeof ApiPublicStudySlugEmbedRoute
+  '/api/public/study/$slug/og': typeof ApiPublicStudySlugOgRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -663,6 +699,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/online'
     | '/skills'
+    | '/studies'
     | '/training-plan'
     | '/auth/callback'
     | '/auth/login'
@@ -676,6 +713,7 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/play/variants'
     | '/players/$slug'
+    | '/s/$slug'
     | '/watch/$gameId'
     | '/drills/'
     | '/events/'
@@ -716,6 +754,8 @@ export interface FileRouteTypes {
     | '/admin/fairplay/'
     | '/admin/users/'
     | '/watch/platform/'
+    | '/api/public/study/$slug/embed'
+    | '/api/public/study/$slug/og'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -732,6 +772,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/online'
     | '/skills'
+    | '/studies'
     | '/training-plan'
     | '/auth/callback'
     | '/auth/login'
@@ -745,6 +786,7 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/play/variants'
     | '/players/$slug'
+    | '/s/$slug'
     | '/watch/$gameId'
     | '/drills'
     | '/events'
@@ -785,6 +827,8 @@ export interface FileRouteTypes {
     | '/admin/fairplay'
     | '/admin/users'
     | '/watch/platform'
+    | '/api/public/study/$slug/embed'
+    | '/api/public/study/$slug/og'
   id:
     | '__root__'
     | '/'
@@ -802,6 +846,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/_authenticated/online'
     | '/_authenticated/skills'
+    | '/_authenticated/studies'
     | '/_authenticated/training-plan'
     | '/auth/callback'
     | '/auth/login'
@@ -815,6 +860,7 @@ export interface FileRouteTypes {
     | '/play/share'
     | '/play/variants'
     | '/players/$slug'
+    | '/s/$slug'
     | '/watch/$gameId'
     | '/drills/'
     | '/events/'
@@ -855,6 +901,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/fairplay/'
     | '/_authenticated/admin/users/'
     | '/_authenticated/watch/platform/'
+    | '/api/public/study/$slug/embed'
+    | '/api/public/study/$slug/og'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -882,6 +930,7 @@ export interface RootRouteChildren {
   PlayShareRoute: typeof PlayShareRoute
   PlayVariantsRoute: typeof PlayVariantsRoute
   PlayersSlugRoute: typeof PlayersSlugRoute
+  SSlugRoute: typeof SSlugRoute
   WatchGameIdRoute: typeof WatchGameIdRoute
   DrillsIndexRoute: typeof DrillsIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -900,6 +949,8 @@ export interface RootRouteChildren {
   ApiPublicTournamentsTickRoute: typeof ApiPublicTournamentsTickRoute
   ApiPublicWatchIngestRoute: typeof ApiPublicWatchIngestRoute
   ApiPublicWatchTickRoute: typeof ApiPublicWatchTickRoute
+  ApiPublicStudySlugEmbedRoute: typeof ApiPublicStudySlugEmbedRoute
+  ApiPublicStudySlugOgRoute: typeof ApiPublicStudySlugOgRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1007,6 +1058,13 @@ declare module '@tanstack/react-router' {
       path: '/skills'
       fullPath: '/skills'
       preLoaderRoute: typeof AuthenticatedSkillsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/studies': {
+      id: '/_authenticated/studies'
+      path: '/studies'
+      fullPath: '/studies'
+      preLoaderRoute: typeof AuthenticatedStudiesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/training-plan': {
@@ -1147,6 +1205,13 @@ declare module '@tanstack/react-router' {
       path: '/puzzles'
       fullPath: '/puzzles/'
       preLoaderRoute: typeof PuzzlesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/watch/': {
@@ -1380,6 +1445,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWatchTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/study/$slug/embed': {
+      id: '/api/public/study/$slug/embed'
+      path: '/api/public/study/$slug/embed'
+      fullPath: '/api/public/study/$slug/embed'
+      preLoaderRoute: typeof ApiPublicStudySlugEmbedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/study/$slug/og': {
+      id: '/api/public/study/$slug/og'
+      path: '/api/public/study/$slug/og'
+      fullPath: '/api/public/study/$slug/og'
+      preLoaderRoute: typeof ApiPublicStudySlugOgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1398,6 +1477,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedOnlineRoute: typeof AuthenticatedOnlineRouteWithChildren
   AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
+  AuthenticatedStudiesRoute: typeof AuthenticatedStudiesRoute
   AuthenticatedTrainingPlanRoute: typeof AuthenticatedTrainingPlanRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminEngineRoute: typeof AuthenticatedAdminEngineRoute
@@ -1426,6 +1506,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedOnlineRoute: AuthenticatedOnlineRouteWithChildren,
   AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
+  AuthenticatedStudiesRoute: AuthenticatedStudiesRoute,
   AuthenticatedTrainingPlanRoute: AuthenticatedTrainingPlanRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminEngineRoute: AuthenticatedAdminEngineRoute,
@@ -1478,6 +1559,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayShareRoute: PlayShareRoute,
   PlayVariantsRoute: PlayVariantsRoute,
   PlayersSlugRoute: PlayersSlugRoute,
+  SSlugRoute: SSlugRoute,
   WatchGameIdRoute: WatchGameIdRoute,
   DrillsIndexRoute: DrillsIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
@@ -1496,6 +1578,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTournamentsTickRoute: ApiPublicTournamentsTickRoute,
   ApiPublicWatchIngestRoute: ApiPublicWatchIngestRoute,
   ApiPublicWatchTickRoute: ApiPublicWatchTickRoute,
+  ApiPublicStudySlugEmbedRoute: ApiPublicStudySlugEmbedRoute,
+  ApiPublicStudySlugOgRoute: ApiPublicStudySlugOgRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
