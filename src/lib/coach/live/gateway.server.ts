@@ -88,6 +88,7 @@ export async function styleCoachMoment(
       body: JSON.stringify({
         model: MODEL,
         max_tokens: COACH_LIVE_MODEL_LIMITS.maxOutputTokens,
+        reasoning_effort: "low",
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },

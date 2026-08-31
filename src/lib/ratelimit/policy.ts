@@ -98,5 +98,5 @@ export const COACH_MODEL_LIMITS = {
 
 /** Live Play Coach restyling is a single short paragraph. */
 export const COACH_LIVE_MODEL_LIMITS = {
-  maxOutputTokens: 220,
+  maxOutputTokens: 900,
 } as const;
