@@ -68,8 +68,10 @@ describe("Chess960 castling", () => {
 
   it("keeps generated start positions canonical through the rule engine", () => {
     for (let index = 0; index < 960; index += 97) {
-      const fen = generateChess960Position(index);
+      const { fen, shredderFen } = generateChess960Position(index);
       expect(() => canonicalChess960Fen(fen)).not.toThrow();
+      // Shredder-FEN and X-FEN describe the same position after canonicalisation.
+      expect(canonicalChess960Fen(shredderFen)).toBe(canonicalChess960Fen(fen));
       const position = Chess960Rules.createPosition(fen);
       expect(position.turn()).toBe("w");
       expect(position.legalMoves().length).toBeGreaterThan(0);
