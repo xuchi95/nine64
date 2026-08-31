@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { APP } from "@/config/app";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { guardAuthAttempt } from "@/lib/authGuard.functions";
+import { parseRateLimited, rateLimitMessage } from "@/lib/ratelimit/errors";
 import { lovable } from "@/integrations/lovable";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
@@ -46,6 +49,19 @@ function LoginPage() {
     setLoading(true);
     setFormError(null);
     setFormInfo(null);
+    try {
+      await guard({ data: { intent: "login", email } });
+    } catch (err) {
+      const limited = parseRateLimited(err);
+      setLoading(false);
+      if (limited) {
+        setFormError(rateLimitMessage(limited, "vi"));
+        return;
+      }
+      setFormError(err instanceof Error ? err.message : "Đăng nhập thất bại");
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {

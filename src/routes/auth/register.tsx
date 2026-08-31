@@ -12,6 +12,10 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { useT } from "@/lib/i18n";
+import { useServerFn } from "@tanstack/react-start";
+import { guardAuthAttempt } from "@/lib/authGuard.functions";
+import { TurnstileWidget, resetTurnstile } from "@/components/security/TurnstileWidget";
+import { parseRateLimited, rateLimitMessage, isCaptchaFailure, captchaMessage } from "@/lib/ratelimit/errors";
 
 export const Route = createFileRoute("/auth/register")({
   head: () => ({
@@ -36,6 +40,9 @@ function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const guard = useServerFn(guardAuthAttempt);
 
   const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
 
@@ -43,6 +50,21 @@ function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setFormError(null);
+
+    // Fail closed: rate limit + human verification before touching auth.
+    try {
+      await guard({ data: { intent: "signup", email, captchaToken: captchaToken ?? "", idempotencyKey } });
+    } catch (err) {
+      const limited = parseRateLimited(err);
+      setLoading(false);
+      setFormError(
+        limited ? rateLimitMessage(limited, "vi") : isCaptchaFailure(err) ? captchaMessage("vi") : t("study.register.signUpFailed"),
+      );
+      setCaptchaToken(null);
+      setIdempotencyKey(crypto.randomUUID());
+      resetTurnstile();
+      return;
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -54,6 +76,9 @@ function RegisterPage() {
     });
 
     setLoading(false);
+    setCaptchaToken(null);
+    setIdempotencyKey(crypto.randomUUID());
+    resetTurnstile();
 
     if (error) {
       setFormError(error.message || t("study.register.signUpFailed"));
