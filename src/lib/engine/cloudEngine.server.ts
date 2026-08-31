@@ -214,6 +214,52 @@ async function call<T>(
   }
 }
 
+/**
+ * Defensive parse of the /healthz contract. A malformed or partial payload is
+ * never trusted: it downgrades the reported status instead of throwing.
+ */
+export function interpretHealthPayload(
+  raw: unknown,
+  latencyMs: number,
+): CloudEngineHealth {
+  const body = (raw ?? {}) as Record<string, unknown>;
+  const statusText = typeof body["status"] === "string" ? (body["status"] as string) : null;
+  const engineVersion = typeof body["engineVersion"] === "string" ? (body["engineVersion"] as string) : null;
+  const arch = typeof body["arch"] === "string" ? (body["arch"] as string) : null;
+
+  const rawPool = body["pool"];
+  let pool: { size: number; busy: number } | null = null;
+  if (rawPool && typeof rawPool === "object" && !Array.isArray(rawPool)) {
+    const size = Number((rawPool as Record<string, unknown>)["size"]);
+    const busy = Number((rawPool as Record<string, unknown>)["busy"]);
+    if (Number.isFinite(size) && Number.isFinite(busy) && size > 0 && busy >= 0) {
+      pool = { size: Math.trunc(size), busy: Math.trunc(busy) };
+    }
+  }
+
+  if (!pool || statusText !== "ok") {
+    // Unknown shape or an engine that is still starting: never report healthy.
+    return {
+      status: statusText === "ok" ? "degraded" : "unavailable",
+      engineVersion,
+      arch,
+      pool,
+      latencyMs,
+      detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /healthz không hợp lệ.",
+    };
+  }
+
+  const busy = pool.busy >= pool.size;
+  return {
+    status: busy ? "degraded" : "healthy",
+    engineVersion,
+    arch,
+    pool,
+    latencyMs,
+    detail: busy ? "Toàn bộ engine process đang bận." : "OK",
+  };
+}
+
 export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
   const creds = credentials();
   if (!creds) {
@@ -227,12 +273,7 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     };
   }
   const startedAt = Date.now();
-  const res = await call<{
-    status?: string;
-    engineVersion?: string;
-    arch?: string;
-    pool?: { size: number; busy: number };
-  }>("/healthz", {}, 8_000);
+  const res = await call<unknown>("/healthz", {}, 8_000);
   if (!res.ok) {
     return {
       status: "unavailable",
@@ -243,15 +284,7 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
       detail: res.error,
     };
   }
-  const busy = res.data.pool ? res.data.pool.busy >= res.data.pool.size : false;
-  return {
-    status: busy ? "degraded" : "healthy",
-    engineVersion: res.data.engineVersion ?? null,
-    arch: res.data.arch ?? null,
-    pool: res.data.pool ?? null,
-    latencyMs: Date.now() - startedAt,
-    detail: busy ? "Toàn bộ engine process đang bận." : "OK",
-  };
+  return interpretHealthPayload(res.data, Date.now() - startedAt);
 }
 
 /** Only the allowlisted UCI options ever leave this process. */
