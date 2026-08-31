@@ -342,11 +342,17 @@ export async function requestBestMove(req: BestMoveRequest): Promise<BestMoveRes
         moves: req.moves,
         options: uciOptions(config),
         search,
+        // Top-level fields the engine service reads directly.
+        movetimeMs: config.timePolicy === "movetime" ? Math.min(config.moveTimeMs, config.maxMoveTimeMs) : undefined,
+        clock: config.timePolicy === "clock" && req.clock ? req.clock : undefined,
+        timeoutMs: config.requestTimeoutMs,
+        newGame: req.moves.length === 0,
         sessionId: req.sessionId,
         requestId: req.requestId,
       },
       config.requestTimeoutMs,
     );
+
     if (res.ok && res.data.bestmove) {
       return {
         status: "ok",
