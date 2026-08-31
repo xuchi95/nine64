@@ -120,7 +120,7 @@ function Analysis() {
 
   const canMoveFrom = useCallback(
     (square: string) => {
-      const piece = game.game.current.get(square as never);
+      const piece = game.pieceAt(square);
       return !!piece && piece.color === game.turn;
     },
     [game],

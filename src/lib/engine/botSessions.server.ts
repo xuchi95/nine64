@@ -16,7 +16,7 @@
  * Server-only module.
  */
 import { rulesFor } from "@/lib/chess/rules";
-import type { RulesPosition } from "@/lib/chess/rules";
+import type { RulesPosition, PromotionPiece } from "@/lib/chess/rules";
 import { engineUciToAppMove } from "@/lib/chess/rules";
 import type { VariantId } from "@/config/variants";
 import { TITAN_SLUG, type EngineConfig } from "./profileTypes";
@@ -165,12 +165,12 @@ function decodeEngineMove(
   variant: SessionVariant,
   fen: string,
   uci: string,
-): { from: string; to: string; promotion?: string } | null {
+): { from: string; to: string; promotion?: PromotionPiece } | null {
   if (variant !== "chess960") {
     return {
       from: uci.slice(0, 2),
       to: uci.slice(2, 4),
-      ...(uci.length > 4 ? { promotion: uci[4] as string } : {}),
+      ...(uci.length > 4 ? { promotion: uci[4] as PromotionPiece } : {}),
     };
   }
   return engineUciToAppMove(fen, uci);
@@ -295,7 +295,7 @@ export async function playMove(args: {
   }
   const from = args.uci.slice(0, 2);
   const to = args.uci.slice(2, 4);
-  const promotion = args.uci.length > 4 ? args.uci[4] : undefined;
+  const promotion = args.uci.length > 4 ? (args.uci[4] as PromotionPiece) : undefined;
   const playerMove = chess.move(from, to, promotion);
   if (!playerMove) return { ok: false, code: "ILLEGAL_MOVE", snapshot: session };
 

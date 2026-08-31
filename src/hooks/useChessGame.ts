@@ -246,7 +246,7 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   const board = useMemo(() => {
     return gameRef.current.boardPieces().map((p) => ({
       square: p.square,
-      type: p.type as string,
+      type: p.type,
       color: p.color,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
