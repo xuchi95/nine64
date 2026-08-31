@@ -7,6 +7,8 @@ import { GameLayout, GameNotice, StatusPill } from "@/components/game/GameLayout
 import { GamePanel, StatRow } from "@/components/game/GamePanel";
 import { PlayerCard } from "@/components/game/PlayerCard";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
+import { GameChatPanel } from "@/components/game/GameChatPanel";
+import { useAuth } from "@/lib/auth";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { APP } from "@/config/app";
 import { useT } from "@/lib/i18n";
@@ -39,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/watch/platform/$gameId")({
 function SpectatorPage() {
   const { gameId } = useParams({ from: "/_authenticated/watch/platform/$gameId" });
   const { t } = useT();
+  const { user } = useAuth();
   const viewFn = useServerFn(getSpectatorView);
   const [view, setView] = useState<SpectatorView | null>(null);
   const [loading, setLoading] = useState(true);
@@ -198,9 +201,17 @@ function SpectatorPage() {
           />
         }
         right={
-          <GamePanel title={t("play.watch.moves")} className="max-h-[420px]" bodyClassName="overflow-hidden p-4">
-            <MoveJournal entries={journal} statusLine={`${journal.length} ply`} />
-          </GamePanel>
+          <>
+            <GamePanel title={t("play.watch.moves")} className="max-h-[420px]" bodyClassName="overflow-hidden p-4">
+              <MoveJournal entries={journal} statusLine={`${journal.length} ply`} />
+            </GamePanel>
+            <GameChatPanel
+              gameId={gameId}
+              moveSans={(view?.moves ?? []).map((m) => m.san)}
+              ply={(view?.moves ?? []).length}
+              userId={user?.id ?? null}
+            />
+          </>
         }
       />
     </AppShell>

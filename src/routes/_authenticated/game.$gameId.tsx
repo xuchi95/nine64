@@ -60,6 +60,7 @@ import { timeControlSpec } from "@/lib/chess/timeControls";
 import { normalizeResult, resultLabel } from "@/lib/chess/gameResult";
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
+import { GameChatPanel } from "@/components/game/GameChatPanel";
 import { buildPgn, shareUrl } from "@/lib/chess/share";
 import { useFairplayTelemetry } from "@/hooks/useFairplayTelemetry";
 import { ReportPlayerCard } from "@/components/game/ReportPlayerCard";
