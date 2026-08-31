@@ -1,7 +1,8 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Chess, type Move } from "chess.js";
+import { rulesFor, type AppliedMove, type RulesPosition } from "@/lib/chess/rules";
+import type { VariantId } from "@/config/variants";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChessBoard } from "@/components/chess/ChessBoard";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,10 @@ function OnlineGamePage() {
   const [drawBusy, setDrawBusy] = useState(false);
   const [drawNotice, setDrawNotice] = useState<string | null>(null);
 
-  const gameRef = useRef<Chess>(new Chess());
+  // Rule engine is variant-driven: Chess960 never goes through chess.js.
+  const gameRef = useRef<RulesPosition>(rulesFor("standard").createPosition());
+  /** FEN captured before an optimistic move, used to roll the preview back. */
+  const preMoveFenRef = useRef<string | null>(null);
   const finishedRef = useRef(false);
   const inFlightRef = useRef(false);
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
@@ -200,20 +204,25 @@ function OnlineGamePage() {
       setGame(g);
       setMoves(ms.slice().sort((a, b) => a.move_number - b.move_number));
 
-      const chess = new Chess();
+      const rules = rulesFor((g.variant ?? "standard") as VariantId);
+      let chess: RulesPosition;
       try {
-        chess.load(g.initial_fen || g.current_fen);
+        chess = rules.createPosition(g.initial_fen || g.current_fen);
       } catch {
-        chess.reset();
+        chess = rules.createPosition();
       }
       for (const m of ms.slice().sort((a, b) => a.move_number - b.move_number)) {
+        // `uci` is Nine64 canonical notation (castle = king start -> king
+        // final square), which the rules adapter accepts for every variant.
+        const promotion = m.uci.length > 4 ? (m.uci[4] as "q" | "r" | "b" | "n") : undefined;
         try {
-          chess.move(m.san);
+          chess.move(m.uci.slice(0, 2), m.uci.slice(2, 4), promotion);
         } catch {
           // ignore invalid moves
         }
       }
       gameRef.current = chess;
+      preMoveFenRef.current = null;
 
       // Canonical clock base: remaining ms per side at the start of the active
       // turn, plus how much of that turn the *server* says already elapsed.
@@ -581,7 +590,15 @@ function OnlineGamePage() {
         await refresh({ showSpinner: true }).catch(() => undefined);
         setConflict(`${label} Board resynced from the server.`);
       } catch (e: unknown) {
-        gameRef.current.undo();
+        const back = preMoveFenRef.current;
+        if (back) {
+          try {
+            gameRef.current = rulesFor((game.variant ?? "standard") as VariantId).createPosition(back);
+          } catch {
+            // keep the current position; the refresh below is authoritative
+          }
+          preMoveFenRef.current = null;
+        }
         setLastMove(null);
         setPendingMove(null);
         setBoardRev((v) => v + 1);
@@ -607,9 +624,10 @@ function OnlineGamePage() {
       }
 
       // Local preview only — the server re-derives SAN/FEN from the intent.
-      let move: Move | null = null;
+      preMoveFenRef.current = gameRef.current.fen();
+      let move: AppliedMove | null = null;
       try {
-        move = gameRef.current.move({ from, to, promotion: promotion ?? "q" });
+        move = gameRef.current.move(from, to, promotion ?? undefined);
       } catch {
         move = null;
       }
@@ -643,7 +661,7 @@ function OnlineGamePage() {
     (square: string) => {
       if (!myColor || finishedRef.current || game?.status !== "active") return false;
       if (gameRef.current.turn() !== myColor) return false;
-      const piece = gameRef.current.get(square as never);
+      const piece = gameRef.current.pieceAt(square);
       return piece?.color === myColor;
     },
     [game?.status, myColor],
@@ -651,37 +669,23 @@ function OnlineGamePage() {
 
   const legalTargets = useCallback((square: string) => {
     try {
-      return gameRef.current
-        .moves({ square: square as never, verbose: true })
-        .map((m) => (m as Move).to as string);
+      return gameRef.current.legalTargets(square);
     } catch {
       return [];
     }
   }, []);
 
   const needsPromotion = useCallback((from: string, to: string) => {
-    const piece = gameRef.current.get(from as never);
-    if (!piece || piece.type !== "p") return false;
-    return (piece.color === "w" && to[1] === "8") || (piece.color === "b" && to[1] === "1");
+    return gameRef.current.needsPromotion(from, to);
   }, []);
 
   const pieces = useMemo(() => {
-    return gameRef.current
-      .board()
-      .flat()
-      .filter((sq): sq is NonNullable<typeof sq> => sq !== null)
-      .map((sq) => ({ square: sq.square as string, type: sq.type, color: sq.color as PieceColor }));
+    return gameRef.current.boardPieces();
   }, [moves, result, boardRev]);
 
   const checkSquare = useMemo(() => {
     if (!gameRef.current.isCheck()) return null;
-    const turn = gameRef.current.turn();
-    for (const row of gameRef.current.board()) {
-      for (const sq of row) {
-        if (sq && sq.type === "k" && sq.color === turn) return sq.square as string;
-      }
-    }
-    return null;
+    return gameRef.current.kingSquare(gameRef.current.turn());
   }, [moves, result, boardRev]);
 
   const isCheckmate = useMemo(
@@ -981,12 +985,12 @@ function OnlineGamePage() {
 }
 
 
-function playMoveSound(game: Chess, move: Move) {
+function playMoveSound(game: RulesPosition, move: AppliedMove) {
   if (game.isCheck()) {
     playSound("check");
-  } else if (move.flags.includes("p")) {
+  } else if (move.promotion) {
     playSound("promotion");
-  } else if (move.flags.includes("k") || move.flags.includes("q")) {
+  } else if (move.castle) {
     playSound("castle");
   } else if (move.captured) {
     playSound("capture");
