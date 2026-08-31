@@ -337,10 +337,11 @@ export const makeMove = createServerFn({ method: "POST" })
     const opponentId = isWhite ? snapshot.black_id : snapshot.white_id;
 
     if (committedGame.status === "completed") {
-      const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", {
+      // Single orchestration path; safe to call at-least-once (ledger-guarded).
+      const { error: ratingError } = await supabaseAdmin.rpc("apply_rating_once", {
         _game_id: data.gameId,
       });
-      if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
+      if (ratingError) console.error("Rating apply failed", ratingError.message);
 
       const title = committedGame.result === "1/2-1/2" ? "Game drawn" : "Game over";
       await supabaseAdmin.from("notifications").insert([
