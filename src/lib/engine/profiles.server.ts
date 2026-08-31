@@ -172,40 +172,32 @@ export async function publishProfile(args: {
   if (args.expectedVersion !== null && before.version !== args.expectedVersion) {
     return { ok: false, code: "VERSION_CONFLICT", version: before.version, before };
   }
-  const nextVersion = before.version + 1;
-  const { error } = await db
-    .from("engine_profiles")
-    .update({
-      config: parsed.data as unknown as Record<string, unknown>,
-      draft_config: parsed.data as unknown as Record<string, unknown>,
-      has_draft: false,
-      status: args.status,
-      enabled: args.enabled,
-      version: nextVersion,
-      reason: args.reason,
-      updated_by: args.actorId,
-      published_at: new Date().toISOString(),
-      ...(args.stockfishVersion ? { stockfish_version: args.stockfishVersion } : {}),
-    } as never)
-    .eq("slug", args.slug)
-    .eq("version", before.version);
-  if (error) return { ok: false, code: "WRITE_FAILED", message: error.message, before };
-
-  await db.from("engine_profile_versions").insert({
-    profile_id: (row as { id: string }).id,
-    slug: args.slug,
-    version: nextVersion,
-    status: args.status,
-    enabled: args.enabled,
-    config: parsed.data as unknown as Record<string, unknown>,
-    stockfish_version: args.stockfishVersion ?? before.stockfishVersion,
-    benchmark_id: args.benchmarkId ?? null,
-    reason: args.reason,
-    changed_by: args.actorId,
+  // Version bump + history row happen in one database transaction.
+  const { data, error } = await db.rpc("engine_profile_publish", {
+    _slug: args.slug,
+    _config: parsed.data as unknown as Record<string, unknown>,
+    _status: args.status,
+    _enabled: args.enabled,
+    _reason: args.reason,
+    _actor: args.actorId,
+    _expected_version: args.expectedVersion,
+    _benchmark_id: args.benchmarkId ?? null,
+    _stockfish_version: args.stockfishVersion ?? null,
   } as never);
   invalidateEngineProfileCache();
-  return { ok: true, version: nextVersion, before };
+  if (error) return { ok: false, code: "WRITE_FAILED", message: error.message, before };
+  const payload = (data ?? {}) as Record<string, unknown>;
+  if (!payload["ok"]) {
+    return {
+      ok: false,
+      code: String(payload["code"] ?? "WRITE_FAILED"),
+      version: Number(payload["version"] ?? before.version),
+      before,
+    };
+  }
+  return { ok: true, version: Number(payload["version"]), before };
 }
+
 
 export interface ProfileVersionRow {
   version: number;
