@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import {
   ArrowLeft,
@@ -30,6 +30,7 @@ import { addPuzzles } from "@/lib/learn/store";
 import { useSettings } from "@/lib/settings";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { useT } from "@/lib/i18n";
+import type { AnalysisFocus } from "@/lib/analysis/presentation";
 
 export const Route = createFileRoute("/games/$gameId")({
   head: () => ({
@@ -212,17 +213,18 @@ function GameDetail() {
               interactive={false}
               lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : null}
               checkSquare={position.checkSquare}
+              arrows={boardArrows}
             />
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="icon" aria-label={t("play.detail.firstMove")} onClick={() => setCursor(-1)}>
+            <Button variant="outline" size="icon" aria-label={t("play.detail.firstMove")} onClick={() => goto(-1)}>
               <SkipBack className="size-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
               aria-label={t("play.detail.prevMove")}
-              onClick={() => setCursor((c) => Math.max(-1, c - 1))}
+              onClick={() => goto((c) => Math.max(-1, c - 1))}
             >
               <ChevronLeft className="size-4" />
             </Button>
@@ -230,7 +232,7 @@ function GameDetail() {
               variant="outline"
               size="icon"
               aria-label={t("play.detail.nextMove")}
-              onClick={() => setCursor((c) => Math.min(game.moves.length - 1, c + 1))}
+              onClick={() => goto((c) => Math.min(game.moves.length - 1, c + 1))}
             >
               <ChevronRight className="size-4" />
             </Button>
@@ -238,7 +240,7 @@ function GameDetail() {
               variant="outline"
               size="icon"
               aria-label={t("play.detail.lastMove")}
-              onClick={() => setCursor(game.moves.length - 1)}
+              onClick={() => goto(game.moves.length - 1)}
             >
               <SkipForward className="size-4" />
             </Button>
@@ -283,7 +285,7 @@ function GameDetail() {
                   startEval={game.review.startEval}
                   evals={game.review.evals}
                   activeIndex={cursor}
-                  onSelect={setCursor}
+                  onSelect={goto}
                 />
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div className="rounded-md bg-surface-2 p-3">
@@ -366,15 +368,20 @@ function GameDetail() {
             )}
           </div>
 
-          <VariationPanel game={game} onSelectMove={setCursor} />
+          <CoachPanel game={game} onSelectMove={goto} />
 
-          <CoachPanel game={game} onSelectMove={setCursor} />
+          <VariationPanel
+            game={game}
+            onSelectMove={goto}
+            focus={focus}
+            onFocus={showOnBoard}
+          />
 
           <div className="panel flex max-h-[420px] flex-col overflow-hidden">
             <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("play.detail.moves")}
             </div>
-            <MoveList moves={game.moves} activeIndex={cursor} onSelect={setCursor} />
+            <MoveList moves={game.moves} activeIndex={cursor} onSelect={goto} />
           </div>
 
           <div className="panel space-y-2 p-4 text-sm">
