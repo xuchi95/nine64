@@ -125,7 +125,7 @@ export function GameChatPanel({
     <GamePanel
       title="Trò chuyện"
       meta={<span>{messages.length}</span>}
-      className={className}
+      className={className ?? ""}
       bodyClassName="flex flex-col"
     >
       <div ref={scrollRef} className="max-h-72 min-h-32 flex-1 space-y-2 overflow-y-auto p-3">
