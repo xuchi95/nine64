@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { useT } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/fairplay")({
+export const Route = createFileRoute("/_authenticated/admin/fairplay/")({
   head: () => ({
     meta: [
       { title: `Hồ sơ Fair Play — ${APP.name}` },
