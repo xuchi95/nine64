@@ -1,5 +1,17 @@
 import { Chess } from "chess.js";
-import type { Puzzle, PuzzleMove } from "./puzzleGen";
+import type { PuzzleMove } from "./puzzleGen";
+
+/**
+ * Structural shape the solver needs. Both personal puzzles (`Puzzle`) and
+ * catalog puzzles (`PlatformPuzzle`) satisfy it.
+ */
+export interface SolvablePuzzle {
+  fen: string;
+  solution: PuzzleMove[];
+  alternates?: Record<number, string[]>;
+}
+
+type Puzzle = SolvablePuzzle;
 
 /**
  * Multi-move puzzle solver.

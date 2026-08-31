@@ -39,10 +39,12 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
 import { Route as AuthenticatedAdminIntelligenceRouteImport } from './routes/_authenticated/admin.intelligence'
+import { Route as AuthenticatedAdminPuzzlesRouteImport } from './routes/_authenticated/admin.puzzles'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin.system'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as AuthenticatedOnlineDiagnosticsRouteImport } from './routes/_authenticated/online.diagnostics'
+import { Route as AuthenticatedPuzzlesTrainRouteImport } from './routes/_authenticated/puzzles.train'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
 import { Route as AuthenticatedAdminFairplayIndexRouteImport } from './routes/_authenticated/admin.fairplay.index'
 import { Route as AuthenticatedAdminFairplayLogRouteImport } from './routes/_authenticated/admin.fairplay.log'
@@ -204,6 +206,12 @@ const AuthenticatedAdminIntelligenceRoute =
     path: '/admin/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminPuzzlesRoute =
+  AuthenticatedAdminPuzzlesRouteImport.update({
+    id: '/admin/puzzles',
+    path: '/admin/puzzles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSecurityRoute =
   AuthenticatedAdminSecurityRouteImport.update({
     id: '/admin/security',
@@ -226,6 +234,12 @@ const AuthenticatedOnlineDiagnosticsRoute =
     id: '/diagnostics',
     path: '/diagnostics',
     getParentRoute: () => AuthenticatedOnlineRoute,
+  } as any)
+const AuthenticatedPuzzlesTrainRoute =
+  AuthenticatedPuzzlesTrainRouteImport.update({
+    id: '/puzzles/train',
+    path: '/puzzles/train',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const GamesOnlineGameIdRoute = GamesOnlineGameIdRouteImport.update({
   id: '/games/online/$gameId',
@@ -301,10 +315,12 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
+  '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
@@ -344,10 +360,12 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
+  '/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
@@ -389,10 +407,12 @@ export interface FileRoutesById {
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
+  '/_authenticated/admin/puzzles': typeof AuthenticatedAdminPuzzlesRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/_authenticated/online/diagnostics': typeof AuthenticatedOnlineDiagnosticsRoute
+  '/_authenticated/puzzles/train': typeof AuthenticatedPuzzlesTrainRoute
   '/games/online/$gameId': typeof GamesOnlineGameIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
@@ -434,10 +454,12 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
+    | '/admin/puzzles'
     | '/admin/security'
     | '/admin/system'
     | '/game/$gameId'
     | '/online/diagnostics'
+    | '/puzzles/train'
     | '/games/online/$gameId'
     | '/admin/'
     | '/admin/fairplay/log'
@@ -477,10 +499,12 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
+    | '/admin/puzzles'
     | '/admin/security'
     | '/admin/system'
     | '/game/$gameId'
     | '/online/diagnostics'
+    | '/puzzles/train'
     | '/games/online/$gameId'
     | '/admin'
     | '/admin/fairplay/log'
@@ -521,10 +545,12 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
     | '/_authenticated/admin/intelligence'
+    | '/_authenticated/admin/puzzles'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/system'
     | '/_authenticated/game/$gameId'
     | '/_authenticated/online/diagnostics'
+    | '/_authenticated/puzzles/train'
     | '/games/online/$gameId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/fairplay/log'
@@ -777,6 +803,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIntelligenceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/puzzles': {
+      id: '/_authenticated/admin/puzzles'
+      path: '/admin/puzzles'
+      fullPath: '/admin/puzzles'
+      preLoaderRoute: typeof AuthenticatedAdminPuzzlesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/security': {
       id: '/_authenticated/admin/security'
       path: '/admin/security'
@@ -804,6 +837,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/online/diagnostics'
       preLoaderRoute: typeof AuthenticatedOnlineDiagnosticsRouteImport
       parentRoute: typeof AuthenticatedOnlineRoute
+    }
+    '/_authenticated/puzzles/train': {
+      id: '/_authenticated/puzzles/train'
+      path: '/puzzles/train'
+      fullPath: '/puzzles/train'
+      preLoaderRoute: typeof AuthenticatedPuzzlesTrainRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/games/online/$gameId': {
       id: '/games/online/$gameId'
@@ -883,9 +923,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminEngineRoute: typeof AuthenticatedAdminEngineRoute
   AuthenticatedAdminIntelligenceRoute: typeof AuthenticatedAdminIntelligenceRoute
+  AuthenticatedAdminPuzzlesRoute: typeof AuthenticatedAdminPuzzlesRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSystemRoute: typeof AuthenticatedAdminSystemRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
+  AuthenticatedPuzzlesTrainRoute: typeof AuthenticatedPuzzlesTrainRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminFairplayLogRoute: typeof AuthenticatedAdminFairplayLogRoute
   AuthenticatedAdminUsersUserIdRoute: typeof AuthenticatedAdminUsersUserIdRoute
@@ -901,9 +943,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminEngineRoute: AuthenticatedAdminEngineRoute,
   AuthenticatedAdminIntelligenceRoute: AuthenticatedAdminIntelligenceRoute,
+  AuthenticatedAdminPuzzlesRoute: AuthenticatedAdminPuzzlesRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSystemRoute: AuthenticatedAdminSystemRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
+  AuthenticatedPuzzlesTrainRoute: AuthenticatedPuzzlesTrainRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminFairplayLogRoute: AuthenticatedAdminFairplayLogRoute,
   AuthenticatedAdminUsersUserIdRoute: AuthenticatedAdminUsersUserIdRoute,

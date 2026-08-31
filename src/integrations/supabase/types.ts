@@ -1326,34 +1326,388 @@ export type Database = {
         Row: {
           created_at: string
           grade: number
+          hints_used: number
           id: string
+          mode: string
+          moves_played: Json
           puzzle_id: string
           rating_after: number | null
           rating_before: number | null
+          session_id: string | null
           solved: boolean
+          source: string
+          themes: string[]
           time_ms: number | null
           user_id: string
         }
         Insert: {
           created_at?: string
           grade: number
+          hints_used?: number
           id?: string
+          mode?: string
+          moves_played?: Json
           puzzle_id: string
           rating_after?: number | null
           rating_before?: number | null
+          session_id?: string | null
           solved?: boolean
+          source?: string
+          themes?: string[]
           time_ms?: number | null
           user_id: string
         }
         Update: {
           created_at?: string
           grade?: number
+          hints_used?: number
           id?: string
+          mode?: string
+          moves_played?: Json
           puzzle_id?: string
           rating_after?: number | null
           rating_before?: number | null
+          session_id?: string | null
           solved?: boolean
+          source?: string
+          themes?: string[]
           time_ms?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "puzzle_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "puzzle_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      puzzle_catalog: {
+        Row: {
+          attempts: number
+          color: string
+          created_at: string
+          dataset_id: string | null
+          enabled: boolean
+          fen: string
+          flag_reason: string | null
+          flagged: boolean
+          game_url: string | null
+          id: string
+          opening: string | null
+          phase: string
+          plies: number
+          popularity: number
+          rating: number
+          rating_deviation: number
+          solved: number
+          source: string
+          source_id: string | null
+          themes: string[]
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          color: string
+          created_at?: string
+          dataset_id?: string | null
+          enabled?: boolean
+          fen: string
+          flag_reason?: string | null
+          flagged?: boolean
+          game_url?: string | null
+          id: string
+          opening?: string | null
+          phase?: string
+          plies?: number
+          popularity?: number
+          rating?: number
+          rating_deviation?: number
+          solved?: number
+          source?: string
+          source_id?: string | null
+          themes?: string[]
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          color?: string
+          created_at?: string
+          dataset_id?: string | null
+          enabled?: boolean
+          fen?: string
+          flag_reason?: string | null
+          flagged?: boolean
+          game_url?: string | null
+          id?: string
+          opening?: string | null
+          phase?: string
+          plies?: number
+          popularity?: number
+          rating?: number
+          rating_deviation?: number
+          solved?: number
+          source?: string
+          source_id?: string | null
+          themes?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "puzzle_catalog_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "puzzle_datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      puzzle_datasets: {
+        Row: {
+          attribution: string
+          created_at: string
+          id: string
+          imported_count: number
+          license: string
+          license_url: string
+          name: string
+          notes: string
+          slug: string
+          source_url: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          attribution?: string
+          created_at?: string
+          id?: string
+          imported_count?: number
+          license: string
+          license_url?: string
+          name: string
+          notes?: string
+          slug: string
+          source_url?: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          attribution?: string
+          created_at?: string
+          id?: string
+          imported_count?: number
+          license?: string
+          license_url?: string
+          name?: string
+          notes?: string
+          slug?: string
+          source_url?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      puzzle_lines: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          line_index: number
+          moves: Json
+          ply_from: number
+          puzzle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          line_index?: number
+          moves?: Json
+          ply_from?: number
+          puzzle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          line_index?: number
+          moves?: Json
+          ply_from?: number
+          puzzle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "puzzle_lines_puzzle_id_fkey"
+            columns: ["puzzle_id"]
+            isOneToOne: false
+            referencedRelation: "puzzle_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      puzzle_ratings: {
+        Row: {
+          attempts: number
+          peak_rating: number
+          rating: number
+          rating_deviation: number
+          scope: string
+          solved: number
+          updated_at: string
+          user_id: string
+          volatility: number
+        }
+        Insert: {
+          attempts?: number
+          peak_rating?: number
+          rating?: number
+          rating_deviation?: number
+          scope?: string
+          solved?: number
+          updated_at?: string
+          user_id: string
+          volatility?: number
+        }
+        Update: {
+          attempts?: number
+          peak_rating?: number
+          rating?: number
+          rating_deviation?: number
+          scope?: string
+          solved?: number
+          updated_at?: string
+          user_id?: string
+          volatility?: number
+        }
+        Relationships: []
+      }
+      puzzle_sessions: {
+        Row: {
+          config: Json
+          duration_seconds: number | null
+          failed: number
+          finished_at: string | null
+          hints_used: number
+          id: string
+          lives: number | null
+          mode: string
+          score: number
+          solved: number
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config?: Json
+          duration_seconds?: number | null
+          failed?: number
+          finished_at?: string | null
+          hints_used?: number
+          id?: string
+          lives?: number | null
+          mode: string
+          score?: number
+          solved?: number
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          duration_seconds?: number | null
+          failed?: number
+          finished_at?: string | null
+          hints_used?: number
+          id?: string
+          lives?: number | null
+          mode?: string
+          score?: number
+          solved?: number
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      puzzle_themes: {
+        Row: {
+          category: string
+          description_en: string
+          description_vi: string
+          enabled: boolean
+          key: string
+          name_en: string
+          name_vi: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          description_en?: string
+          description_vi?: string
+          enabled?: boolean
+          key: string
+          name_en: string
+          name_vi: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          description_en?: string
+          description_vi?: string
+          enabled?: boolean
+          key?: string
+          name_en?: string
+          name_vi?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      puzzle_user_stats: {
+        Row: {
+          attempts: number
+          best_streak: number
+          current_streak: number
+          hints_used: number
+          last_solved_at: string | null
+          solved: number
+          sprint_best: number
+          survival_best: number
+          theme_stats: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          best_streak?: number
+          current_streak?: number
+          hints_used?: number
+          last_solved_at?: string | null
+          solved?: number
+          sprint_best?: number
+          survival_best?: number
+          theme_stats?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          best_streak?: number
+          current_streak?: number
+          hints_used?: number
+          last_solved_at?: string | null
+          solved?: number
+          sprint_best?: number
+          survival_best?: number
+          theme_stats?: Json
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -1667,6 +2021,51 @@ export type Database = {
             referencedColumns: ["key"]
           },
         ]
+      }
+      srs_cards: {
+        Row: {
+          created_at: string
+          difficulty: number
+          due: string
+          id: string
+          lapses: number
+          last_review: string | null
+          puzzle_id: string
+          reps: number
+          source: string
+          stability: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: number
+          due?: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          puzzle_id: string
+          reps?: number
+          source?: string
+          stability?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number
+          due?: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          puzzle_id?: string
+          reps?: number
+          source?: string
+          stability?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       system_incidents: {
         Row: {
@@ -2318,6 +2717,10 @@ export type Database = {
       purge_rate_limit_counters: {
         Args: { _older_than_hours?: number }
         Returns: number
+      }
+      puzzle_catalog_record_attempt: {
+        Args: { _puzzle_id: string; _solved: boolean }
+        Returns: undefined
       }
       queue_heartbeat: { Args: { _queue_id: string }; Returns: undefined }
       queue_join: {
