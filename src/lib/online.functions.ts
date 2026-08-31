@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Game, GameMove, MatchmakingQueue, Notification } from "@/lib/database.types";
 import {
-  FINISH_GAME_SCHEMA,
+  GAME_COMMAND_SCHEMA,
   GAME_ID_SCHEMA,
   MOVE_SCHEMA,
   NOTIFICATION_ID_SCHEMA,

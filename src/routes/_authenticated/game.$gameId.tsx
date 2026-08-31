@@ -44,7 +44,7 @@ import {
   formatTimeControl,
   timeControlSpec,
 } from "@/lib/chess/timeControls";
-import { normalizeResult, resultCodeFromWinner, resultLabel } from "@/lib/chess/gameResult";
+import { normalizeResult, resultLabel } from "@/lib/chess/gameResult";
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
 import { buildPgn, shareUrl } from "@/lib/chess/share";
@@ -350,22 +350,6 @@ function OnlineGamePage() {
     return () => window.clearInterval(id);
   }, [game, boardRev]);
 
-  // When the estimated countdown hits zero we ask the server to rule on it.
-  // The client never declares a winner by itself.
-  useEffect(() => {
-    if (!awaitingFlag || !game || game.status !== "active") return;
-    let cancelled = false;
-    const claim = () => {
-      if (cancelled) return;
-      void runCommand("timeout");
-    };
-    const id = window.setInterval(claim, 1500);
-    claim();
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [awaitingFlag, game, runCommand]);
 
   // Resync canonical state on reconnect and when the tab regains focus.
   useEffect(() => {
@@ -409,6 +393,23 @@ function OnlineGamePage() {
     },
     [abortGameFn, claimTimeoutFn, commandBusy, game, myColor, refresh, resignGameFn],
   );
+
+  // When the estimated countdown hits zero we ask the server to rule on it.
+  // The client never declares a winner by itself.
+  useEffect(() => {
+    if (!awaitingFlag || !game || game.status !== "active") return;
+    let cancelled = false;
+    const claim = () => {
+      if (cancelled) return;
+      void runCommand("timeout");
+    };
+    const id = window.setInterval(claim, 1500);
+    claim();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [awaitingFlag, game, runCommand]);
 
 
 
