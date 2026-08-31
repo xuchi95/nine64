@@ -491,7 +491,7 @@ function PlayAi() {
                 onChange={(tc) => setConfig((c) => ({ ...c, timeControl: tc }))}
               />
             </div>
-            <Button size="lg" className="w-full" onClick={start}>
+            <Button size="lg" className="w-full" onClick={start} disabled={titanStarting}>
               {t("play.ai.startGame")}
             </Button>
           </div>
@@ -588,6 +588,11 @@ function PlayAi() {
                 onClick={() => {
                   if (!settings.confirmResign || window.confirm(t("play.ai.resignConfirm"))) {
                     game.resign(playerColor);
+                    if (titanRef.current) {
+                      void endTitan({ data: { sessionId: titanRef.current.id, reason: "resign" } }).catch(
+                        () => undefined,
+                      );
+                    }
                   }
                 }}
                 disabled={!!game.result}

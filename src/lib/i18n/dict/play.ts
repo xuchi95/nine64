@@ -82,6 +82,11 @@ export default {
     "play.ai.gameSavedDesc": "Mở lại để xem từng nước đi và phân tích máy.",
     "play.ai.viewAction": "Xem",
     "play.ai.standard": "Không giới hạn",
+    "play.ai.titanDisabled": "Nine64 Titan hiện chưa sẵn sàng (dịch vụ máy chủ chưa bật). Vui lòng chọn mức 1–15.",
+    "play.ai.titanTooMany": "Bạn đang có quá nhiều ván Titan đang mở. Hãy kết thúc bớt trước khi bắt đầu ván mới.",
+    "play.ai.titanConflict": "Ván Titan đã thay đổi trên máy chủ. Hãy tải lại để đồng bộ.",
+    "play.ai.titanUnavailable": "Không kết nối được Nine64 Titan. Thử lại sau ít phút.",
+    "play.ai.titanStarting": "Đang tạo ván Titan…",
     "play.local.title": "Chơi 2 người",
     "play.local.subtitle": "Dùng chung một thiết bị và lần lượt đi quân.",
     "play.local.variant": "Biến thể",
@@ -432,6 +437,11 @@ export default {
     "play.ai.gameSavedDesc": "Open it for a move-by-move replay and engine review.",
     "play.ai.viewAction": "View",
     "play.ai.standard": "Unlimited",
+    "play.ai.titanDisabled": "Nine64 Titan is not available yet (cloud service is off). Please pick level 1–15.",
+    "play.ai.titanTooMany": "You already have too many open Titan games. Finish one before starting another.",
+    "play.ai.titanConflict": "This Titan game changed on the server. Reload to resync.",
+    "play.ai.titanUnavailable": "Could not reach Nine64 Titan. Try again in a moment.",
+    "play.ai.titanStarting": "Creating Titan game…",
 
     // ---------- Play local ----------
     "play.local.title": "Local two player",
