@@ -33,7 +33,7 @@ const searchSchema = z.object({
   dir: z.enum(["asc", "desc"]).optional(),
 });
 
-export const Route = createFileRoute("/_authenticated/admin/users")({
+export const Route = createFileRoute("/_authenticated/admin/users/")({
   validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
