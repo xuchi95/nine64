@@ -235,16 +235,24 @@ export async function listProfileVersions(slug: string, limit = 50): Promise<Pro
   });
 }
 
-/** Emergency kill switch: new sessions are refused immediately. */
+/**
+ * Emergency kill switch: new sessions are refused immediately.
+ * Goes through the same versioned publish path so the change is auditable and
+ * appears in version history like any other profile change.
+ */
 export async function emergencyDisable(slug: string, actorId: string, reason: string): Promise<WriteResult> {
-  const db = await admin();
-  const { data: row } = await db.from("engine_profiles").select("version").eq("slug", slug).maybeSingle();
-  if (!row) return { ok: false, code: "NOT_FOUND" };
-  const { error } = await db
-    .from("engine_profiles")
-    .update({ enabled: false, status: "disabled", reason, updated_by: actorId } as never)
-    .eq("slug", slug);
-  if (error) return { ok: false, code: "WRITE_FAILED", message: error.message };
-  invalidateEngineProfileCache();
-  return { ok: true, version: Number(row.version) };
+  if (reason.trim().length < 10) return { ok: false, code: "REASON_REQUIRED" };
+  const { rows } = await listEngineProfiles(true);
+  const current = rows.find((r) => r.slug === slug);
+  if (!current) return { ok: false, code: "NOT_FOUND" };
+  return publishProfile({
+    slug,
+    config: current.config,
+    status: "disabled",
+    enabled: false,
+    reason: reason.trim(),
+    actorId,
+    expectedVersion: current.version,
+  });
 }
+
