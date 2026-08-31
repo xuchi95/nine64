@@ -29,6 +29,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
+import { useServerFn } from "@tanstack/react-start";
+import { startTitanSession, submitTitanMove, endTitanSession } from "@/lib/titan.functions";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/play/ai")({
@@ -116,8 +118,16 @@ function PlayAi() {
   const prevEval = useRef(0);
   const busy = useRef(false);
 
+  // Titan (level 16) is server-authoritative: the browser never runs it.
+  const isTitan = level.runtime === "cloud";
+  const startTitan = useServerFn(startTitanSession);
+  const submitTitan = useServerFn(submitTitanMove);
+  const endTitan = useServerFn(endTitanSession);
+  const titanRef = useRef<{ id: string; version: number } | null>(null);
+  const [titanStarting, setTitanStarting] = useState(false);
+
   useEffect(() => {
-    if (phase !== "playing") return;
+    if (phase !== "playing" || isTitan) return;
     const engine = new StockfishEngine(settings.enginePerformance);
     engineRef.current = engine;
     engine.init().catch((e: Error) => setEngineError(e.message));
@@ -126,11 +136,41 @@ function PlayAi() {
       engineRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, settings.enginePerformance]);
+  }, [phase, settings.enginePerformance, isTitan]);
 
   const start = () => {
     const color: Color =
       config.color === "random" ? (Math.random() < 0.5 ? "w" : "b") : config.color;
+    setEngineError(null);
+    if (isTitan) {
+      // A Titan game only exists once the server has created the session.
+      setTitanStarting(true);
+      void (async () => {
+        try {
+          const res = await startTitan({ data: { playerColor: color } });
+          if (!res.ok) {
+            setEngineError(t(`play.ai.titan.${res.code}`, {}, t("play.ai.titan.unavailable")));
+            return;
+          }
+          titanRef.current = { id: res.snapshot.sessionId, version: res.snapshot.version };
+          setPlayerColor(color);
+          game.reset();
+          prevEval.current = 0;
+          setPhase("playing");
+          playSound("matchFound");
+          // Engine opened the game when the player is Black.
+          for (const move of res.snapshot.moves) {
+            game.makeMove(move.uci.slice(0, 2), move.uci.slice(2, 4), move.uci[4] as never);
+          }
+        } catch (err) {
+          setEngineError(err instanceof Error ? err.message : t("play.ai.titan.unavailable"));
+        } finally {
+          setTitanStarting(false);
+        }
+      })();
+      return;
+    }
+    titanRef.current = null;
     setPlayerColor(color);
     game.reset();
     prevEval.current = 0;
@@ -159,6 +199,68 @@ function PlayAi() {
   // Bot turn: search off-thread, then hold the move for a human-like delay.
   useEffect(() => {
     if (phase !== "playing" || game.result || game.turn !== botColor) return;
+    if (busy.current) return;
+
+    if (isTitan) {
+      const session = titanRef.current;
+      const last = game.moves[game.moves.length - 1];
+      if (!session || !last) return;
+      let titanCancelled = false;
+      busy.current = true;
+      setThinking(true);
+      const promo = /=([QRBN])/.exec(last.san)?.[1]?.toLowerCase();
+      const uciMove = `${last.from}${last.to}${promo ?? ""}`;
+      void (async () => {
+        try {
+          const res = await submitTitan({
+            data: {
+              sessionId: session.id,
+              expectedVersion: session.version,
+              uci: uciMove,
+              idempotencyKey: `${session.id}:${session.version}`,
+              clock: config.timeControl
+                ? {
+                    whiteMs: Math.round(game.clock.w * 1000),
+                    blackMs: Math.round(game.clock.b * 1000),
+                    whiteIncMs: (config.timeControl.increment ?? 0) * 1000,
+                    blackIncMs: (config.timeControl.increment ?? 0) * 1000,
+                  }
+                : null,
+            },
+          });
+          if (titanCancelled) return;
+          if (!res.ok) {
+            // Never silently downgrade to a weaker engine.
+            setEngineError(t(`play.ai.titan.${res.code}`, {}, t("play.ai.titan.unavailable")));
+            return;
+          }
+          titanRef.current = { id: session.id, version: res.snapshot.version };
+          setEngineError(null);
+          if (res.snapshot.engine?.depth) {
+            setEngineInfo({ depth: res.snapshot.engine.depth, eval: "" });
+          }
+          // Apply whatever the canonical snapshot has beyond the local board.
+          const pending = res.snapshot.moves.slice(game.moves.length);
+          for (const move of pending) {
+            game.makeMove(move.uci.slice(0, 2), move.uci.slice(2, 4), move.uci[4] as never);
+          }
+          applyPremove();
+        } catch (err) {
+          if (!titanCancelled) {
+            setEngineError(err instanceof Error ? err.message : t("play.ai.titan.unavailable"));
+          }
+        } finally {
+          busy.current = false;
+          setThinking(false);
+        }
+      })();
+      return () => {
+        titanCancelled = true;
+        busy.current = false;
+        setThinking(false);
+      };
+    }
+
     const engine = engineRef.current;
     if (!engine || busy.current) return;
 
@@ -241,7 +343,7 @@ function PlayAi() {
       engineRef.current?.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, game.fen, game.turn, game.result, botColor, level, personality]);
+  }, [phase, game.fen, game.turn, game.result, botColor, level, personality, isTitan]);
 
   const canMoveFrom = useCallback(
     (square: string) => {
