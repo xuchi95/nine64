@@ -123,6 +123,7 @@ export default {
     "adminc.nav.engine": "Engine",
     "adminc.nav.intelligence": "AI intelligence",
     "adminc.nav.puzzles": "Puzzle catalog",
+    "adminc.nav.openings": "Openings",
 
     "adminc.dash.title": "Operations overview",
     "adminc.dash.subtitle": "Live numbers from the Nine64 database.",
