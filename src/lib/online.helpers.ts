@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isOnlinePlayable } from "@/config/variants";
-import { generateChess960Position } from "@/lib/chess/chess960";
+import { generateChess960Position, isValidChess960Start } from "@/lib/chess/chess960";
+import { canonicalChess960Fen } from "@/lib/chess/rules";
 
 
 export const QUEUE_SCHEMA = z.object({
