@@ -137,6 +137,17 @@ function GameDetail() {
     return { pieces, turn: chess.turn() as Color, checkSquare };
   }, [fen]);
 
+  /** Exactly one arrow, and only while the board sits on the matching position. */
+  const boardArrows = useMemo(
+    () =>
+      focus && cursor === focus.plyIndex - 1
+        ? [{ from: focus.from, to: focus.to, ply: 0 }]
+        : undefined,
+    [focus, cursor],
+  );
+
+
+
   if (!game) {
     return (
       <AppShell>
