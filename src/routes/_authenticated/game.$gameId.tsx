@@ -40,12 +40,21 @@ import type {
   MoveOutcome,
   RatingEvent,
 } from "@/lib/online.functions";
+import {
+  getTakebackState,
+  requestTakeback,
+  respondTakeback,
+  touchPresence,
+  createChallenge,
+  type TakebackRequest,
+} from "@/lib/online.challenges.functions";
+import { parseTimeControl, timeControlLabel } from "@/lib/online/timeControl";
 import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
 import type { DrawOffer, Game, GameMove } from "@/lib/database.types";
 import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
-import { Flag, Hand, Ban, Copy, Share2 } from "lucide-react";
+import { Flag, Hand, Ban, Copy, Share2, Undo2, Swords, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import {
   formatTimeControl,
@@ -102,6 +111,11 @@ function OnlineGamePage() {
   const acceptDrawFn = useServerFn(acceptDraw);
   const declineDrawFn = useServerFn(declineDraw);
   const cancelDrawFn = useServerFn(cancelDraw);
+  const getTakebackStateFn = useServerFn(getTakebackState);
+  const requestTakebackFn = useServerFn(requestTakeback);
+  const respondTakebackFn = useServerFn(respondTakeback);
+  const touchPresenceFn = useServerFn(touchPresence);
+  const createChallengeFn = useServerFn(createChallenge);
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
@@ -123,6 +137,14 @@ function OnlineGamePage() {
   const [drawLatest, setDrawLatest] = useState<DrawOffer | null>(null);
   const [drawBusy, setDrawBusy] = useState(false);
   const [drawNotice, setDrawNotice] = useState<string | null>(null);
+  // Takeback is server state too — casual games only, both players must agree.
+  const [takebackPending, setTakebackPending] = useState<TakebackRequest | null>(null);
+  const [takebackBusy, setTakebackBusy] = useState(false);
+  const [rematchBusy, setRematchBusy] = useState(false);
+  const [rematchSent, setRematchSent] = useState(false);
+  const [opponentSeenAt, setOpponentSeenAt] = useState<number | null>(null);
+  /** Armed premove: replayed the instant the server says it is our turn. */
+  const [premove, setPremove] = useState<{ from: string; to: string } | null>(null);
 
   // Rule engine is variant-driven: Chess960 never goes through chess.js.
   const gameRef = useRef<RulesPosition>(rulesFor("standard").createPosition());
