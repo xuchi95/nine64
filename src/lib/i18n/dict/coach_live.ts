@@ -1,6 +1,9 @@
 /** Live Play Coach — strings for /play/coach. */
 export default {
   vi: {
+    "play.hub.card.coach.title": "Chơi cùng Huấn luyện viên",
+    "play.hub.card.coach.text":
+      "Đấu bot và được nhắc đúng lúc: engine chấm từng nước, coach chỉ nói khi bạn thật sự cần.",
     "coachLive.title": "Chơi cùng Huấn luyện viên",
     "coachLive.subtitle":
       "Đấu với bot và nhận nhận xét đúng lúc. Huấn luyện viên chỉ lên tiếng khi thật sự cần.",
@@ -47,6 +50,9 @@ export default {
     "coachLive.logEmpty": "Chưa có nhắc nhở nào trong ván này.",
   },
   en: {
+    "play.hub.card.coach.title": "Play with Coach",
+    "play.hub.card.coach.text":
+      "Face a bot with timely feedback: the engine grades each move, the coach speaks only when it counts.",
     "coachLive.title": "Play with Coach",
     "coachLive.subtitle":
       "Play a bot and get feedback at the right moment. The coach only speaks when it matters.",
