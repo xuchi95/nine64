@@ -1888,6 +1888,51 @@ export type Database = {
           },
         ]
       }
+      training_sessions: {
+        Row: {
+          budget_minutes: number
+          completed_blocks: number
+          created_at: string
+          day: string
+          failed_blocks: number
+          id: string
+          minutes_spent: number
+          plan: Json
+          results: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_minutes?: number
+          completed_blocks?: number
+          created_at?: string
+          day: string
+          failed_blocks?: number
+          id?: string
+          minutes_spent?: number
+          plan?: Json
+          results?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_minutes?: number
+          completed_blocks?: number
+          created_at?: string
+          day?: string
+          failed_blocks?: number
+          id?: string
+          minutes_spent?: number
+          plan?: Json
+          results?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_admin_state: {
         Row: {
           created_at: string
