@@ -394,6 +394,7 @@ export type Database = {
           initial_fen: string
           last_move_at: string | null
           rated: boolean
+          rating_applied_at: string | null
           result: string
           status: string
           time_control: string
@@ -419,6 +420,7 @@ export type Database = {
           initial_fen?: string
           last_move_at?: string | null
           rated?: boolean
+          rating_applied_at?: string | null
           result?: string
           status?: string
           time_control?: string
@@ -444,6 +446,7 @@ export type Database = {
           initial_fen?: string
           last_move_at?: string | null
           rated?: boolean
+          rating_applied_at?: string | null
           result?: string
           status?: string
           time_control?: string
@@ -712,6 +715,92 @@ export type Database = {
         }
         Relationships: []
       }
+      rating_events: {
+        Row: {
+          algorithm: string
+          algorithm_version: number
+          black_delta: number
+          black_id: string
+          black_rating_after: number
+          black_rating_before: number
+          black_rd_after: number
+          black_rd_before: number
+          black_volatility_after: number
+          black_volatility_before: number
+          created_at: string
+          game_id: string
+          id: string
+          idempotency_key: string
+          result: string
+          white_delta: number
+          white_id: string
+          white_rating_after: number
+          white_rating_before: number
+          white_rd_after: number
+          white_rd_before: number
+          white_volatility_after: number
+          white_volatility_before: number
+        }
+        Insert: {
+          algorithm?: string
+          algorithm_version?: number
+          black_delta: number
+          black_id: string
+          black_rating_after: number
+          black_rating_before: number
+          black_rd_after: number
+          black_rd_before: number
+          black_volatility_after: number
+          black_volatility_before: number
+          created_at?: string
+          game_id: string
+          id?: string
+          idempotency_key: string
+          result: string
+          white_delta: number
+          white_id: string
+          white_rating_after: number
+          white_rating_before: number
+          white_rd_after: number
+          white_rd_before: number
+          white_volatility_after: number
+          white_volatility_before: number
+        }
+        Update: {
+          algorithm?: string
+          algorithm_version?: number
+          black_delta?: number
+          black_id?: string
+          black_rating_after?: number
+          black_rating_before?: number
+          black_rd_after?: number
+          black_rd_before?: number
+          black_volatility_after?: number
+          black_volatility_before?: number
+          created_at?: string
+          game_id?: string
+          id?: string
+          idempotency_key?: string
+          result?: string
+          white_delta?: number
+          white_id?: string
+          white_rating_after?: number
+          white_rating_before?: number
+          white_rd_after?: number
+          white_rd_before?: number
+          white_volatility_after?: number
+          white_volatility_before?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rating_events_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: true
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           created_at: string
@@ -781,6 +870,7 @@ export type Database = {
     }
     Functions: {
       apply_glicko2: { Args: { _game_id: string }; Returns: undefined }
+      apply_rating_once: { Args: { _game_id: string }; Returns: Json }
       clock_lag_grace_ms: { Args: never; Returns: number }
       commit_move_internal: {
         Args: {

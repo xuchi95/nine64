@@ -337,10 +337,11 @@ export const makeMove = createServerFn({ method: "POST" })
     const opponentId = isWhite ? snapshot.black_id : snapshot.white_id;
 
     if (committedGame.status === "completed") {
-      const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", {
+      // Single orchestration path; safe to call at-least-once (ledger-guarded).
+      const { error: ratingError } = await supabaseAdmin.rpc("apply_rating_once", {
         _game_id: data.gameId,
       });
-      if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
+      if (ratingError) console.error("Rating apply failed", ratingError.message);
 
       const title = committedGame.result === "1/2-1/2" ? "Game drawn" : "Game over";
       await supabaseAdmin.from("notifications").insert([
@@ -418,8 +419,10 @@ export const finishGame = createServerFn({ method: "POST" })
     // Glicko-2 rating update (rating, deviation and volatility) — service role only.
     const draw = result === "1/2-1/2";
 
-    const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", { _game_id: data.gameId });
-    if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
+    const { error: ratingError } = await supabaseAdmin.rpc("apply_rating_once", {
+      _game_id: data.gameId,
+    });
+    if (ratingError) console.error("Rating apply failed", ratingError.message);
 
     // Notify both players
     const title = draw ? "Game drawn" : winnerId ? "Game over" : "Game over";
@@ -509,4 +512,37 @@ export const syncGame = createServerFn({ method: "POST" })
       serverNow: payload.server_now ?? new Date().toISOString(),
       activeSide: sideToMoveFromFen(game.current_fen),
     };
+  });
+
+/** Canonical rating ledger entry for a finished game (never recomputed client-side). */
+export type RatingEvent = {
+  game_id: string;
+  white_id: string;
+  black_id: string;
+  result: string;
+  white_rating_before: number;
+  white_rating_after: number;
+  white_delta: number;
+  black_rating_before: number;
+  black_rating_after: number;
+  black_delta: number;
+  algorithm: string;
+  algorithm_version: number;
+  created_at: string;
+};
+
+export const getRatingEvent = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_ID_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<RatingEvent | null> => {
+    const { data: row, error } = await context.supabase
+      .from("rating_events")
+      .select(
+        "game_id, white_id, black_id, result, white_rating_before, white_rating_after, white_delta, black_rating_before, black_rating_after, black_delta, algorithm, algorithm_version, created_at",
+      )
+      .eq("game_id", data.gameId)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return (row as RatingEvent | null) ?? null;
   });

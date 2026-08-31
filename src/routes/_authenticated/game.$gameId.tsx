@@ -17,8 +17,19 @@ import {
 import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getGameMoves, makeMove, finishGame, syncGame } from "@/lib/online.functions";
-import type { GameSnapshot, MoveErrorCode, MoveOutcome } from "@/lib/online.functions";
+import {
+  getGameMoves,
+  makeMove,
+  finishGame,
+  syncGame,
+  getRatingEvent,
+} from "@/lib/online.functions";
+import type {
+  GameSnapshot,
+  MoveErrorCode,
+  MoveOutcome,
+  RatingEvent,
+} from "@/lib/online.functions";
 import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
 import type { Game, GameMove } from "@/lib/database.types";
@@ -74,6 +85,8 @@ function OnlineGamePage() {
   const getMovesFn = useServerFn(getGameMoves);
   const makeMoveFn = useServerFn(makeMove);
   const finishGameFn = useServerFn(finishGame);
+  const getRatingEventFn = useServerFn(getRatingEvent);
+  const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
   const [moves, setMoves] = useState<GameMove[]>([]);
@@ -130,6 +143,33 @@ function OnlineGamePage() {
   useEffect(() => {
     if (game?.status === "completed") void fairplay.flush();
   }, [fairplay, game?.status]);
+
+  // Rating delta is read from the canonical ledger; never recomputed in the browser.
+  useEffect(() => {
+    if (game?.status !== "completed") return;
+    let cancelled = false;
+    let attempt = 0;
+    const poll = async () => {
+      while (!cancelled && attempt < 6) {
+        attempt += 1;
+        try {
+          const ev = (await getRatingEventFn({ data: { gameId } })) as RatingEvent | null;
+          if (cancelled) return;
+          if (ev) {
+            setRatingEvent(ev);
+            return;
+          }
+        } catch {
+          /* transient; retry with backoff */
+        }
+        await new Promise((r) => setTimeout(r, 800 * attempt));
+      }
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [game?.status, gameId, getRatingEventFn]);
   const spec = useMemo(() => timeControlSpec(game?.time_control ?? "blitz5m"), [game?.time_control]);
   const result = useMemo(() => (game ? normalizeResult(game) : null), [game]);
   const resultView = useMemo(() => resultLabel(result, myColor), [result, myColor]);
@@ -702,6 +742,34 @@ function OnlineGamePage() {
                   <Flag className="size-4" /> Resign
                 </Button>
               </GameActions>
+            )}
+
+            {ratingEvent && myColor && (
+              <GamePanel title="Hệ số Glicko-2" bodyClassName="space-y-1.5 p-4">
+                <StatRow
+                  label="Trước ván"
+                  value={String(
+                    myColor === "w"
+                      ? ratingEvent.white_rating_before
+                      : ratingEvent.black_rating_before,
+                  )}
+                />
+                <StatRow
+                  label="Sau ván"
+                  value={String(
+                    myColor === "w"
+                      ? ratingEvent.white_rating_after
+                      : ratingEvent.black_rating_after,
+                  )}
+                />
+                <StatRow
+                  label="Thay đổi"
+                  value={(() => {
+                    const d = myColor === "w" ? ratingEvent.white_delta : ratingEvent.black_delta;
+                    return `${d > 0 ? "+" : ""}${d}`;
+                  })()}
+                />
+              </GamePanel>
             )}
 
             <GamePanel title="Share this game" bodyClassName="space-y-2.5 p-4">
