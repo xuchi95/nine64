@@ -12,7 +12,6 @@ import {
   Unlock,
   UserRound,
 } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -193,7 +192,7 @@ function AdminAuditPage() {
 
   if (admin === false) {
     return (
-      <AppShell>
+      <AdminShell module="audit" title={t("admin.audit.title")}>
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
           {t("admin.adminOnly")}
         </div>

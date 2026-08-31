@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { KeyRound, RefreshCw, ShieldCheck, Gauge, FileLock2 } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,7 +97,7 @@ function AdminSystemPage() {
 
   if (admin === false) {
     return (
-      <AppShell>
+      <AdminShell module="system" title={t("admin.system.title")}>
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
           {t("admin.adminOnly")}
         </div>

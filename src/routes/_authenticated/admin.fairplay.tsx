@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ShieldAlert, ShieldCheck, RefreshCw, LockOpen, Clock, Search } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { APP } from "@/config/app";
@@ -183,7 +182,7 @@ function AdminFairplayPage() {
 
   if (admin === false) {
     return (
-      <AppShell>
+      <AdminShell module="fairplay" title={t("admin.fairplay.title")}>
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
           {t("admin.adminOnly")}
         </div>

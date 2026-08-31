@@ -10,7 +10,6 @@ import {
   Gamepad2,
   Search,
 } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -242,7 +241,7 @@ function FairplayLogPage() {
 
   if (admin === false) {
     return (
-      <AppShell>
+      <AdminShell module="fairplayLog" title={t("admin.log.title")}>
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
           {t("admin.adminOnly")}
         </div>
