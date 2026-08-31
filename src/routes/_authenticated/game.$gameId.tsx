@@ -377,30 +377,33 @@ function OnlineGamePage() {
     };
   }, [refresh]);
 
-  const finishIfOver = useCallback(
-    async (reason: string, winner: Color | "draw") => {
-      if (finishedRef.current || !game) return;
-      finishedRef.current = true;
-      const code = resultCodeFromWinner(winner as "w" | "b" | "draw");
-      const winnerId = winner === "w" ? game.white_id : winner === "b" ? game.black_id : null;
-      setGame({ ...game, status: "completed", result: code, end_reason: reason });
-
+  /**
+   * Terminal commands: the client only names the action and the version it saw.
+   * Result, winner and end reason always come back from the server.
+   */
+  const runCommand = useCallback(
+    async (kind: "resign" | "timeout" | "abort") => {
+      if (!game || !myColor || commandBusy) return;
+      setCommandBusy(true);
       try {
-        await finishGameFn({
-          data: {
-            gameId: game.id,
-            result: code,
-            winnerId,
-            endReason: reason,
-            finalFen: gameRef.current.fen(),
-          },
-        });
+        const fn =
+          kind === "resign" ? resignGameFn : kind === "timeout" ? claimTimeoutFn : abortGameFn;
+        const out = (await fn({
+          data: { gameId: game.id, expectedVersion: game.version ?? 0 },
+        })) as CommandOutcome;
+        if (!out.ok && out.code === "ABORT_NOT_ALLOWED") {
+          setConflict("Không thể huỷ ván sau khi đã có nước đi.");
+        }
       } catch {
-        // server may have already finished the game
+        // Idempotent commands: the resync below shows the canonical outcome.
+      } finally {
+        await refresh().catch(() => undefined);
+        setCommandBusy(false);
       }
     },
-    [finishGameFn, game],
+    [abortGameFn, claimTimeoutFn, commandBusy, game, myColor, refresh, resignGameFn],
   );
+
 
 
   const submitMove = useCallback(
