@@ -11,7 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -246,13 +246,13 @@ function FairplayLogPage() {
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
           {t("admin.adminOnly")}
         </div>
-      </AppShell>
+      </AdminShell>
     );
   }
 
   return (
-    <AppShell wide>
-      <AdminMfaGate>
+    <AdminShell module="fairplayLog" title={t("admin.log.title")}>
+      <>
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -403,7 +403,7 @@ function FairplayLogPage() {
           )}
         </div>
       </div>
-    </AdminMfaGate>
-    </AppShell>
+    </>
+    </AdminShell>
   );
 }

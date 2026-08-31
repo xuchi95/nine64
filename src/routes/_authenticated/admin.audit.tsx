@@ -13,7 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -197,13 +197,13 @@ function AdminAuditPage() {
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
           {t("admin.adminOnly")}
         </div>
-      </AppShell>
+      </AdminShell>
     );
   }
 
   return (
-    <AppShell wide>
-      <AdminMfaGate>
+    <AdminShell module="audit" title={t("admin.audit.title")}>
+      <>
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -293,7 +293,7 @@ function AdminAuditPage() {
             </CardContent>
           </Card>
         </div>
-      </AdminMfaGate>
-    </AppShell>
+      </>
+    </AdminShell>
   );
 }

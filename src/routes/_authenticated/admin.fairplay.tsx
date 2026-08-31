@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { actionLabel, THRESHOLDS, type FairplayAction } from "@/lib/fairplay/thresholds";
 import { cn } from "@/lib/utils";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
@@ -187,13 +187,13 @@ function AdminFairplayPage() {
         <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
           {t("admin.adminOnly")}
         </div>
-      </AppShell>
+      </AdminShell>
     );
   }
 
   return (
-    <AppShell wide>
-      <AdminMfaGate>
+    <AdminShell module="fairplay" title={t("admin.fairplay.title")}>
+      <>
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between">
           <div>
@@ -448,7 +448,7 @@ function AdminFairplayPage() {
           </Card>
         </div>
       </div>
-      </AdminMfaGate>
-    </AppShell>
+      </>
+    </AdminShell>
   );
 }
