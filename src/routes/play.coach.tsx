@@ -16,7 +16,7 @@ import { MoveList } from "@/components/game/MoveList";
 import { GamePanel, StatRow } from "@/components/game/GamePanel";
 import { GameLayout, GameActions, GameNotice, StatusPill } from "@/components/game/GameLayout";
 import { PlayerCard } from "@/components/game/PlayerCard";
-import { CoachPanel, type CoachSourceBadge } from "@/components/game/CoachPanel";
+import { LiveCoachPanel, type CoachSourceBadge } from "@/components/game/LiveCoachPanel";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { APP } from "@/config/app";
@@ -489,7 +489,7 @@ function PlayCoach() {
         }
         right={
           <>
-            <CoachPanel
+            <LiveCoachPanel
               moment={moment}
               analysing={analysing}
               source={source}
