@@ -559,7 +559,9 @@ function AuthHeader() {
             </DropdownMenuItem>
           );
         })}
+        <AdminMenuItem />
         <DropdownMenuSeparator />
+
         <DropdownMenuItem
           onClick={signOut}
           className="cursor-pointer rounded-lg px-3.5 py-2.5 text-destructive focus:text-destructive"
