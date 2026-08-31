@@ -79,11 +79,14 @@ describe("crazyhouse", () => {
     expect(capture?.captured).toBe("p");
     expect(pos.pocket?.("w").p).toBe(1);
 
-    pos.move("d8", "d5"); // black recaptures, now white has nothing, black has a pawn
+    pos.move("d8", "d5"); // black recaptures: each side now holds one pawn
     expect(pos.pocket?.("b").p).toBe(1);
+    expect(pos.pocket?.("w").p).toBe(1);
 
+    // White to move may drop its pawn on any empty non-back-rank square.
     const targets = pos.dropTargets?.("p") ?? [];
-    expect(targets.length).toBe(0); // white to move with an empty pocket
+    expect(targets.length).toBeGreaterThan(0);
+    expect(targets.some((sq) => sq.endsWith("1") || sq.endsWith("8"))).toBe(false);
   });
 
   it("never allows a pawn drop on the back ranks", () => {
@@ -107,9 +110,20 @@ describe("crazyhouse", () => {
   });
 
   it("reverts a promoted piece to a pawn in the pocket", () => {
-    // White queen on d8 is a promoted pawn; black rook captures it.
-    const pos = CrazyhouseRules.createPosition("3Q3k/8/8/8/8/8/8/r3K3[] b - - 0 1");
-    expect(pos.drop).toBeDefined();
+    // White promotes on b8; black's rook then captures the promoted queen.
+    const pos = CrazyhouseRules.createPosition("1r5k/P7/8/8/8/8/8/4K3[] w - - 0 1");
+    const promo = pos.move("a7", "b8", "q");
+    expect(promo?.promotion).toBe("q");
+    expect(pos.pocket?.("w").r).toBe(1); // the captured rook
+
+    pos.move("h8", "g7"); // quiet black king move? no — black must respond
+    // Black king cannot take b8; use a fresh line where the rook recaptures.
+    const pos2 = CrazyhouseRules.createPosition("1r5k/P7/8/8/8/8/8/4K3[] w - - 0 1");
+    pos2.move("a7", "a8", "q");
+    pos2.move("b8", "a8"); // rook takes the PROMOTED queen
+    // Reversion: the capturer receives a pawn, never a queen.
+    expect(pos2.pocket?.("b").q).toBe(0);
+    expect(pos2.pocket?.("b").p).toBe(1);
   });
 });
 
