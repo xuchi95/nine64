@@ -98,12 +98,13 @@ function GameDetail() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!game) return;
-      if (e.key === "ArrowLeft") setCursor((c) => Math.max(-1, c - 1));
-      if (e.key === "ArrowRight") setCursor((c) => Math.min(game.moves.length - 1, c + 1));
+      if (e.key === "ArrowLeft") goto((c) => Math.max(-1, c - 1));
+      if (e.key === "ArrowRight") goto((c) => Math.min(game.moves.length - 1, c + 1));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [game?.id, game?.moves.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game?.id, game?.moves.length, goto]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const fen = useMemo(() => {
     if (!game) return null;
