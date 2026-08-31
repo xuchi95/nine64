@@ -49,9 +49,21 @@ export const startTitanSession = createServerFn({ method: "POST" })
       config: profile.config,
       level: TITAN_LEVEL,
     });
-    return res.ok
-      ? { ok: true as const, snapshot: res.snapshot }
-      : { ok: false as const, code: res.code };
+    if (!res.ok) return { ok: false as const, code: res.code };
+
+    // Player chose Black: the engine opens. Idempotent on the server.
+    if (data.playerColor === "b") {
+      const { engineOpeningMove } = await import("@/lib/engine/botSessions.server");
+      const opened = await engineOpeningMove({
+        sessionId: res.snapshot.sessionId,
+        userId: context.userId,
+        config: profile.config,
+        clock: null,
+      });
+      if (!opened.ok) return { ok: false as const, code: opened.code };
+      return { ok: true as const, snapshot: opened.snapshot };
+    }
+    return { ok: true as const, snapshot: res.snapshot };
   });
 
 export const submitTitanMove = createServerFn({ method: "POST" })
