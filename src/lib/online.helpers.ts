@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isOnlinePlayable } from "@/config/variants";
-import { generateChess960Position } from "@/lib/chess/chess960";
+import { generateChess960Position, isValidChess960Start } from "@/lib/chess/chess960";
+import { canonicalChess960Fen } from "@/lib/chess/rules";
 
 
 export const QUEUE_SCHEMA = z.object({
@@ -72,9 +73,10 @@ export function timeControlToMs(timeControl: string): number {
  *
  * Only variants marked `onlinePlayable` in the capability registry can reach
  * this function (QUEUE_SCHEMA rejects the rest), so the classical array is the
- * canonical answer today. Shuffled back ranks come from
- * `generateChess960Position` — never from an ad-hoc shuffle — and stay gated
- * behind the registry until a Chess960 rule engine exists.
+ * canonical answer for standard. Chess960 draws a Scharnagl array from
+ * `generateChess960Position` — never an ad-hoc shuffle — and returns the
+ * canonical Shredder-FEN so the rook files behind each castling right survive
+ * every round trip. Called exactly once, when the match is created.
  */
 export function startingFenForVariant(variant: string): string {
   if (!isOnlinePlayable(variant)) {
@@ -82,8 +84,12 @@ export function startingFenForVariant(variant: string): string {
     // the server cannot validate, even if a caller bypasses QUEUE_SCHEMA.
     throw new Error(`VARIANT_NOT_ONLINE_PLAYABLE:${variant}`);
   }
-  if (variant === "chess960" || variant === "random-army") {
-    return generateChess960Position().fen;
+  if (variant === "chess960") {
+    const fen = canonicalChess960Fen(generateChess960Position().shredderFen);
+    if (!isValidChess960Start(fen)) {
+      throw new Error("CHESS960_INVALID_FEN");
+    }
+    return fen;
   }
   return STANDARD_FEN;
 }

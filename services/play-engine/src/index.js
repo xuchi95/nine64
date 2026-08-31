@@ -10,8 +10,8 @@
  */
 import http from "node:http";
 import os from "node:os";
-import { Chess } from "chess.js";
 import { EnginePool } from "./pool.js";
+import { VARIANTS, createPosition, decodeEngineMove, isLegal } from "./rules.js";
 import { verifyIdToken } from "./auth.js";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -26,6 +26,7 @@ const ALLOWED_OPTIONS = new Set([
   "Ponder",
   "SyzygyProbeLimit",
   "SyzygyPath",
+  "UCI_Chess960",
 ]);
 
 const pool = new EnginePool();
@@ -103,18 +104,24 @@ async function readBody(req, limit = 256 * 1024) {
 
 async function handleBestMove(body) {
   if (typeof body.fen !== "string") return { status: 400, payload: { error: "fen_required" } };
+  const variant = typeof body.variant === "string" ? body.variant : "standard";
+  if (!VARIANTS.has(variant)) return { status: 400, payload: { error: "unknown_variant" } };
   const moves = Array.isArray(body.moves) ? body.moves.filter((m) => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m)) : [];
 
-  // Validate the position locally before spending engine time on it.
+  // Validate the position locally, with the CORRECT variant rules, before
+  // spending engine time on it.
   let chess;
   try {
-    chess = new Chess(body.fen);
+    chess = createPosition(variant, body.fen);
     for (const uci of moves) {
-      const move = chess.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        ...(uci.length > 4 ? { promotion: uci[4] } : {}),
-      });
+      const decoded = decodeEngineMove(variant, chess.fen(), uci);
+      const move =
+        decoded &&
+        chess.move({
+          from: decoded.from,
+          to: decoded.to,
+          ...(decoded.promotion ? { promotion: decoded.promotion } : {}),
+        });
       if (!move) throw new Error("illegal");
     }
   } catch {
@@ -126,18 +133,20 @@ async function handleBestMove(body) {
     const result = await pool.search({
       fen: body.fen,
       moves,
-      options: sanitizeOptions(body.options),
+      // Set on EVERY search so a Chess960 request can never leave a pooled
+      // engine process in 960 mode for the next standard request.
+      options: { ...sanitizeOptions(body.options), UCI_Chess960: variant === "chess960" ? "true" : "false" },
       goArgs: buildGoArgs(body),
       timeoutMs,
       newGame: Boolean(body.newGame),
     });
     if (!result.bestmove) return { status: 409, payload: { error: "no_move" } };
-    // The engine's move must be legal in the resulting position.
-    const check = new Chess(chess.fen());
-    const legal = check.moves({ verbose: true }).some((m) => {
-      const uci = `${m.from}${m.to}${m.promotion ?? ""}`;
-      return uci === result.bestmove;
-    });
+    // The engine's move must be legal in the resulting position. For Chess960
+    // it is decoded out of Stockfish notation first — legality checking is
+    // never disabled to make the engine's encoding "fit".
+    const check = createPosition(variant, chess.fen());
+    const decoded = decodeEngineMove(variant, chess.fen(), result.bestmove);
+    const legal = Boolean(decoded) && isLegal(check, decoded);
     if (!legal) {
       pool.stats.illegal += 1;
       return { status: 500, payload: { error: "illegal_bestmove" } };

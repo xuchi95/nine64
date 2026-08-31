@@ -5,7 +5,7 @@ const START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 describe("applyIntent", () => {
   it("derives canonical SAN/UCI/FEN for a legal move", () => {
-    const res = applyIntent(START, "e2", "e4");
+    const res = applyIntent("standard", START, "e2", "e4");
     expect(res).not.toBeNull();
     expect(res!.san).toBe("e4");
     expect(res!.uci).toBe("e2e4");
@@ -15,17 +15,16 @@ describe("applyIntent", () => {
   });
 
   it("rejects an illegal move", () => {
-    expect(applyIntent(START, "e2", "e5")).toBeNull();
-    expect(applyIntent(START, "a1", "a8")).toBeNull();
+    expect(applyIntent("standard", START, "e2", "e5")).toBeNull();
+    expect(applyIntent("standard", START, "a1", "a8")).toBeNull();
   });
 
   it("rejects moving the opponent's piece", () => {
-    expect(applyIntent(START, "e7", "e5")).toBeNull();
+    expect(applyIntent("standard", START, "e7", "e5")).toBeNull();
   });
 
   it("detects checkmate", () => {
-    const mate = applyIntent(
-      "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2",
+    const mate = applyIntent("standard", "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2",
       "d8",
       "h4",
     );
@@ -34,13 +33,13 @@ describe("applyIntent", () => {
   });
 
   it("handles promotion", () => {
-    const res = applyIntent("8/P6k/8/8/8/8/7K/8 w - - 0 1", "a7", "a8", "n");
+    const res = applyIntent("standard", "8/P6k/8/8/8/8/7K/8 w - - 0 1", "a7", "a8", "n");
     expect(res?.san).toBe("a8=N");
     expect(res?.uci).toBe("a7a8n");
   });
 
   it("detects stalemate as a draw", () => {
-    const stale = applyIntent("7k/8/8/8/8/8/8/K5Q1 w - - 0 1", "g1", "g6");
+    const stale = applyIntent("standard", "7k/8/8/8/8/8/8/K5Q1 w - - 0 1", "g1", "g6");
     expect(stale?.isStalemate).toBe(true);
     expect(stale?.isDraw).toBe(true);
   });
@@ -49,6 +48,6 @@ describe("applyIntent", () => {
 describe("sideToMoveFromFen", () => {
   it("reads the side to move", () => {
     expect(sideToMoveFromFen(START)).toBe("w");
-    expect(sideToMoveFromFen(applyIntent(START, "e2", "e4")!.fen)).toBe("b");
+    expect(sideToMoveFromFen(applyIntent("standard", START, "e2", "e4")!.fen)).toBe("b");
   });
 });

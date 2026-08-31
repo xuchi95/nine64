@@ -153,3 +153,51 @@ export function generateChess960Position(index?: number): Chess960Position {
 export function generateChess960Fen(index?: number): string {
   return generateChess960Position(index).fen;
 }
+
+/**
+ * Structural validation of a Chess960 starting FEN before it becomes the
+ * canonical position of a real game. Rejects anything the generator could
+ * never have produced: bad piece counts, same-colour bishops, a king outside
+ * the rooks, or a castling right that does not point at an actual rook.
+ */
+export function isValidChess960Start(fen: string): boolean {
+  const parts = fen.trim().split(/\s+/);
+  if (parts.length < 4) return false;
+  const [placement, side, castling] = parts as [string, string, string];
+  const ranks = placement.split("/");
+  if (ranks.length !== 8) return false;
+  if (side !== "w") return false;
+
+  const black = ranks[0] ?? "";
+  const white = ranks[7] ?? "";
+  if (ranks[1] !== "pppppppp" || ranks[6] !== "PPPPPPPP") return false;
+  if (ranks.slice(2, 6).some((r) => r !== "8")) return false;
+  if (black.length !== 8 || white.length !== 8) return false;
+  if (white.toLowerCase() !== black) return false;
+  if (!/^[rnbqk]{8}$/.test(black)) return false;
+
+  const counts: Record<string, number> = {};
+  for (const c of black) counts[c] = (counts[c] ?? 0) + 1;
+  if (counts["k"] !== 1 || counts["q"] !== 1) return false;
+  if (counts["r"] !== 2 || counts["b"] !== 2 || counts["n"] !== 2) return false;
+
+  const bishops = [...black].flatMap((c, i) => (c === "b" ? [i] : []));
+  if ((bishops[0]! - bishops[1]!) % 2 === 0) return false;
+
+  const king = black.indexOf("k");
+  const rooks = [...black].flatMap((c, i) => (c === "r" ? [i] : []));
+  if (!(rooks[0]! < king && king < rooks[1]!)) return false;
+
+  // Every castling right must name a real rook, on both sides.
+  if (castling === "-" ) return false;
+  const rookFiles = new Set(rooks.map((i) => FILES[i]!));
+  for (const right of castling) {
+    const lower = right.toLowerCase();
+    if (lower === "k" || lower === "q") continue; // X-FEN shorthand
+    if (!/^[a-h]$/.test(lower)) return false;
+    if (!rookFiles.has(lower)) return false;
+  }
+  const hasWhite = [...castling].some((c) => c === c.toUpperCase());
+  const hasBlack = [...castling].some((c) => c === c.toLowerCase());
+  return hasWhite && hasBlack;
+}

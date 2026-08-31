@@ -279,6 +279,7 @@ export const makeMove = createServerFn({ method: "POST" })
     }
 
     const canonical = applyIntent(
+      snapshot.variant,
       snapshot.current_fen,
       data.from,
       data.to,

@@ -1,4 +1,5 @@
-import { Chess } from "chess.js";
+import type { VariantId } from "@/config/variants";
+import { rulesFor } from "@/lib/chess/rules";
 
 /** Stable, client-facing error codes for the canonical move pipeline. */
 export type MoveErrorCode =
@@ -31,24 +32,20 @@ export interface CanonicalMove {
  * every canonical value the database stores. The client never supplies these.
  */
 export function applyIntent(
+  variant: VariantId | string,
   currentFen: string,
   from: string,
   to: string,
   promotion?: Promotion,
 ): CanonicalMove | null {
-  const chess = new Chess();
+  let chess;
   try {
-    chess.load(currentFen);
+    chess = rulesFor(variant as VariantId).createPosition(currentFen);
   } catch {
     return null;
   }
 
-  let moved;
-  try {
-    moved = chess.move({ from, to, ...(promotion ? { promotion } : { promotion: "q" }) });
-  } catch {
-    return null;
-  }
+  const moved = chess.move(from, to, promotion ?? "q");
   if (!moved) return null;
 
   const isCheckmate = chess.isCheckmate();
@@ -59,10 +56,12 @@ export function applyIntent(
 
   return {
     san: moved.san,
+    // Nine64 application notation: a Chess960 castle is stored as
+    // king start -> FINAL KING SQUARE (e1g1), never Stockfish's e1h1.
     uci: `${moved.from}${moved.to}${moved.promotion ?? ""}`,
     fen: chess.fen(),
     turn: chess.turn(),
-    isCheck: chess.inCheck(),
+    isCheck: chess.isCheck(),
     isCheckmate,
     isStalemate,
     isDraw: isDraw && !isCheckmate,

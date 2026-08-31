@@ -15,8 +15,13 @@
  *
  * Server-only module.
  */
-import { Chess } from "chess.js";
+import { rulesFor } from "@/lib/chess/rules";
+import type { RulesPosition, PromotionPiece } from "@/lib/chess/rules";
+import { engineUciToAppMove } from "@/lib/chess/rules";
+import type { VariantId } from "@/config/variants";
 import { TITAN_SLUG, type EngineConfig } from "./profileTypes";
+
+export type SessionVariant = "standard" | "chess960";
 
 export interface SessionMove {
   san: string;
@@ -31,9 +36,12 @@ export interface SessionSnapshot {
   profileSlug: string;
   level: number;
   playerColor: "w" | "b";
+  variant: SessionVariant;
   status: "active" | "finished" | "aborted" | "expired";
   result: string | null;
   endReason: string | null;
+  /** Canonical starting array — for Chess960 this is NOT the standard FEN. */
+  initialFen: string;
   fen: string;
   moves: SessionMove[];
   version: number;
@@ -110,9 +118,11 @@ function toSnapshot(row: Record<string, unknown>): SessionSnapshot {
     profileSlug: String(row["profile_slug"]),
     level: Number(row["level"]),
     playerColor: row["player_color"] === "b" ? "b" : "w",
+    variant: row["variant"] === "chess960" ? "chess960" : "standard",
     status: (row["status"] as SessionSnapshot["status"]) ?? "active",
     result: (row["result"] as string | null) ?? null,
     endReason: (row["end_reason"] as string | null) ?? null,
+    initialFen: String(row["initial_fen"] ?? row["current_fen"]),
     fen: String(row["current_fen"]),
     moves: Array.isArray(row["moves"]) ? (row["moves"] as SessionMove[]) : [],
     version: Number(row["version"] ?? 0),
@@ -129,7 +139,7 @@ function toSnapshot(row: Record<string, unknown>): SessionSnapshot {
   };
 }
 
-function outcome(chess: Chess): { status: "active" | "finished"; result: string | null; endReason: string | null } {
+function outcome(chess: RulesPosition): { status: "active" | "finished"; result: string | null; endReason: string | null } {
   if (!chess.isGameOver()) return { status: "active", result: null, endReason: null };
   if (chess.isCheckmate()) {
     return {
@@ -146,9 +156,30 @@ function outcome(chess: Chess): { status: "active" | "finished"; result: string 
   return { status: "finished", result: "1/2-1/2", endReason: "fifty_move_rule" };
 }
 
+/**
+ * Stockfish boundary decode. Standard UCI passes through; Chess960 castling
+ * arrives as "king takes rook" and is mapped to the Nine64 app convention
+ * (king -> final king square).
+ */
+function decodeEngineMove(
+  variant: SessionVariant,
+  fen: string,
+  uci: string,
+): { from: string; to: string; promotion?: PromotionPiece } | null {
+  if (variant !== "chess960") {
+    return {
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      ...(uci.length > 4 ? { promotion: uci[4] as PromotionPiece } : {}),
+    };
+  }
+  return engineUciToAppMove(fen, uci);
+}
+
 export async function createSession(args: {
   userId: string;
   playerColor: "w" | "b";
+  variant: SessionVariant;
   config: EngineConfig;
   level: number;
 }): Promise<SessionResult> {
@@ -162,7 +193,8 @@ export async function createSession(args: {
     return { ok: false, code: "TOO_MANY_SESSIONS" };
   }
 
-  const chess = new Chess();
+  // The 960 array is drawn once, here, and stored as the canonical start.
+  const startFen = rulesFor(args.variant as VariantId).startingFen();
   const { data, error } = await db
     .from("bot_sessions")
     .insert({
@@ -170,8 +202,9 @@ export async function createSession(args: {
       profile_slug: TITAN_SLUG,
       level: args.level,
       player_color: args.playerColor,
-      initial_fen: chess.fen(),
-      current_fen: chess.fen(),
+      variant: args.variant,
+      initial_fen: startFen,
+      current_fen: startFen,
       moves: [],
     } as never)
     .select("*")
@@ -256,19 +289,14 @@ export async function playMove(args: {
     return { ok: false, code: "VERSION_CONFLICT", snapshot: session };
   }
 
-  const chess = new Chess(session.fen);
+  const chess = rulesFor(session.variant as VariantId).createPosition(session.fen);
   if (chess.turn() !== session.playerColor) {
     return { ok: false, code: "NOT_YOUR_TURN", snapshot: session };
   }
   const from = args.uci.slice(0, 2);
   const to = args.uci.slice(2, 4);
-  const promotion = args.uci.length > 4 ? args.uci[4] : undefined;
-  let playerMove;
-  try {
-    playerMove = chess.move({ from, to, ...(promotion ? { promotion } : {}) });
-  } catch {
-    playerMove = null;
-  }
+  const promotion = args.uci.length > 4 ? (args.uci[4] as PromotionPiece) : undefined;
+  const playerMove = chess.move(from, to, promotion);
   if (!playerMove) return { ok: false, code: "ILLEGAL_MOVE", snapshot: session };
 
   const moves: SessionMove[] = [
@@ -291,13 +319,15 @@ export async function playMove(args: {
       limit: args.config.perUserDailyMoves,
     });
     if (!quota.ok) return { ok: false, code: quota.code ?? "WRITE_FAILED", snapshot: session };
+    const searchFen = chess.fen();
     const reply = await requestBestMove({
-      fen: session.fen,
-      moves: [...session.moves.map((m) => m.uci), args.uci],
+      fen: searchFen,
+      variant: session.variant,
       config: args.config,
       clock: args.clock,
       sessionId: args.sessionId,
       requestId: args.idempotencyKey,
+      newGame: moves.length <= 1,
     });
     if (reply.status !== "ok" || !reply.bestmove) {
       return {
@@ -306,22 +336,26 @@ export async function playMove(args: {
         snapshot: session,
       };
     }
-    // The cloud reply is never trusted blindly: it must be legal here too.
-    let engineMove;
-    try {
-      engineMove = chess.move({
-        from: reply.bestmove.slice(0, 2),
-        to: reply.bestmove.slice(2, 4),
-        ...(reply.bestmove.length > 4 ? { promotion: reply.bestmove[4] } : {}),
+    // The cloud reply is never trusted blindly: decode Chess960 castling out
+    // of Stockfish notation, then re-validate against canonical rules.
+    const app = decodeEngineMove(session.variant, searchFen, reply.bestmove);
+    if (!app) {
+      console.error("[titan] CHESS960_MOVE_DECODE_FAILED", {
+        sessionId: args.sessionId,
+        variant: session.variant,
       });
-    } catch {
-      engineMove = null;
-    }
-    if (!engineMove) {
-      console.error("[titan] engine returned an illegal move", { sessionId: args.sessionId });
       return { ok: false, code: "ENGINE_UNAVAILABLE", snapshot: session };
     }
-    moves.push({ san: engineMove.san, uci: reply.bestmove, fen: chess.fen(), by: "engine", ...(reply.timeMs ? { ms: reply.timeMs } : {}) });
+    const engineMove = chess.move(app.from, app.to, app.promotion);
+    if (!engineMove) {
+      console.error("[titan] CHESS960_ENGINE_ILLEGAL_MOVE", {
+        sessionId: args.sessionId,
+        variant: session.variant,
+      });
+      return { ok: false, code: "ENGINE_UNAVAILABLE", snapshot: session };
+    }
+    const appUci = `${app.from}${app.to}${app.promotion ?? ""}`;
+    moves.push({ san: engineMove.san, uci: appUci, fen: chess.fen(), by: "engine", ...(reply.timeMs ? { ms: reply.timeMs } : {}) });
     await recordEngineMs(args.userId, reply.timeMs);
     after = outcome(chess);
     engineMeta = {
@@ -408,14 +442,15 @@ export async function engineOpeningMove(args: {
   });
   if (!quota.ok) return { ok: false, code: quota.code ?? "WRITE_FAILED", snapshot: session };
 
-  const chess = new Chess(session.fen);
+  const chess = rulesFor(session.variant as VariantId).createPosition(session.fen);
   const reply = await requestBestMove({
     fen: session.fen,
-    moves: [],
+    variant: session.variant,
     config: args.config,
     clock: args.clock,
     sessionId: args.sessionId,
     requestId: `${args.sessionId}:open`,
+    newGame: true,
   });
   if (reply.status !== "ok" || !reply.bestmove) {
     return {
@@ -424,20 +459,12 @@ export async function engineOpeningMove(args: {
       snapshot: session,
     };
   }
-  let engineMove;
-  try {
-    engineMove = chess.move({
-      from: reply.bestmove.slice(0, 2),
-      to: reply.bestmove.slice(2, 4),
-      ...(reply.bestmove.length > 4 ? { promotion: reply.bestmove[4] } : {}),
-    });
-  } catch {
-    engineMove = null;
-  }
-  if (!engineMove) return { ok: false, code: "ENGINE_UNAVAILABLE", snapshot: session };
+  const app = decodeEngineMove(session.variant, session.fen, reply.bestmove);
+  const engineMove = app ? chess.move(app.from, app.to, app.promotion) : null;
+  if (!app || !engineMove) return { ok: false, code: "ENGINE_UNAVAILABLE", snapshot: session };
 
   const moves: SessionMove[] = [
-    { san: engineMove.san, uci: reply.bestmove, fen: chess.fen(), by: "engine", ...(reply.timeMs ? { ms: reply.timeMs } : {}) },
+    { san: engineMove.san, uci: `${app.from}${app.to}${app.promotion ?? ""}`, fen: chess.fen(), by: "engine", ...(reply.timeMs ? { ms: reply.timeMs } : {}) },
   ];
   await recordEngineMs(args.userId, reply.timeMs);
   const engineMeta = {

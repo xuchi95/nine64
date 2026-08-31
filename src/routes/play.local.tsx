@@ -79,7 +79,7 @@ function LocalGame() {
   const canMoveFrom = useCallback(
     (square: string) => {
       if (game.result) return false;
-      const piece = game.game.current.get(square as never);
+      const piece = game.pieceAt(square);
       return !!piece && piece.color === game.turn;
     },
     [game],

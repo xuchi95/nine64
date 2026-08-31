@@ -14,6 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { APP, type TimeControl } from "@/config/app";
 import { BOT_LEVELS, BOT_PERSONALITIES, getBotLevel, getPersonality, botLevelTitle, personalityName, personalityBlurb } from "@/config/bots";
 import { botVariants, type VariantId, variantName, variantBlurb } from "@/config/variants";
+import { engineUciToAppMove } from "@/lib/chess/rules";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import {
   StockfishEngine,
@@ -165,14 +166,20 @@ function PlayAi() {
       setTitanStarting(true);
       void (async () => {
         try {
-          const res = await startTitan({ data: { playerColor: color } });
+          const res = await startTitan({
+            data: {
+              playerColor: color,
+              variant: config.variant === "chess960" ? "chess960" : "standard",
+            },
+          });
           if (!res.ok) {
             setEngineError(titanMessage(res.code, t));
             return;
           }
           titanRef.current = { id: res.snapshot.sessionId, version: res.snapshot.version };
           setPlayerColor(color);
-          game.reset();
+          // The server owns the starting array (critical for Chess960).
+          game.loadFen(res.snapshot.initialFen);
           prevEval.current = 0;
           setPhase("playing");
           playSound("matchFound");
@@ -288,12 +295,13 @@ function PlayAi() {
 
     const run = async () => {
       const startedAt = Date.now();
-      const legal = game.game.current.moves().length;
+      const legal = game.legalMoveCount();
       const multiPv = personality.evalTolerance > 0 && level.level < 13 ? 4 : 1;
       let lines: EngineLine[] = [];
       try {
         lines = await engine.search({
           fen: game.fen,
+          variant: config.variant === "chess960" ? "chess960" : "standard",
           depth: level.depth,
           moveTimeMs: level.moveTimeMs,
           multiPv,
@@ -344,10 +352,23 @@ function PlayAi() {
         return;
       }
 
-      const from = uci.slice(0, 2);
-      const to = uci.slice(2, 4);
-      const promo = uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
-      game.makeMove(from, to, promo);
+      // Stockfish speaks UCI_Chess960 (king takes rook) for 960 castles; the
+      // app speaks king -> final king square. Convert at the boundary only.
+      const decoded =
+        config.variant === "chess960" ? engineUciToAppMove(game.fen, uci) : null;
+      if (config.variant === "chess960" && !decoded) {
+        setEngineError("CHESS960_MOVE_DECODE_FAILED");
+        busy.current = false;
+        setThinking(false);
+        return;
+      }
+      const from = decoded ? decoded.from : uci.slice(0, 2);
+      const to = decoded ? decoded.to : uci.slice(2, 4);
+      const promoRaw = decoded ? decoded.promotion : uci.length > 4 ? uci[4] : undefined;
+      const promo = promoRaw as "q" | "r" | "b" | "n" | undefined;
+      if (!game.makeMove(from, to, promo)) {
+        setEngineError("CHESS960_ENGINE_ILLEGAL_MOVE");
+      }
       busy.current = false;
       setThinking(false);
       applyPremove();
@@ -366,7 +387,7 @@ function PlayAi() {
   const canMoveFrom = useCallback(
     (square: string) => {
       if (game.result) return false;
-      const piece = game.game.current.get(square as never);
+      const piece = game.pieceAt(square);
       return !!piece && piece.color === playerColor && game.turn === playerColor;
     },
     [game, playerColor],

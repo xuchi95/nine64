@@ -42,8 +42,12 @@ export type VariantMeta = VariantCapability & {
   enabled: boolean;
 };
 
-const CHESS960_DISABLED_REASON =
-  "Chess960 castling is not implemented by the current rule engine — the variant stays disabled instead of producing illegal positions.";
+const RANDOM_ARMY_DISABLED_REASON =
+  "Random Army has no specified army-balancing rules yet — it stays disabled instead of shipping an undefined variant.";
+
+/** Chess960 gameplay is live; engine review is not (see AA audit). */
+export const CHESS960_ANALYSIS_DISABLED_REASON =
+  "Engine review for Chess960 is still gated: the analysis pipeline reconstructs positions with chess.js and cannot decode Chess960 castling in PV lines.";
 
 const CAPABILITIES: VariantCapability[] = [
   {
@@ -98,14 +102,13 @@ const CAPABILITIES: VariantCapability[] = [
     id: "chess960",
     name: "Chess960",
     blurb: "Randomised back rank with legal Chess960 castling.",
-    localPlayable: false,
-    botPlayable: false,
-    onlinePlayable: false,
+    localPlayable: true,
+    botPlayable: true,
+    onlinePlayable: true,
     analysable: false,
-    rated: false,
+    rated: true,
     rulesEngine: "chess960",
     ratingPool: "chess960",
-    disabledReason: CHESS960_DISABLED_REASON,
   },
   {
     id: "random-army",
@@ -118,7 +121,7 @@ const CAPABILITIES: VariantCapability[] = [
     rated: false,
     rulesEngine: "chess960",
     ratingPool: "random-army",
-    disabledReason: CHESS960_DISABLED_REASON,
+    disabledReason: RANDOM_ARMY_DISABLED_REASON,
   },
 ];
 
