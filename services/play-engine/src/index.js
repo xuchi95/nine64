@@ -9,6 +9,7 @@
  * Copyright (C) 2026 Nine64. GPL-3.0-or-later (see LICENSE / README).
  */
 import http from "node:http";
+import os from "node:os";
 import { Chess } from "chess.js";
 import { EnginePool } from "./pool.js";
 import { verifyIdToken } from "./auth.js";
@@ -183,16 +184,36 @@ const POSITION_SUITE = [
   { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", best: null },
 ];
 
+/**
+ * Stable, typed /healthz payload. `busy` is derived from the real engine
+ * process states, never from a static number. Never contains credentials.
+ */
+export function healthPayload(enginePool, isReady) {
+  const engines = Array.isArray(enginePool?.engines) ? enginePool.engines : [];
+  const alive = engines.filter((e) => !e.dead);
+  const stats = enginePool?.stats ?? {};
+  return {
+    status: isReady ? "ok" : "starting",
+    engineVersion: enginePool?.engineVersion ?? null,
+    arch: process.env.ENGINE_ARCH || os.arch() || null,
+    pool: {
+      size: Number(enginePool?.size ?? alive.length) || alive.length,
+      busy: alive.filter((e) => e.busy).length,
+    },
+    stats: {
+      searches: Number(stats.searches ?? 0),
+      timeouts: Number(stats.timeouts ?? 0),
+      restarts: Number(stats.restarts ?? 0),
+      illegal: Number(stats.illegal ?? 0),
+    },
+  };
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
 
   if (url.pathname === "/healthz") {
-    return json(res, ready ? 200 : 503, {
-      status: ready ? "ok" : "starting",
-      engineVersion: pool.engineVersion,
-      pool: pool.engines?.length ?? 0,
-      stats: pool.stats,
-    });
+    return json(res, ready ? 200 : 503, healthPayload(pool, ready));
   }
 
   const auth = await verifyIdToken(req.headers.authorization);
