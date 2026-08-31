@@ -24,8 +24,8 @@ describe("Chess960 castling", () => {
       rookFrom: "h1",
       rookTo: "f1",
     });
-    expect(move?.fen.split(" ")[0]).toContain("R1KR"[0]); // board changed
-    expect(move?.fen).toMatch(/\/5RK1 |\/5RK1$/);
+    // Rook lands on f1, king on g1.
+    expect(move?.fen.split(" ")[0]?.split("/")[7]).toBe("R4RK1");
   });
 
   it("castles queenside even though the king never leaves its square", () => {
@@ -44,8 +44,8 @@ describe("Chess960 castling", () => {
   });
 
   it("round-trips app notation and Stockfish UCI_Chess960 notation", () => {
-    expect(appMoveToEngineUci(ODD_CASTLE_FEN, "c1", "g1")).toBe("c1h1");
-    expect(appMoveToEngineUci(ODD_CASTLE_FEN, "c1", "c1")).toBe("c1a1");
+    expect(appMoveToEngineUci(ODD_CASTLE_FEN, { from: "c1", to: "g1" })).toBe("c1h1");
+    expect(appMoveToEngineUci(ODD_CASTLE_FEN, { from: "c1", to: "c1" })).toBe("c1a1");
     expect(engineUciToAppMove(ODD_CASTLE_FEN, "c1h1")).toEqual({ from: "c1", to: "g1" });
     expect(engineUciToAppMove(ODD_CASTLE_FEN, "c1a1")).toEqual({ from: "c1", to: "c1" });
     // Non-castling moves pass through untouched.
