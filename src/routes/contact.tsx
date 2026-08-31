@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { submitContactRequest } from "@/lib/contact.functions";
+import { TurnstileWidget, resetTurnstile } from "@/components/security/TurnstileWidget";
+import { parseRateLimited, rateLimitMessage, isCaptchaFailure, captchaMessage } from "@/lib/ratelimit/errors";
 import { pageHead } from "@/lib/seo";
 import { useT } from "@/lib/i18n";
 
@@ -63,18 +65,39 @@ function ContactPage() {
   });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
     setErrorMsg("");
+    if (!captchaToken) {
+      setStatus("error");
+      setErrorMsg(captchaMessage("vi"));
+      return;
+    }
     try {
-      await submit({ data: form as any });
+      await submit({ data: { ...form, captchaToken, idempotencyKey } as any });
       setStatus("success");
       setForm((f) => ({ ...f, subject: "", message: "" }));
     } catch (err) {
+      const limited = parseRateLimited(err);
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : t("study.contact.genericError"));
+      setErrorMsg(
+        limited
+          ? rateLimitMessage(limited, "vi")
+          : isCaptchaFailure(err)
+            ? captchaMessage("vi")
+            : err instanceof Error
+              ? err.message
+              : t("study.contact.genericError"),
+      );
+    } finally {
+      // Turnstile tokens are single-use: always mint a fresh challenge.
+      setCaptchaToken(null);
+      setIdempotencyKey(crypto.randomUUID());
+      resetTurnstile();
     }
   };
 
