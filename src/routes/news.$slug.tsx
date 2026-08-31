@@ -6,7 +6,8 @@ import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { APP } from "@/config/app";
 import { pageHead, SITE_URL } from "@/lib/seo";
 import { useT } from "@/lib/i18n";
-import { getNewsArticle, type NewsArticle } from "@/lib/watch/watch.functions";
+import { getNewsArticle } from "@/lib/watch/watch.functions";
+import type { NewsArticleDetail } from "@/lib/watch/types";
 
 export const Route = createFileRoute("/news/$slug")({
   loader: ({ params }) => getNewsArticle({ data: { slug: params.slug } }),
