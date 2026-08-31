@@ -48,6 +48,8 @@ const MAIN_NAV = [
 ] as const;
 
 const MORE_NAV = [
+  { to: "/learn", labelKey: "shell.nav.learn" },
+  { to: "/endgames", labelKey: "shell.nav.endgames" },
   { to: "/training-plan", labelKey: "shell.nav.trainingPlan" },
   { to: "/skills", labelKey: "shell.nav.skills" },
   { to: "/openings", labelKey: "shell.nav.openings" },

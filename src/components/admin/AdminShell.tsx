@@ -9,6 +9,7 @@ import {
   Sparkles,
   Puzzle,
   BookOpen,
+  GraduationCap,
   ShieldCheck,
   ScrollText,
   ListChecks,
@@ -38,6 +39,7 @@ const NAV: { module: AdminModule; icon: typeof Users; labelKey: string }[] = [
   { module: "intelligence", icon: Sparkles, labelKey: "adminc.nav.intelligence" },
   { module: "puzzles", icon: Puzzle, labelKey: "adminc.nav.puzzles" },
   { module: "openings", icon: BookOpen, labelKey: "adminc.nav.openings" },
+  { module: "learn", icon: GraduationCap, labelKey: "adminc.nav.learn" },
 ];
 
 function isActive(pathname: string, to: string) {
