@@ -31,7 +31,8 @@ export type RateLimitAction =
   | "study.view"
   | "study.embed"
   | "study.og"
-  | "study.create";
+  | "study.create"
+  | "chat.send";
 
 export interface RateLimitRule {
   /** Rolling window length in seconds. */
@@ -90,6 +91,9 @@ export const RATE_LIMIT_POLICY: Record<RateLimitAction, RateLimitRule> = {
   "study.embed": { windowSeconds: 60, limit: 120, failClosed: false, scope: "ip-hmac" },
   "study.og": { windowSeconds: 60, limit: 60, failClosed: false, scope: "ip-hmac" },
   "study.create": { windowSeconds: 3_600, limit: 40, failClosed: false, scope: "user" },
+
+  // In-game chat — chatty but bounded so a client cannot flood a game room.
+  "chat.send": { windowSeconds: 60, limit: 30, failClosed: false, scope: "user" },
 };
 
 /** Hard ceilings for AI Coach input, enforced before any gateway call. */
