@@ -78,7 +78,8 @@ describe("turnstile verification", () => {
     const spy = vi.fn(async () => new Response(JSON.stringify({ success: true, action: "contact", hostname: "nine64.com" })));
     globalThis.fetch = spy as unknown as typeof fetch;
     await verifyTurnstile("tok", { action: "contact", idempotencyKey: "abc" });
-    const body = String((spy.mock.calls[0]![1] as RequestInit).body);
+    const call = spy.mock.calls[0] as unknown as [string, RequestInit];
+    const body = String(call[1].body);
     expect(body).toContain("idempotency_key=abc");
   });
 });
