@@ -53,22 +53,28 @@ function makeFakeDb() {
 const fakeDb = makeFakeDb();
 let failBackend = false;
 
-vi.mock("@/integrations/supabase/client.server", () => ({
-  supabaseAdmin: {
-    rpc: (name: string, args: Record<string, unknown>) => {
-      if (failBackend) return Promise.resolve({ data: null, error: { message: "down" } });
-      return fakeDb.rpc(name, args);
-    },
-  },
-}));
-
 vi.mock("@tanstack/react-start/server", () => ({
-  getRequest: () => new Request("https://nine64.com/x", { headers: { "cf-connecting-ip": "203.0.113.7" } }),
+  getRequest: () =>
+    new Request("https://nine64.com/x", { headers: { "cf-connecting-ip": "203.0.113.7" } }),
   setResponseHeader: () => undefined,
   setResponseStatus: () => undefined,
 }));
 
-const importLimiter = () => import("./limiter.server");
+async function importLimiter() {
+  const mod = await import("./limiter.server");
+  mod.__setRateLimitBackend(async ({ key, windowSeconds, limit, cost }) => {
+    if (failBackend) throw new Error("backend down");
+    const { data } = await fakeDb.rpc("consume_rate_limit", {
+      _key: key,
+      _window_seconds: windowSeconds,
+      _limit: limit,
+      _cost: cost,
+    });
+    return data as Record<string, unknown>;
+  });
+  return mod;
+}
+
 
 describe("rate limiter", () => {
   beforeEach(() => {
