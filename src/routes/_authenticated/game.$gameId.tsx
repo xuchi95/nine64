@@ -20,11 +20,14 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   getGameMoves,
   makeMove,
-  finishGame,
+  resignGame,
+  claimTimeout,
+  abortGame,
   syncGame,
   getRatingEvent,
 } from "@/lib/online.functions";
 import type {
+  CommandOutcome,
   GameSnapshot,
   MoveErrorCode,
   MoveOutcome,
@@ -33,16 +36,15 @@ import type {
 import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
 import type { Game, GameMove } from "@/lib/database.types";
-import type { Color } from "@/hooks/useChessGame";
 import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
-import { Flag, Hand, Copy, Share2 } from "lucide-react";
+import { Flag, Hand, Ban, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   formatTimeControl,
   timeControlSpec,
 } from "@/lib/chess/timeControls";
-import { normalizeResult, resultCodeFromWinner, resultLabel } from "@/lib/chess/gameResult";
+import { normalizeResult, resultLabel } from "@/lib/chess/gameResult";
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
 import { buildPgn, shareUrl } from "@/lib/chess/share";
@@ -84,7 +86,9 @@ function OnlineGamePage() {
   const syncGameFn = useServerFn(syncGame);
   const getMovesFn = useServerFn(getGameMoves);
   const makeMoveFn = useServerFn(makeMove);
-  const finishGameFn = useServerFn(finishGame);
+  const resignGameFn = useServerFn(resignGame);
+  const claimTimeoutFn = useServerFn(claimTimeout);
+  const abortGameFn = useServerFn(abortGame);
   const getRatingEventFn = useServerFn(getRatingEvent);
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
@@ -101,6 +105,7 @@ function OnlineGamePage() {
   const [syncing, setSyncing] = useState(false);
   const [pendingMove, setPendingMove] = useState<string | null>(null);
   const [conflict, setConflict] = useState<string | null>(null);
+  const [commandBusy, setCommandBusy] = useState(false);
 
   const gameRef = useRef<Chess>(new Chess());
   const finishedRef = useRef(false);
@@ -345,21 +350,6 @@ function OnlineGamePage() {
     return () => window.clearInterval(id);
   }, [game, boardRev]);
 
-  // When the estimated countdown hits zero we ask the server to rule on it.
-  // The client never declares a winner by itself.
-  useEffect(() => {
-    if (!awaitingFlag || !game || game.status !== "active") return;
-    let cancelled = false;
-    const id = window.setInterval(() => {
-      if (cancelled) return;
-      void refresh().catch(() => undefined);
-    }, 1500);
-    void refresh().catch(() => undefined);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [awaitingFlag, game, refresh]);
 
   // Resync canonical state on reconnect and when the tab regains focus.
   useEffect(() => {
@@ -377,30 +367,50 @@ function OnlineGamePage() {
     };
   }, [refresh]);
 
-  const finishIfOver = useCallback(
-    async (reason: string, winner: Color | "draw") => {
-      if (finishedRef.current || !game) return;
-      finishedRef.current = true;
-      const code = resultCodeFromWinner(winner as "w" | "b" | "draw");
-      const winnerId = winner === "w" ? game.white_id : winner === "b" ? game.black_id : null;
-      setGame({ ...game, status: "completed", result: code, end_reason: reason });
-
+  /**
+   * Terminal commands: the client only names the action and the version it saw.
+   * Result, winner and end reason always come back from the server.
+   */
+  const runCommand = useCallback(
+    async (kind: "resign" | "timeout" | "abort") => {
+      if (!game || !myColor || commandBusy) return;
+      setCommandBusy(true);
       try {
-        await finishGameFn({
-          data: {
-            gameId: game.id,
-            result: code,
-            winnerId,
-            endReason: reason,
-            finalFen: gameRef.current.fen(),
-          },
-        });
+        const fn =
+          kind === "resign" ? resignGameFn : kind === "timeout" ? claimTimeoutFn : abortGameFn;
+        const out = (await fn({
+          data: { gameId: game.id, expectedVersion: game.version ?? 0 },
+        })) as CommandOutcome;
+        if (!out.ok && out.code === "ABORT_NOT_ALLOWED") {
+          setConflict("Không thể huỷ ván sau khi đã có nước đi.");
+        }
       } catch {
-        // server may have already finished the game
+        // Idempotent commands: the resync below shows the canonical outcome.
+      } finally {
+        await refresh().catch(() => undefined);
+        setCommandBusy(false);
       }
     },
-    [finishGameFn, game],
+    [abortGameFn, claimTimeoutFn, commandBusy, game, myColor, refresh, resignGameFn],
   );
+
+  // When the estimated countdown hits zero we ask the server to rule on it.
+  // The client never declares a winner by itself.
+  useEffect(() => {
+    if (!awaitingFlag || !game || game.status !== "active") return;
+    let cancelled = false;
+    const claim = () => {
+      if (cancelled) return;
+      void runCommand("timeout");
+    };
+    const id = window.setInterval(claim, 1500);
+    claim();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [awaitingFlag, game, runCommand]);
+
 
 
   const submitMove = useCallback(
@@ -588,15 +598,8 @@ function OnlineGamePage() {
     }
   }, []);
 
-  const resign = useCallback(async () => {
-    if (!game || !myColor || finishedRef.current) return;
-    await finishIfOver("Resignation", myColor === "w" ? "b" : "w");
-  }, [finishIfOver, game, myColor]);
-
-  const offerDraw = useCallback(async () => {
-    if (!game || !myColor || finishedRef.current) return;
-    await finishIfOver("Agreement", "draw");
-  }, [finishIfOver, game, myColor]);
+  const resign = useCallback(() => runCommand("resign"), [runCommand]);
+  const abort = useCallback(() => runCommand("abort"), [runCommand]);
 
   if (loading) {
     return (
@@ -735,11 +738,20 @@ function OnlineGamePage() {
 
             {live && (
               <GameActions>
-                <Button variant="outline" onClick={() => void offerDraw()}>
-                  <Hand className="size-4" /> Draw
+                <Button
+                  variant="outline"
+                  disabled
+                  title="Cầu hoà sẽ có ở bản cập nhật kế tiếp"
+                >
+                  <Hand className="size-4" /> Cầu hoà
                 </Button>
-                <Button variant="outline" onClick={() => void resign()}>
-                  <Flag className="size-4" /> Resign
+                {moves.length === 0 && (
+                  <Button variant="outline" disabled={commandBusy} onClick={() => void abort()}>
+                    <Ban className="size-4" /> Huỷ ván
+                  </Button>
+                )}
+                <Button variant="outline" disabled={commandBusy} onClick={() => void resign()}>
+                  <Flag className="size-4" /> Xin thua
                 </Button>
               </GameActions>
             )}

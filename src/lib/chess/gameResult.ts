@@ -15,6 +15,29 @@ export function resultCodeFromWinner(winner: ResultWinner): ResultCode {
   return "1/2-1/2";
 }
 
+/**
+ * Canonical end-reason codes written by the server (P0.5). Anything else is a
+ * legacy/free-form string and is shown as-is.
+ */
+const END_REASON_LABEL: Record<string, string> = {
+  checkmate: "Chiếu hết",
+  stalemate: "Hết nước đi (hoà)",
+  insufficient_material: "Không đủ lực chiếu hết",
+  threefold_repetition: "Lặp nước ba lần",
+  fifty_move_rule: "Luật 50 nước",
+  timeout: "Hết giờ",
+  resignation: "Xin thua",
+  draw_agreement: "Hoà theo thoả thuận",
+  aborted: "Ván bị huỷ",
+  declined: "Đối thủ từ chối ghép",
+  other: "Kết thúc",
+};
+
+export function endReasonLabel(reason?: string | null): string | null {
+  if (!reason) return null;
+  return END_REASON_LABEL[reason] ?? reason;
+}
+
 /** One shared parser so realtime, fallback polling and replay all agree. */
 export function normalizeResult(input: {
   result?: string | null;
@@ -22,13 +45,14 @@ export function normalizeResult(input: {
 }): NormalizedResult | null {
   const code = input.result ?? "*";
   if (code === "*" || !code) return null;
+  const reason = endReasonLabel(input.end_reason);
   if (code === "1/2-1/2")
-    return { code, winner: "draw", reason: input.end_reason || t("game.result.reasonDraw") };
+    return { code, winner: "draw", reason: reason || t("game.result.reasonDraw") };
   if (code === "1-0")
-    return { code, winner: "w", reason: input.end_reason || t("game.result.reasonWhiteWins") };
+    return { code, winner: "w", reason: reason || t("game.result.reasonWhiteWins") };
   if (code === "0-1")
-    return { code, winner: "b", reason: input.end_reason || t("game.result.reasonBlackWins") };
-  return { code: "*", winner: "draw", reason: input.end_reason || t("game.result.reasonGameOver") };
+    return { code, winner: "b", reason: reason || t("game.result.reasonBlackWins") };
+  return { code: "*", winner: "draw", reason: reason || t("game.result.reasonGameOver") };
 }
 
 /** Perspective label shared by every screen. */
