@@ -37,6 +37,8 @@ import { CookieBanner } from "@/components/layout/CookieBanner";
 import { resetCookieConsent } from "@/lib/cookieConsent";
 import { LanguageToggle } from "@/components/layout/LanguageToggle";
 import { useT } from "@/lib/i18n";
+import { useServerFn } from "@tanstack/react-start";
+import { getAdminAccess } from "@/lib/adminCenter.functions";
 
 const MAIN_NAV = [
   { to: "/", labelKey: "shell.nav.home" },
