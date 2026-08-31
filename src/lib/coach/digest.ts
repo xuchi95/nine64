@@ -2,6 +2,21 @@ import type { SavedGame } from "@/lib/history";
 import { LABEL_META } from "@/lib/analysis/classify";
 import { MOTIF_LABEL } from "@/lib/analysis/motifs";
 
+export interface CoachKeyMoment {
+  /** Stable canonical id (`ply-<index>`). The model may only reference this. */
+  id: string;
+  /** 0-based ply index in the game's move list. */
+  plyIndex: number;
+  moveNumber: number;
+  san: string;
+  label: string;
+  lossPct: number;
+  bestMove: string | null;
+  evalAfter: string;
+  phase: string;
+  motifs: string[];
+}
+
 export interface CoachDigest {
   side: "w" | "b";
   playerName: string;
@@ -15,21 +30,17 @@ export interface CoachDigest {
   acpl: { player: number; opponent: number } | null;
   estimatedRating: number | null;
   labelCounts: Record<string, number> | null;
+  /** Timestamp of the engine review this digest was built from. */
+  reviewedAt: string | null;
   /** Compact move list: "12. Nf3 (mistake, -18%, fork missed)". */
   timeline: string[];
   /** Worst decisions for the analysed side, already sorted by damage. */
-  keyMoments: {
-    moveNumber: number;
-    san: string;
-    label: string;
-    lossPct: number;
-    bestMove: string | null;
-    evalAfter: string;
-    phase: string;
-    motifs: string[];
-  }[];
+  keyMoments: CoachKeyMoment[];
   finalFen: string;
 }
+
+/** How many key moments the model is allowed to reason about. */
+export const DIGEST_KEY_MOMENTS = 6;
 
 function evalText(cp: number | null): string {
   if (cp === null) return "n/a";
@@ -54,11 +65,13 @@ export function buildCoachDigest(game: SavedGame, side: "w" | "b"): CoachDigest 
     return `${prefix} [${bits.join(", ")}]`;
   });
 
-  const keyMoments = [...own]
-    .sort((a, b) => b.loss - a.loss)
-    .slice(0, 8)
+  const keyMoments: CoachKeyMoment[] = [...own]
     .filter((p) => p.loss >= 2)
+    .sort((a, b) => b.loss - a.loss)
+    .slice(0, DIGEST_KEY_MOMENTS)
     .map((p) => ({
+      id: `ply-${p.index}`,
+      plyIndex: p.index,
       moveNumber: Math.floor(p.index / 2) + 1,
       san: p.san,
       label: LABEL_META[p.label].title,
@@ -91,6 +104,7 @@ export function buildCoachDigest(game: SavedGame, side: "w" | "b"): CoachDigest 
     acpl: summary ? { player: summary.acpl[side], opponent: summary.acpl[oppSide] } : null,
     estimatedRating: summary ? summary.estimatedRating[side] : null,
     labelCounts: summary ? (summary.labels[side] as unknown as Record<string, number>) : null,
+    reviewedAt: review?.reviewedAt ?? null,
     timeline,
     keyMoments,
     finalFen: game.finalFen,
