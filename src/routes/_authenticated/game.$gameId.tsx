@@ -130,6 +130,33 @@ function OnlineGamePage() {
   useEffect(() => {
     if (game?.status === "completed") void fairplay.flush();
   }, [fairplay, game?.status]);
+
+  // Rating delta is read from the canonical ledger; never recomputed in the browser.
+  useEffect(() => {
+    if (game?.status !== "completed") return;
+    let cancelled = false;
+    let attempt = 0;
+    const poll = async () => {
+      while (!cancelled && attempt < 6) {
+        attempt += 1;
+        try {
+          const ev = (await getRatingEventFn({ data: { gameId } })) as RatingEvent | null;
+          if (cancelled) return;
+          if (ev) {
+            setRatingEvent(ev);
+            return;
+          }
+        } catch {
+          /* transient; retry with backoff */
+        }
+        await new Promise((r) => setTimeout(r, 800 * attempt));
+      }
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [game?.status, gameId, getRatingEventFn]);
   const spec = useMemo(() => timeControlSpec(game?.time_control ?? "blitz5m"), [game?.time_control]);
   const result = useMemo(() => (game ? normalizeResult(game) : null), [game]);
   const resultView = useMemo(() => resultLabel(result, myColor), [result, myColor]);
