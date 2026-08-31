@@ -361,7 +361,7 @@ export const adminSetTournamentState = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> =
+    const patch: { status?: string; paused?: boolean } =
       data.action === "publish"
         ? { status: "scheduled" }
         : data.action === "cancel"
@@ -441,7 +441,7 @@ export const adminTournamentEvents = createServerFn({ method: "GET" })
     return ((rows ?? []) as Row[]).map((r) => ({
       id: r["id"] as string,
       type: r["type"] as string,
-      payload: (r["payload"] as Record<string, unknown>) ?? {},
+      payload: JSON.stringify(r["payload"] ?? {}),
       createdAt: r["created_at"] as string,
     }));
   });
