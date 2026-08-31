@@ -58,6 +58,7 @@ export type SessionError =
   | "ILLEGAL_MOVE"
   | "NOT_YOUR_TURN"
   | "TOO_MANY_SESSIONS"
+  | "QUOTA_EXCEEDED"
   | "WRITE_FAILED";
 
 export type SessionResult =
@@ -67,6 +68,39 @@ export type SessionResult =
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
+}
+
+/**
+ * Atomic daily Titan quota (UTC bucket). Counts canonical engine searches
+ * only, charges once per (session, idempotency key) so retries never
+ * double-charge, and is checked BEFORE any Cloud Run CPU is spent. The client
+ * never supplies a counter, and a new session cannot reset the bucket because
+ * it is keyed on the user, not the session.
+ */
+async function consumeDailyQuota(args: {
+  userId: string;
+  sessionId: string;
+  idempotencyKey: string;
+  limit: number;
+}): Promise<{ ok: boolean; code?: "QUOTA_EXCEEDED" | "WRITE_FAILED" }> {
+  const db = await admin();
+  const { data, error } = await db.rpc("titan_consume_move", {
+    _user_id: args.userId,
+    _session_id: args.sessionId,
+    _idempotency_key: args.idempotencyKey,
+    _limit: args.limit,
+  } as never);
+  if (error) return { ok: false, code: "WRITE_FAILED" };
+  const payload = (data ?? {}) as Record<string, unknown>;
+  if (payload["ok"] === true) return { ok: true };
+  return { ok: false, code: payload["code"] === "QUOTA_EXCEEDED" ? "QUOTA_EXCEEDED" : "WRITE_FAILED" };
+}
+
+/** Estimated compute usage only — this is measured engine time, not GCP billing. */
+async function recordEngineMs(userId: string, ms: number | null): Promise<void> {
+  if (!ms || ms <= 0) return;
+  const db = await admin();
+  await db.rpc("titan_record_engine_ms", { _user_id: userId, _ms: Math.trunc(ms) } as never);
 }
 
 function toSnapshot(row: Record<string, unknown>): SessionSnapshot {
@@ -250,6 +284,13 @@ export async function playMove(args: {
     if (!cloudEngineConfigured()) {
       return { ok: false, code: "ENGINE_NOT_CONFIGURED", snapshot: session };
     }
+    const quota = await consumeDailyQuota({
+      userId: args.userId,
+      sessionId: args.sessionId,
+      idempotencyKey: args.idempotencyKey,
+      limit: args.config.perUserDailyMoves,
+    });
+    if (!quota.ok) return { ok: false, code: quota.code ?? "WRITE_FAILED", snapshot: session };
     const reply = await requestBestMove({
       fen: session.fen,
       moves: [...session.moves.map((m) => m.uci), args.uci],
@@ -281,6 +322,7 @@ export async function playMove(args: {
       return { ok: false, code: "ENGINE_UNAVAILABLE", snapshot: session };
     }
     moves.push({ san: engineMove.san, uci: reply.bestmove, fen: chess.fen(), by: "engine", ...(reply.timeMs ? { ms: reply.timeMs } : {}) });
+    await recordEngineMs(args.userId, reply.timeMs);
     after = outcome(chess);
     engineMeta = {
       name: "Nine64 Titan",
@@ -358,6 +400,14 @@ export async function engineOpeningMove(args: {
   const { requestBestMove, cloudEngineConfigured } = await import("./cloudEngine.server");
   if (!cloudEngineConfigured()) return { ok: false, code: "ENGINE_NOT_CONFIGURED", snapshot: session };
 
+  const quota = await consumeDailyQuota({
+    userId: args.userId,
+    sessionId: args.sessionId,
+    idempotencyKey: `${args.sessionId}:open`,
+    limit: args.config.perUserDailyMoves,
+  });
+  if (!quota.ok) return { ok: false, code: quota.code ?? "WRITE_FAILED", snapshot: session };
+
   const chess = new Chess(session.fen);
   const reply = await requestBestMove({
     fen: session.fen,
@@ -389,6 +439,7 @@ export async function engineOpeningMove(args: {
   const moves: SessionMove[] = [
     { san: engineMove.san, uci: reply.bestmove, fen: chess.fen(), by: "engine", ...(reply.timeMs ? { ms: reply.timeMs } : {}) },
   ];
+  await recordEngineMs(args.userId, reply.timeMs);
   const engineMeta = {
     name: "Nine64 Titan",
     depth: reply.depth,
