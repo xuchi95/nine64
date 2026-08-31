@@ -419,8 +419,10 @@ export const finishGame = createServerFn({ method: "POST" })
     // Glicko-2 rating update (rating, deviation and volatility) — service role only.
     const draw = result === "1/2-1/2";
 
-    const { error: ratingError } = await supabaseAdmin.rpc("apply_glicko2", { _game_id: data.gameId });
-    if (ratingError) console.error("Glicko-2 update failed", ratingError.message);
+    const { error: ratingError } = await supabaseAdmin.rpc("apply_rating_once", {
+      _game_id: data.gameId,
+    });
+    if (ratingError) console.error("Rating apply failed", ratingError.message);
 
     // Notify both players
     const title = draw ? "Game drawn" : winnerId ? "Game over" : "Game over";
