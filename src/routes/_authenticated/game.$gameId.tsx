@@ -56,10 +56,7 @@ import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
 import { Flag, Hand, Ban, Copy, Share2, Undo2, Swords, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
-import {
-  formatTimeControl,
-  timeControlSpec,
-} from "@/lib/chess/timeControls";
+import { timeControlSpec } from "@/lib/chess/timeControls";
 import { normalizeResult, resultLabel } from "@/lib/chess/gameResult";
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
@@ -217,7 +214,12 @@ function OnlineGamePage() {
       cancelled = true;
     };
   }, [game?.status, gameId, getRatingEventFn]);
-  const spec = useMemo(() => timeControlSpec(game?.time_control ?? "blitz5m"), [game?.time_control]);
+  const spec = useMemo(() => {
+    const parsed = parseTimeControl(game?.time_control ?? "blitz5m");
+    return parsed.valid
+      ? { baseMs: parsed.baseMs, incrementMs: parsed.incMs }
+      : timeControlSpec(game?.time_control ?? "blitz5m");
+  }, [game?.time_control]);
   const result = useMemo(() => (game ? normalizeResult(game) : null), [game]);
   const resultView = useMemo(() => resultLabel(result, myColor), [result, myColor]);
 
@@ -978,7 +980,14 @@ function OnlineGamePage() {
               bodyClassName="space-y-3.5 p-4"
             >
               <StatRow label="Variant" value={game.variant} />
-              <StatRow label="Time control" value={formatTimeControl(game.time_control)} mono />
+              <StatRow label="Time control" value={timeControlLabel(game.time_control)} mono />
+              <StatRow label="Pool" value={game.pool ?? "—"} />
+              {game.pace === "daily" && game.deadline_at && live && (
+                <StatRow
+                  label="Hạn nước đi"
+                  value={new Date(game.deadline_at).toLocaleString("vi-VN")}
+                />
+              )}
               <StatRow label="Sync" value={syncMode === "realtime" ? "Realtime" : "Backup"} />
               {result && <StatRow label="Result" value={`${result.reason} · ${result.code}`} />}
             </GamePanel>
@@ -1006,6 +1015,18 @@ function OnlineGamePage() {
                   : "Đã gửi đề nghị hoà — đang chờ đối thủ phản hồi."}
               </GameNotice>
             )}
+            {takebackPending && game?.status === "active" && (
+              <GameNotice tone={takebackPending.requested_to === user?.id ? "warning" : "info"}>
+                {takebackPending.requested_to === user?.id
+                  ? "Đối thủ xin đòi lại nước — bạn có thể đồng ý hoặc từ chối."
+                  : "Đã gửi yêu cầu đòi lại nước — đang chờ đối thủ."}
+              </GameNotice>
+            )}
+            {live && opponentSeenAt !== null && Date.now() - opponentSeenAt > 45_000 && (
+              <GameNotice tone="warning">
+                Đối thủ có vẻ đã mất kết nối. Đồng hồ vẫn chạy theo giờ máy chủ.
+              </GameNotice>
+            )}
             {!drawPending && drawNotice && game?.status === "active" && (
               <GameNotice tone="info">{drawNotice}</GameNotice>
             )}
@@ -1027,6 +1048,8 @@ function OnlineGamePage() {
               checkSquare={checkSquare}
               checkmate={isCheckmate}
               turn={turn}
+              premove={premove}
+              onPremove={(from, to) => setPremove({ from, to })}
               interactive={live}
             />
           </>
@@ -1078,6 +1101,42 @@ function OnlineGamePage() {
                     <Hand className="size-4" /> Cầu hoà
                   </Button>
                 )}
+                {game.allow_takeback && !game.rated && moves.length > 0 && (
+                  takebackPending && takebackPending.requested_to === user?.id ? (
+                    <>
+                      <Button
+                        variant="default"
+                        disabled={takebackBusy}
+                        onClick={() => void runTakeback("accept")}
+                      >
+                        <Undo2 className="size-4" /> Đồng ý đòi lại
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={takebackBusy}
+                        onClick={() => void runTakeback("decline")}
+                      >
+                        <Ban className="size-4" /> Từ chối
+                      </Button>
+                    </>
+                  ) : takebackPending ? (
+                    <Button
+                      variant="outline"
+                      disabled={takebackBusy}
+                      onClick={() => void runTakeback("cancel")}
+                    >
+                      <Undo2 className="size-4" /> Rút yêu cầu đòi lại
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      disabled={takebackBusy}
+                      onClick={() => void runTakeback("request")}
+                    >
+                      <Undo2 className="size-4" /> Đòi lại nước
+                    </Button>
+                  )
+                )}
                 {moves.length === 0 && (
                   <Button variant="outline" disabled={commandBusy} onClick={() => void abort()}>
                     <Ban className="size-4" /> Huỷ ván
@@ -1085,6 +1144,15 @@ function OnlineGamePage() {
                 )}
                 <Button variant="outline" disabled={commandBusy} onClick={() => void resign()}>
                   <Flag className="size-4" /> Xin thua
+                </Button>
+              </GameActions>
+            )}
+
+            {!live && myColor && (
+              <GameActions>
+                <Button disabled={rematchBusy || rematchSent} onClick={() => void requestRematch()}>
+                  <Swords className="size-4" />
+                  {rematchSent ? "Đã mời tái đấu" : "Tái đấu"}
                 </Button>
               </GameActions>
             )}
