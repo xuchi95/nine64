@@ -38,7 +38,7 @@ export default {
     "play.hub.card.share.title": "Chia sẻ qua liên kết / PGN",
     "play.hub.card.share.text": "Cờ qua thư: đồng bộ nước đi qua URL hoặc PGN.",
     "play.hub.card.variants.title": "Biến thể",
-    "play.hub.card.variants.text": "Ba lần chiếu, Vua trên đồi, Không Hậu và nhiều hơn nữa.",
+    "play.hub.card.variants.text": "Cờ thả, Nguyên tử, Bầy Tốt, Đua Vua, Ba lần chiếu và nhiều hơn nữa.",
     "play.hub.card.analysis.title": "Bàn phân tích",
     "play.hub.card.analysis.text": "Bàn cờ tự do với đánh giá máy theo yêu cầu.",
     "play.hub.comingSoon": "Sắp ra mắt",
@@ -348,6 +348,7 @@ export default {
     "play.bots.personality.oracle.blurb": "Tính toán tối đa. Không phong cách, chỉ chọn nước đi tốt nhất.",
     "play.bots.personality.chaos.name": "Chaos",
     "play.bots.personality.chaos.blurb": "Chọn nước đi khó lường, nhưng vẫn rất mạnh.",
+    "play.local.checksLabel": "Số lần chiếu (T–Đ)",
     "play.variantHelp.title": "Luật các biến thể cờ",
     "play.variantHelp.subtitle": "Toàn bộ biến thể Nine64 hỗ trợ, luật thắng thua và nơi được phép chơi.",
     "play.variantHelp.rules": "Luật chính",
@@ -459,7 +460,7 @@ export default {
     "play.hub.card.share.title": "Share by link / PGN",
     "play.hub.card.share.text": "Correspondence play: sync each move via URL or PGN.",
     "play.hub.card.variants.title": "Variants",
-    "play.hub.card.variants.text": "Three-Check, King of the Hill, No Queen and more.",
+    "play.hub.card.variants.text": "Crazyhouse, Atomic, Horde, Racing Kings, Three-Check and more.",
     "play.hub.card.analysis.title": "Analysis board",
     "play.hub.card.analysis.text": "Free board with engine evaluation on demand.",
     "play.hub.comingSoon": "Coming soon",
@@ -789,6 +790,7 @@ export default {
     "play.bots.personality.chaos.blurb": "Unpredictable move selection, still strong.",
 
     // ---------- Variants ----------
+    "play.local.checksLabel": "Checks (W–B)",
     "play.variantHelp.title": "Variant rules",
     "play.variantHelp.subtitle": "Every variant Nine64 supports, how each one is won, and where you can play it.",
     "play.variantHelp.rules": "Key rules",

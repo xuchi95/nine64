@@ -183,6 +183,13 @@ function LocalGame() {
             bodyClassName="space-y-3.5 p-4"
           >
             <StatRow label={t("play.local.variantLabel")} value={variant ? variantName(variant) : t("play.local.standard")} />
+            {variant === "three-check" && game.checkCount && (
+              <StatRow
+                label={t("play.local.checksLabel")}
+                value={`${game.checkCount.w} – ${game.checkCount.b}`}
+                mono
+              />
+            )}
             <StatRow label={t("play.local.openingLabel")} value={game.opening?.name ?? "—"} />
             <StatRow label={t("play.local.movesLabel")} value={String(game.moves.length)} mono />
           </GamePanel>

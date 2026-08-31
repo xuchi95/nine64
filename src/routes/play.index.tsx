@@ -50,7 +50,7 @@ const AVAILABLE = [
     textKey: "play.hub.card.share.text",
   },
   {
-    to: "/play/ai",
+    to: "/play/variants",
     icon: Swords,
     titleKey: "play.hub.card.variants.title",
     textKey: "play.hub.card.variants.text",
