@@ -20,13 +20,30 @@ upstream tag (`STOCKFISH_REF`, default `sf_18`) and builds it unmodified with
 
 ## Endpoints
 
-| Method | Path         | Purpose                                        |
-| ------ | ------------ | ---------------------------------------------- |
-| GET    | `/healthz`   | readiness + engine version + pool stats (open)  |
-| POST   | `/bestmove`  | one search for a validated position (OIDC only) |
-| POST   | `/benchmark` | `bench`, `speedtest`, `epd`, `positions` (OIDC) |
+| Method | Path         | Purpose                                         |
+| ------ | ------------ | ----------------------------------------------- |
+| GET    | `/healthz`   | readiness + engine version + pool stats (open)   |
+| POST   | `/bestmove`  | one search for a validated position (OIDC only)  |
+| POST   | `/benchmark` | `bench`, `speedtest`, `epd`, `positions` (OIDC)  |
 
-`/bestmove` request:
+### `/healthz` response contract (stable)
+
+```json
+{
+  "status": "ok",
+  "engineVersion": "Stockfish 18",
+  "arch": "x64",
+  "pool": { "size": 1, "busy": 0 },
+  "stats": { "searches": 0, "timeouts": 0, "restarts": 0, "illegal": 0 }
+}
+```
+
+`status` is `"starting"` (HTTP 503) until every engine process has completed
+its UCI handshake. `pool.busy` is computed from the real engine process states.
+The backend parses this defensively: any other shape is treated as
+`unavailable`, never as healthy.
+
+### `/bestmove` request
 
 ```json
 {
@@ -44,40 +61,150 @@ The position is replayed with `chess.js` before and after the search: an illegal
 input is rejected with `400`, and an illegal engine reply returns `500` rather
 than being passed on.
 
-## Authentication
-
-Deploy as a **private** Cloud Run service. Every request must carry
-`Authorization: Bearer <Google ID token>` with:
-
-- `PLAY_ENGINE_AUDIENCE` — the audience the backend mints tokens for
-- `ALLOWED_SERVICE_ACCOUNTS` — comma-separated allowlist of caller emails
-
-If either is unset the service answers `401 not_configured` — it never falls
-back to open access.
-
-## Environment
+## Environment (service side)
 
 | Variable                   | Meaning                                  |
 | -------------------------- | ---------------------------------------- |
 | `PORT`                     | listen port (Cloud Run sets this)        |
 | `STOCKFISH_PATH`           | engine binary path                       |
 | `ENGINE_POOL_SIZE`         | engine processes (one search each)       |
-| `ENGINE_THREADS`           | reported in benchmark hardware detail    |
-| `PLAY_ENGINE_AUDIENCE`     | expected OIDC audience                   |
+| `ENGINE_THREADS`           | threads reported in benchmark hardware   |
+| `ENGINE_ARCH`              | optional arch label for `/healthz`       |
+| `PLAY_ENGINE_AUDIENCE`     | expected OIDC audience (the Run URL)     |
 | `ALLOWED_SERVICE_ACCOUNTS` | allowlisted caller service accounts      |
 
-## Manual GCP steps (cannot be done from Lovable)
+If `PLAY_ENGINE_AUDIENCE` or `ALLOWED_SERVICE_ACCOUNTS` is unset the service
+answers `401 not_configured` — it never falls back to open access.
 
-1. Build and push: `gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT/nine64/play-engine`.
-2. Deploy privately: `gcloud run deploy play-engine --no-allow-unauthenticated
-   --cpu 8 --memory 16Gi --concurrency 1 --min-instances 1 --max-instances N
-   --set-env-vars PLAY_ENGINE_AUDIENCE=...,ALLOWED_SERVICE_ACCOUNTS=...`.
-3. Grant `roles/run.invoker` to the Nine64 backend service account.
-4. Set the backend secrets `PLAY_ENGINE_URL`, `PLAY_ENGINE_AUDIENCE`,
-   `PLAY_ENGINE_SA_EMAIL`, `PLAY_ENGINE_SA_PRIVATE_KEY`.
-5. Run the benchmarks from `/admin/engine` and publish the Titan profile only
-   after they pass. No NPS or Elo figure is claimed until a real run is stored.
+---
 
-Set `Threads` to the vCPU count you actually deployed and `Hash` within the
-memory you actually granted; `SyzygyPath`/`SyzygyProbeLimit` only when the
-tablebase files are really mounted.
+# Production deployment to Google Cloud Run
+
+All commands run on your workstation. Replace `PROJECT_ID` and `REGION`
+(example uses `asia-southeast1`). **No real credential belongs in this repo.**
+
+### 1. Enable the required Google APIs
+
+```bash
+gcloud config set project PROJECT_ID
+gcloud services enable \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  cloudbuild.googleapis.com \
+  iamcredentials.googleapis.com
+```
+
+### 2. Create the Artifact Registry repository
+
+```bash
+gcloud artifacts repositories create nine64 \
+  --repository-format=docker --location=REGION
+```
+
+### 3. Create the two service accounts
+
+```bash
+# identity the Cloud Run service runs as
+gcloud iam service-accounts create play-engine-run
+# identity the Nine64 backend uses to call the service
+gcloud iam service-accounts create nine64-backend
+```
+
+### 4. Build the image — build context is `services/play-engine`
+
+```bash
+cd services/play-engine
+gcloud builds submit . \
+  --tag REGION-docker.pkg.dev/PROJECT_ID/nine64/play-engine:sf18
+```
+
+The build compiles Stockfish from source (10–20 minutes on the first run).
+
+### 5. Deploy privately
+
+```bash
+gcloud run deploy play-engine \
+  --image REGION-docker.pkg.dev/PROJECT_ID/nine64/play-engine:sf18 \
+  --region REGION \
+  --no-allow-unauthenticated \
+  --service-account play-engine-run@PROJECT_ID.iam.gserviceaccount.com \
+  --cpu 8 --memory 16Gi --cpu-boost \
+  --concurrency 1 --min-instances 1 --max-instances 4 --timeout 120 \
+  --set-env-vars ENGINE_POOL_SIZE=1,ENGINE_THREADS=8,ALLOWED_SERVICE_ACCOUNTS=nine64-backend@PROJECT_ID.iam.gserviceaccount.com
+```
+
+- `--no-allow-unauthenticated` keeps the service private.
+- `--concurrency 1` matches "one search per engine process".
+- `--max-instances` is the **hard cost blast-radius control**. Set it to a
+  number you are willing to pay for; there is no in-app USD cap.
+
+### 6. Retrieve the generated Cloud Run URL and set the audience
+
+```bash
+SERVICE_URL=$(gcloud run services describe play-engine \
+  --region REGION --format='value(status.url)')
+echo "$SERVICE_URL"
+
+gcloud run services update play-engine --region REGION \
+  --update-env-vars PLAY_ENGINE_AUDIENCE="$SERVICE_URL"
+```
+
+`PLAY_ENGINE_AUDIENCE` must be **exactly** the generated URL — the backend mints
+ID tokens for that audience and the service rejects anything else.
+
+### 7. Grant the backend permission to invoke
+
+```bash
+gcloud run services add-iam-policy-binding play-engine --region REGION \
+  --member serviceAccount:nine64-backend@PROJECT_ID.iam.gserviceaccount.com \
+  --role roles/run.invoker
+```
+
+### 8. Obtain credentials for the Nine64 backend
+
+```bash
+gcloud iam service-accounts keys create key.json \
+  --iam-account nine64-backend@PROJECT_ID.iam.gserviceaccount.com
+```
+
+Open `key.json`, copy the `client_email` and `private_key` values, then **delete
+the file**. Never commit it.
+
+### 9. Set the four Lovable server secrets
+
+In the Nine64 project backend secrets (server-only, no `VITE_` variants, never
+returned by any API, log, error page or admin screen):
+
+| Secret                      | Value                                                        |
+| --------------------------- | ------------------------------------------------------------ |
+| `PLAY_ENGINE_URL`           | the Cloud Run URL from step 6                                 |
+| `PLAY_ENGINE_AUDIENCE`      | the same URL, byte-for-byte                                   |
+| `PLAY_ENGINE_SA_EMAIL`      | `nine64-backend@PROJECT_ID.iam.gserviceaccount.com`           |
+| `PLAY_ENGINE_SA_PRIVATE_KEY`| the `private_key` value (keep the `\n` escapes)               |
+
+### 10. Benchmark procedure (real runs only)
+
+Open `/admin/engine` as an admin with MFA:
+
+1. The **Cloud Engine** card must show `healthy`, a real engine version and the
+   pool size/busy counts. `not_configured` means the secrets are not loaded.
+2. In **Benchmarks**, run each kind with a reason (≥10 characters):
+   `bench` → `speedtest` → `epd` → `positions`.
+3. Every run stores the reported engine version, hardware, nodes/NPS/depth/score
+   in `engine_benchmarks`. No value is ever typed in by hand.
+
+### 11. Publish gate
+
+Publishing the Titan profile is blocked until:
+
+- a `bench` run exists and passed,
+- an `epd` run exists and passed,
+- no stored run reports `illegalMoves > 0`.
+
+Set `Threads` to the vCPUs you actually deployed, `Hash` inside the memory you
+actually granted, `Move Overhead` including real network latency, and enable
+Syzygy only when the tablebase files are truly mounted. Publish with a reason;
+use **Emergency disable** or rollback if anything regresses.
+
+No NPS, Elo or "production ready" claim may be made before a real deployment has
+produced these benchmark rows.
