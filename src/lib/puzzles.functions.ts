@@ -506,10 +506,17 @@ export const getPuzzleOverview = createServerFn({ method: "GET" })
         bestStreak: Number(stats["best_streak"] ?? 0),
         sprintBest: Number(stats["sprint_best"] ?? 0),
         survivalBest: Number(stats["survival_best"] ?? 0),
-        themeStats: (stats["theme_stats"] as Record<string, { n: number; solved: number }>) ?? {},
+        themeStats: (stats["theme_stats"] ?? {}) as Record<string, { n: number; solved: number }>,
       },
       dueCount: dueRes.count ?? 0,
       catalogCount: catalogRes.count ?? 0,
-      datasets: (datasetsRes.data ?? []) as Row[],
+      datasets: ((datasetsRes.data ?? []) as Row[]).map((d) => ({
+        slug: String(d["slug"] ?? ""),
+        name: String(d["name"] ?? ""),
+        license: String(d["license"] ?? ""),
+        licenseUrl: String(d["license_url"] ?? ""),
+        version: String(d["version"] ?? ""),
+        importedCount: Number(d["imported_count"] ?? 0),
+      })),
     };
   });

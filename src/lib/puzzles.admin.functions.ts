@@ -6,15 +6,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { THEME_KEYS, type ThemeKey } from "./puzzles/themes";
+import { THEME_KEYS, coerceThemes, type ThemeKey } from "./puzzles/themes";
 import { recalculatePuzzleRating } from "./puzzles/rating";
 
 type Row = Record<string, unknown>;
 
-async function assertPuzzleAdmin(context: {
-  supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> };
-  userId: string;
-}) {
+type RoleRpc = {
+  rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" }) => PromiseLike<{ data: unknown }>;
+};
+
+async function assertPuzzleAdmin(context: { supabase: RoleRpc; userId: string }) {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
@@ -59,11 +60,36 @@ export const adminListPuzzles = createServerFn({ method: "POST" })
       supabaseAdmin.from("puzzle_themes").select("*").order("sort_order"),
     ]);
     return {
-      puzzles: (rows ?? []) as Row[],
+      puzzles: ((rows ?? []) as Row[]).map((r) => ({
+        id: String(r["id"]),
+        fen: String(r["fen"] ?? ""),
+        rating: Number(r["rating"] ?? 0),
+        ratingDeviation: Number(r["rating_deviation"] ?? 0),
+        themes: coerceThemes(r["themes"] as unknown[] | null),
+        phase: String(r["phase"] ?? "middlegame"),
+        enabled: r["enabled"] !== false,
+        flagged: r["flagged"] === true,
+        flagReason: r["flag_reason"] == null ? null : String(r["flag_reason"]),
+        attempts: Number(r["attempts"] ?? 0),
+        solved: Number(r["solved"] ?? 0),
+      })),
       total: total ?? 0,
       flaggedCount: flagged ?? 0,
-      datasets: (datasets.data ?? []) as Row[],
-      themes: (themes.data ?? []) as Row[],
+      datasets: ((datasets.data ?? []) as Row[]).map((d) => ({
+        slug: String(d["slug"] ?? ""),
+        name: String(d["name"] ?? ""),
+        license: String(d["license"] ?? ""),
+        version: String(d["version"] ?? ""),
+        importedCount: Number(d["imported_count"] ?? 0),
+      })),
+      themes: ((themes.data ?? []) as Row[]).map((th) => ({
+        key: String(th["key"] ?? ""),
+        nameVi: String(th["name_vi"] ?? ""),
+        nameEn: String(th["name_en"] ?? ""),
+        category: String(th["category"] ?? ""),
+        enabled: th["enabled"] !== false,
+        sortOrder: Number(th["sort_order"] ?? 0),
+      })),
     };
   });
 
@@ -90,13 +116,13 @@ export const adminModeratePuzzle = createServerFn({ method: "POST" })
       patch["flag_reason"] = data.flagged ? data.reason : null;
     }
     if (data.themes) patch["themes"] = data.themes;
-    const { error } = await supabaseAdmin.from("puzzle_catalog").update(patch).eq("id", data.puzzleId);
+    const { error } = await supabaseAdmin.from("puzzle_catalog").update(patch as never).eq("id", data.puzzleId);
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("admin_audit_log").insert({
       actor_id: context.userId,
       action: "puzzle.moderate",
       note: data.reason || "puzzle catalog update",
-      detail: { puzzleId: data.puzzleId, ...data },
+      detail: { ...data },
     });
     return { ok: true };
   });
