@@ -68,7 +68,7 @@ function MissingArticle() {
 
 function ArticlePage() {
   const { t } = useT();
-  const article = Route.useLoaderData() as NewsArticle | null;
+  const article = Route.useLoaderData() as NewsArticleDetail | null;
   if (!article) return <MissingArticle />;
 
   return (
