@@ -36,13 +36,13 @@ import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
-import { Route as AuthenticatedAdminFairplayRouteImport } from './routes/_authenticated/admin.fairplay'
 import { Route as AuthenticatedAdminIntelligenceRouteImport } from './routes/_authenticated/admin.intelligence'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin.system'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as AuthenticatedOnlineDiagnosticsRouteImport } from './routes/_authenticated/online.diagnostics'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
+import { Route as AuthenticatedAdminFairplayIndexRouteImport } from './routes/_authenticated/admin.fairplay.index'
 import { Route as AuthenticatedAdminFairplayLogRouteImport } from './routes/_authenticated/admin.fairplay.log'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin.users.index'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
@@ -185,12 +185,6 @@ const AuthenticatedAdminEngineRoute =
     path: '/admin/engine',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminFairplayRoute =
-  AuthenticatedAdminFairplayRouteImport.update({
-    id: '/admin/fairplay',
-    path: '/admin/fairplay',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminIntelligenceRoute =
   AuthenticatedAdminIntelligenceRouteImport.update({
     id: '/admin/intelligence',
@@ -225,11 +219,17 @@ const GamesOnlineGameIdRoute = GamesOnlineGameIdRouteImport.update({
   path: '/games/online/$gameId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminFairplayIndexRoute =
+  AuthenticatedAdminFairplayIndexRouteImport.update({
+    id: '/admin/fairplay/',
+    path: '/admin/fairplay/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminFairplayLogRoute =
   AuthenticatedAdminFairplayLogRouteImport.update({
-    id: '/log',
-    path: '/log',
-    getParentRoute: () => AuthenticatedAdminFairplayRoute,
+    id: '/admin/fairplay/log',
+    path: '/admin/fairplay/log',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminUsersIndexRoute =
   AuthenticatedAdminUsersIndexRouteImport.update({
@@ -285,7 +285,6 @@ export interface FileRoutesByFullPath {
   '/puzzles/': typeof PuzzlesIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
-  '/admin/fairplay': typeof AuthenticatedAdminFairplayRouteWithChildren
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -298,6 +297,7 @@ export interface FileRoutesByFullPath {
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
+  '/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -326,7 +326,6 @@ export interface FileRoutesByTo {
   '/puzzles': typeof PuzzlesIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
-  '/admin/fairplay': typeof AuthenticatedAdminFairplayRouteWithChildren
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -339,6 +338,7 @@ export interface FileRoutesByTo {
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
+  '/admin/fairplay': typeof AuthenticatedAdminFairplayIndexRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -369,7 +369,6 @@ export interface FileRoutesById {
   '/puzzles/': typeof PuzzlesIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
-  '/_authenticated/admin/fairplay': typeof AuthenticatedAdminFairplayRouteWithChildren
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -382,6 +381,7 @@ export interface FileRoutesById {
   '/api/public/fairplay/claim': typeof ApiPublicFairplayClaimRoute
   '/api/public/fairplay/fail': typeof ApiPublicFairplayFailRoute
   '/api/public/fairplay/result': typeof ApiPublicFairplayResultRoute
+  '/_authenticated/admin/fairplay/': typeof AuthenticatedAdminFairplayIndexRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -412,7 +412,6 @@ export interface FileRouteTypes {
     | '/puzzles/'
     | '/admin/audit'
     | '/admin/engine'
-    | '/admin/fairplay'
     | '/admin/intelligence'
     | '/admin/security'
     | '/admin/system'
@@ -425,6 +424,7 @@ export interface FileRouteTypes {
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
+    | '/admin/fairplay/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -453,7 +453,6 @@ export interface FileRouteTypes {
     | '/puzzles'
     | '/admin/audit'
     | '/admin/engine'
-    | '/admin/fairplay'
     | '/admin/intelligence'
     | '/admin/security'
     | '/admin/system'
@@ -466,6 +465,7 @@ export interface FileRouteTypes {
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
+    | '/admin/fairplay'
     | '/admin/users'
   id:
     | '__root__'
@@ -495,7 +495,6 @@ export interface FileRouteTypes {
     | '/puzzles/'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
-    | '/_authenticated/admin/fairplay'
     | '/_authenticated/admin/intelligence'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/system'
@@ -508,6 +507,7 @@ export interface FileRouteTypes {
     | '/api/public/fairplay/claim'
     | '/api/public/fairplay/fail'
     | '/api/public/fairplay/result'
+    | '/_authenticated/admin/fairplay/'
     | '/_authenticated/admin/users/'
   fileRoutesById: FileRoutesById
 }
@@ -731,13 +731,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEngineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/fairplay': {
-      id: '/_authenticated/admin/fairplay'
-      path: '/admin/fairplay'
-      fullPath: '/admin/fairplay'
-      preLoaderRoute: typeof AuthenticatedAdminFairplayRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin/intelligence': {
       id: '/_authenticated/admin/intelligence'
       path: '/admin/intelligence'
@@ -780,12 +773,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GamesOnlineGameIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/fairplay/': {
+      id: '/_authenticated/admin/fairplay/'
+      path: '/admin/fairplay'
+      fullPath: '/admin/fairplay/'
+      preLoaderRoute: typeof AuthenticatedAdminFairplayIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/fairplay/log': {
       id: '/_authenticated/admin/fairplay/log'
-      path: '/log'
+      path: '/admin/fairplay/log'
       fullPath: '/admin/fairplay/log'
       preLoaderRoute: typeof AuthenticatedAdminFairplayLogRouteImport
-      parentRoute: typeof AuthenticatedAdminFairplayRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/users/': {
       id: '/_authenticated/admin/users/'
@@ -836,32 +836,19 @@ const AuthenticatedOnlineRouteChildren: AuthenticatedOnlineRouteChildren = {
 const AuthenticatedOnlineRouteWithChildren =
   AuthenticatedOnlineRoute._addFileChildren(AuthenticatedOnlineRouteChildren)
 
-interface AuthenticatedAdminFairplayRouteChildren {
-  AuthenticatedAdminFairplayLogRoute: typeof AuthenticatedAdminFairplayLogRoute
-}
-
-const AuthenticatedAdminFairplayRouteChildren: AuthenticatedAdminFairplayRouteChildren =
-  {
-    AuthenticatedAdminFairplayLogRoute: AuthenticatedAdminFairplayLogRoute,
-  }
-
-const AuthenticatedAdminFairplayRouteWithChildren =
-  AuthenticatedAdminFairplayRoute._addFileChildren(
-    AuthenticatedAdminFairplayRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedOnlineRoute: typeof AuthenticatedOnlineRouteWithChildren
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminEngineRoute: typeof AuthenticatedAdminEngineRoute
-  AuthenticatedAdminFairplayRoute: typeof AuthenticatedAdminFairplayRouteWithChildren
   AuthenticatedAdminIntelligenceRoute: typeof AuthenticatedAdminIntelligenceRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSystemRoute: typeof AuthenticatedAdminSystemRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminFairplayLogRoute: typeof AuthenticatedAdminFairplayLogRoute
   AuthenticatedAdminUsersUserIdRoute: typeof AuthenticatedAdminUsersUserIdRoute
+  AuthenticatedAdminFairplayIndexRoute: typeof AuthenticatedAdminFairplayIndexRoute
   AuthenticatedAdminUsersIndexRoute: typeof AuthenticatedAdminUsersIndexRoute
 }
 
@@ -870,13 +857,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnlineRoute: AuthenticatedOnlineRouteWithChildren,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminEngineRoute: AuthenticatedAdminEngineRoute,
-  AuthenticatedAdminFairplayRoute: AuthenticatedAdminFairplayRouteWithChildren,
   AuthenticatedAdminIntelligenceRoute: AuthenticatedAdminIntelligenceRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSystemRoute: AuthenticatedAdminSystemRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminFairplayLogRoute: AuthenticatedAdminFairplayLogRoute,
   AuthenticatedAdminUsersUserIdRoute: AuthenticatedAdminUsersUserIdRoute,
+  AuthenticatedAdminFairplayIndexRoute: AuthenticatedAdminFairplayIndexRoute,
   AuthenticatedAdminUsersIndexRoute: AuthenticatedAdminUsersIndexRoute,
 }
 
