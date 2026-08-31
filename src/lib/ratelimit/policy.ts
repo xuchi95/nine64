@@ -20,7 +20,10 @@ export type RateLimitAction =
   | "fairplay.report.game"
   | "fairplay.signals"
   | "profile.update"
-  | "notification.action";
+  | "notification.action"
+  | "titan.session"
+  | "titan.move"
+  | "engine.benchmark";
 
 export interface RateLimitRule {
   /** Rolling window length in seconds. */
@@ -58,6 +61,11 @@ export const RATE_LIMIT_POLICY: Record<RateLimitAction, RateLimitRule> = {
   // Light hygiene limits.
   "profile.update": { windowSeconds: 600, limit: 15, failClosed: false, scope: "user" },
   "notification.action": { windowSeconds: 60, limit: 120, failClosed: false, scope: "user" },
+
+  // Nine64 Titan — every move burns paid CPU on Cloud Run, so it fails closed.
+  "titan.session": { windowSeconds: 3_600, limit: 20, failClosed: true, scope: "user" },
+  "titan.move": { windowSeconds: 60, limit: 40, failClosed: true, scope: "user" },
+  "engine.benchmark": { windowSeconds: 3_600, limit: 12, failClosed: true, scope: "admin" },
 };
 
 /** Hard ceilings for AI Coach input, enforced before any gateway call. */

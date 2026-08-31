@@ -13,6 +13,8 @@ export interface BotLevel {
   /** how much random opening deviation at low levels (0-1) */
   openingRandomness: number;
   strength: string;
+  /** Where the search runs. Levels 1-15 run in the browser (offline capable). */
+  runtime?: "browser" | "cloud";
 }
 
 export const BOT_LEVELS: BotLevel[] = [
@@ -30,7 +32,11 @@ export const BOT_LEVELS: BotLevel[] = [
   { level: 12, title: "Super GM", skill: 20, uciElo: 2750, depth: 19, moveTimeMs: 2200, openingRandomness: 0, strength: "~2750 est." },
   { level: 13, title: "Engine", skill: null, uciElo: null, depth: 20, moveTimeMs: 3000, openingRandomness: 0, strength: "Engine strength" },
   { level: 14, title: "Engine Pro", skill: null, uciElo: null, depth: 24, moveTimeMs: 5000, openingRandomness: 0, strength: "Engine strength" },
-  { level: 15, title: "Engine Max", skill: null, uciElo: null, depth: null, moveTimeMs: 8000, openingRandomness: 0, strength: "Engine Max" },
+  { level: 15, title: "Engine Max", skill: null, uciElo: null, depth: null, moveTimeMs: 8000, openingRandomness: 0, strength: "Engine Max", runtime: "browser" },
+  // Level 16 runs official Stockfish 18 on a private server with far more
+  // threads/hash than any browser build. No Elo cap, no randomness, no
+  // personality tolerance — and no claim of being unbeatable.
+  { level: 16, title: "Nine64 Titan", skill: 20, uciElo: null, depth: null, moveTimeMs: 12000, openingRandomness: 0, strength: "Sức mạnh máy tối đa", runtime: "cloud" },
 ];
 
 export interface BotPersonality {

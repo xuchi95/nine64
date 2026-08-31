@@ -251,7 +251,87 @@ export const SETTING_REGISTRY = {
     control: "flags",
     failClosed: true,
   }),
+
+  // ----- Intelligence (AI Coach / Deep Review) -----
+  coach_model: def({
+    key: "coach_model",
+    scope: "server_only",
+    group: "limits",
+    schema: z.enum(["google/gemini-3-flash", "google/gemini-3-pro", "openai/gpt-5-mini"]),
+    default: "google/gemini-3-flash" as const,
+    control: "select",
+    options: ["google/gemini-3-flash", "google/gemini-3-pro", "openai/gpt-5-mini"],
+    failClosed: true,
+  }),
+  coach_daily_quota: def({
+    key: "coach_daily_quota",
+    scope: "server_only",
+    group: "limits",
+    schema: z.number().int().min(0).max(500),
+    default: 20,
+    control: "number",
+    min: 0,
+    max: 500,
+    failClosed: true,
+  }),
+  deep_review_move_time_ms: def({
+    key: "deep_review_move_time_ms",
+    scope: "public_runtime",
+    group: "limits",
+    schema: z.number().int().min(100).max(10_000),
+    default: 1200,
+    control: "number",
+    min: 100,
+    max: 10_000,
+    failClosed: true,
+  }),
+  deep_review_multipv: def({
+    key: "deep_review_multipv",
+    scope: "public_runtime",
+    group: "limits",
+    schema: z.number().int().min(1).max(5),
+    default: 3,
+    control: "number",
+    min: 1,
+    max: 5,
+    failClosed: true,
+  }),
+  turning_point_threshold_cp: def({
+    key: "turning_point_threshold_cp",
+    scope: "public_runtime",
+    group: "limits",
+    schema: z.number().int().min(50).max(600),
+    default: 150,
+    control: "number",
+    min: 50,
+    max: 600,
+    failClosed: true,
+  }),
+  turning_point_max: def({
+    key: "turning_point_max",
+    scope: "public_runtime",
+    group: "limits",
+    schema: z.number().int().min(1).max(5),
+    default: 3,
+    control: "number",
+    min: 1,
+    max: 5,
+    failClosed: true,
+  }),
+
+  // ----- Engine -----
+  titan_enabled: def({
+    key: "titan_enabled",
+    scope: "public_runtime",
+    group: "features",
+    schema: bool,
+    default: true,
+    control: "boolean",
+    failClosed: true,
+    highImpact: true,
+  }),
 } as const;
+
 
 export type SettingKey = keyof typeof SETTING_REGISTRY;
 
