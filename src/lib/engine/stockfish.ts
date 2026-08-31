@@ -17,8 +17,16 @@ export interface EngineLine {
   pv: string[];
 }
 
+export type EngineVariant = "standard" | "chess960";
+
 export interface SearchRequest {
   fen: string;
+  /**
+   * Rule set for the search. `chess960` toggles `UCI_Chess960`, which changes
+   * BOTH castling legality and the castling move encoding (king takes rook).
+   * Callers must convert bestmove/PV through `chess960MoveCodec`.
+   */
+  variant?: EngineVariant;
   /** search movetime in ms (used when depth is null) */
   moveTimeMs?: number;
   depth?: number | null;
@@ -148,6 +156,13 @@ export class StockfishEngine {
   private async runSearch(req: SearchRequest): Promise<EngineLine[]> {
     await this.init();
     const multiPv = Math.max(1, req.multiPv ?? 1);
+
+    // Set explicitly on EVERY search: a shared engine instance keeps UCI
+    // options, so a previous Chess960 search must never leak into a standard
+    // one (and vice versa).
+    this.send(
+      `setoption name UCI_Chess960 value ${req.variant === "chess960" ? "true" : "false"}`,
+    );
 
     if (req.skill === null || req.skill === undefined) {
       this.send("setoption name UCI_LimitStrength value false");

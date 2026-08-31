@@ -4,8 +4,9 @@ import { StandardRules } from "./StandardRules";
 import { Chess960Rules } from "./Chess960Rules";
 
 export * from "./ChessRulesAdapter";
+export * from "./chess960MoveCodec";
 export { StandardRules, STANDARD_FEN } from "./StandardRules";
-export { Chess960Rules, CHESS960_UNSUPPORTED_REASON } from "./Chess960Rules";
+export { Chess960Rules, canonicalChess960Fen } from "./Chess960Rules";
 
 /**
  * Rule engine per variant. Variants that only change the *objective* (three

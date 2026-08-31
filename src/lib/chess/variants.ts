@@ -1,11 +1,17 @@
-import { Chess } from "chess.js";
 import type { VariantId } from "@/config/variants";
 import { generateChess960Position } from "@/lib/chess/chess960";
+import { Chess960Rules } from "@/lib/chess/rules/Chess960Rules";
+import type { BoardPiece } from "@/lib/chess/rules/ChessRulesAdapter";
 
 export interface VariantResult {
   over: boolean;
   winner?: "w" | "b";
   reason?: string;
+}
+
+/** Minimal, rule-engine-neutral view a variant objective needs. */
+export interface VariantPositionView {
+  boardPieces(): BoardPiece[];
 }
 
 export interface VariantRules {
@@ -16,7 +22,7 @@ export interface VariantRules {
    * Variant-specific terminal check, evaluated after each move.
    * Standard rules (mate/stalemate/etc.) are always checked separately.
    */
-  checkResult: (game: Chess, history: string[]) => VariantResult;
+  checkResult: (position: VariantPositionView, history: string[]) => VariantResult;
   /** Chess960-style castling handling required. */
   chess960: boolean;
 }
@@ -26,7 +32,6 @@ const NONE: VariantResult = { over: false };
 const STANDARD_BACK = "rnbqkbnr";
 
 export const STANDARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
 
 function countChecks(history: string[]): { w: number; b: number } {
   let w = 0;
@@ -51,9 +56,8 @@ export const VARIANT_RULES: Record<VariantId, VariantRules> = {
   },
   chess960: {
     id: "chess960",
-    // Position generation is deterministic and correct; the variant stays
-    // disabled in the capability registry because castling is not implemented.
-    startingFen: () => generateChess960Position().fen,
+    /** Canonical Chess960 start: Scharnagl generator -> rule-engine FEN. */
+    startingFen: () => Chess960Rules.startingFen(),
     checkResult: () => NONE,
     chess960: true,
   },
@@ -61,7 +65,7 @@ export const VARIANT_RULES: Record<VariantId, VariantRules> = {
   "three-check": {
     id: "three-check",
     startingFen: () => STANDARD_FEN,
-    checkResult: (_game, history) => {
+    checkResult: (_position, history) => {
       const { w, b } = countChecks(history);
       if (w >= 3) return { over: true, winner: "w", reason: "Three checks delivered" };
       if (b >= 3) return { over: true, winner: "b", reason: "Three checks delivered" };
@@ -72,13 +76,10 @@ export const VARIANT_RULES: Record<VariantId, VariantRules> = {
   "king-of-the-hill": {
     id: "king-of-the-hill",
     startingFen: () => STANDARD_FEN,
-    checkResult: (game) => {
-      const board = game.board();
-      for (const row of board) {
-        for (const sq of row) {
-          if (sq && sq.type === "k" && CENTER.has(sq.square)) {
-            return { over: true, winner: sq.color, reason: "King reached the hill" };
-          }
+    checkResult: (position) => {
+      for (const piece of position.boardPieces()) {
+        if (piece.type === "k" && CENTER.has(piece.square)) {
+          return { over: true, winner: piece.color, reason: "King reached the hill" };
         }
       }
       return NONE;
@@ -93,20 +94,12 @@ export const VARIANT_RULES: Record<VariantId, VariantRules> = {
   },
   "random-army": {
     id: "random-army",
-    // Same shuffled back rank family as Chess960 — disabled for the same reason.
-    startingFen: () => generateChess960Position().fen,
+    // Random Army stays DISABLED in the capability registry: its balancing
+    // rules are unspecified. It is not "Chess960 with another name".
+    startingFen: () => generateChess960Position().shredderFen,
     checkResult: () => NONE,
     chess960: true,
   },
-
 };
-
-export function newGameForVariant(variant: VariantId): Chess {
-  const rules = VARIANT_RULES[variant];
-  const fen = rules.startingFen();
-  const game = new Chess();
-  game.load(fen, { skipValidation: false });
-  return game;
-}
 
 export { STANDARD_BACK };

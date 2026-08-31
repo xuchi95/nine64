@@ -2,48 +2,108 @@
  * Rule-engine abstraction.
  *
  * UI (ChessBoard, panels) and server code talk to this interface only; they
- * never import a concrete rule implementation. That way a variant can be
- * backed by a different engine without touching presentation code, and a
- * variant whose rules are not correctly implemented can be reported as
- * unsupported instead of silently producing illegal positions.
+ * never import a concrete rule implementation and never receive a raw engine
+ * object. That way a variant can be backed by a different engine without
+ * touching presentation code.
+ *
+ * Two rule engines exist:
+ *   - `chessjs-standard`  — chess.js, classical FIDE rules (perft verified).
+ *   - `void57-chess960`   — void57-chess, Chess960 rules incl. arbitrary
+ *                           king/rook files and both castling directions.
  */
 
-export type RulesEngineId = "chessjs-standard" | "chess960-unimplemented";
+export type RulesEngineId = "chessjs-standard" | "void57-chess960";
 
 export type RulesErrorCode =
   | "RULES_ENGINE_UNAVAILABLE"
   | "INVALID_FEN"
-  | "ILLEGAL_MOVE";
+  | "ILLEGAL_MOVE"
+  | "CHESS960_INVALID_FEN"
+  | "CHESS960_MOVE_DECODE_FAILED"
+  | "CHESS960_ENGINE_PROTOCOL_MISMATCH"
+  | "CHESS960_ILLEGAL_CASTLE"
+  | "CHESS960_STATE_DIVERGENCE"
+  | "CHESS960_ENGINE_ILLEGAL_MOVE";
 
 export class RulesError extends Error {
   readonly code: RulesErrorCode;
-  constructor(code: RulesErrorCode, message: string) {
+  readonly meta: Record<string, string | number | null>;
+  constructor(
+    code: RulesErrorCode,
+    message: string,
+    meta: Record<string, string | number | null> = {},
+  ) {
     super(message);
     this.name = "RulesError";
     this.code = code;
+    this.meta = meta;
   }
 }
 
+export type PieceType = "p" | "n" | "b" | "r" | "q" | "k";
+export type PieceColor = "w" | "b";
+export type PromotionPiece = "q" | "r" | "b" | "n";
+
+export interface BoardPiece {
+  square: string;
+  type: PieceType;
+  color: PieceColor;
+}
+
+export type CastleSide = "king" | "queen";
+
 export interface AppliedMove {
   san: string;
+  /**
+   * Nine64 canonical coordinate notation ("app UCI"): for a castle this is the
+   * KING START square followed by the KING FINAL square (e1g1 / e1c1), never
+   * the Stockfish UCI_Chess960 king-takes-rook encoding.
+   */
   uci: string;
   from: string;
   to: string;
-  color: "w" | "b";
-  captured?: string | undefined;
-  promotion?: string | undefined;
+  color: PieceColor;
+  captured?: PieceType | undefined;
+  promotion?: PromotionPiece | undefined;
   /** FEN after the move. */
   fen: string;
+  /** Castling metadata, deterministic — the UI never infers it from geometry. */
+  castle?:
+    | {
+        side: CastleSide;
+        kingFrom: string;
+        kingTo: string;
+        rookFrom: string;
+        rookTo: string;
+      }
+    | undefined;
 }
 
 export interface RulesPosition {
   fen(): string;
-  turn(): "w" | "b";
-  /** Legal destination squares for a piece, or all legal SAN moves when omitted. */
+  turn(): PieceColor;
+  pieceAt(square: string): BoardPiece | null;
+  boardPieces(): BoardPiece[];
+  /**
+   * Legal destination squares for a piece. For castling this is the FINAL KING
+   * square (g/c file), so the board UI never asks the user to drag the king
+   * onto its own rook.
+   */
   legalTargets(square: string): string[];
-  move(from: string, to: string, promotion?: "q" | "r" | "b" | "n"): AppliedMove | null;
+  legalMoves(): { from: string; to: string; san: string; promotion?: PromotionPiece }[];
+  move(from: string, to: string, promotion?: PromotionPiece): AppliedMove | null;
+  historySan(): string[];
   isCheck(): boolean;
+  isCheckmate(): boolean;
+  isStalemate(): boolean;
+  isInsufficientMaterial(): boolean;
+  isThreefoldRepetition(): boolean;
+  isDraw(): boolean;
   isGameOver(): boolean;
+  needsPromotion(from: string, to: string): boolean;
+  /** King square of a side, or null when absent (never in a legal position). */
+  kingSquare(color: PieceColor): string | null;
+  clone(): RulesPosition;
 }
 
 export interface ChessRulesAdapter {
@@ -63,6 +123,6 @@ export interface ChessRulesAdapter {
     fen: string,
     from: string,
     to: string,
-    promotion?: "q" | "r" | "b" | "n",
+    promotion?: PromotionPiece,
   ): AppliedMove | null;
 }

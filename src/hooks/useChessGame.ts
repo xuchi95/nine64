@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Chess, type Move } from "chess.js";
 import type { VariantId } from "@/config/variants";
 import { VARIANT_RULES } from "@/lib/chess/variants";
+import { rulesFor } from "@/lib/chess/rules";
+import type { AppliedMove, RulesPosition } from "@/lib/chess/rules";
 import type { TimeControl } from "@/config/app";
 import { playSound } from "@/lib/sound";
 import { detectOpening } from "@/lib/chess/openings";
@@ -38,7 +39,11 @@ export interface MoveRecord {
   fen: string;
 }
 
-function toResult(game: Chess, variantId: VariantId, history: string[]): GameResult | null {
+function toResult(
+  game: RulesPosition,
+  variantId: VariantId,
+  history: string[],
+): GameResult | null {
   const variantResult = VARIANT_RULES[variantId].checkResult(game, history);
   if (variantResult.over && variantResult.winner) {
     return { winner: variantResult.winner, reason: variantResult.reason ?? "Variant objective" };
@@ -54,9 +59,9 @@ function toResult(game: Chess, variantId: VariantId, history: string[]): GameRes
 }
 
 export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOptions) {
-  const gameRef = useRef<Chess>(null as unknown as Chess);
+  const gameRef = useRef<RulesPosition>(null as unknown as RulesPosition);
   if (gameRef.current === null) {
-    gameRef.current = new Chess();
+    gameRef.current = rulesFor(variant).createPosition(VARIANT_RULES[variant].startingFen());
   }
 
   const [fen, setFen] = useState(() => gameRef.current.fen());
@@ -75,13 +80,9 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   const startFenRef = useRef<string>(gameRef.current.fen());
 
   const reset = useCallback(() => {
-    const rules = VARIANT_RULES[variant];
-    const game = new Chess();
-    try {
-      game.load(rules.startingFen());
-    } catch {
-      game.reset();
-    }
+    // No silent fallback: an invalid variant FEN is a rule-engine integrity
+    // bug and must surface, never be downgraded to standard chess.
+    const game = rulesFor(variant).createPosition(VARIANT_RULES[variant].startingFen());
     gameRef.current = game;
     startFenRef.current = game.fen();
     movesRef.current = [];
@@ -98,9 +99,9 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   /** Load an arbitrary position (analysis board). Returns false on invalid FEN. */
   const loadFen = useCallback(
     (fenString: string): boolean => {
-      const game = new Chess();
+      let game: RulesPosition;
       try {
-        game.load(fenString);
+        game = rulesFor(variant).createPosition(fenString);
       } catch {
         return false;
       }
@@ -115,7 +116,7 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       setStarted(false);
       return true;
     },
-    [],
+    [variant],
   );
 
 
@@ -170,12 +171,7 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
     (from: string, to: string, promotion?: "q" | "r" | "b" | "n"): boolean => {
       if (resultRef.current) return false;
       const game = gameRef.current;
-      let move: Move | null = null;
-      try {
-        move = game.move({ from, to, promotion: promotion ?? "q" });
-      } catch {
-        move = null;
-      }
+      const move: AppliedMove | null = game.move(from, to, promotion);
       if (!move) {
         playSound("illegal");
         return false;
@@ -197,16 +193,16 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
       movesRef.current = [...movesRef.current, record];
       setMoves((prev) => [...prev, record]);
 
-      const history = game.history();
+      const history = game.historySan();
       const r = toResult(game, variant, history);
       if (r) {
         playSound(r.winner === "draw" ? "draw" : "checkmate");
         finish(r);
       } else if (game.isCheck()) {
         playSound("check");
-      } else if (move.flags.includes("p")) {
+      } else if (move.promotion) {
         playSound("promotion");
-      } else if (move.flags.includes("k") || move.flags.includes("q")) {
+      } else if (move.castle) {
         playSound("castle");
       } else if (move.captured) {
         playSound("capture");
@@ -235,63 +231,43 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   const legalTargets = useCallback(
     (square: string) => {
       if (resultRef.current) return [];
-      try {
-        return gameRef.current
-          .moves({ square: square as never, verbose: true })
-          .map((m) => (m as Move).to as string);
-      } catch {
-        return [];
-      }
+      return gameRef.current.legalTargets(square);
     },
     [fen],
   );
 
   const needsPromotion = useCallback(
     (from: string, to: string) => {
-      const piece = gameRef.current.get(from as never);
-      if (!piece || piece.type !== "p") return false;
-      return (piece.color === "w" && to[1] === "8") || (piece.color === "b" && to[1] === "1");
+      return gameRef.current.needsPromotion(from, to);
     },
     [fen],
   );
 
   const board = useMemo(() => {
-    const game = gameRef.current;
-    return game
-      .board()
-      .flat()
-      .filter((sq): sq is NonNullable<typeof sq> => sq !== null)
-      .map((sq) => ({ square: sq.square as string, type: sq.type, color: sq.color }));
+    return gameRef.current.boardPieces().map((p) => ({
+      square: p.square,
+      type: p.type as string,
+      color: p.color,
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fen]);
 
   const checkSquare = useMemo(() => {
     const game = gameRef.current;
     if (!game.isCheck()) return null;
-    const turn = game.turn();
-    for (const row of game.board()) {
-      for (const sq of row) {
-        if (sq && sq.type === "k" && sq.color === turn) return sq.square as string;
-      }
-    }
-    return null;
+    return game.kingSquare(game.turn());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fen]);
 
   const captured = useMemo(() => {
-    const start = new Chess();
-    try {
-      start.load(VARIANT_RULES[variant].startingFen());
-    } catch {
-      start.reset();
-    }
-    const count = (g: Chess, color: Color) => {
+    // Compare the canonical starting array of *this* game against the current
+    // board — no chess.js reconstruction, which would destroy 960 metadata.
+    const start = rulesFor(variant).createPosition(startFenRef.current);
+    const count = (g: RulesPosition, color: Color) => {
       const map: Record<string, number> = {};
-      g.board()
-        .flat()
-        .forEach((sq) => {
-          if (sq && sq.color === color) map[sq.type] = (map[sq.type] ?? 0) + 1;
-        });
+      g.boardPieces().forEach((p) => {
+        if (p.color === color) map[p.type] = (map[p.type] ?? 0) + 1;
+      });
       return map;
     };
     const diff = (color: Color) => {
@@ -311,7 +287,9 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   const opening = useMemo(() => detectOpening(moves.map((m) => m.san)), [moves]);
 
   return {
-    game: gameRef,
+    /** Rule-neutral position accessors — never a raw engine instance. */
+    pieceAt: (square: string) => gameRef.current.pieceAt(square),
+    legalMoveCount: () => gameRef.current.legalMoves().length,
     fen,
     moves,
     board,
@@ -333,12 +311,11 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
   };
 }
 
-function hasMatingMaterial(game: Chess, color: Color): boolean {
+function hasMatingMaterial(game: RulesPosition, color: Color): boolean {
   const pieces = game
-    .board()
-    .flat()
-    .filter((sq) => sq && sq.color === color)
-    .map((sq) => sq!.type);
+    .boardPieces()
+    .filter((p) => p.color === color)
+    .map((p) => p.type as string);
   if (pieces.some((p) => p === "q" || p === "r" || p === "p")) return true;
   const bishops = pieces.filter((p) => p === "b").length;
   const knights = pieces.filter((p) => p === "n").length;
