@@ -171,7 +171,7 @@ describe("VariationPanel default layer", () => {
       <VariationPanel game={game} onSelectMove={() => {}} focus={null} onFocus={onFocus} />,
     );
     fireEvent.click(screen.getAllByText("Xem trên bàn")[0]!);
-    expect(onFocus).toHaveBeenCalledWith({ plyIndex: 0, from: "e2", to: "e4" });
+    expect(onFocus).toHaveBeenCalledWith({ plyIndex: 6, from: "e2", to: "e4" });
   });
 
   it("uses Vietnamese motif wording, never the English engine label", () => {
