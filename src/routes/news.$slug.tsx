@@ -4,7 +4,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
 import { APP } from "@/config/app";
-import { pageHead, SITE_URL } from "@/lib/seo";
+import { pageHead } from "@/lib/seo";
+import { articleLd, breadcrumbLd, jsonLdScript } from "@/lib/seo/structuredData";
 import { useT } from "@/lib/i18n";
 import { getNewsArticle } from "@/lib/watch/watch.functions";
 import type { NewsArticleDetail } from "@/lib/watch/types";
@@ -31,20 +32,24 @@ export const Route = createFileRoute("/news/$slug")({
     return {
       ...head,
       scripts: [
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "NewsArticle",
+        jsonLdScript([
+          articleLd({
+            path: `/news/${a.slug}`,
             headline: a.title,
-            datePublished: a.publishedAt,
-            image: a.imageUrl ?? undefined,
-            url: `${SITE_URL}/news/${a.slug}`,
-            publisher: { "@type": "Organization", name: a.sourceName },
+            description: a.summary,
+            image: a.imageUrl,
+            publishedAt: a.publishedAt,
+            section: "Chess news",
           }),
-        },
+          breadcrumbLd([
+            { name: "Trang chủ", path: "/" },
+            { name: "Tin tức", path: "/news" },
+            { name: a.title, path: `/news/${a.slug}` },
+          ]),
+        ]),
       ],
     };
+
   },
   pendingComponent: ListSkeleton,
   errorComponent: () => <MissingArticle />,

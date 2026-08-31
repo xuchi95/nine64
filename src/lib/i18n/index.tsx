@@ -32,8 +32,15 @@ export function hydrateLocale() {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw === "vi" || raw === "en") locale = raw;
+    // `?lang=` wins over storage so hreflang alternates resolve to real pages.
+    const param = new URLSearchParams(window.location.search).get("lang");
+    if (param === "vi" || param === "en") {
+      locale = param;
+      window.localStorage.setItem(KEY, param);
+    } else {
+      const raw = window.localStorage.getItem(KEY);
+      if (raw === "vi" || raw === "en") locale = raw;
+    }
   } catch {
     /* storage unavailable */
   }

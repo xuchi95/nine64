@@ -19,6 +19,7 @@ import { useT } from "@/lib/i18n";
 export const Route = createFileRoute("/auth/login")({
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex, nofollow" },
       { title: `Đăng nhập — ${APP.name}` },
       { name: "description", content: "Đăng nhập vào tài khoản Nine64 để chơi trực tuyến và theo dõi điểm rating." },
       { property: "og:title", content: `Đăng nhập — ${APP.name}` },

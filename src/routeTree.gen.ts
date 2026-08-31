@@ -16,10 +16,12 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
 import { Route as EndgamesRouteImport } from './routes/endgames'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as OpeningsRouteImport } from './routes/openings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
@@ -116,6 +118,11 @@ const InsightsRoute = InsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OfflineRoute = OfflineRouteImport.update({
+  id: '/offline',
+  path: '/offline',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OpeningsRoute = OpeningsRouteImport.update({
   id: '/openings',
   path: '/openings',
@@ -134,6 +141,11 @@ const ProgressRoute = ProgressRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -468,10 +480,12 @@ export interface FileRoutesByFullPath {
   '/cookie-policy': typeof CookiePolicyRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
@@ -541,10 +555,12 @@ export interface FileRoutesByTo {
   '/cookie-policy': typeof CookiePolicyRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
@@ -616,10 +632,12 @@ export interface FileRoutesById {
   '/cookie-policy': typeof CookiePolicyRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRouteWithChildren
@@ -691,10 +709,12 @@ export interface FileRouteTypes {
     | '/cookie-policy'
     | '/endgames'
     | '/insights'
+    | '/offline'
     | '/openings'
     | '/privacy'
     | '/progress'
     | '/settings'
+    | '/sitemap.xml'
     | '/terms'
     | '/account'
     | '/online'
@@ -764,10 +784,12 @@ export interface FileRouteTypes {
     | '/cookie-policy'
     | '/endgames'
     | '/insights'
+    | '/offline'
     | '/openings'
     | '/privacy'
     | '/progress'
     | '/settings'
+    | '/sitemap.xml'
     | '/terms'
     | '/account'
     | '/online'
@@ -838,10 +860,12 @@ export interface FileRouteTypes {
     | '/cookie-policy'
     | '/endgames'
     | '/insights'
+    | '/offline'
     | '/openings'
     | '/privacy'
     | '/progress'
     | '/settings'
+    | '/sitemap.xml'
     | '/terms'
     | '/_authenticated/account'
     | '/_authenticated/online'
@@ -913,10 +937,12 @@ export interface RootRouteChildren {
   CookiePolicyRoute: typeof CookiePolicyRoute
   EndgamesRoute: typeof EndgamesRoute
   InsightsRoute: typeof InsightsRoute
+  OfflineRoute: typeof OfflineRoute
   OpeningsRoute: typeof OpeningsRoute
   PrivacyRoute: typeof PrivacyRoute
   ProgressRoute: typeof ProgressRoute
   SettingsRoute: typeof SettingsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
@@ -1004,6 +1030,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/offline': {
+      id: '/offline'
+      path: '/offline'
+      fullPath: '/offline'
+      preLoaderRoute: typeof OfflineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/openings': {
       id: '/openings'
       path: '/openings'
@@ -1030,6 +1063,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -1542,10 +1582,12 @@ const rootRouteChildren: RootRouteChildren = {
   CookiePolicyRoute: CookiePolicyRoute,
   EndgamesRoute: EndgamesRoute,
   InsightsRoute: InsightsRoute,
+  OfflineRoute: OfflineRoute,
   OpeningsRoute: OpeningsRoute,
   PrivacyRoute: PrivacyRoute,
   ProgressRoute: ProgressRoute,
   SettingsRoute: SettingsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,

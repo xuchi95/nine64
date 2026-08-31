@@ -21,6 +21,11 @@ export interface PageSeo {
   imageAlt?: string;
   locale?: string;
   noindex?: boolean;
+  /**
+   * Emit hreflang alternates (`?lang=vi` / `?lang=en` + x-default).
+   * Defaults to true for indexable pages; skipped when `noindex` is set.
+   */
+  hreflang?: boolean;
 }
 
 /**
@@ -37,8 +42,17 @@ export function pageHead({
   imageAlt = OG_IMAGE_ALT,
   locale = "vi_VN",
   noindex = false,
+  hreflang = true,
 }: PageSeo) {
   const url = `${SITE_URL}${path === "/" ? "/" : path.replace(/\/$/, "")}`;
+  const alternates =
+    hreflang && !noindex
+      ? [
+          { rel: "alternate", hrefLang: "vi", href: `${url}?lang=vi` },
+          { rel: "alternate", hrefLang: "en", href: `${url}?lang=en` },
+          { rel: "alternate", hrefLang: "x-default", href: url },
+        ]
+      : [];
 
   return {
     meta: [
@@ -65,6 +79,6 @@ export function pageHead({
       { name: "twitter:image", content: image },
       { name: "twitter:image:alt", content: imageAlt },
     ],
-    links: [{ rel: "canonical", href: url }],
+    links: [{ rel: "canonical", href: url }, ...alternates],
   };
 }
