@@ -72,10 +72,7 @@ function AdminPuzzlesPage() {
   };
 
   return (
-    <AdminShell
-      title="Kho câu đố"
-      description="Quản lý catalog: gắn cờ bài sai, tắt bài lỗi, tính lại độ khó theo tỷ lệ giải và khai báo giấy phép dataset."
-    >
+    <AdminShell module="puzzles" title="Kho câu đố">
       {message ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {message}
