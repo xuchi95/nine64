@@ -383,10 +383,14 @@ async function setState(params: {
     _status: params.status,
     _reason: params.reason,
     _actor: params.actorId,
-    _suspended_until: params.suspendedUntil ?? undefined,
-    _internal_note: params.internalNote ?? undefined,
-    _expected_version: params.expectedVersion ?? undefined,
+    // Optional RPC args are omitted (not sent as null) so PostgREST uses defaults.
+    ...(params.suspendedUntil ? { _suspended_until: params.suspendedUntil } : {}),
+    ...(params.internalNote ? { _internal_note: params.internalNote } : {}),
+    ...(params.expectedVersion !== undefined && params.expectedVersion !== null
+      ? { _expected_version: params.expectedVersion }
+      : {}),
   });
+
   if (error) return fail("STATE_WRITE_FAILED", error.message);
   const res = data as { ok: boolean; code?: string; state?: Record<string, unknown>; before?: unknown };
   if (!res.ok) return fail(res.code ?? "STATE_WRITE_FAILED");
