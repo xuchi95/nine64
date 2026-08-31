@@ -1,6 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import { Brain, Lightbulb, ShieldAlert, Sparkles, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { coachGame } from "@/lib/coach.functions";
@@ -8,6 +7,7 @@ import { buildCoachDigest } from "@/lib/coach/digest";
 import { SEVERITY_META, type CoachReport } from "@/lib/coach/types";
 import { attachCoach, type SavedGame } from "@/lib/history";
 import { useT, getLocale } from "@/lib/i18n";
+import { parseRateLimited, rateLimitMessage } from "@/lib/ratelimit/errors";
 
 interface Props {
   game: SavedGame;
@@ -18,6 +18,7 @@ export function CoachPanel({ game, onSelectMove }: Props) {
   const { t } = useT();
   const runCoach = useServerFn(coachGame);
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const side = game.playerColor ?? "w";
   const report = game.coach ?? null;
 
@@ -32,13 +33,20 @@ export function CoachPanel({ game, onSelectMove }: Props) {
 
   async function generate() {
     setPending(true);
+    setError(null);
     try {
       const digest = buildCoachDigest(game, side);
       const result = (await runCoach({ data: { digest, locale: getLocale() } })) as CoachReport;
       attachCoach(game.id, result);
-      toast.success(t("game.coach.successToast"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("game.coach.errorToast"));
+      const limited = parseRateLimited(err);
+      setError(
+        limited
+          ? rateLimitMessage(limited, getLocale())
+          : err instanceof Error
+            ? err.message
+            : t("game.coach.errorToast"),
+      );
     } finally {
       setPending(false);
     }
@@ -56,6 +64,12 @@ export function CoachPanel({ game, onSelectMove }: Props) {
           </Button>
         )}
       </div>
+
+      {error ? (
+        <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       {!report && (
         <div className="mt-3">
