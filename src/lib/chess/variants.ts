@@ -1,17 +1,23 @@
-import type { VariantId } from "@/config/variants";
-import { generateChess960Position } from "@/lib/chess/chess960";
-import { Chess960Rules } from "@/lib/chess/rules/Chess960Rules";
-import type { BoardPiece } from "@/lib/chess/rules/ChessRulesAdapter";
+import { VARIANT_CAPABILITIES, type ResultResolverKey, type VariantId } from "@/config/variants";
+import { rulesFor } from "@/lib/chess/rules";
+import type { BoardPiece, PieceColor } from "@/lib/chess/rules/ChessRulesAdapter";
 
 export interface VariantResult {
   over: boolean;
-  winner?: "w" | "b";
+  winner?: "w" | "b" | "draw";
   reason?: string;
 }
 
-/** Minimal, rule-engine-neutral view a variant objective needs. */
+/**
+ * Minimal, rule-engine-neutral view a variant objective needs.
+ *
+ * `variantOutcome` / `checkCount` are optional because only the chessops-backed
+ * engines expose them; resolvers must feature-detect rather than assume.
+ */
 export interface VariantPositionView {
   boardPieces(): BoardPiece[];
+  variantOutcome?(): { over: boolean; winner?: PieceColor | "draw"; reason?: string } | null;
+  checkCount?(): { w: number; b: number };
 }
 
 export interface VariantRules {
@@ -33,73 +39,48 @@ const STANDARD_BACK = "rnbqkbnr";
 
 export const STANDARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-function countChecks(history: string[]): { w: number; b: number } {
-  let w = 0;
-  let b = 0;
-  history.forEach((san, i) => {
-    if (san.includes("+") || san.includes("#")) {
-      if (i % 2 === 0) w += 1;
-      else b += 1;
-    }
-  });
-  return { w, b };
+/**
+ * Every variant objective is decided by the rules engine itself
+ * (`position.variantOutcome()`), never by parsing SAN strings. The resolver
+ * only translates the engine verdict into a Nine64 reason string.
+ */
+function engineOutcome(position: VariantPositionView, reason: string): VariantResult {
+  const outcome = position.variantOutcome?.();
+  if (!outcome?.over) return NONE;
+  return { over: true, winner: outcome.winner ?? "draw", reason };
 }
 
-const CENTER = new Set(["d4", "e4", "d5", "e5"]);
-
-export const VARIANT_RULES: Record<VariantId, VariantRules> = {
-  standard: {
-    id: "standard",
-    startingFen: () => STANDARD_FEN,
-    checkResult: () => NONE,
-    chess960: false,
-  },
-  chess960: {
-    id: "chess960",
-    /** Canonical Chess960 start: Scharnagl generator -> rule-engine FEN. */
-    startingFen: () => Chess960Rules.startingFen(),
-    checkResult: () => NONE,
-    chess960: true,
-  },
-
-  "three-check": {
-    id: "three-check",
-    startingFen: () => STANDARD_FEN,
-    checkResult: (_position, history) => {
-      const { w, b } = countChecks(history);
-      if (w >= 3) return { over: true, winner: "w", reason: "Three checks delivered" };
-      if (b >= 3) return { over: true, winner: "b", reason: "Three checks delivered" };
-      return NONE;
-    },
-    chess960: false,
-  },
-  "king-of-the-hill": {
-    id: "king-of-the-hill",
-    startingFen: () => STANDARD_FEN,
-    checkResult: (position) => {
-      for (const piece of position.boardPieces()) {
-        if (piece.type === "k" && CENTER.has(piece.square)) {
-          return { over: true, winner: piece.color, reason: "King reached the hill" };
-        }
-      }
-      return NONE;
-    },
-    chess960: false,
-  },
-  "no-queen": {
-    id: "no-queen",
-    startingFen: () => "rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1",
-    checkResult: () => NONE,
-    chess960: false,
-  },
-  "random-army": {
-    id: "random-army",
-    // Random Army stays DISABLED in the capability registry: its balancing
-    // rules are unspecified. It is not "Chess960 with another name".
-    startingFen: () => generateChess960Position().shredderFen,
-    checkResult: () => NONE,
-    chess960: true,
-  },
+const RESOLVERS: Record<
+  ResultResolverKey,
+  (position: VariantPositionView, history: string[]) => VariantResult
+> = {
+  standard: () => NONE,
+  crazyhouse: () => NONE,
+  "three-check": (position) => engineOutcome(position, "Three checks delivered"),
+  "king-of-the-hill": (position) => engineOutcome(position, "King reached the hill"),
+  "racing-kings": (position) => engineOutcome(position, "King reached the eighth rank"),
+  atomic: (position) => engineOutcome(position, "King exploded"),
+  horde: (position) => engineOutcome(position, "Horde destroyed"),
+  giveaway: (position) => engineOutcome(position, "All pieces given away"),
 };
+
+/** Canonical three-check counter, read from position state (never from SAN). */
+export function checkCounters(position: VariantPositionView): { w: number; b: number } {
+  return position.checkCount?.() ?? { w: 0, b: 0 };
+}
+
+function build(id: VariantId): VariantRules {
+  const meta = VARIANT_CAPABILITIES[id];
+  return {
+    id,
+    startingFen: () => rulesFor(id).startingFen(),
+    checkResult: RESOLVERS[meta.resultResolver],
+    chess960: meta.rulesEngine === "chess960",
+  };
+}
+
+export const VARIANT_RULES: Record<VariantId, VariantRules> = Object.fromEntries(
+  (Object.keys(VARIANT_CAPABILITIES) as VariantId[]).map((id) => [id, build(id)]),
+) as Record<VariantId, VariantRules>;
 
 export { STANDARD_BACK };

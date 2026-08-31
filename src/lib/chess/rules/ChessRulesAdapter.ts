@@ -12,7 +12,7 @@
  *                           king/rook files and both castling directions.
  */
 
-export type RulesEngineId = "chessjs-standard" | "void57-chess960";
+export type RulesEngineId = "chessjs-standard" | "void57-chess960" | "chessops-variant";
 
 export type RulesErrorCode =
   | "RULES_ENGINE_UNAVAILABLE"
@@ -65,6 +65,8 @@ export interface AppliedMove {
   color: PieceColor;
   captured?: PieceType | undefined;
   promotion?: PromotionPiece | undefined;
+  /** Crazyhouse: the pocket piece dropped by this move. */
+  drop?: PieceType | undefined;
   /** FEN after the move. */
   fen: string;
   /** Castling metadata, deterministic — the UI never infers it from geometry. */
@@ -104,6 +106,28 @@ export interface RulesPosition {
   /** King square of a side, or null when absent (never in a legal position). */
   kingSquare(color: PieceColor): string | null;
   clone(): RulesPosition;
+
+  // ---- optional variant extensions -------------------------------------
+  /**
+   * Crazyhouse pocket for a side. Undefined on engines without pockets, so a
+   * caller must feature-detect rather than assume a drop surface exists.
+   */
+  pocket?(color: PieceColor): Record<PieceType, number>;
+  /** Legal drop squares for a pocket piece of the side to move. */
+  dropTargets?(type: PieceType): string[];
+  /** Play a drop from the pocket. */
+  drop?(type: PieceType, to: string): AppliedMove | null;
+  /**
+   * Canonical three-check counters, read from position state (FEN), never
+   * inferred from SAN strings.
+   */
+  checkCount?(): { w: number; b: number };
+  /**
+   * Variant-specific terminal state decided by the rules engine itself
+   * (king of the hill, racing kings, atomic king explosion, horde wipe-out,
+   * giveaway bare side, three-check counters).
+   */
+  variantOutcome?(): { over: boolean; winner?: PieceColor | "draw"; reason?: string } | null;
 }
 
 export interface ChessRulesAdapter {

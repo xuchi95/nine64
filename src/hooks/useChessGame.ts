@@ -44,6 +44,9 @@ function toResult(
   variantId: VariantId,
   history: string[],
 ): GameResult | null {
+  // Variant objectives (three-check, hill, atomic, horde, giveaway, racing)
+  // are checked FIRST: they can end a game in a position that classical rules
+  // would call stalemate or even legal-and-ongoing.
   const variantResult = VARIANT_RULES[variantId].checkResult(game, history);
   if (variantResult.over && variantResult.winner) {
     return { winner: variantResult.winner, reason: variantResult.reason ?? "Variant objective" };
@@ -323,6 +326,60 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
 
   const opening = useMemo(() => detectOpening(moves.map((m) => m.san)), [moves]);
 
+  // ---- Crazyhouse pocket ---------------------------------------------------
+  const pockets = useMemo(() => {
+    const game = gameRef.current;
+    if (!game.pocket) return null;
+    return { w: game.pocket("w"), b: game.pocket("b") };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fen]);
+
+  const dropTargets = useCallback(
+    (type: string) => {
+      if (resultRef.current) return [];
+      return gameRef.current.dropTargets?.(type as "p") ?? [];
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [fen],
+  );
+
+  /** Play a pocket drop (Crazyhouse). Returns false when the drop is illegal. */
+  const makeDrop = useCallback(
+    (type: string, to: string): boolean => {
+      if (resultRef.current) return false;
+      const game = gameRef.current;
+      const move = game.drop?.(type as "p", to);
+      if (!move) {
+        playSound("illegal");
+        return false;
+      }
+      setStarted(true);
+      setFen(game.fen());
+      setLastMove({ from: move.to, to: move.to });
+      const record: MoveRecord = {
+        san: move.san,
+        from: move.to,
+        to: move.to,
+        color: move.color,
+        fen: game.fen(),
+      };
+      movesRef.current = [...movesRef.current, record];
+      setMoves((prev) => [...prev, record]);
+      const r = toResult(game, variant, game.historySan());
+      if (r) {
+        playSound(r.winner === "draw" ? "draw" : "checkmate");
+        finish(r);
+      } else {
+        playSound(game.isCheck() ? "check" : "move");
+      }
+      return true;
+    },
+    [finish, variant],
+  );
+
+  /** Canonical three-check counters from position state. */
+  const checkCount = useMemo(() => gameRef.current.checkCount?.() ?? null, [fen]);
+
   return {
     /** Rule-neutral position accessors — never a raw engine instance. */
     pieceAt: (square: string) => gameRef.current.pieceAt(square),
@@ -348,6 +405,10 @@ export function useChessGame({ variant, timeControl, onGameEnd }: UseChessGameOp
     reset,
     loadFen,
     takeback,
+    pockets,
+    dropTargets,
+    makeDrop,
+    checkCount,
   };
 }
 
