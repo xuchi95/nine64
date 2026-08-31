@@ -17,8 +17,19 @@ import {
 import { APP } from "@/config/app";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getGameMoves, makeMove, finishGame, syncGame } from "@/lib/online.functions";
-import type { GameSnapshot, MoveErrorCode, MoveOutcome } from "@/lib/online.functions";
+import {
+  getGameMoves,
+  makeMove,
+  finishGame,
+  syncGame,
+  getRatingEvent,
+} from "@/lib/online.functions";
+import type {
+  GameSnapshot,
+  MoveErrorCode,
+  MoveOutcome,
+  RatingEvent,
+} from "@/lib/online.functions";
 import { deriveDisplayClock } from "@/lib/online/clock";
 import { playSound } from "@/lib/sound";
 import type { Game, GameMove } from "@/lib/database.types";
@@ -74,6 +85,8 @@ function OnlineGamePage() {
   const getMovesFn = useServerFn(getGameMoves);
   const makeMoveFn = useServerFn(makeMove);
   const finishGameFn = useServerFn(finishGame);
+  const getRatingEventFn = useServerFn(getRatingEvent);
+  const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
   const [moves, setMoves] = useState<GameMove[]>([]);
