@@ -20,11 +20,14 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   getGameMoves,
   makeMove,
-  finishGame,
+  resignGame,
+  claimTimeout,
+  abortGame,
   syncGame,
   getRatingEvent,
 } from "@/lib/online.functions";
 import type {
+  CommandOutcome,
   GameSnapshot,
   MoveErrorCode,
   MoveOutcome,
@@ -36,7 +39,7 @@ import type { Game, GameMove } from "@/lib/database.types";
 import type { Color } from "@/hooks/useChessGame";
 import type { PieceColor } from "@/components/chess/Piece";
 import { cn } from "@/lib/utils";
-import { Flag, Hand, Copy, Share2 } from "lucide-react";
+import { Flag, Hand, Ban, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   formatTimeControl,
@@ -84,7 +87,9 @@ function OnlineGamePage() {
   const syncGameFn = useServerFn(syncGame);
   const getMovesFn = useServerFn(getGameMoves);
   const makeMoveFn = useServerFn(makeMove);
-  const finishGameFn = useServerFn(finishGame);
+  const resignGameFn = useServerFn(resignGame);
+  const claimTimeoutFn = useServerFn(claimTimeout);
+  const abortGameFn = useServerFn(abortGame);
   const getRatingEventFn = useServerFn(getRatingEvent);
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
@@ -101,6 +106,7 @@ function OnlineGamePage() {
   const [syncing, setSyncing] = useState(false);
   const [pendingMove, setPendingMove] = useState<string | null>(null);
   const [conflict, setConflict] = useState<string | null>(null);
+  const [commandBusy, setCommandBusy] = useState(false);
 
   const gameRef = useRef<Chess>(new Chess());
   const finishedRef = useRef(false);
@@ -350,16 +356,17 @@ function OnlineGamePage() {
   useEffect(() => {
     if (!awaitingFlag || !game || game.status !== "active") return;
     let cancelled = false;
-    const id = window.setInterval(() => {
+    const claim = () => {
       if (cancelled) return;
-      void refresh().catch(() => undefined);
-    }, 1500);
-    void refresh().catch(() => undefined);
+      void runCommand("timeout");
+    };
+    const id = window.setInterval(claim, 1500);
+    claim();
     return () => {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [awaitingFlag, game, refresh]);
+  }, [awaitingFlag, game, runCommand]);
 
   // Resync canonical state on reconnect and when the tab regains focus.
   useEffect(() => {
@@ -591,15 +598,8 @@ function OnlineGamePage() {
     }
   }, []);
 
-  const resign = useCallback(async () => {
-    if (!game || !myColor || finishedRef.current) return;
-    await finishIfOver("Resignation", myColor === "w" ? "b" : "w");
-  }, [finishIfOver, game, myColor]);
-
-  const offerDraw = useCallback(async () => {
-    if (!game || !myColor || finishedRef.current) return;
-    await finishIfOver("Agreement", "draw");
-  }, [finishIfOver, game, myColor]);
+  const resign = useCallback(() => runCommand("resign"), [runCommand]);
+  const abort = useCallback(() => runCommand("abort"), [runCommand]);
 
   if (loading) {
     return (
@@ -738,11 +738,20 @@ function OnlineGamePage() {
 
             {live && (
               <GameActions>
-                <Button variant="outline" onClick={() => void offerDraw()}>
-                  <Hand className="size-4" /> Draw
+                <Button
+                  variant="outline"
+                  disabled
+                  title="Cầu hoà sẽ có ở bản cập nhật kế tiếp"
+                >
+                  <Hand className="size-4" /> Cầu hoà
                 </Button>
-                <Button variant="outline" onClick={() => void resign()}>
-                  <Flag className="size-4" /> Resign
+                {moves.length === 0 && (
+                  <Button variant="outline" disabled={commandBusy} onClick={() => void abort()}>
+                    <Ban className="size-4" /> Huỷ ván
+                  </Button>
+                )}
+                <Button variant="outline" disabled={commandBusy} onClick={() => void resign()}>
+                  <Flag className="size-4" /> Xin thua
                 </Button>
               </GameActions>
             )}
