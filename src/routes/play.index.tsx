@@ -57,15 +57,17 @@ const AVAILABLE = [
   },
 
   {
+    to: "/tournaments",
+    icon: Trophy,
+    titleKey: "tourney.title",
+    textKey: "tourney.subtitle",
+  },
+  {
     to: "/analysis",
     icon: LineChart,
     titleKey: "play.hub.card.analysis.title",
     textKey: "play.hub.card.analysis.text",
   },
-] as const;
-
-const SOON = [
-  { icon: Trophy, titleKey: "play.hub.soon.tournaments.title", textKey: "play.hub.soon.tournaments.text" },
 ] as const;
 
 function PlayHub() {
@@ -93,27 +95,6 @@ function PlayHub() {
         ))}
       </div>
 
-      <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        {t("play.hub.comingSoon")}
-      </h2>
-      <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        {SOON.map((card) => (
-          <div key={card.titleKey} className="panel flex items-start gap-4 p-5 opacity-60">
-            <span className="flex size-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
-              <card.icon className="size-5" />
-            </span>
-            <span>
-              <span className="flex items-center gap-2 font-semibold">
-                {t(card.titleKey)}
-                <span className="rounded bg-secondary px-1.5 py-0.5 text-2xs uppercase tracking-wider text-muted-foreground">
-                  {t("play.hub.soon.badge")}
-                </span>
-              </span>
-              <span className="mt-1 block text-sm text-muted-foreground">{t(card.textKey)}</span>
-            </span>
-          </div>
-        ))}
-      </div>
     </AppShell>
   );
 }
