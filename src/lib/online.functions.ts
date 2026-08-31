@@ -198,13 +198,15 @@ export const declineMatch = createServerFn({ method: "POST" })
         status: "waiting",
       });
 
-      await supabaseAdmin.from("notifications").insert({
-        user_id: opponentId,
-        type: "match_declined",
-        title: "Đối thủ đã từ chối ván",
-        body: "Ván ghép đã bị huỷ. Bạn được đưa trở lại hàng chờ để tìm đối thủ khác.",
-        data: { gameId: game.id, variant, timeControl },
+      await supabaseAdmin.rpc("enqueue_notification", {
+        _event_type: "match_declined",
+        _event_key: `match_declined:${game.id}:${opponentId}`,
+        _recipient: opponentId,
+        _game_id: game.id,
+        _actor_id: context.userId,
+        _payload: { variant, time_control: timeControl },
       });
+      await kickNotificationOutbox();
     }
 
     return { ok: true, aborted: abortable, variant, timeControl };
@@ -336,7 +338,6 @@ export const makeMove = createServerFn({ method: "POST" })
 
 
     const committedGame = payload.game;
-    const opponentId = isWhite ? snapshot.black_id : snapshot.white_id;
 
     if (committedGame.status === "completed") {
       // Single orchestration path; safe to call at-least-once (ledger-guarded).
@@ -344,34 +345,11 @@ export const makeMove = createServerFn({ method: "POST" })
         _game_id: data.gameId,
       });
       if (ratingError) console.error("Rating apply failed", ratingError.message);
-
-      const title = committedGame.result === "1/2-1/2" ? "Game drawn" : "Game over";
-      await supabaseAdmin.from("notifications").insert([
-
-        {
-          user_id: snapshot.white_id,
-          type: "game_over",
-          title,
-          body: endReason ?? "The game ended.",
-          data: { game_id: data.gameId },
-        },
-        {
-          user_id: snapshot.black_id,
-          type: "game_over",
-          title,
-          body: endReason ?? "The game ended.",
-          data: { game_id: data.gameId },
-        },
-      ]);
-    } else {
-      await supabaseAdmin.from("notifications").insert({
-        user_id: opponentId,
-        type: "move",
-        title: "Your move",
-        body: `Your opponent played ${canonical.san}.`,
-        data: { game_id: data.gameId },
-      });
     }
+
+    // Notifications were enqueued transactionally by the database (P0.8 outbox).
+    // This is only a best-effort low-latency delivery kick.
+    await kickNotificationOutbox();
 
     return { ok: true, game: committedGame, move: payload.move, serverNow };
   });
@@ -433,25 +411,18 @@ async function runGameCommand(
   };
 }
 
-async function notifyGameOver(game: Game) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const title = game.result === "1/2-1/2" ? "Game drawn" : "Game over";
-  await supabaseAdmin.from("notifications").insert([
-    {
-      user_id: game.white_id,
-      type: "game_over",
-      title,
-      body: game.end_reason ?? "The game ended.",
-      data: { game_id: game.id },
-    },
-    {
-      user_id: game.black_id,
-      type: "game_over",
-      title,
-      body: game.end_reason ?? "The game ended.",
-      data: { game_id: game.id },
-    },
-  ]);
+/**
+ * Game-over notifications are enqueued transactionally by the database
+ * (notification_outbox). This only kicks the processor for low latency.
+ */
+async function kickNotificationOutbox() {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("process_notification_outbox", { _limit: 50 });
+    if (error) console.error("Notification outbox kick failed", error.message);
+  } catch (err) {
+    console.error("Notification outbox kick failed", err);
+  }
 }
 
 /** Resign: only the caller can lose; the opponent is derived by the server. */
@@ -465,7 +436,7 @@ export const resignGame = createServerFn({ method: "POST" })
       context.userId,
       data.expectedVersion,
     );
-    if (out.code === "RESIGNED" && out.game) await notifyGameOver(out.game);
+    if (out.code === "RESIGNED") await kickNotificationOutbox();
     return out;
   });
 
@@ -480,7 +451,7 @@ export const claimTimeout = createServerFn({ method: "POST" })
       context.userId,
       data.expectedVersion,
     );
-    if (out.code === "FLAGGED" && out.game) await notifyGameOver(out.game);
+    if (out.code === "FLAGGED") await kickNotificationOutbox();
     return out;
   });
 
@@ -509,6 +480,7 @@ export const getMyGames = createServerFn({ method: "GET" })
 export const getNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await kickNotificationOutbox();
     const { data, error } = await context.supabase
       .from("notifications")
       .select("*")
@@ -679,7 +651,9 @@ export const offerDraw = createServerFn({ method: "POST" })
       _idempotency_key: data.idempotencyKey,
     });
     if (error) throw new Error(error.message);
-    return toDrawOutcome(raw);
+    const out = toDrawOutcome(raw);
+    await kickNotificationOutbox();
+    return out;
   });
 
 export const acceptDraw = createServerFn({ method: "POST" })
@@ -695,7 +669,7 @@ export const acceptDraw = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const out = toDrawOutcome(raw);
-    if (out.code === "DRAW_AGREED" && out.game) await notifyGameOver(out.game);
+    if (out.code === "DRAW_AGREED") await kickNotificationOutbox();
     return out;
   });
 
@@ -711,7 +685,9 @@ export const declineDraw = createServerFn({ method: "POST" })
       _action: "decline",
     });
     if (error) throw new Error(error.message);
-    return toDrawOutcome(raw);
+    const out = toDrawOutcome(raw);
+    await kickNotificationOutbox();
+    return out;
   });
 
 export const cancelDraw = createServerFn({ method: "POST" })
@@ -726,5 +702,7 @@ export const cancelDraw = createServerFn({ method: "POST" })
       _action: "cancel",
     });
     if (error) throw new Error(error.message);
-    return toDrawOutcome(raw);
+    const out = toDrawOutcome(raw);
+    await kickNotificationOutbox();
+    return out;
   });

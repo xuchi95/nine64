@@ -15,6 +15,11 @@ import {
   type SecurityEventRow,
 } from "@/lib/security.functions";
 import { ListSkeleton } from "@/components/layout/PageSkeleton";
+import {
+  listNotificationOutbox,
+  retryNotificationEvent,
+} from "@/lib/notifications.functions";
+import type { NotificationOutboxEvent } from "@/lib/database.types";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 
@@ -238,8 +243,76 @@ function SecurityLogPage() {
               ))}
             </CardContent>
           </Card>
+
+          <NotificationOutboxCard />
         </div>
       </AdminMfaGate>
     </AppShell>
+  );
+}
+
+/** Stuck or dead-lettered notification events, with a manual retry. */
+function NotificationOutboxCard() {
+  const listFn = useServerFn(listNotificationOutbox);
+  const retryFn = useServerFn(retryNotificationEvent);
+  const [rows, setRows] = useState<NotificationOutboxEvent[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setBusy(true);
+    try {
+      const data = (await listFn({ data: { status: "failed", limit: 50 } })) as NotificationOutboxEvent[];
+      setRows(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "load_failed");
+    } finally {
+      setBusy(false);
+    }
+  }, [listFn]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base">Thông báo thất bại</CardTitle>
+        <Button variant="outline" size="sm" onClick={() => void load()} disabled={busy}>
+          <RefreshCw className={cn("mr-2 size-4", busy && "animate-spin")} />
+          Tải lại
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {rows.length === 0 && !error && (
+          <p className="text-sm text-muted-foreground">Không có sự kiện thông báo nào thất bại.</p>
+        )}
+        {rows.map((r) => (
+          <div key={r.id} className="rounded-lg border border-border/60 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs">{r.event_type}</span>
+              <span className="font-mono text-2xs text-muted-foreground">{r.event_key}</span>
+              <span className="ml-auto font-mono text-2xs text-muted-foreground">
+                {r.attempts}/{r.max_attempts} lần thử
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  await retryFn({ data: { id: r.id } });
+                  await load();
+                }}
+              >
+                Thử lại
+              </Button>
+            </div>
+            {r.last_error && <p className="mt-1 text-xs text-destructive">{r.last_error}</p>}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

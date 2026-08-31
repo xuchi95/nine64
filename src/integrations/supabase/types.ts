@@ -617,11 +617,74 @@ export type Database = {
           },
         ]
       }
+      notification_outbox: {
+        Row: {
+          actor_id: string | null
+          attempts: number
+          available_at: string
+          created_at: string
+          event_key: string
+          event_type: string
+          game_id: string | null
+          id: string
+          last_error: string | null
+          max_attempts: number
+          payload: Json
+          processed_at: string | null
+          recipient_id: string
+          schema_version: number
+          status: string
+        }
+        Insert: {
+          actor_id?: string | null
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          event_key: string
+          event_type: string
+          game_id?: string | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          payload?: Json
+          processed_at?: string | null
+          recipient_id: string
+          schema_version?: number
+          status?: string
+        }
+        Update: {
+          actor_id?: string | null
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          event_key?: string
+          event_type?: string
+          game_id?: string | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          payload?: Json
+          processed_at?: string | null
+          recipient_id?: string
+          schema_version?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
           created_at: string
           data: Json | null
+          event_key: string | null
           id: string
           read: boolean
           title: string
@@ -632,6 +695,7 @@ export type Database = {
           body: string
           created_at?: string
           data?: Json | null
+          event_key?: string | null
           id?: string
           read?: boolean
           title: string
@@ -642,6 +706,7 @@ export type Database = {
           body?: string
           created_at?: string
           data?: Json | null
+          event_key?: string | null
           id?: string
           read?: boolean
           title?: string
@@ -1070,6 +1135,17 @@ export type Database = {
         }
         Returns: string
       }
+      enqueue_notification: {
+        Args: {
+          _actor_id: string
+          _event_key: string
+          _event_type: string
+          _game_id: string
+          _payload: Json
+          _recipient: string
+        }
+        Returns: undefined
+      }
       expire_draw_offers: { Args: { _game_id: string }; Returns: undefined }
       fairplay_analyzer_version: { Args: never; Returns: string }
       fairplay_claim_jobs: {
@@ -1157,6 +1233,7 @@ export type Database = {
         }
         Returns: Json
       }
+      process_notification_outbox: { Args: { _limit?: number }; Returns: Json }
       queue_heartbeat: { Args: { _queue_id: string }; Returns: undefined }
       queue_join: {
         Args: { _time_control: string; _variant: string }
@@ -1192,6 +1269,7 @@ export type Database = {
         }
         Returns: Json
       }
+      retry_notification_event: { Args: { _id: string }; Returns: Json }
       security_probe_alerts: {
         Args: { _threshold?: number; _window_minutes?: number }
         Returns: {
