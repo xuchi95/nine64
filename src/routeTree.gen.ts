@@ -34,6 +34,7 @@ import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as GamesGameIdRouteImport } from './routes/games.$gameId'
 import { Route as LearnIndexRouteImport } from './routes/learn.index'
+import { Route as NewsIndexRouteImport } from './routes/news.index'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAiRouteImport } from './routes/play.ai'
 import { Route as PlayCoachRouteImport } from './routes/play.coach'
@@ -198,6 +199,11 @@ const GamesGameIdRoute = GamesGameIdRouteImport.update({
 const LearnIndexRoute = LearnIndexRouteImport.update({
   id: '/learn/',
   path: '/learn/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsIndexRoute = NewsIndexRouteImport.update({
+  id: '/news/',
+  path: '/news/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayIndexRoute = PlayIndexRouteImport.update({
@@ -451,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/events/': typeof EventsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
+  '/news/': typeof NewsIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
@@ -517,6 +524,7 @@ export interface FileRoutesByTo {
   '/events': typeof EventsIndexRoute
   '/games': typeof GamesIndexRoute
   '/learn': typeof LearnIndexRoute
+  '/news': typeof NewsIndexRoute
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
   '/watch': typeof WatchIndexRoute
@@ -585,6 +593,7 @@ export interface FileRoutesById {
   '/events/': typeof EventsIndexRoute
   '/games/': typeof GamesIndexRoute
   '/learn/': typeof LearnIndexRoute
+  '/news/': typeof NewsIndexRoute
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
@@ -653,6 +662,7 @@ export interface FileRouteTypes {
     | '/events/'
     | '/games/'
     | '/learn/'
+    | '/news/'
     | '/play/'
     | '/puzzles/'
     | '/watch/'
@@ -719,6 +729,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/games'
     | '/learn'
+    | '/news'
     | '/play'
     | '/puzzles'
     | '/watch'
@@ -786,6 +797,7 @@ export interface FileRouteTypes {
     | '/events/'
     | '/games/'
     | '/learn/'
+    | '/news/'
     | '/play/'
     | '/puzzles/'
     | '/watch/'
@@ -850,6 +862,7 @@ export interface RootRouteChildren {
   EventsIndexRoute: typeof EventsIndexRoute
   GamesIndexRoute: typeof GamesIndexRoute
   LearnIndexRoute: typeof LearnIndexRoute
+  NewsIndexRoute: typeof NewsIndexRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PuzzlesIndexRoute: typeof PuzzlesIndexRoute
   WatchIndexRoute: typeof WatchIndexRoute
@@ -1039,6 +1052,13 @@ declare module '@tanstack/react-router' {
       path: '/learn'
       fullPath: '/learn/'
       preLoaderRoute: typeof LearnIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news/': {
+      id: '/news/'
+      path: '/news'
+      fullPath: '/news/'
+      preLoaderRoute: typeof NewsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/play/': {
@@ -1421,6 +1441,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsIndexRoute: EventsIndexRoute,
   GamesIndexRoute: GamesIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
+  NewsIndexRoute: NewsIndexRoute,
   PlayIndexRoute: PlayIndexRoute,
   PuzzlesIndexRoute: PuzzlesIndexRoute,
   WatchIndexRoute: WatchIndexRoute,
