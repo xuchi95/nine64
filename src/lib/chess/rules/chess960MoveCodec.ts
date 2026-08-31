@@ -191,11 +191,11 @@ export function appMoveToEngineUci(
 export function engineUciToAppMove(
   fen: string,
   uci: string,
-): { from: string; to: string; promotion?: string } | null {
+): { from: string; to: string; promotion?: PromotionPiece } | null {
   if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return null;
   const from = uci.slice(0, 2);
   const to = uci.slice(2, 4);
-  const promotion = uci.length > 4 ? uci[4] : undefined;
+  const promotion = uci.length > 4 ? (uci[4] as PromotionPiece) : undefined;
 
   const board = parseBoard(fen);
   const piece = board.get(from);
