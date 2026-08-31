@@ -14,7 +14,9 @@ describe("time control parsing", () => {
   });
 
   it("classifies pools from the estimated game length", () => {
-    expect(parseTimeControl("120+1").pool).toBe("blitz");
+    // 120s + 40 increments of 1s = 160s estimated, still bullet territory.
+    expect(parseTimeControl("120+1").pool).toBe("bullet");
+    expect(parseTimeControl("180+2").pool).toBe("blitz");
     expect(parseTimeControl("600+5").pool).toBe("rapid");
   });
 
