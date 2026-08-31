@@ -38,7 +38,7 @@ export function CookieBanner() {
       role="alertdialog"
       aria-modal="true"
       aria-label={t("cookie.dialogLabel")}
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-background/80 px-3 pb-3 backdrop-blur-md sm:px-4 sm:pb-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 px-3 backdrop-blur-md sm:px-4"
     >
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-border/80 bg-card p-4 shadow-2xl sm:flex-row sm:items-center sm:gap-4 sm:p-5">
         <div className="flex min-w-0 items-start gap-3">
