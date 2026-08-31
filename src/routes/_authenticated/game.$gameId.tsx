@@ -455,6 +455,102 @@ function OnlineGamePage() {
     };
   }, [gameId, refresh, refreshDraw]);
 
+  const refreshTakeback = useCallback(async () => {
+    try {
+      const res = (await getTakebackStateFn({ data: { gameId } })) as {
+        pending: TakebackRequest | null;
+      };
+      setTakebackPending(res.pending);
+    } catch {
+      // Non-fatal: the next sync retries.
+    }
+  }, [gameId, getTakebackStateFn]);
+
+  useEffect(() => {
+    if (!game?.allow_takeback) return;
+    void refreshTakeback();
+  }, [game?.allow_takeback, game?.version, refreshTakeback]);
+
+  useEffect(() => {
+    if (!gameId || !game?.allow_takeback) return;
+    const ch = supabase
+      .channel(`takeback:${gameId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "game_takeback_requests",
+          filter: `game_id=eq.${gameId}`,
+        },
+        () => {
+          void refreshTakeback();
+          void refresh().catch(() => undefined);
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, [game?.allow_takeback, gameId, refresh, refreshTakeback]);
+
+  const runTakeback = useCallback(
+    async (kind: "request" | "accept" | "decline" | "cancel") => {
+      if (!game || !myColor || takebackBusy) return;
+      setTakebackBusy(true);
+      try {
+        if (kind === "request") {
+          await requestTakebackFn({
+            data: {
+              gameId: game.id,
+              expectedVersion: game.version ?? 0,
+              idempotencyKey: `takeback:${game.id}:${game.version ?? 0}:${user?.id ?? "anon"}`,
+            },
+          });
+        } else if (takebackPending) {
+          await respondTakebackFn({
+            data: { gameId: game.id, requestId: takebackPending.id, action: kind },
+          });
+        }
+      } catch {
+        toast.error("Không gửi được yêu cầu đòi lại nước.");
+      } finally {
+        await refreshTakeback();
+        await refresh().catch(() => undefined);
+        setTakebackBusy(false);
+      }
+    },
+    [
+      game,
+      myColor,
+      refresh,
+      refreshTakeback,
+      requestTakebackFn,
+      respondTakebackFn,
+      takebackBusy,
+      takebackPending,
+      user?.id,
+    ],
+  );
+
+  /** Presence heartbeat: powers the "opponent disconnected" hint on both sides. */
+  useEffect(() => {
+    if (!gameId || !myColor || game?.status !== "active") return;
+    const beat = async () => {
+      try {
+        const res = (await touchPresenceFn({ data: { gameId } })) as {
+          opponent_seen_at?: string | null;
+        };
+        setOpponentSeenAt(res.opponent_seen_at ? Date.parse(res.opponent_seen_at) : null);
+      } catch {
+        // Presence is advisory only.
+      }
+    };
+    void beat();
+    const id = window.setInterval(() => void beat(), 15_000);
+    return () => window.clearInterval(id);
+  }, [game?.status, gameId, myColor, touchPresenceFn]);
+
   const drawMessage = useCallback((out: DrawCommandOutcome): string | null => {
     switch (out.code) {
       case "OFFER_CREATED":
@@ -679,6 +775,24 @@ function OnlineGamePage() {
 
 
 
+  // Premove: armed while the opponent thinks, replayed the moment the server
+  // confirms it is our turn. Illegal premoves are silently discarded.
+  useEffect(() => {
+    if (!premove) return;
+    if (!game || game.status !== "active" || !myColor) return;
+    if (gameRef.current.turn() !== myColor) return;
+    const armed = premove;
+    setPremove(null);
+    const legal = (() => {
+      try {
+        return gameRef.current.legalTargets(armed.from).includes(armed.to);
+      } catch {
+        return false;
+      }
+    })();
+    if (legal) handleMove(armed.from, armed.to);
+  }, [boardRev, game, handleMove, myColor, premove]);
+
   const canMoveFrom = useCallback(
     (square: string) => {
       if (!myColor || finishedRef.current || game?.status !== "active") return false;
@@ -756,6 +870,38 @@ function OnlineGamePage() {
       toast.error("Clipboard unavailable");
     }
   }, []);
+
+  /** Rematch = a direct challenge to the same opponent with the same settings. */
+  const requestRematch = useCallback(async () => {
+    if (!game || !myColor || rematchBusy) return;
+    const opponentId = myColor === "w" ? game.black_id : game.white_id;
+    setRematchBusy(true);
+    try {
+      const out = (await createChallengeFn({
+        data: {
+          opponentId,
+          variant: game.variant,
+          timeControl: game.time_control,
+          rated: Boolean(game.rated),
+          // Colours swap on a rematch.
+          color: myColor === "w" ? "black" : "white",
+          allowTakeback: Boolean(game.allow_takeback),
+          spectate: (game.spectate ?? "public") as "public" | "private",
+          rematchOf: game.id,
+        },
+      })) as { ok: boolean };
+      if (out.ok) {
+        setRematchSent(true);
+        toast.success("Đã gửi lời mời tái đấu.");
+      } else {
+        toast.error("Không gửi được lời mời tái đấu.");
+      }
+    } catch {
+      toast.error("Không gửi được lời mời tái đấu.");
+    } finally {
+      setRematchBusy(false);
+    }
+  }, [createChallengeFn, game, myColor, rematchBusy]);
 
   const resign = useCallback(() => runCommand("resign"), [runCommand]);
   const abort = useCallback(() => runCommand("abort"), [runCommand]);
