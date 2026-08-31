@@ -480,6 +480,7 @@ export const getMyGames = createServerFn({ method: "GET" })
 export const getNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await kickNotificationOutbox();
     const { data, error } = await context.supabase
       .from("notifications")
       .select("*")
@@ -650,7 +651,9 @@ export const offerDraw = createServerFn({ method: "POST" })
       _idempotency_key: data.idempotencyKey,
     });
     if (error) throw new Error(error.message);
-    return toDrawOutcome(raw);
+    const out = toDrawOutcome(raw);
+    await kickNotificationOutbox();
+    return out;
   });
 
 export const acceptDraw = createServerFn({ method: "POST" })
@@ -682,7 +685,9 @@ export const declineDraw = createServerFn({ method: "POST" })
       _action: "decline",
     });
     if (error) throw new Error(error.message);
-    return toDrawOutcome(raw);
+    const out = toDrawOutcome(raw);
+    await kickNotificationOutbox();
+    return out;
   });
 
 export const cancelDraw = createServerFn({ method: "POST" })
@@ -697,5 +702,7 @@ export const cancelDraw = createServerFn({ method: "POST" })
       _action: "cancel",
     });
     if (error) throw new Error(error.message);
-    return toDrawOutcome(raw);
+    const out = toDrawOutcome(raw);
+    await kickNotificationOutbox();
+    return out;
   });
