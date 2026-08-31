@@ -50,6 +50,7 @@ import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenti
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as AuthenticatedOnlineDiagnosticsRouteImport } from './routes/_authenticated/online.diagnostics'
 import { Route as AuthenticatedPuzzlesTrainRouteImport } from './routes/_authenticated/puzzles.train'
+import { Route as AuthenticatedTournamentsIndexRouteImport } from './routes/_authenticated/tournaments.index'
 import { Route as AuthenticatedWatchIndexRouteImport } from './routes/_authenticated/watch.index'
 import { Route as AuthenticatedWatchGameIdRouteImport } from './routes/_authenticated/watch.$gameId'
 import { Route as GamesOnlineGameIdRouteImport } from './routes/games.online.$gameId'
@@ -277,6 +278,12 @@ const AuthenticatedPuzzlesTrainRoute =
     path: '/puzzles/train',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTournamentsIndexRoute =
+  AuthenticatedTournamentsIndexRouteImport.update({
+    id: '/tournaments/',
+    path: '/tournaments/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedWatchIndexRoute = AuthenticatedWatchIndexRouteImport.update({
   id: '/watch/',
   path: '/watch/',
@@ -394,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/learn/course/$slug': typeof LearnCourseSlugRoute
   '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/tournaments/': typeof AuthenticatedTournamentsIndexRoute
   '/watch/': typeof AuthenticatedWatchIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -449,6 +457,7 @@ export interface FileRoutesByTo {
   '/learn/course/$slug': typeof LearnCourseSlugRoute
   '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/tournaments': typeof AuthenticatedTournamentsIndexRoute
   '/watch': typeof AuthenticatedWatchIndexRoute
   '/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -506,6 +515,7 @@ export interface FileRoutesById {
   '/learn/course/$slug': typeof LearnCourseSlugRoute
   '/learn/lesson/$slug': typeof LearnLessonSlugRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/tournaments/': typeof AuthenticatedTournamentsIndexRoute
   '/_authenticated/watch/': typeof AuthenticatedWatchIndexRoute
   '/_authenticated/admin/fairplay/log': typeof AuthenticatedAdminFairplayLogRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/learn/course/$slug'
     | '/learn/lesson/$slug'
     | '/admin/'
+    | '/tournaments/'
     | '/watch/'
     | '/admin/fairplay/log'
     | '/admin/users/$userId'
@@ -618,6 +629,7 @@ export interface FileRouteTypes {
     | '/learn/course/$slug'
     | '/learn/lesson/$slug'
     | '/admin'
+    | '/tournaments'
     | '/watch'
     | '/admin/fairplay/log'
     | '/admin/users/$userId'
@@ -674,6 +686,7 @@ export interface FileRouteTypes {
     | '/learn/course/$slug'
     | '/learn/lesson/$slug'
     | '/_authenticated/admin/'
+    | '/_authenticated/tournaments/'
     | '/_authenticated/watch/'
     | '/_authenticated/admin/fairplay/log'
     | '/_authenticated/admin/users/$userId'
@@ -1009,6 +1022,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPuzzlesTrainRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tournaments/': {
+      id: '/_authenticated/tournaments/'
+      path: '/tournaments'
+      fullPath: '/tournaments/'
+      preLoaderRoute: typeof AuthenticatedTournamentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/watch/': {
       id: '/_authenticated/watch/'
       path: '/watch'
@@ -1131,6 +1151,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPuzzlesTrainRoute: typeof AuthenticatedPuzzlesTrainRoute
   AuthenticatedWatchGameIdRoute: typeof AuthenticatedWatchGameIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedTournamentsIndexRoute: typeof AuthenticatedTournamentsIndexRoute
   AuthenticatedWatchIndexRoute: typeof AuthenticatedWatchIndexRoute
   AuthenticatedAdminFairplayLogRoute: typeof AuthenticatedAdminFairplayLogRoute
   AuthenticatedAdminUsersUserIdRoute: typeof AuthenticatedAdminUsersUserIdRoute
@@ -1155,6 +1176,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPuzzlesTrainRoute: AuthenticatedPuzzlesTrainRoute,
   AuthenticatedWatchGameIdRoute: AuthenticatedWatchGameIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedTournamentsIndexRoute: AuthenticatedTournamentsIndexRoute,
   AuthenticatedWatchIndexRoute: AuthenticatedWatchIndexRoute,
   AuthenticatedAdminFairplayLogRoute: AuthenticatedAdminFairplayLogRoute,
   AuthenticatedAdminUsersUserIdRoute: AuthenticatedAdminUsersUserIdRoute,
