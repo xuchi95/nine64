@@ -38,7 +38,7 @@ function puzzleOf(partial: Partial<PlatformPuzzle> & Pick<PlatformPuzzle, "id" |
 }
 
 describe("multi-move puzzles", () => {
-  const fen = "7k/6pp/8/8/8/8/8/R6K w - - 0 1";
+  const fen = "7k/6p1/7p/8/8/8/8/R6K w - - 0 1";
   const solution = line(fen, ["Ra8+", "Kh7", "Ra7"]);
   const puzzle = puzzleOf({ id: "multi", fen, solution });
 
@@ -206,7 +206,7 @@ describe("selection", () => {
 });
 
 describe("hint ladder", () => {
-  const fen = "7k/6pp/8/8/8/8/8/R6K w - - 0 1";
+  const fen = "7k/6p1/7p/8/8/8/8/R6K w - - 0 1";
   const puzzle = puzzleOf({ id: "hint", fen, solution: line(fen, ["Ra8+", "Kh7", "Ra7"]), themes: ["back_rank"] });
 
   it("escalates piece -> idea -> from -> to -> solution", () => {
