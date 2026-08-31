@@ -76,7 +76,7 @@ function AdminOpeningsPage() {
   };
 
   return (
-    <AdminShell module="openings">
+    <AdminShell module="openings" title="Khai cuộc">
       <div className="space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
