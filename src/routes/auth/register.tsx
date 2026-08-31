@@ -20,6 +20,7 @@ import { parseRateLimited, rateLimitMessage, isCaptchaFailure, captchaMessage } 
 export const Route = createFileRoute("/auth/register")({
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex, nofollow" },
       { title: `Tạo tài khoản — ${APP.name}` },
       { name: "description", content: "Tạo tài khoản Nine64 để chơi trực tuyến, theo dõi điểm rating và xem lại ván đấu của bạn." },
       { property: "og:title", content: `Tạo tài khoản — ${APP.name}` },

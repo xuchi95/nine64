@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth";
 import { FairplayStatusCard } from "@/components/game/FairplayStatusCard";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { useT } from "@/lib/i18n";
+import { OfflineManager } from "@/components/pwa/OfflineManager";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -53,6 +54,8 @@ function SettingsPage() {
         </div>
       )}
 
+
+      <OfflineManager />
 
       <section className="panel mt-5 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

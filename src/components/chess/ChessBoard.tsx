@@ -1252,17 +1252,19 @@ export function ChessBoard(props: ChessBoardProps) {
                   key={p}
                   type="button"
                   onClick={() => finishPromotion(p)}
-                  className="rounded-md bg-surface-2 p-1 transition-colors hover:bg-primary/20"
+                  // min 44px keeps the tap target usable on 390px-wide phones.
+                  className="flex min-h-11 min-w-11 items-center justify-center rounded-md bg-surface-2 p-1 transition-colors hover:bg-primary/20"
                   aria-label={t("game.board.promoteTo", { piece: p })}
                 >
                   <Piece
                     type={p}
                     color={promotion.from[1] === "7" ? "w" : "b"}
                     set={pieceSet}
-                    size={Math.min(64, squareSize)}
+                    size={Math.max(36, Math.min(64, squareSize))}
                   />
                 </button>
               ))}
+
             </div>
           </div>
         )}

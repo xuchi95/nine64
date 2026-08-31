@@ -20,16 +20,22 @@ import { GenericSkeleton } from "@/components/layout/PageSkeleton";
 import { useBoardStyle } from "@/components/chess/useBoardStyle";
 import { StaticBoard, START_PIECES } from "@/components/chess/StaticBoard";
 import { pageHead } from "@/lib/seo";
+import { jsonLdScript, organizationLd, webSiteLd } from "@/lib/seo/structuredData";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
-  head: () =>
-    pageHead({
+  head: () => ({
+    ...pageHead({
       path: "/",
       title: `${APP.name} — Chơi cờ vua online miễn phí`,
       description:
         "Nine64: chơi cờ với engine Stockfish, đấu online xếp hạng Glicko-2, phân tích từng nước đi và luyện tập theo lỗi của chính bạn.",
     }),
+    scripts: [
+      jsonLdScript([webSiteLd(), { "@context": "https://schema.org", ...organizationLd() }]),
+    ],
+  }),
+
   pendingComponent: GenericSkeleton,
   component: Home,
 });

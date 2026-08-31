@@ -4,6 +4,8 @@ import { hydrateHistory } from "@/lib/history";
 import { hydrateLearn } from "@/lib/learn/store";
 import { hydrateLocale } from "@/lib/i18n";
 import { configureSound } from "@/lib/sound";
+import { setupServiceWorker } from "@/lib/pwa/register";
+
 
 /**
  * Applies persisted client settings after hydration: colour mode on <html> and
@@ -24,23 +26,10 @@ export function SettingsBridge() {
   }, [settings.soundEnabled, settings.sfxVolume]);
 
   useEffect(() => {
-    // Dev/preview builds serve route chunks straight from Vite; a cached shell
-    // there can break dynamic imports, so only run the SW in production.
-    if (import.meta.env.DEV) {
-      void navigator.serviceWorker?.getRegistrations?.().then((regs) =>
-        regs.forEach((r) => void r.unregister()),
-      );
-      return;
-    }
-    if (!("serviceWorker" in navigator)) return;
-    const register = () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        /* offline support is best-effort */
-      });
-    };
-    if (document.readyState === "complete") register();
-    else window.addEventListener("load", register, { once: true });
+    // Guarded: never registers in dev, previews or iframes; `?sw=off` clears it.
+    setupServiceWorker();
   }, []);
+
 
   // A failed route-chunk import (server restart, flaky network) leaves a blank
   // screen; recover once with a hard reload instead of stalling.

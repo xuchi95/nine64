@@ -12,3 +12,18 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /auth
+Disallow: /studies
+Disallow: /game/
+Disallow: /games/online/
+Disallow: /online
+Disallow: /skills
+Disallow: /training-plan
+Disallow: /tournaments
+Disallow: /puzzles/train
+Disallow: /watch/platform
+Disallow: /api/
+
+Sitemap: https://nine64.com/sitemap.xml

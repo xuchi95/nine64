@@ -5,8 +5,15 @@ import { Loader2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth/callback")({
+  head: () => ({
+    meta: [
+      { title: "Đang hoàn tất đăng nhập" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: CallbackPage,
 });
+
 
 function CallbackPage() {
   const { t } = useT();

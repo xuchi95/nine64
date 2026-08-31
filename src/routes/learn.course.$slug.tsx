@@ -8,6 +8,7 @@ import { getCourse, myProgress } from "@/lib/learn/learn.functions";
 import { localized, type LessonProgress } from "@/lib/learn/lessonTypes";
 import { APP } from "@/config/app";
 import { pageHead } from "@/lib/seo";
+import { breadcrumbLd, courseLd, jsonLdScript } from "@/lib/seo/structuredData";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -23,15 +24,26 @@ export const Route = createFileRoute("/learn/course/$slug")({
       return { meta: [{ title: `Không tìm thấy khoá học — ${APP.name}` }, { name: "robots", content: "noindex" }] };
     }
     const title = loaderData.course.doc.title.vi || loaderData.course.doc.title.en;
-    return pageHead({
-      path: `/learn/course/${loaderData.course.slug}`,
-      title: `${title} — ${APP.name}`,
-      description:
-        loaderData.course.doc.summary.vi ||
-        loaderData.course.doc.summary.en ||
-        `Khoá học cờ vua tương tác ${title} trên ${APP.name}.`,
-    });
+    const path = `/learn/course/${loaderData.course.slug}`;
+    const description =
+      loaderData.course.doc.summary.vi ||
+      loaderData.course.doc.summary.en ||
+      `Khoá học cờ vua tương tác ${title} trên ${APP.name}.`;
+    return {
+      ...pageHead({ path, title: `${title} — ${APP.name}`, description }),
+      scripts: [
+        jsonLdScript([
+          courseLd({ path, name: title, description }),
+          breadcrumbLd([
+            { name: "Trang chủ", path: "/" },
+            { name: "Học", path: "/learn" },
+            { name: title, path },
+          ]),
+        ]),
+      ],
+    };
   },
+
   pendingComponent: DashboardSkeleton,
   notFoundComponent: () => <Missing />,
   errorComponent: () => <Missing />,
