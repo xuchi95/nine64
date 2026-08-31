@@ -31,6 +31,8 @@ export const updateProfile = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    await enforceRateLimit("profile.update", userSubject(context.userId));
     // Direct UPDATE on profiles is revoked; the allowlisted RPC is the only path.
     const { data: result, error } = await context.supabase.rpc("update_my_profile", {
       _display_name: data.displayName ?? (null as unknown as string),

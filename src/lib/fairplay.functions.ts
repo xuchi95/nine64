@@ -33,6 +33,8 @@ export const submitFairplaySignals = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    await enforceRateLimit("fairplay.signals", userSubject(context.userId));
     const { data: game, error: gameError } = await context.supabase
       .from("games")
       .select("id, white_id, black_id")
@@ -75,6 +77,11 @@ export const submitPlayerReport = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { enforceAll, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    await enforceAll([
+      { action: "fairplay.report.user", subject: userSubject(context.userId) },
+      { action: "fairplay.report.game", subject: `${userSubject(context.userId)}|${data.gameId}` },
+    ]);
     const { data: result, error } = await context.supabase.rpc("submit_player_report", {
       _game_id: data.gameId,
       _reason: data.reason,

@@ -36,6 +36,8 @@ export const joinQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => QUEUE_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
+    const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    await enforceRateLimit("matchmaking.join", userSubject(context.userId));
     // Queue rows are not client-writable: the RPC stamps rating, status and
     // ownership from auth.uid() and enforces one waiting entry per user.
     const { data: entry, error } = await context.supabase.rpc("queue_join", {
@@ -50,6 +52,8 @@ export const joinQueue = createServerFn({ method: "POST" })
 export const leaveQueue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    await enforceRateLimit("matchmaking.leave", userSubject(context.userId));
     const { error } = await context.supabase.rpc("queue_leave");
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -496,6 +500,8 @@ export const markNotificationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => NOTIFICATION_ID_SCHEMA.parse(input))
   .handler(async ({ data, context }) => {
+    const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    await enforceRateLimit("notification.action", userSubject(context.userId));
     const { error } = await context.supabase
       .from("notifications")
       .update({ read: true })
