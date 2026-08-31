@@ -17,7 +17,7 @@
  * Promotions keep the ordinary UCI suffix in both notations.
  */
 
-import type { CastleSide } from "./ChessRulesAdapter";
+import type { CastleSide, PromotionPiece } from "./ChessRulesAdapter";
 
 const FILES = "abcdefgh";
 
