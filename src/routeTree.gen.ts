@@ -40,6 +40,7 @@ import { Route as PlayCoachRouteImport } from './routes/play.coach'
 import { Route as PlayLocalRouteImport } from './routes/play.local'
 import { Route as PlayShareRouteImport } from './routes/play.share'
 import { Route as PlayVariantsRouteImport } from './routes/play.variants'
+import { Route as PlayersSlugRouteImport } from './routes/players.$slug'
 import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
 import { Route as WatchIndexRouteImport } from './routes/watch.index'
 import { Route as WatchGameIdRouteImport } from './routes/watch.$gameId'
@@ -227,6 +228,11 @@ const PlayShareRoute = PlayShareRouteImport.update({
 const PlayVariantsRoute = PlayVariantsRouteImport.update({
   id: '/play/variants',
   path: '/play/variants',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayersSlugRoute = PlayersSlugRouteImport.update({
+  id: '/players/$slug',
+  path: '/players/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PuzzlesIndexRoute = PuzzlesIndexRouteImport.update({
@@ -439,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
+  '/players/$slug': typeof PlayersSlugRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
   '/events/': typeof EventsIndexRoute
@@ -504,6 +511,7 @@ export interface FileRoutesByTo {
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
+  '/players/$slug': typeof PlayersSlugRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills': typeof DrillsIndexRoute
   '/events': typeof EventsIndexRoute
@@ -571,6 +579,7 @@ export interface FileRoutesById {
   '/play/local': typeof PlayLocalRoute
   '/play/share': typeof PlayShareRoute
   '/play/variants': typeof PlayVariantsRoute
+  '/players/$slug': typeof PlayersSlugRoute
   '/watch/$gameId': typeof WatchGameIdRoute
   '/drills/': typeof DrillsIndexRoute
   '/events/': typeof EventsIndexRoute
@@ -638,6 +647,7 @@ export interface FileRouteTypes {
     | '/play/local'
     | '/play/share'
     | '/play/variants'
+    | '/players/$slug'
     | '/watch/$gameId'
     | '/drills/'
     | '/events/'
@@ -703,6 +713,7 @@ export interface FileRouteTypes {
     | '/play/local'
     | '/play/share'
     | '/play/variants'
+    | '/players/$slug'
     | '/watch/$gameId'
     | '/drills'
     | '/events'
@@ -769,6 +780,7 @@ export interface FileRouteTypes {
     | '/play/local'
     | '/play/share'
     | '/play/variants'
+    | '/players/$slug'
     | '/watch/$gameId'
     | '/drills/'
     | '/events/'
@@ -832,6 +844,7 @@ export interface RootRouteChildren {
   PlayLocalRoute: typeof PlayLocalRoute
   PlayShareRoute: typeof PlayShareRoute
   PlayVariantsRoute: typeof PlayVariantsRoute
+  PlayersSlugRoute: typeof PlayersSlugRoute
   WatchGameIdRoute: typeof WatchGameIdRoute
   DrillsIndexRoute: typeof DrillsIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -1068,6 +1081,13 @@ declare module '@tanstack/react-router' {
       path: '/play/variants'
       fullPath: '/play/variants'
       preLoaderRoute: typeof PlayVariantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/players/$slug': {
+      id: '/players/$slug'
+      path: '/players/$slug'
+      fullPath: '/players/$slug'
+      preLoaderRoute: typeof PlayersSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/puzzles/': {
@@ -1395,6 +1415,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayLocalRoute: PlayLocalRoute,
   PlayShareRoute: PlayShareRoute,
   PlayVariantsRoute: PlayVariantsRoute,
+  PlayersSlugRoute: PlayersSlugRoute,
   WatchGameIdRoute: WatchGameIdRoute,
   DrillsIndexRoute: DrillsIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
