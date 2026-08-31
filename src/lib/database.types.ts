@@ -89,3 +89,18 @@ export interface Notification {
   read: boolean;
   created_at: string;
 }
+
+export type DrawOfferStatus = "pending" | "accepted" | "declined" | "cancelled" | "expired";
+
+export interface DrawOffer {
+  id: string;
+  game_id: string;
+  offered_by: string;
+  offered_to: string;
+  status: DrawOfferStatus;
+  game_version: number;
+  idempotency_key: string;
+  created_at: string;
+  responded_at: string | null;
+  expires_at: string;
+}

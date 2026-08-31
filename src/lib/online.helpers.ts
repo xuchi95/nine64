@@ -122,3 +122,19 @@ function generateChess960Fen(): string {
 export function startingFenForVariant(variant: string): string {
   return variant === "chess960" ? generateChess960Fen() : STANDARD_FEN;
 }
+/** Draw offer commands. Idempotency key is supplied by the caller and reused on retry. */
+export const DRAW_OFFER_SCHEMA = z
+  .object({
+    gameId: z.string().uuid(),
+    expectedVersion: z.number().int().min(0),
+    idempotencyKey: z.string().min(8).max(100),
+  })
+  .strict();
+
+export const DRAW_RESPONSE_SCHEMA = z
+  .object({
+    gameId: z.string().uuid(),
+    offerId: z.string().uuid(),
+    expectedVersion: z.number().int().min(0),
+  })
+  .strict();
