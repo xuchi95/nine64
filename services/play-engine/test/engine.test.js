@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sanitizeOptions, buildGoArgs } from "../src/index.js";
+import { sanitizeOptions, buildGoArgs, healthPayload } from "../src/index.js";
 import { verifyIdToken } from "../src/auth.js";
 
 test("sanitizeOptions drops anything outside the allowlist", () => {
@@ -44,4 +44,29 @@ test("auth rejects a missing bearer token", async () => {
   process.env.ALLOWED_SERVICE_ACCOUNTS = "backend@example.iam.gserviceaccount.com";
   const res = await verifyIdToken(undefined);
   assert.deepEqual(res, { ok: false, error: "missing_token" });
+});
+
+test("healthPayload reports a healthy pool with real busy counts", () => {
+  const pool = {
+    size: 2,
+    engines: [{ busy: false, dead: false, version: "Stockfish 18" }, { busy: true, dead: false }],
+    stats: { searches: 3, timeouts: 0, restarts: 1, illegal: 0 },
+    get engineVersion() {
+      return "Stockfish 18";
+    },
+  };
+  const out = healthPayload(pool, true);
+  assert.equal(out.status, "ok");
+  assert.equal(out.engineVersion, "Stockfish 18");
+  assert.equal(typeof out.arch, "string");
+  assert.deepEqual(out.pool, { size: 2, busy: 1 });
+  assert.deepEqual(out.stats, { searches: 3, timeouts: 0, restarts: 1, illegal: 0 });
+});
+
+test("healthPayload reports starting before the pool is ready and never leaks env", () => {
+  const out = healthPayload({ size: 1, engines: [], stats: {} }, false);
+  assert.equal(out.status, "starting");
+  assert.deepEqual(out.stats, { searches: 0, timeouts: 0, restarts: 0, illegal: 0 });
+  const serialized = JSON.stringify(out);
+  assert.ok(!/PLAY_ENGINE|PRIVATE KEY|Bearer/i.test(serialized));
 });
