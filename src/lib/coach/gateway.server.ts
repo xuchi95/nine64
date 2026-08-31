@@ -1,6 +1,7 @@
 import type { CoachDigest } from "./digest";
 import type { CoachMistake, CoachReport, MistakeSeverity } from "./types";
 import { COACH_MODEL, COACH_SCHEMA, coachSystem, buildCoachPrompt } from "./prompt";
+import { COACH_MODEL_LIMITS } from "@/lib/ratelimit/policy";
 
 const ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const SEVERITIES: MistakeSeverity[] = ["basic", "moderate", "serious", "critical"];
@@ -68,7 +69,9 @@ export async function requestCoachReport(
       "X-Lovable-AIG-SDK": "fetch",
     },
     body: JSON.stringify({
+      // Model and output budget are server constants — never client input.
       model: COACH_MODEL,
+      max_tokens: COACH_MODEL_LIMITS.maxOutputTokens,
       messages: [
         { role: "system", content: coachSystem(locale) },
         { role: "user", content: buildCoachPrompt(digest, locale) },
@@ -82,6 +85,8 @@ export async function requestCoachReport(
 
   if (!res.ok) {
     const body = await res.text();
+    // Provider internals stay in the server log; the client gets a safe message.
+    console.error("[coach] gateway error", { status: res.status });
     if (res.status === 429)
       throw new Error(locale === "en" ? "AI is overloaded, try again in a few minutes." : "AI đang quá tải, thử lại sau ít phút.");
     if (res.status === 402)
@@ -92,7 +97,12 @@ export async function requestCoachReport(
       );
     if (res.status === 403)
       throw new Error(locale === "en" ? "AI features are blocked by workspace settings." : "Tính năng AI đang bị chặn bởi thiết lập workspace.");
-    throw new Error(`${locale === "en" ? "AI error" : "AI lỗi"} ${res.status}: ${body.slice(0, 200)}`);
+    void body;
+    throw new Error(
+      locale === "en"
+        ? "The AI service is temporarily unavailable. Please try again later."
+        : "Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau.",
+    );
   }
 
   const payload = (await res.json()) as {

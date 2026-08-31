@@ -939,6 +939,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_counters: {
+        Row: {
+          bucket_key: string
+          count: number
+          updated_at: string
+          window_seconds: number
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          count?: number
+          updated_at?: string
+          window_seconds: number
+          window_start?: string
+        }
+        Update: {
+          bucket_key?: string
+          count?: number
+          updated_at?: string
+          window_seconds?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       rating_events: {
         Row: {
           algorithm: string
@@ -1126,6 +1150,15 @@ export type Database = {
         }
         Returns: Json
       }
+      consume_rate_limit: {
+        Args: {
+          _cost?: number
+          _key: string
+          _limit: number
+          _window_seconds: number
+        }
+        Returns: Json
+      }
       create_online_match: {
         Args: {
           _initial_fen: string
@@ -1234,6 +1267,10 @@ export type Database = {
         Returns: Json
       }
       process_notification_outbox: { Args: { _limit?: number }; Returns: Json }
+      purge_rate_limit_counters: {
+        Args: { _older_than_hours?: number }
+        Returns: number
+      }
       queue_heartbeat: { Args: { _queue_id: string }; Returns: undefined }
       queue_join: {
         Args: { _time_control: string; _variant: string }
