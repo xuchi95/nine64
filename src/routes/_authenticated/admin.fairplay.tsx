@@ -14,6 +14,7 @@ import {
   resolveFairplayCase,
 } from "@/lib/fairplay.functions";
 import { FairplayMetricsPanel } from "@/components/fairplay/FairplayMetricsPanel";
+import { FairplayJobsPanel } from "@/components/fairplay/FairplayJobsPanel";
 import { formatRemaining, isLockActive, remainingLockMs } from "@/lib/fairplay/lockPolicy";
 import type { FairplayMetrics } from "@/lib/fairplay/metrics";
 import { Input } from "@/components/ui/input";
@@ -221,6 +222,10 @@ function AdminFairplayPage() {
             <FairplayMetricsPanel metrics={metrics} />
           </div>
         )}
+
+        <div className="mt-6">
+          <FairplayJobsPanel />
+        </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_380px]">
           <Card>

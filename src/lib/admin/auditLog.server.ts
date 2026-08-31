@@ -18,7 +18,8 @@ export type AdminAuditAction =
   | "audit_log_view"
   | "rating_hold"
   | "clear_warning"
-  | "unlock";
+  | "unlock"
+  | "fairplay_job_retry";
 
 export interface AdminAuditEntry {
   actorId: string;

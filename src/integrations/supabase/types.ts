@@ -138,6 +138,71 @@ export type Database = {
           },
         ]
       }
+      fairplay_jobs: {
+        Row: {
+          analyzer_version: string
+          attempts: number
+          claimed_by: string | null
+          depth: number | null
+          engine_version: string | null
+          finished_at: string | null
+          game_id: string
+          id: string
+          last_error: string | null
+          lease_until: string | null
+          max_attempts: number
+          queued_at: string
+          started_at: string | null
+          status: string
+          time_budget_ms: number | null
+          updated_at: string
+        }
+        Insert: {
+          analyzer_version: string
+          attempts?: number
+          claimed_by?: string | null
+          depth?: number | null
+          engine_version?: string | null
+          finished_at?: string | null
+          game_id: string
+          id?: string
+          last_error?: string | null
+          lease_until?: string | null
+          max_attempts?: number
+          queued_at?: string
+          started_at?: string | null
+          status?: string
+          time_budget_ms?: number | null
+          updated_at?: string
+        }
+        Update: {
+          analyzer_version?: string
+          attempts?: number
+          claimed_by?: string | null
+          depth?: number | null
+          engine_version?: string | null
+          finished_at?: string | null
+          game_id?: string
+          id?: string
+          last_error?: string | null
+          lease_until?: string | null
+          max_attempts?: number
+          queued_at?: string
+          started_at?: string | null
+          status?: string
+          time_budget_ms?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fairplay_jobs_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fairplay_reports: {
         Row: {
           action: string
@@ -618,6 +683,53 @@ export type Database = {
         }
         Relationships: []
       }
+      player_reports: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          note: string | null
+          reason: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          subject_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          note?: string | null
+          reason: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subject_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          note?: string | null
+          reason?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_reports_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -959,6 +1071,49 @@ export type Database = {
         Returns: string
       }
       expire_draw_offers: { Args: { _game_id: string }; Returns: undefined }
+      fairplay_analyzer_version: { Args: never; Returns: string }
+      fairplay_claim_jobs: {
+        Args: { _lease_seconds?: number; _limit?: number; _worker: string }
+        Returns: {
+          analyzer_version: string
+          attempts: number
+          claimed_by: string | null
+          depth: number | null
+          engine_version: string | null
+          finished_at: string | null
+          game_id: string
+          id: string
+          last_error: string | null
+          lease_until: string | null
+          max_attempts: number
+          queued_at: string
+          started_at: string | null
+          status: string
+          time_budget_ms: number | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "fairplay_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      fairplay_fail_job: {
+        Args: { _error: string; _job_id: string }
+        Returns: Json
+      }
+      fairplay_retry_job: { Args: { _job_id: string }; Returns: Json }
+      fairplay_submit_analysis: {
+        Args: {
+          _depth: number
+          _engine_version: string
+          _job_id: string
+          _subjects: Json
+          _time_budget_ms: number
+        }
+        Returns: Json
+      }
       finalize_expired_games: { Args: { _limit?: number }; Returns: Json }
       finalize_game_timeout: { Args: { _game_id: string }; Returns: Json }
       find_match: { Args: { _queue_id: string }; Returns: string }
@@ -1047,6 +1202,10 @@ export type Database = {
           resources: number
           user_id: string
         }[]
+      }
+      submit_player_report: {
+        Args: { _game_id: string; _note?: string; _reason: string }
+        Returns: Json
       }
       tc_increment_ms: { Args: { _time_control: string }; Returns: number }
       update_my_profile: {

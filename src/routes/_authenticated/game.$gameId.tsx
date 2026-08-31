@@ -54,8 +54,8 @@ import { normalizeResult, resultLabel } from "@/lib/chess/gameResult";
 import { ConnectionStatus, type SyncMode } from "@/components/game/ConnectionStatus";
 import { MoveJournal, buildJournalEntries } from "@/components/game/MoveJournal";
 import { buildPgn, shareUrl } from "@/lib/chess/share";
-import { FairplayBridge } from "@/components/game/FairplayBridge";
 import { useFairplayTelemetry } from "@/hooks/useFairplayTelemetry";
+import { ReportPlayerCard } from "@/components/game/ReportPlayerCard";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
@@ -838,6 +838,7 @@ function OnlineGamePage() {
               <GameNotice tone="info">{drawNotice}</GameNotice>
             )}
             {error && <GameNotice tone="error">{error}</GameNotice>}
+            {game.status === "completed" && <ReportPlayerCard gameId={game.id} />}
 
           </>
         }
@@ -856,16 +857,6 @@ function OnlineGamePage() {
               turn={turn}
               interactive={live}
             />
-            {game.status === "completed" && (
-              <FairplayBridge
-                gameId={game.id}
-                initialFen={game.initial_fen}
-                moves={moves}
-                whiteId={game.white_id}
-                blackId={game.black_id}
-                runAnalysis={myColor === "w"}
-              />
-            )}
           </>
         }
         right={
