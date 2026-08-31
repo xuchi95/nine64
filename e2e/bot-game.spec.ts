@@ -24,7 +24,7 @@ test.describe("bot game", () => {
       .poll(
         async () => {
           const text = await page.locator("body").innerText();
-          return /1\.\s*e4\s+\S/.test(text.replace(/\n/g, " "));
+          return /\b1\s+e4\s+[A-Za-z0-9+#=-]+/.test(text.replace(/[\n\t]+/g, " "));
         },
         { timeout: 60_000 },
       )

@@ -17,17 +17,17 @@ test.describe("puzzles", () => {
     const result = await page.evaluate(async () => {
       const solver = await import("/src/lib/learn/puzzleSolver.ts");
 
-      // Mate in two: 1.Ra7+ Kb8 2.Rh8#
+      // Ladder mate in two: 1.Rb7 Kg8 2.Ra8#
       const puzzle = {
         id: "e2e-mate-in-2",
-        fen: "7k/8/8/8/8/8/R7/6RK w - - 0 1",
+        fen: "7k/8/8/8/8/8/8/RR5K w - - 0 1",
         solution: [
-          { uci: "a2a7", san: "Ra7" },
+          { uci: "b1b7", san: "Rb7" },
           { uci: "h8g8", san: "Kg8" },
-          { uci: "g1g7", san: "Rg7#" },
+          { uci: "a1a8", san: "Ra8#" },
         ],
         alternates: {} as Record<number, string[]>,
-        solutionSan: "Ra7",
+        solutionSan: "Rb7",
         color: "w" as const,
         themes: [],
         rating: 1500,
@@ -38,10 +38,10 @@ test.describe("puzzles", () => {
       let state = solver.initialSolverState(puzzle as never);
       const plies = solver.solverPlyCount(puzzle as never);
 
-      const wrong = solver.attemptMove(puzzle as never, state, "g1", "g2");
-      const first = solver.attemptMove(puzzle as never, state, "a2", "a7");
+      const wrong = solver.attemptMove(puzzle as never, state, "a1", "a2");
+      const first = solver.attemptMove(puzzle as never, state, "b1", "b7");
       state = { fen: first.fen, playedPlies: first.playedPlies, status: first.status, lastMove: first.lastMove };
-      const second = solver.attemptMove(puzzle as never, state, "g1", "g7");
+      const second = solver.attemptMove(puzzle as never, state, "a1", "a8");
 
       return {
         plies,
