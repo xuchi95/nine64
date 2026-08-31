@@ -1,5 +1,5 @@
 import { Piece, type PieceColor, type PieceType } from "./Piece";
-import { useSettings } from "@/lib/settings";
+import { useBoardStyle } from "./useBoardStyle";
 import { cn } from "@/lib/utils";
 
 export interface PocketBarProps {
@@ -21,7 +21,7 @@ const ORDER: PieceType[] = ["p", "n", "b", "r", "q"];
  * every legal drop square. Rules live in the engine — this is display only.
  */
 export function PocketBar({ color, pocket, armed, onArm, className }: PocketBarProps) {
-  const settings = useSettings();
+  const { pieceSet } = useBoardStyle();
   return (
     <div
       className={cn(
@@ -50,7 +50,7 @@ export function PocketBar({ color, pocket, armed, onArm, className }: PocketBarP
               isArmed && "border-primary bg-primary/15",
             )}
           >
-            <Piece type={type} color={color} set={settings.pieceSet} size={28} />
+            <Piece type={type} color={color} set={pieceSet} size={28} />
             {count > 1 && (
               <span className="absolute -bottom-1 -right-1 rounded bg-surface-3 px-1 font-mono text-[10px] leading-tight">
                 {count}
