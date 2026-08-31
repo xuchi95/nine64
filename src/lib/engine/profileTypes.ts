@@ -59,7 +59,14 @@ export const engineConfigSchema = z.object({
   /** Abuse + cost guards. */
   perUserDailyMoves: z.number().int().min(10).max(20_000).default(600),
   maxConcurrentGames: z.number().int().min(1).max(10).default(2),
-  maxCostPerDayUsd: z.number().min(0).max(1_000).default(25),
+  /**
+   * DEPRECATED / NOT ENFORCED. Real GCP billing data is not available to this
+   * app, so no honest per-day USD cap can be enforced here. Kept only so stored
+   * rows keep parsing; it is hidden from the admin UI. The hard blast-radius
+   * control is the Cloud Run `--max-instances` limit, plus the enforced
+   * `perUserDailyMoves` quota.
+   */
+  maxCostPerDayUsd: z.number().min(0).max(1_000).default(0),
   requestTimeoutMs: z.number().int().min(1_000).max(120_000).default(20_000),
   maxRetries: z.number().int().min(0).max(3).default(1),
 });

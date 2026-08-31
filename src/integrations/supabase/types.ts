@@ -1686,6 +1686,57 @@ export type Database = {
         }
         Relationships: []
       }
+      titan_move_charges: {
+        Row: {
+          created_at: string
+          day: string
+          id: string
+          idempotency_key: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          id?: string
+          idempotency_key: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          id?: string
+          idempotency_key?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      titan_usage_daily: {
+        Row: {
+          day: string
+          engine_ms: number
+          moves: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          day: string
+          engine_ms?: number
+          moves?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          engine_ms?: number
+          moves?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_admin_state: {
         Row: {
           created_at: string
@@ -2043,6 +2094,19 @@ export type Database = {
         Returns: Json
       }
       tc_increment_ms: { Args: { _time_control: string }; Returns: number }
+      titan_consume_move: {
+        Args: {
+          _idempotency_key: string
+          _limit: number
+          _session_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      titan_record_engine_ms: {
+        Args: { _ms: number; _user_id: string }
+        Returns: undefined
+      }
       update_my_profile: {
         Args: { _avatar_url?: string; _display_name?: string }
         Returns: Json

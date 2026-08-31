@@ -55,6 +55,8 @@ function titanMessage(code: string | null, t: (key: string) => string): string {
     case "ENGINE_NOT_CONFIGURED":
     case "PROFILE_DISABLED":
       return t("play.ai.titanDisabled");
+    case "QUOTA_EXCEEDED":
+      return t("play.ai.titanQuota");
     case "TOO_MANY_SESSIONS":
       return t("play.ai.titanTooMany");
     case "VERSION_CONFLICT":

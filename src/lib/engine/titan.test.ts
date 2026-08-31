@@ -7,6 +7,7 @@ import {
   isFullStrength,
   parseEngineConfig,
 } from "@/lib/engine/profileTypes";
+import { interpretHealthPayload } from "@/lib/engine/cloudEngine.server";
 
 describe("browser bot levels stay intact", () => {
   it("keeps levels 1..15 running in the browser", () => {
@@ -57,5 +58,44 @@ describe("titan engine config", () => {
   it("does not claim Syzygy pieces beyond the configured probe limit by default", () => {
     expect(TITAN_FALLBACK_CONFIG.syzygyEnabled).toBe(false);
     expect(TITAN_FALLBACK_CONFIG.syzygyPieces).toBe(0);
+  });
+});
+
+describe("cloud engine health contract", () => {
+  it("reports healthy for a free pool", () => {
+    const h = interpretHealthPayload(
+      { status: "ok", engineVersion: "Stockfish 18", arch: "x64", pool: { size: 2, busy: 0 }, stats: {} },
+      12,
+    );
+    expect(h.status).toBe("healthy");
+    expect(h.pool).toEqual({ size: 2, busy: 0 });
+    expect(h.engineVersion).toBe("Stockfish 18");
+  });
+
+  it("reports degraded when every engine process is busy", () => {
+    const h = interpretHealthPayload({ status: "ok", pool: { size: 1, busy: 1 } }, 12);
+    expect(h.status).toBe("degraded");
+  });
+
+  it("never reports healthy for a malformed payload", () => {
+    expect(interpretHealthPayload({ status: "ok", pool: 3 }, 5).status).toBe("unavailable");
+    expect(interpretHealthPayload(null, 5).status).toBe("unavailable");
+    expect(interpretHealthPayload({ status: "starting", pool: { size: 1, busy: 0 } }, 5).status).toBe("degraded");
+  });
+
+  it("does not echo credentials in the health detail", () => {
+    const h = interpretHealthPayload({ status: "ok", pool: { size: 1, busy: 0 } }, 5);
+    expect(JSON.stringify(h)).not.toMatch(/PLAY_ENGINE|PRIVATE KEY|Bearer/i);
+  });
+});
+
+describe("titan cost controls are honest", () => {
+  it("keeps an enforceable per-user daily move quota", () => {
+    expect(TITAN_FALLBACK_CONFIG.perUserDailyMoves).toBeGreaterThan(0);
+    expect(TITAN_FALLBACK_CONFIG.maxConcurrentGames).toBeGreaterThan(0);
+  });
+
+  it("does not ship a non-enforced USD cap as a real control", () => {
+    expect(TITAN_FALLBACK_CONFIG.maxCostPerDayUsd).toBe(0);
   });
 });
