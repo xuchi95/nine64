@@ -38,6 +38,14 @@ export interface ChessBoardProps {
   arrows?: { from: string; to: string; ply: number }[];
   /** Coach overlay: squares the live coach wants the user to look at. */
   highlightSquares?: string[];
+  /**
+   * Crazyhouse: legal squares for the pocket piece currently armed outside the
+   * board. When set, a click on one of these squares plays a DROP instead of a
+   * normal selection.
+   */
+  dropTargets?: string[];
+  /** Called with the square a pocket drop was played on. */
+  onDropSquare?: (square: string) => void;
   turn: PieceColor;
 
 
@@ -145,6 +153,8 @@ export function ChessBoard(props: ChessBoardProps) {
     onPremove,
     arrows,
     highlightSquares,
+    dropTargets,
+    onDropSquare,
   } = props;
 
 
@@ -489,8 +499,13 @@ export function ChessBoard(props: ChessBoardProps) {
   );
 
   const targets = useMemo(
-    () => (selected ? legalTargets(selected) : []),
-    [selected, legalTargets],
+    () =>
+      dropTargets && dropTargets.length > 0
+        ? dropTargets
+        : selected
+          ? legalTargets(selected)
+          : [],
+    [dropTargets, selected, legalTargets],
   );
 
   const occupied = useMemo(() => new Set(tracked.map((p) => p.square)), [tracked]);
@@ -517,6 +532,15 @@ export function ChessBoard(props: ChessBoardProps) {
 
   const handlePointerDown = (e: React.PointerEvent, square: string) => {
     if (!interactive) return;
+
+    // A pocket piece is armed: the board becomes a drop surface.
+    if (dropTargets && dropTargets.length > 0 && onDropSquare) {
+      if (dropTargets.includes(square)) {
+        setSelected(null);
+        onDropSquare(square);
+        return;
+      }
+    }
     const piece = tracked.find((p) => p.square === square);
     const selectable = piece && (canMoveFrom(square) || (settings.premove && onPremove));
 
