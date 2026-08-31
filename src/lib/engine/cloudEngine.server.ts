@@ -240,7 +240,7 @@ export function interpretHealthPayload(
   if (!pool || statusText !== "ok") {
     // Unknown shape or an engine that is still starting: never report healthy.
     return {
-      status: statusText === "ok" ? "degraded" : "unavailable",
+      status: pool ? "degraded" : "unavailable",
       engineVersion,
       arch,
       pool,
