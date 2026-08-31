@@ -11,7 +11,9 @@ import { ResultModal } from "@/components/game/ResultModal";
 import { TimeControlPicker } from "@/components/game/TimeControlPicker";
 import { Button } from "@/components/ui/button";
 import { APP, type TimeControl } from "@/config/app";
-import { localVariants, type VariantId, variantName, variantBlurb } from "@/config/variants";
+import { hasPocket, localVariants, type VariantId, variantName, variantBlurb } from "@/config/variants";
+import { PocketBar } from "@/components/chess/PocketBar";
+import type { PieceType } from "@/components/chess/Piece";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
@@ -45,6 +47,8 @@ function LocalGame() {
   const [orientation, setOrientation] = useState<Color>("w");
   const [autoFlip, setAutoFlip] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  /** Crazyhouse: the pocket piece armed for a drop, if any. */
+  const [armedDrop, setArmedDrop] = useState<PieceType | null>(null);
 
   const game = useChessGame({
     variant,
@@ -147,6 +151,8 @@ function LocalGame() {
   }
 
   const boardOrientation: Color = autoFlip ? game.turn : orientation;
+  const showPocket = hasPocket(variant) && !!game.pockets;
+  const dropSquares = armedDrop ? game.dropTargets(armedDrop) : [];
 
   return (
     <AppShell wide>
@@ -183,6 +189,19 @@ function LocalGame() {
           </>
         }
         board={
+          <div className="space-y-2">
+            {showPocket && (
+              <PocketBar
+                color={boardOrientation === "w" ? "b" : "w"}
+                pocket={game.pockets![boardOrientation === "w" ? "b" : "w"]}
+                armed={game.turn === (boardOrientation === "w" ? "b" : "w") ? armedDrop : null}
+                onArm={
+                  !game.result && game.turn === (boardOrientation === "w" ? "b" : "w")
+                    ? setArmedDrop
+                    : null
+                }
+              />
+            )}
             <ChessBoard
               pieces={game.board}
               orientation={boardOrientation}
@@ -195,7 +214,21 @@ function LocalGame() {
               checkmate={game.result?.reason === "Checkmate"}
               interactive={!game.result}
               turn={game.turn}
+              dropTargets={dropSquares}
+              onDropSquare={(square) => {
+                if (!armedDrop) return;
+                if (game.makeDrop(armedDrop, square)) setArmedDrop(null);
+              }}
             />
+            {showPocket && (
+              <PocketBar
+                color={boardOrientation}
+                pocket={game.pockets![boardOrientation]}
+                armed={game.turn === boardOrientation ? armedDrop : null}
+                onArm={!game.result && game.turn === boardOrientation ? setArmedDrop : null}
+              />
+            )}
+          </div>
         }
         right={
           <>

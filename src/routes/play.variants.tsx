@@ -96,7 +96,7 @@ const RULES_VI: Record<VariantId, string[]> = {
 };
 
 function Flag({ on, label }: { on: boolean; label: string }) {
-  const t = useT();
+  const { t } = useT();
   return (
     <span
       className={cn(
@@ -114,7 +114,7 @@ function Flag({ on, label }: { on: boolean; label: string }) {
 }
 
 function VariantHelpPage() {
-  const t = useT();
+  const { t } = useT();
 
   return (
     <AppShell>
