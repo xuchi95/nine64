@@ -22,6 +22,8 @@ export interface LiveCoachStyleRequest {
   /** Deterministic text the model must preserve the meaning of. */
   baseMessage: string;
   baseQuestion: string | null;
+  /** Squares the deterministic text already refers to (hanging square, engine move). */
+  allowedSquares: string[];
 }
 
 export interface LiveCoachStyleResult {
@@ -129,7 +131,7 @@ export async function styleCoachMoment(
     return null;
   }
 
-  const allowed = [req.playedSan, req.bestSan ?? ""];
+  const allowed = [req.playedSan, req.bestSan ?? "", ...req.allowedSquares];
   const message = stripUnsanctionedMoves(cap(parsed.message, 320), allowed);
   if (!message) return null;
   const questionRaw = cap(parsed.question, 200);

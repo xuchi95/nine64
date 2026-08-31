@@ -33,6 +33,7 @@ const StyleInput = z.object({
   lossCp: z.number().int().min(0).max(20_000),
   baseMessage: z.string().min(1).max(600),
   baseQuestion: z.string().max(400).nullable(),
+  allowedSquares: z.array(z.string().regex(/^[a-h][1-8]$/)).max(6),
 });
 
 export interface StyleLiveCoachResult {

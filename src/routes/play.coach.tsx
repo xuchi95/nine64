@@ -204,6 +204,7 @@ function PlayCoach() {
           lossCp: Math.round(built.lossCp),
           baseMessage: built.message,
           baseQuestion: built.question,
+          allowedSquares: built.highlight,
         },
       });
       if (res.styled) {
