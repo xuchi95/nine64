@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { APP, type TimeControl } from "@/config/app";
 import { BOT_LEVELS, BOT_PERSONALITIES, getBotLevel, getPersonality, botLevelTitle, personalityName, personalityBlurb } from "@/config/bots";
-import { VARIANTS, type VariantId, variantName, variantBlurb } from "@/config/variants";
+import { botVariants, type VariantId, variantName, variantBlurb } from "@/config/variants";
 import { useChessGame, type Color } from "@/hooks/useChessGame";
 import {
   StockfishEngine,
@@ -466,7 +466,7 @@ function PlayAi() {
                 {t("play.ai.variant")}
               </h2>
               <div className="mt-3 grid gap-2">
-                {VARIANTS.filter((v) => v.enabled).map((v) => (
+                {botVariants().map((v) => (
                   <button
                     key={v.id}
                     type="button"

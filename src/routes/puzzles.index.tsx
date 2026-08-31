@@ -14,6 +14,7 @@ import { MOTIF_LABEL } from "@/lib/analysis/motifs";
 import { formatRating, isProvisional } from "@/lib/rating/glicko2";
 import { addPuzzles, gradePuzzle, hydrateLearn, useLearnState } from "@/lib/learn/store";
 import { generateFromLibrary, type Puzzle } from "@/lib/learn/puzzleGen";
+import { attemptMove, initialSolverState, solverPlyCount, type SolverState } from "@/lib/learn/puzzleSolver";
 import { isDue, retrievability, sortByUrgency } from "@/lib/learn/fsrs";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
@@ -37,10 +38,9 @@ function PuzzlesPage() {
   const games = useGameHistory();
   const learn = useLearnState();
   const [index, setIndex] = useState(0);
-  const [verdict, setVerdict] = useState<Verdict>("idle");
   const [hinted, setHinted] = useState(false);
   const [startedAt, setStartedAt] = useState(() => Date.now());
-  const [preview, setPreview] = useState<{ from: string; to: string } | null>(null);
+  const [solver, setSolver] = useState<SolverState | null>(null);
 
   useEffect(() => {
     hydrateLearn();
@@ -55,22 +55,26 @@ function PuzzlesPage() {
   const puzzle: Puzzle | null = queue[Math.min(index, Math.max(0, queue.length - 1))] ?? null;
 
   useEffect(() => {
-    setVerdict("idle");
+    setSolver(puzzle ? initialSolverState(puzzle) : null);
     setHinted(false);
-    setPreview(null);
     setStartedAt(Date.now());
   }, [puzzle?.id]);
 
+  const verdict: Verdict =
+    solver?.status === "solved" ? "correct" : solver?.status === "wrong" ? "wrong" : "idle";
+  const finished = verdict !== "idle";
+
   const position = useMemo(() => {
-    if (!puzzle) return null;
+    const fen = solver?.fen ?? puzzle?.fen;
+    if (!fen) return null;
     const chess = new Chess();
     try {
-      chess.load(puzzle.fen);
+      chess.load(fen);
     } catch {
       return null;
     }
     return chess;
-  }, [puzzle?.id, puzzle?.fen]);
+  }, [solver?.fen, puzzle?.fen]);
 
   const pieces = useMemo(() => {
     if (!position) return [];
@@ -100,25 +104,35 @@ function PuzzlesPage() {
   };
 
   const submit = (from: string, to: string, promotion?: "q" | "r" | "b" | "n"): boolean => {
-    if (!puzzle || verdict !== "idle") return false;
-    const attempt = `${from}${to}${promotion && promotion !== "q" ? promotion : ""}`;
-    const expected = puzzle.solution.length > 4 ? puzzle.solution : puzzle.solution.slice(0, 4);
-    const correct = attempt.slice(0, 4) === expected.slice(0, 4);
-    setPreview({ from, to });
+    if (!puzzle || !solver || finished) return false;
+    const result = attemptMove(puzzle, solver, from, to, promotion);
+    // Illegal drop: nothing consumed, no penalty.
+    if (result.playedSan === null && result.status === solver.status) return false;
+    setSolver({
+      fen: result.fen,
+      playedPlies: result.playedPlies,
+      status: result.status,
+      lastMove: result.lastMove,
+    });
 
-    const seconds = (Date.now() - startedAt) / 1000;
-    if (correct) {
-      const grade = hinted ? 2 : seconds < 12 ? 4 : 3;
-      gradePuzzle(puzzle.id, grade);
-      setVerdict("correct");
-      toast.success(hinted ? t("study.puzzles.correctHint") : t("study.puzzles.correct"), {
-        description: puzzle.solutionSan ? t("study.puzzles.bestMove", { san: puzzle.solutionSan }) : undefined,
-      });
-    } else {
+    if (result.status === "wrong") {
       gradePuzzle(puzzle.id, 1);
-      setVerdict("wrong");
       toast.error(t("study.puzzles.wrong"), {
-        description: puzzle.solutionSan ? t("study.puzzles.theWinWas", { san: puzzle.solutionSan }) : undefined,
+        description: result.expected?.san
+          ? t("study.puzzles.theWinWas", { san: result.expected.san })
+          : undefined,
+      });
+      return true;
+    }
+
+    if (result.status === "solved") {
+      const seconds = (Date.now() - startedAt) / 1000;
+      const grade = hinted ? 2 : seconds < 12 * solverPlyCount(puzzle) ? 4 : 3;
+      gradePuzzle(puzzle.id, grade);
+      toast.success(hinted ? t("study.puzzles.correctHint") : t("study.puzzles.correct"), {
+        description: puzzle.solutionSan
+          ? t("study.puzzles.bestMove", { san: puzzle.solutionSan })
+          : undefined,
       });
     }
     return true;
@@ -191,7 +205,7 @@ function PuzzlesPage() {
                 if (!piece || piece.type !== "p") return false;
                 return to.endsWith(piece.color === "w" ? "8" : "1");
               }}
-              lastMove={preview}
+              lastMove={solver?.lastMove ?? null}
               checkSquare={null}
               interactive={verdict === "idle"}
             />
@@ -238,7 +252,7 @@ function PuzzlesPage() {
                     onClick={() => {
                       setHinted(true);
                       toast.info(t("study.puzzles.hintToast"), {
-                        description: t("study.puzzles.hintDesc", { square: puzzle.solution.slice(0, 2) }),
+                        description: t("study.puzzles.hintDesc", { square: puzzle.solution[solver?.playedPlies ?? 0]?.uci.slice(0, 2) ?? "" }),
                       });
                     }}
                   >
@@ -258,7 +272,7 @@ function PuzzlesPage() {
                     }`}
                   >
                     {verdict === "correct" ? <Check className="size-4" /> : <X className="size-4" />}
-                    {verdict === "correct" ? t("study.puzzles.solved") : t("study.puzzles.bestWas", { san: puzzle.solutionSan ?? puzzle.solution })}
+                    {verdict === "correct" ? t("study.puzzles.solved") : t("study.puzzles.bestWas", { san: puzzle.solutionSan ?? puzzle.solution[0]?.uci ?? "" })}
                   </div>
                   <Button className="w-full" onClick={next}>
                     {t("study.puzzles.nextPuzzle")}
