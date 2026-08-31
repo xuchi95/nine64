@@ -25,24 +25,25 @@ function makePuzzle(fen: string, solution: Puzzle["solution"], alternates: Puzzl
 }
 
 // Back-rank mate in two: 1. Ra8+ Rxa8 2. Rxa8#
-const BACK_RANK = "6k1/5ppp/8/8/8/8/8/R3R1K1 w - - 0 1";
+const BACK_RANK = "6k1/5pp1/7p/8/8/8/8/R3R1K1 w - - 0 1";
 
 describe("multi-move puzzle solver", () => {
   it("does not accept the first move as a full solution", () => {
     const line = lineFromSan(BACK_RANK, ["Ra8+", "Kh7"], 4);
+    expect(line).toHaveLength(2);
     const puzzle = makePuzzle(BACK_RANK, line);
     expect(solverPlyCount(puzzle)).toBe(1);
 
-    const longer = makePuzzle(BACK_RANK, [...line, { uci: "e1e8", san: "Re8#" }]);
+    const longer = makePuzzle(BACK_RANK, [...line, { uci: "e1e8", san: "Re8" }]);
     const state = initialSolverState(longer);
     const first = attemptMove(longer, state, "a1", "a8");
     expect(first.status).toBe("progress");
     expect(first.replySan).toBe("Kh7");
     expect(first.playedPlies).toBe(2);
 
-    const wrong = attemptMove(longer, first, "e1", "e2");
+    const wrong = attemptMove(longer, first, "e1", "e4");
     expect(wrong.status).toBe("wrong");
-    expect(wrong.expected?.san).toBe("Re8#");
+    expect(wrong.expected?.san).toBe("Re8");
 
     const right = attemptMove(longer, first, "e1", "e8");
     expect(right.status).toBe("solved");
@@ -51,9 +52,9 @@ describe("multi-move puzzle solver", () => {
   it("ignores illegal drops without penalising the solver", () => {
     const puzzle = makePuzzle(BACK_RANK, [{ uci: "a1a8", san: "Ra8+" }]);
     const state = initialSolverState(puzzle);
-    const result = attemptMove(puzzle, state, "a1", "a5");
+    const result = attemptMove(puzzle, state, "a1", "b3");
     expect(result.status).toBe("idle");
-    const illegal = attemptMove(puzzle, state, "a1", "b3");
+    const illegal = attemptMove(puzzle, state, "g1", "a5");
     expect(illegal.status).toBe("idle");
     expect(illegal.playedPlies).toBe(0);
   });
