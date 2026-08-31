@@ -19,6 +19,7 @@ import { AuthProvider } from "@/lib/auth";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { IdlePreloader } from "@/components/layout/IdlePreloader";
+import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/security/headers";
 
 
 function NotFoundComponent() {
@@ -136,12 +137,9 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className="dark">
       <head>
-        {/* Applies the persisted colour mode before first paint: no light/dark flash on reload. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem("nexus-chess.settings.v1");var m=s?(JSON.parse(s)||{}).appearance:null;if(m!=="light"&&m!=="dark")m="dark";var r=document.documentElement;r.classList.toggle("light",m==="light");r.classList.toggle("dark",m==="dark");r.style.colorScheme=m;}catch(e){}})();`,
-          }}
-        />
+        {/* Applies the persisted colour mode before first paint: no light/dark
+            flash on reload. Kept byte-identical to the CSP script hash. */}
+        <script data-theme-boot="" dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
