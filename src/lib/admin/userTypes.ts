@@ -68,19 +68,20 @@ export interface AdminUserListResult {
 }
 
 export interface AdminUserListInput {
-  page?: number;
-  pageSize?: number;
-  q?: string;
-  role?: "admin" | "moderator" | "user" | "any";
-  status?: UserAdminStatus | "any";
-  fairplay?: "any" | "clean" | "flagged" | "locked";
-  ratingMin?: number;
-  ratingMax?: number;
-  createdFrom?: string;
-  createdTo?: string;
-  sort?: UserSortField;
-  dir?: "asc" | "desc";
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  q?: string | undefined;
+  role?: "admin" | "moderator" | "user" | "any" | undefined;
+  status?: UserAdminStatus | "any" | undefined;
+  fairplay?: "any" | "clean" | "flagged" | "locked" | undefined;
+  ratingMin?: number | undefined;
+  ratingMax?: number | undefined;
+  createdFrom?: string | undefined;
+  createdTo?: string | undefined;
+  sort?: UserSortField | undefined;
+  dir?: "asc" | "desc" | undefined;
 }
+
 
 export interface TimelineEntry {
   id: string;
