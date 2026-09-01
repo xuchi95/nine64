@@ -1,0 +1,109 @@
+/**
+ * Client-side orchestration helpers for starting a Nine64 Titan (level 16) game.
+ *
+ * Pure + dependency-injected so the start flow can be tested without React.
+ * Nothing here trusts the client: the server re-checks every condition.
+ */
+
+export type TitanState = "loading" | "ready" | "not_configured" | "disabled" | "unavailable";
+
+export interface TitanStatusPayload {
+  state: TitanState;
+  name: string;
+  stockfishVersion: string | null;
+}
+
+/** Never leak raw exceptions/URLs; unknown shapes degrade to "unavailable". */
+export function titanStateOf(payload: unknown): TitanState {
+  const state = (payload as { state?: unknown } | null)?.state;
+  return state === "ready" || state === "not_configured" || state === "disabled"
+    ? state
+    : "unavailable";
+}
+
+/** Maps a server error code to a user-facing message; never downgrades Titan. */
+export function titanMessage(code: string | null | undefined, t: (key: string) => string): string {
+  switch (code) {
+    case "ENGINE_NOT_CONFIGURED":
+      return t("play.ai.titanNotConfigured");
+    case "PROFILE_DISABLED":
+      return t("play.ai.titanProfileDisabled");
+    case "QUOTA_EXCEEDED":
+      return t("play.ai.titanQuota");
+    case "TOO_MANY_SESSIONS":
+      return t("play.ai.titanTooMany");
+    case "VERSION_CONFLICT":
+    case "SESSION_CLOSED":
+      return t("play.ai.titanConflict");
+    case "WRITE_FAILED":
+      return t("play.ai.titanWriteFailed");
+    case "UNAUTHORIZED":
+      return t("play.ai.titanAuthRequired");
+    default:
+      return t("play.ai.titanUnavailable");
+  }
+}
+
+/** Message for a preflight status; `null` when there is nothing to warn about. */
+export function titanStateMessage(
+  state: TitanState,
+  t: (key: string) => string,
+): string | null {
+  switch (state) {
+    case "not_configured":
+      return t("play.ai.titanNotConfigured");
+    case "disabled":
+      return t("play.ai.titanProfileDisabled");
+    case "unavailable":
+      return t("play.ai.titanUnavailable");
+    default:
+      return null;
+  }
+}
+
+export interface TitanStartResult {
+  ok: boolean;
+  code?: string | undefined;
+  snapshot?: unknown;
+}
+
+export interface TitanStartDeps<S> {
+  /** Calls the authenticated server function. */
+  request: () => Promise<{ ok: boolean; code?: string; snapshot?: S }>;
+  onStarted: (snapshot: S) => void;
+  onError: (code: string | null) => void;
+  onPending: (pending: boolean) => void;
+}
+
+/**
+ * Single-flight Titan session starter. Concurrent calls (double click) resolve
+ * to the same in-flight promise, so exactly one session is ever created.
+ * Session creation is deliberately never auto-retried.
+ */
+export function createTitanStarter<S>(deps: TitanStartDeps<S>): () => Promise<boolean> {
+  let inFlight: Promise<boolean> | null = null;
+
+  return () => {
+    if (inFlight) return inFlight;
+    deps.onPending(true);
+    inFlight = (async () => {
+      try {
+        const res = await deps.request();
+        if (!res.ok || !res.snapshot) {
+          deps.onError(res.code ?? null);
+          return false;
+        }
+        deps.onStarted(res.snapshot);
+        return true;
+      } catch {
+        // Raw exceptions never reach the UI.
+        deps.onError(null);
+        return false;
+      } finally {
+        deps.onPending(false);
+        inFlight = null;
+      }
+    })();
+    return inFlight;
+  };
+}
