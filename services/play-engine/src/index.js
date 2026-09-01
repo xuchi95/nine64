@@ -13,6 +13,7 @@ import os from "node:os";
 import { EnginePool } from "./pool.js";
 import { VARIANTS, createPosition, decodeEngineMove, isLegal } from "./rules.js";
 import { verifyIdToken } from "./auth.js";
+import { EPD_SUITE, POSITION_SUITE, runSuite, suiteMovetime } from "./benchmark.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const ALLOWED_OPTIONS = new Set([
@@ -290,4 +291,4 @@ if (process.env.NODE_ENV !== "test") {
     });
 }
 
-export { server, pool, sanitizeOptions, buildGoArgs, handleBestMove };
+export { server, pool, sanitizeOptions, buildGoArgs, handleBestMove, handleBenchmark };
