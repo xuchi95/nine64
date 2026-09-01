@@ -133,6 +133,31 @@ function PlayAi() {
   const endTitan = useServerFn(endTitanSession);
   const titanRef = useRef<{ id: string; version: number } | null>(null);
   const [titanStarting, setTitanStarting] = useState(false);
+  const titanStatusFn = useServerFn(getTitanStatus);
+  const [titanState, setTitanState] = useState<TitanState>("loading");
+  const [titanProbe, setTitanProbe] = useState(0);
+
+  // Preflight the Titan service so the setup screen can explain the state
+  // before the player presses Start. Status probes may be retried safely.
+  useEffect(() => {
+    if (!isTitan || phase !== "setup") return;
+    let cancelled = false;
+    setTitanState("loading");
+    void (async () => {
+      try {
+        const res = await titanStatusFn();
+        if (!cancelled) setTitanState(titanStateOf(res));
+      } catch {
+        if (!cancelled) setTitanState("unavailable");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTitan, phase, titanProbe]);
+
+  type TitanSnapshot = Extract<Awaited<ReturnType<typeof startTitan>>, { ok: true }>["snapshot"];
 
   useEffect(() => {
     if (phase !== "playing" || isTitan) return;
@@ -146,42 +171,61 @@ function PlayAi() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, settings.enginePerformance, isTitan]);
 
+  // Latest-value bridge so the single-flight starter can stay stable.
+  const titanStartRef = useRef<{
+    request: () => Promise<Awaited<ReturnType<typeof startTitan>>>;
+    onStarted: (snapshot: TitanSnapshot) => void;
+    onError: (code: string | null) => void;
+  }>({
+    request: () => Promise.reject(new Error("not ready")),
+    onStarted: () => {},
+    onError: () => {},
+  });
+  const titanStarterRef = useRef<(() => Promise<boolean>) | null>(null);
+  if (!titanStarterRef.current) {
+    titanStarterRef.current = createTitanStarter<TitanSnapshot>({
+      request: () => titanStartRef.current.request(),
+      onStarted: (snapshot) => titanStartRef.current.onStarted(snapshot),
+      onError: (code) => titanStartRef.current.onError(code),
+      onPending: setTitanStarting,
+    });
+  }
+
   const start = () => {
     const color: Color =
       config.color === "random" ? (Math.random() < 0.5 ? "w" : "b") : config.color;
+    // Always clear the previous error before a new attempt.
     setEngineError(null);
     if (isTitan) {
       // A Titan game only exists once the server has created the session.
-      setTitanStarting(true);
-      void (async () => {
-        try {
-          const res = await startTitan({
+      titanStartRef.current = {
+        request: () =>
+          startTitan({
             data: {
               playerColor: color,
               variant: config.variant === "chess960" ? "chess960" : "standard",
             },
-          });
-          if (!res.ok) {
-            setEngineError(titanMessage(res.code, t));
-            return;
-          }
-          titanRef.current = { id: res.snapshot.sessionId, version: res.snapshot.version };
+          }),
+        onStarted: (snapshot) => {
+          titanRef.current = { id: snapshot.sessionId, version: snapshot.version };
           setPlayerColor(color);
           // The server owns the starting array (critical for Chess960).
-          game.loadFen(res.snapshot.initialFen);
+          game.loadFen(snapshot.initialFen);
           prevEval.current = 0;
           setPhase("playing");
           playSound("matchFound");
           // Engine opened the game when the player is Black.
-          for (const move of res.snapshot.moves) {
+          for (const move of snapshot.moves) {
             game.makeMove(move.uci.slice(0, 2), move.uci.slice(2, 4), move.uci[4] as never);
           }
-        } catch (err) {
-          setEngineError(err instanceof Error ? err.message : titanMessage(null, t));
-        } finally {
-          setTitanStarting(false);
-        }
-      })();
+        },
+        onError: (code) => {
+          setEngineError(titanMessage(code, t));
+          setTitanProbe((n) => n + 1);
+        },
+      };
+      // Session creation is single-flight and never auto-retried.
+      void titanStarterRef.current?.();
       return;
     }
     titanRef.current = null;
@@ -191,6 +235,7 @@ function PlayAi() {
     setPhase("playing");
     playSound("matchFound");
   };
+
 
   const { quick } = Route.useSearch();
   const quickStarted = useRef(false);
