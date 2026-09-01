@@ -394,8 +394,9 @@ function PlayAi() {
           applyPremove();
         } catch (err) {
           if (!titanCancelled) {
-            setEngineError(err instanceof Error ? err.message : titanMessage(null, t));
+            setEngineError(titanMessage(titanThrownCode(err), t));
           }
+
         } finally {
           busy.current = false;
           setThinking(false);
