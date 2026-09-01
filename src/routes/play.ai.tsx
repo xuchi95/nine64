@@ -622,10 +622,13 @@ function PlayAi() {
                 })}
               </div>
               {titanVariantBlocked && (
-                <GameNotice tone="error" className="mt-3">
-                  {t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) })}
-                </GameNotice>
+                <div className="mt-3">
+                  <GameNotice tone="error">
+                    {t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) })}
+                  </GameNotice>
+                </div>
               )}
+
               {isTitan && !titanVariantBlocked && (
                 <p className="mt-3 text-xs text-muted-foreground">{t("play.ai.titanVariantHint")}</p>
               )}
