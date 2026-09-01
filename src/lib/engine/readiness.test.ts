@@ -118,6 +118,25 @@ describe("publish readiness", () => {
     expect(evaluateReadiness(rows, null).ready).toBe(true);
   });
 
+  it("keeps the latest passing run for the requested fingerprint when another draft ran later", async () => {
+    const other = await engineConfigFingerprint({
+      ...TITAN_FALLBACK_CONFIG,
+      threads: TITAN_FALLBACK_CONFIG.threads + 1,
+    });
+    const r = evaluateReadiness(
+      [
+        row({ kind: "bench", createdAt: "2026-09-01T10:00:00Z" }),
+        row({ kind: "epd", createdAt: "2026-09-01T10:01:00Z" }),
+        row({ kind: "bench", createdAt: "2026-09-02T10:00:00Z", configSignature: other, passed: false }),
+        row({ kind: "epd", createdAt: "2026-09-02T10:01:00Z", configSignature: other, passed: false }),
+      ],
+      SIG,
+    );
+    expect(r.ready).toBe(true);
+    expect(r.required.bench.id).toBe("bench-2026-09-01T10:00:00Z");
+    expect(r.required.epd.id).toBe("epd-2026-09-01T10:01:00Z");
+  });
+
   it("timeouts and engine errors on the latest run are reported distinctly", () => {
     const r = evaluateReadiness(
       [

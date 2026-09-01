@@ -59,12 +59,20 @@ function counter(row: BenchmarkRow, key: string): number {
  * runs must carry that exact fingerprint.
  */
 export function evaluateReadiness(rows: BenchmarkRow[], signature?: string | null): ReadinessResult {
-  const latestByKind = latestBenchmarkByKind(rows);
+  // When publishing a concrete config, first scope to that fingerprint. A
+  // newer run for another draft must not hide the latest valid run for the
+  // config being published. We still inspect all rows below when no matching
+  // run exists so the UI can distinguish mismatch/stale from genuinely
+  // missing data.
+  const matchingRows = signature ? rows.filter((row) => row.configSignature === signature) : rows;
+  const latestByKind = latestBenchmarkByKind(matchingRows);
+  const latestUnscopedByKind = latestBenchmarkByKind(rows);
   const reasons = new Set<ReadinessReason>();
   const required = {} as Record<RequiredKind, RequiredBenchmarkState>;
 
   for (const kind of REQUIRED_BENCHMARK_KINDS) {
     const row = latestByKind.get(kind) ?? null;
+    const unscopedRow = latestUnscopedByKind.get(kind) ?? null;
     required[kind] = {
       present: Boolean(row),
       passed: Boolean(row?.passed),
@@ -72,12 +80,13 @@ export function evaluateReadiness(rows: BenchmarkRow[], signature?: string | nul
       createdAt: row?.createdAt ?? null,
     };
     if (!row) {
-      reasons.add(kind === "bench" ? "missing_bench" : "missing_tactics");
+      if (signature && unscopedRow) {
+        if (!unscopedRow.configSignature) reasons.add("benchmark_stale");
+        else reasons.add("benchmark_config_mismatch");
+      } else {
+        reasons.add(kind === "bench" ? "missing_bench" : "missing_tactics");
+      }
       continue;
-    }
-    if (signature) {
-      if (!row.configSignature) reasons.add("benchmark_stale");
-      else if (row.configSignature !== signature) reasons.add("benchmark_config_mismatch");
     }
     if (!row.passed) reasons.add(kind === "bench" ? "bench_failed" : "tactics_failed");
     // Execution/rules failures are read ONLY from the authoritative runs.
