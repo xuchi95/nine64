@@ -18,6 +18,7 @@ import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
 import { Route as DataRightsRouteImport } from './routes/data-rights'
 import { Route as EndgamesRouteImport } from './routes/endgames'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as OpeningsRouteImport } from './routes/openings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -26,6 +27,7 @@ import { Route as RegisterPolicyRouteImport } from './routes/register-policy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
 import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
@@ -53,6 +55,7 @@ import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as WatchIndexRouteImport } from './routes/watch.index'
 import { Route as WatchGameIdRouteImport } from './routes/watch.$gameId'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
@@ -131,6 +134,11 @@ const InsightsRoute = InsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OfflineRoute = OfflineRouteImport.update({
   id: '/offline',
   path: '/offline',
@@ -171,6 +179,12 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -305,6 +319,11 @@ const WatchIndexRoute = WatchIndexRouteImport.update({
 const WatchGameIdRoute = WatchGameIdRouteImport.update({
   id: '/watch/$gameId',
   path: '/watch/$gameId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -500,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/mcp': typeof McpRoute
   '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -508,6 +528,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
   '/skills': typeof AuthenticatedSkillsRoute
@@ -535,6 +556,7 @@ export interface FileRoutesByFullPath {
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -578,6 +600,7 @@ export interface FileRoutesByTo {
   '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/mcp': typeof McpRoute
   '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -586,6 +609,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
   '/skills': typeof AuthenticatedSkillsRoute
@@ -613,6 +637,7 @@ export interface FileRoutesByTo {
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
   '/watch': typeof WatchIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -658,6 +683,7 @@ export interface FileRoutesById {
   '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/mcp': typeof McpRoute
   '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -666,6 +692,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRouteWithChildren
   '/_authenticated/skills': typeof AuthenticatedSkillsRoute
@@ -693,6 +720,7 @@ export interface FileRoutesById {
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -738,6 +766,7 @@ export interface FileRouteTypes {
     | '/data-rights'
     | '/endgames'
     | '/insights'
+    | '/mcp'
     | '/offline'
     | '/openings'
     | '/privacy'
@@ -746,6 +775,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/account'
     | '/online'
     | '/skills'
@@ -773,6 +803,7 @@ export interface FileRouteTypes {
     | '/play/'
     | '/puzzles/'
     | '/watch/'
+    | '/.lovable/oauth/consent'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -816,6 +847,7 @@ export interface FileRouteTypes {
     | '/data-rights'
     | '/endgames'
     | '/insights'
+    | '/mcp'
     | '/offline'
     | '/openings'
     | '/privacy'
@@ -824,6 +856,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/account'
     | '/online'
     | '/skills'
@@ -851,6 +884,7 @@ export interface FileRouteTypes {
     | '/play'
     | '/puzzles'
     | '/watch'
+    | '/.lovable/oauth/consent'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -895,6 +929,7 @@ export interface FileRouteTypes {
     | '/data-rights'
     | '/endgames'
     | '/insights'
+    | '/mcp'
     | '/offline'
     | '/openings'
     | '/privacy'
@@ -903,6 +938,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/account'
     | '/_authenticated/online'
     | '/_authenticated/skills'
@@ -930,6 +966,7 @@ export interface FileRouteTypes {
     | '/play/'
     | '/puzzles/'
     | '/watch/'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
     | '/_authenticated/admin/intelligence'
@@ -975,6 +1012,7 @@ export interface RootRouteChildren {
   DataRightsRoute: typeof DataRightsRoute
   EndgamesRoute: typeof EndgamesRoute
   InsightsRoute: typeof InsightsRoute
+  McpRoute: typeof McpRoute
   OfflineRoute: typeof OfflineRoute
   OpeningsRoute: typeof OpeningsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -983,6 +1021,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
@@ -1005,6 +1044,7 @@ export interface RootRouteChildren {
   PlayIndexRoute: typeof PlayIndexRoute
   PuzzlesIndexRoute: typeof PuzzlesIndexRoute
   WatchIndexRoute: typeof WatchIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   GamesOnlineGameIdRoute: typeof GamesOnlineGameIdRoute
   LearnCourseSlugRoute: typeof LearnCourseSlugRoute
   LearnLessonSlugRoute: typeof LearnLessonSlugRoute
@@ -1083,6 +1123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/offline': {
       id: '/offline'
       path: '/offline'
@@ -1137,6 +1184,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account': {
@@ -1326,6 +1380,13 @@ declare module '@tanstack/react-router' {
       path: '/watch/$gameId'
       fullPath: '/watch/$gameId'
       preLoaderRoute: typeof WatchGameIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
@@ -1644,6 +1705,7 @@ const rootRouteChildren: RootRouteChildren = {
   DataRightsRoute: DataRightsRoute,
   EndgamesRoute: EndgamesRoute,
   InsightsRoute: InsightsRoute,
+  McpRoute: McpRoute,
   OfflineRoute: OfflineRoute,
   OpeningsRoute: OpeningsRoute,
   PrivacyRoute: PrivacyRoute,
@@ -1652,6 +1714,8 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
@@ -1674,6 +1738,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayIndexRoute: PlayIndexRoute,
   PuzzlesIndexRoute: PuzzlesIndexRoute,
   WatchIndexRoute: WatchIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   GamesOnlineGameIdRoute: GamesOnlineGameIdRoute,
   LearnCourseSlugRoute: LearnCourseSlugRoute,
   LearnLessonSlugRoute: LearnLessonSlugRoute,

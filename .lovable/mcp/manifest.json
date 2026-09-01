@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "sdk_version": "1.0.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://paonjtgdzlmryhbneeqy.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "chess-master-platform",
+      "version": "0.1.0",
+      "title": "Chess Master Platform"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my Nine64 profile",
+        "description": "Return the signed-in Nine64 player's profile: display name, Glicko-2 rating, deviation, peak rating and win/loss/draw record.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_games",
+        "title": "List my online games",
+        "description": "List the signed-in player's most recent Nine64 online games with variant, time control, status, result and opponent id.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "description": "How many games to return (1-50)."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "any",
+                "active",
+                "finished"
+              ],
+              "default": "any",
+              "description": "Filter by game status."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_game_moves",
+        "title": "Get moves of one of my games",
+        "description": "Return the ordered move list (SAN, UCI, FEN after each move, clocks) of a Nine64 online game the signed-in player took part in.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "game_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The game id, as returned by list_my_games."
+            }
+          },
+          "required": [
+            "game_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_puzzle_stats",
+        "title": "Get my puzzle training stats",
+        "description": "Return the signed-in player's Nine64 puzzle training stats: attempts, solved, hints used, streaks, sprint/survival bests and per-theme accuracy.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
