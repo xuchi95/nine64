@@ -157,9 +157,14 @@ function PlayAi() {
   const [titanState, setTitanState] = useState<TitanState>("loading");
   const [titanCode, setTitanCode] = useState<string | null>(null);
   const [titanProbe, setTitanProbe] = useState(0);
+  // Titan sessions are server-side and authenticated: a signed-out player must
+  // be told to sign in, not that the engine is down.
+  const { user, isLoading: authLoading } = useAuth();
+  const titanNeedsAuth = isTitan && !authLoading && !user;
   // Titan runs plain Stockfish: variants it cannot adjudicate are blocked,
   // never silently downgraded to standard chess.
   const titanVariantBlocked = isTitan && !titanSupportsVariant(config.variant);
+
 
 
   // Preflight the Titan service so the setup screen can explain the state
