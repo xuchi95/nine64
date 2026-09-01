@@ -148,11 +148,12 @@ export function extractFeatures(fen: string, uci: string): MoveFeatures {
     const them = mover === "w" ? "b" : "w";
     const beforeUs = materialOf(chess, mover);
     const beforeThem = materialOf(chess, them);
-    const move = chess.move({
-      from: uci.slice(0, 2),
-      to: uci.slice(2, 4),
-      promotion: uci.length > 4 ? uci[4] : undefined,
-    });
+    const promotion = uci.length > 4 ? uci[4] : undefined;
+    const move = chess.move(
+      promotion
+        ? { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion }
+        : { from: uci.slice(0, 2), to: uci.slice(2, 4) },
+    );
     if (!move) return NEUTRAL;
 
     const afterUs = materialOf(chess, mover);
