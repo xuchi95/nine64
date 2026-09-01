@@ -219,12 +219,13 @@ export function styleScore(
       s += f.capture ? 6 : 0;
       break;
     case "fortress":
-      s += f.check ? 2 : 0;
-      s -= kingPressure * 2;
-      s += f.simplification * 0.02;
+      // Solidity first: no king hunts, no speculative material, clean pawns.
+      s -= f.check ? 10 : 0;
+      s -= kingPressure * 4;
+      s += f.simplification * 0.03;
       s -= f.pawnStructurePenalty * 6;
       s -= f.sacrifice ? 30 : 0;
-      s -= f.theirMobility * 0.25;
+      s += f.ourMobility * 0.2;
       break;
     case "gambit":
       s += f.sacrifice ? 26 : 0;

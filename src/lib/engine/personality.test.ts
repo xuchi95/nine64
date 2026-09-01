@@ -6,6 +6,8 @@ import {
   personalityActive,
   pickPersonalityMove,
   toleranceFor,
+  extractFeatures,
+  styleScore,
 } from "./personality";
 import { parseUciOptionName, type EngineLine } from "./stockfish";
 
@@ -160,17 +162,15 @@ describe("personality reranker", () => {
         ply: 0,
       }),
     ).toBe("e2e4");
-    // Chess960 must not inherit standard-opening assumptions.
-    expect(
-      pickPersonalityMove({
-        lines: [line("d2d4", 25), line("e2e4", 10)],
-        personality: getPersonality("viper"),
-        level: getBotLevel(12),
-        fen: start,
-        ply: 0,
-        variant: "chess960",
-      }),
-    ).toBe("d2d4");
+    // Chess960 must not inherit standard-opening assumptions, and the book is
+    // opening-phase only.
+    const viper = getPersonality("viper");
+    const f = extractFeatures(start, "e2e4");
+    const std = styleScore("viper", f, viper, { ply: 0, variant: "standard" });
+    const p960 = styleScore("viper", f, viper, { ply: 0, variant: "chess960" });
+    const late = styleScore("viper", f, viper, { ply: 30, variant: "standard" });
+    expect(std).toBeGreaterThan(p960);
+    expect(late).toBe(p960);
   });
 });
 
