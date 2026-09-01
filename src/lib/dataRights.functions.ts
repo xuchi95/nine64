@@ -35,7 +35,11 @@ export const exportMyData = createServerFn({ method: "POST" })
         .limit(2000),
       sb.from("offline_games").select("*").eq("user_id", userId).limit(5000),
       sb.from("puzzle_attempts").select("*").eq("user_id", userId).limit(5000),
-      sb.from("rating_events").select("*").eq("user_id", userId).limit(5000),
+      sb
+        .from("rating_events")
+        .select("*")
+        .or(`white_id.eq.${userId},black_id.eq.${userId}`)
+        .limit(5000),
       sb.from("learn_progress").select("*").eq("user_id", userId).limit(5000),
       sb.from("notifications").select("*").eq("user_id", userId).limit(1000),
     ]);
