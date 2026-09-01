@@ -274,7 +274,7 @@ function LoginPage() {
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {t("study.login.noAccount")}{" "}
             <Link
-              to="/auth/register"
+              to="/register-policy"
               search={{ redirect: redirectTo }}
               className="text-primary hover:underline"
             >
