@@ -498,8 +498,20 @@ export async function requestBestMove(req: BestMoveRequest): Promise<BestMoveRes
   return last;
 }
 
+/**
+ * Per-kind search budget. `bench`/`speedtest` run Stockfish's native bench and
+ * ignore movetime; the suites get a realistic per-position budget instead of
+ * the old 1s that made tactics scoring meaningless.
+ */
+export const BENCHMARK_MOVETIME_MS: Record<BenchmarkRun["kind"], number | null> = {
+  bench: null,
+  speedtest: null,
+  epd: 3_000,
+  positions: 1_500,
+};
+
 export interface BenchmarkRun {
-  kind: "bench" | "speedtest" | "epd" | "positions" | "selfplay";
+  kind: "bench" | "speedtest" | "epd" | "positions";
   status: CloudEngineStatus;
   engineVersion: string | null;
   nodes: number | null;
@@ -514,7 +526,7 @@ export interface BenchmarkRun {
 export async function runCloudBenchmark(
   kind: BenchmarkRun["kind"],
   config: EngineConfig,
-  options: { movetimeMs?: number; games?: number } = {},
+  options: { movetimeMs?: number } = {},
 ): Promise<BenchmarkRun> {
   const res = await call<{
     engineVersion?: string;
@@ -529,10 +541,10 @@ export async function runCloudBenchmark(
     {
       kind,
       options: uciOptions(config),
-      movetimeMs: options.movetimeMs ?? 1_000,
-      games: options.games ?? 4,
+      movetimeMs: options.movetimeMs ?? BENCHMARK_MOVETIME_MS[kind] ?? null,
     },
-    Math.max(config.requestTimeoutMs, 120_000),
+    // Wall-clock budget must comfortably exceed the total suite search time.
+    Math.max(config.requestTimeoutMs, 300_000),
   );
   if (!res.ok) {
     return {
