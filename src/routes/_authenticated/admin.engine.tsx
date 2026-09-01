@@ -119,6 +119,7 @@ function AdminEnginePage() {
   const qualify = useServerFn(runTitanQualificationSuite);
   const [qual, setQual] = useState<QualificationResult | null>(null);
   const [qualBusy, setQualBusy] = useState(false);
+  const [openRows, setOpenRows] = useState<Record<string, boolean>>({});
 
   const refresh = useCallback(async () => {
     setError(null);
