@@ -50,7 +50,7 @@ export const getTitanStatus = createServerFn({ method: "GET" }).handler(async ()
       stockfishVersion: profile.stockfishVersion,
       source: profile.source,
     };
-    const configured = env.present.PLAY_ENGINE_URL && env.present.PLAY_ENGINE_SA_EMAIL && env.present.PLAY_ENGINE_SA_PRIVATE_KEY;
+    const configured = env.configured;
 
     if (!configured) {
       return {
@@ -77,15 +77,25 @@ export const getTitanStatus = createServerFn({ method: "GET" }).handler(async ()
 
     const health = await cloudEngineHealthCached();
     const ready = health.status === "healthy" || health.status === "degraded";
+    const code = ready
+      ? "READY"
+      : health.status === "unauthorized"
+        ? "ENGINE_AUTH_FAILED"
+        : health.status === "not_configured"
+          ? "ENGINE_NOT_CONFIGURED"
+          : "ENGINE_UNAVAILABLE";
     return {
       ...info,
+      // The live engine version wins over the stored profile metadata.
+      stockfishVersion: health.engineVersion ?? info.stockfishVersion,
       state: ready ? "ready" : health.status === "not_configured" ? "not_configured" : "unavailable",
       available: ready,
       configured: true,
       enabled: true,
-      health: health.status,
-      code: ready ? "OK" : "ENGINE_UNAVAILABLE",
+      health: health.status === "unauthorized" ? "unavailable" : health.status,
+      code,
     };
+
   } catch {
     // Never surface stack traces, URLs or credentials to the client.
     return {
