@@ -20,6 +20,7 @@ import type { RulesPosition, PromotionPiece } from "@/lib/chess/rules";
 import { engineUciToAppMove } from "@/lib/chess/rules";
 import type { VariantId } from "@/config/variants";
 import { TITAN_SLUG, type EngineConfig } from "./profileTypes";
+import { endSessionPatch, type EndReason } from "./sessionLifecycle";
 
 export type SessionVariant = "standard" | "chess960";
 
@@ -184,6 +185,9 @@ export async function createSession(args: {
   level: number;
 }): Promise<SessionResult> {
   const db = await admin();
+  // Reap abandoned zero-move sessions first: a failed start must never eat
+  // into the player's concurrency budget.
+  await abortStaleZeroMoveSessions(args.userId).catch(() => 0);
   const { count } = await db
     .from("bot_sessions")
     .select("id", { count: "exact", head: true })
@@ -515,20 +519,22 @@ export async function engineOpeningMove(args: {
 export async function endSession(
   sessionId: string,
   userId: string,
-  reason: "resign" | "abort",
+  reason: EndReason,
 ): Promise<SessionResult> {
   const current = await getSession(sessionId, userId);
   if (!current.ok) return current;
   const s = current.snapshot;
+  // Already terminal (e.g. checkmate committed by the move pipeline): never
+  // write a second terminal state, that would race the canonical result.
   if (s.status !== "active") return { ok: true, snapshot: s };
   const db = await admin();
-  const result = reason === "resign" ? (s.playerColor === "w" ? "0-1" : "1-0") : null;
+  const patch = endSessionPatch(reason, s.playerColor);
   const { data: updated } = await db
     .from("bot_sessions")
     .update({
-      status: reason === "resign" ? "finished" : "aborted",
-      result,
-      end_reason: reason,
+      status: patch.status,
+      result: patch.result,
+      end_reason: patch.endReason,
       finished_at: new Date().toISOString(),
       version: s.version + 1,
     } as never)
@@ -546,12 +552,49 @@ export async function endSession(
     ok: true,
     snapshot: {
       ...s,
-      status: reason === "resign" ? "finished" : "aborted",
-      result,
-      endReason: reason,
+      status: patch.status,
+      result: patch.result,
+      endReason: patch.endReason,
       version: s.version + 1,
     },
   };
+}
+
+/**
+ * Safety net for sessions the UI could not close (tab crash, network drop).
+ * Only zero-move sessions older than the grace period are touched, so a game
+ * genuinely in progress in another tab is never killed.
+ */
+export async function abortStaleZeroMoveSessions(
+  userId: string,
+  graceMinutes = 10,
+): Promise<number> {
+  const db = await admin();
+  const cutoff = new Date(Date.now() - graceMinutes * 60_000).toISOString();
+  const { data: candidates } = await db
+    .from("bot_sessions")
+    .select("id, moves")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .lt("last_activity_at", cutoff)
+    .limit(50);
+  const ids = (candidates ?? [])
+    .filter((r) => {
+      const moves = (r as Record<string, unknown>)["moves"];
+      return Array.isArray(moves) && moves.length === 0;
+    })
+    .map((r) => String((r as Record<string, unknown>)["id"]));
+  if (ids.length === 0) return 0;
+  await db
+    .from("bot_sessions")
+    .update({
+      status: "aborted",
+      end_reason: "abandoned_start",
+      finished_at: new Date().toISOString(),
+    } as never)
+    .in("id", ids)
+    .eq("status", "active");
+  return ids.length;
 }
 
 /** Cron/admin cleanup for abandoned sessions. */
