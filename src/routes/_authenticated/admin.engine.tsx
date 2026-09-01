@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Activity, Cpu, Gauge, History, RefreshCw, ShieldAlert } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -36,6 +36,47 @@ function benchmarkIssues(row: BenchmarkRow): string {
     .filter(([, value]) => value > 0)
     .map(([key, value]) => `${key}=${value}`);
   return [...new Set([...reasons, ...counts])].join(", ");
+}
+
+type DetailField = { key: string; value: string; tone?: string | undefined };
+
+/** Flattens a benchmark row into labelled diagnostic fields (no secrets). */
+function benchmarkDetailFields(row: import("@/lib/engine/benchmarkTypes").BenchmarkRow): DetailField[] {
+  const d = row.result ?? {};
+  const hw = row.hardware ?? {};
+  const num = (key: string): number | null => {
+    const raw = d[key] ?? hw[key];
+    return typeof raw === "number" ? raw : null;
+  };
+  const show = (value: number | null) => (value === null ? "—" : String(value));
+  const durationMs = num("durationMs") ?? num("elapsedMs") ?? num("totalTimeMs");
+  const solved = num("solved");
+  const total = num("total");
+  const bad = (value: number | null) => ((value ?? 0) > 0 ? "text-destructive" : undefined);
+
+  return [
+    { key: "status", value: row.passed ? "OK" : "FAIL", tone: row.passed ? "text-emerald-400" : "text-destructive" },
+    { key: "kind", value: row.kind },
+    { key: "engineVersion", value: row.engineVersion || "—" },
+    { key: "fingerprint", value: row.configSignature ? `${row.configSignature.slice(0, 12)}…` : "—" },
+    { key: "nps", value: show(row.nps) },
+    { key: "nodes", value: show(row.nodes) },
+    { key: "depth", value: show(row.depth) },
+    { key: "score", value: row.score === null ? "—" : String(row.score) },
+    {
+      key: "passed",
+      value: row.passed ? "yes" : "no",
+      tone: row.passed ? "text-emerald-400" : "text-destructive",
+    },
+    { key: "solved", value: total === null ? "—" : `${solved ?? 0} / ${total}` },
+    { key: "legalMoves", value: show(num("legalMoves")) },
+    { key: "illegalMoves", value: show(num("illegalMoves")), tone: bad(num("illegalMoves")) },
+    { key: "noMove", value: show(num("noMove")), tone: bad(num("noMove")) },
+    { key: "timeouts", value: show(num("timeouts")), tone: bad(num("timeouts")) },
+    { key: "engineErrors", value: show(num("engineErrors")), tone: bad(num("engineErrors")) },
+    { key: "duration", value: durationMs === null ? "—" : `${(durationMs / 1000).toFixed(1)}s` },
+    { key: "createdAt", value: new Date(row.createdAt).toLocaleString() },
+  ];
 }
 
 export const Route = createFileRoute("/_authenticated/admin/engine")({
@@ -119,6 +160,7 @@ function AdminEnginePage() {
   const qualify = useServerFn(runTitanQualificationSuite);
   const [qual, setQual] = useState<QualificationResult | null>(null);
   const [qualBusy, setQualBusy] = useState(false);
+  const [openRows, setOpenRows] = useState<Record<string, boolean>>({});
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -282,9 +324,18 @@ function AdminEnginePage() {
             <p className={cn("font-semibold", data?.readiness.ready ? "text-emerald-400" : "text-amber-400")}>
               {data?.readiness.ready ? t("adminc.engine.ready") : t("adminc.engine.notReady")}
             </p>
-            <p className="font-mono text-xs text-muted-foreground">
-              {(data?.readiness.reasons ?? []).join(", ") || "—"}
-            </p>
+            {(data?.readiness.reasons ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">—</p>
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {data!.readiness.reasons.map((code) => (
+                  <li key={code}>
+                    <p className="text-xs text-amber-300">{t(`adminc.engine.reason.${code}`)}</p>
+                    <p className="font-mono text-[10px] text-muted-foreground">{code}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
         <Card className="md:col-span-3">
@@ -565,6 +616,9 @@ function AdminEnginePage() {
                   </Button>
                 ))}
               </div>
+              {!reasonValid && (
+                <p className="text-xs text-amber-300">{t("adminc.engine.reasonHint")}</p>
+              )}
               <Textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -587,23 +641,56 @@ function AdminEnginePage() {
                         <th>Passed</th>
                         <th>Issues</th>
                         <th>At</th>
+                        <th />
                       </tr>
                     </thead>
                     <tbody className="font-mono">
                       {data!.benchmarks.map((b) => (
-                        <tr key={b.id} className="border-t border-border/40">
-                          <td className="py-2">{b.kind}</td>
-                          <td>{b.engineVersion}</td>
-                          <td>{b.nps ?? "—"}</td>
-                          <td>{b.nodes ?? "—"}</td>
-                          <td>{b.depth ?? "—"}</td>
-                          <td>{b.score ?? "—"}</td>
-                          <td className={b.passed ? "text-emerald-400" : "text-destructive"}>
-                            {b.passed ? "yes" : "no"}
-                          </td>
-                          <td className="text-destructive">{benchmarkIssues(b) || "—"}</td>
-                          <td>{new Date(b.createdAt).toLocaleString()}</td>
-                        </tr>
+                        <Fragment key={b.id}>
+                          <tr className="border-t border-border/40">
+                            <td className="py-2">{b.kind}</td>
+                            <td>{b.engineVersion}</td>
+                            <td>{b.nps ?? "—"}</td>
+                            <td>{b.nodes ?? "—"}</td>
+                            <td>{b.depth ?? "—"}</td>
+                            <td>{b.score ?? "—"}</td>
+                            <td className={b.passed ? "text-emerald-400" : "text-destructive"}>
+                              {b.passed
+                                ? t("adminc.engine.d.passedYes")
+                                : t("adminc.engine.d.passedNo")}
+                            </td>
+                            <td className="text-destructive">{benchmarkIssues(b) || "—"}</td>
+                            <td>{new Date(b.createdAt).toLocaleString()}</td>
+                            <td className="text-right">
+                              <button
+                                type="button"
+                                aria-expanded={!!openRows[b.id]}
+                                className="rounded px-2 py-1 font-sans text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                                onClick={() =>
+                                  setOpenRows((prev) => ({ ...prev, [b.id]: !prev[b.id] }))
+                                }
+                              >
+                                {openRows[b.id] ? t("adminc.engine.hide") : t("adminc.engine.details")}
+                              </button>
+                            </td>
+                          </tr>
+                          {openRows[b.id] && (
+                            <tr className="border-t border-border/20 bg-muted/20">
+                              <td colSpan={10} className="p-3">
+                                <dl className="grid grid-cols-2 gap-x-6 gap-y-1 font-sans text-[11px] sm:grid-cols-3 lg:grid-cols-4">
+                                  {benchmarkDetailFields(b).map((field) => (
+                                    <div key={field.key} className="flex justify-between gap-2">
+                                      <dt className="text-muted-foreground">
+                                        {t(`adminc.engine.d.${field.key}`)}
+                                      </dt>
+                                      <dd className={cn("font-mono", field.tone)}>{field.value}</dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       ))}
                     </tbody>
                   </table>
