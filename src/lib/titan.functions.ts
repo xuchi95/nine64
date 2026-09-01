@@ -172,16 +172,22 @@ export const startTitanSession = createServerFn({ method: "POST" })
     if (env.code === "INVALID_ENGINE_CREDENTIALS") {
       return { ok: false as const, code: "INVALID_ENGINE_CREDENTIALS" };
     }
-    if (!env.present.PLAY_ENGINE_URL || !env.present.PLAY_ENGINE_SA_EMAIL || !env.present.PLAY_ENGINE_SA_PRIVATE_KEY) {
+    if (!env.configured) {
       return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
     }
     const health = await cloudEngineHealthCached();
     if (health.status !== "healthy" && health.status !== "degraded") {
       return {
         ok: false as const,
-        code: health.status === "not_configured" ? "ENGINE_NOT_CONFIGURED" : "ENGINE_UNAVAILABLE",
+        code:
+          health.status === "unauthorized"
+            ? "ENGINE_AUTH_FAILED"
+            : health.status === "not_configured"
+              ? "ENGINE_NOT_CONFIGURED"
+              : "ENGINE_UNAVAILABLE",
       };
     }
+
 
     const { startWithRollback } = await import("@/lib/engine/sessionLifecycle");
     const { endSession, engineOpeningMove } = await import("@/lib/engine/botSessions.server");
