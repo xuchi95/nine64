@@ -14,6 +14,8 @@ export type EngineEnvCode =
 
 export interface EngineEnvDiagnostics {
   ok: boolean;
+  /** True when all four PLAY_ENGINE_* secrets are present and well-formed. */
+  configured: boolean;
   code: EngineEnvCode;
   /** Presence only — never the value. */
   present: {
@@ -25,13 +27,17 @@ export interface EngineEnvDiagnostics {
     SUPABASE_SERVICE_ROLE_KEY: boolean;
   };
   /** Names that are missing or malformed (no values). */
+  missing: string[];
   problems: string[];
 }
 
-/** PEM sanity check. Returns a code, never any part of the key. */
+/**
+ * PEM sanity check. Handles both a real multiline PEM and a provider-escaped
+ * `\n` PEM. Returns a code, never any part of the key.
+ */
 export function classifyPrivateKey(raw: string | undefined): "missing" | "invalid" | "ok" {
   if (!raw || raw.trim() === "") return "missing";
-  const pem = raw.replace(/\\n/g, "\n").trim();
+  const pem = raw.replace(/\\r/g, "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
   if (!pem.startsWith("-----BEGIN PRIVATE KEY-----")) return "invalid";
   if (!pem.endsWith("-----END PRIVATE KEY-----")) return "invalid";
   const body = pem
@@ -42,15 +48,18 @@ export function classifyPrivateKey(raw: string | undefined): "missing" | "invali
   return "ok";
 }
 
-function isUrl(raw: string | undefined): boolean {
-  if (!raw) return false;
+/** HTTPS, no whitespace, trailing slash normalized. */
+function isUrl(raw: string | undefined, requireHttps = false): boolean {
+  const value = (raw ?? "").trim();
+  if (!value || /\s/.test(value)) return false;
   try {
-    const u = new URL(raw);
-    return u.protocol === "https:" || u.protocol === "http:";
+    const u = new URL(value);
+    return requireHttps ? u.protocol === "https:" : u.protocol === "https:" || u.protocol === "http:";
   } catch {
     return false;
   }
 }
+
 
 /** Pure classifier so tests can drive every branch without touching process.env. */
 export function classifyEngineEnv(env: Record<string, string | undefined>): EngineEnvDiagnostics {
