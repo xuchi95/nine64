@@ -677,7 +677,7 @@ function PlayAi() {
               size="lg"
               className="w-full"
               onClick={start}
-              disabled={titanStarting || (isTitan && titanState === "loading")}
+              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState === "loading")}
             >
               {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>
