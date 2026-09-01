@@ -245,7 +245,7 @@ export async function callCloudEngine<T>(
     const res = await fetch(`${creds.url}${path}`, {
       method,
       headers,
-      body: method === "POST" ? JSON.stringify(options.body ?? {}) : undefined,
+      body: method === "POST" ? JSON.stringify(options.body ?? {}) : null,
       signal: controller.signal,
     });
     if (!res.ok) {
