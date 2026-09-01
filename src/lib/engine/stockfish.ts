@@ -33,8 +33,8 @@ export interface SearchRequest {
   multiPv?: number;
   skill?: number | null;
   uciElo?: number | null;
-  contempt?: number;
 }
+
 
 export type PerformanceMode = "performance" | "balanced" | "maximum";
 
