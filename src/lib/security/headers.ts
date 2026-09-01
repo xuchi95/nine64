@@ -22,7 +22,7 @@ export const THEME_BOOTSTRAP_SCRIPT_HASH =
 export const RECOVERY_BOOTSTRAP_SCRIPT = `(function(){try{var K="nine64:recovered";var t=setTimeout(function(){if(document.documentElement.hasAttribute("data-app-booted"))return;if(sessionStorage.getItem(K))return;sessionStorage.setItem(K,"1");var done=function(){location.reload()};var jobs=[];if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}))}if(window.caches&&caches.keys){jobs.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return k==="nine64-offline-packs"?null:caches.delete(k)}))}))}Promise.all(jobs).then(done,done)},8000);window.addEventListener("pagehide",function(){clearTimeout(t)});}catch(e){}})();`;
 
 /** sha256-base64 of RECOVERY_BOOTSTRAP_SCRIPT — verified by headers.test.ts. */
-export const RECOVERY_BOOTSTRAP_SCRIPT_HASH = "'sha256-RECOVERY_PLACEHOLDER='";
+export const RECOVERY_BOOTSTRAP_SCRIPT_HASH = "'sha256-IDmia2GMuX5nVoEgQkVHKFEzZXZHYH4x+H5e5OFBX8g='";
 
 const TURNSTILE = "https://challenges.cloudflare.com";
 const GOOGLE_FONTS_CSS = "https://fonts.googleapis.com";
