@@ -24,6 +24,7 @@ export const getEngineOverview = createServerFn({ method: "GET" })
     const { listBenchmarks, publishReadiness } = await import("@/lib/engine/benchmarks.server");
     const { listActiveSessions } = await import("@/lib/engine/botSessions.server");
     const { recordAdminAction } = await import("@/lib/admin/auditLog.server");
+    const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
 
     await ensureTitanProfile();
     const [{ rows, degraded }, health, benchmarks, readiness, sessions] = await Promise.all([
@@ -38,7 +39,9 @@ export const getEngineOverview = createServerFn({ method: "GET" })
       action: "system_console_view",
       detail: { view: "engine" },
     });
-    return { profiles: rows, degraded, health, breaker: breakerState(), benchmarks, readiness, sessions };
+    // Booleans + codes only — never a secret value.
+    const env = engineEnvDiagnostics();
+    return { profiles: rows, degraded, health, breaker: breakerState(), benchmarks, readiness, sessions, env };
   });
 
 export type EngineOverview = Awaited<ReturnType<typeof getEngineOverview>>;
