@@ -50,6 +50,7 @@ const HEALTH_TONE: Record<string, string> = {
   healthy: "text-emerald-400",
   degraded: "text-amber-400",
   unavailable: "text-destructive",
+  unauthorized: "text-destructive",
   not_configured: "text-muted-foreground",
 };
 

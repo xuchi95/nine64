@@ -52,6 +52,7 @@ export type EngineOverview = Awaited<ReturnType<typeof getEngineOverview>>;
  */
 export const checkEngineConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator(() => ({}))
   .handler(async ({ context }) => {
     await assertAdmin(context, "engine");
     const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
