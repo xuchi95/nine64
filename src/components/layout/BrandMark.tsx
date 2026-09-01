@@ -1,5 +1,5 @@
-import markDark from "@/assets/nine64-mark-dark.png";
-import markLight from "@/assets/nine64-mark-light.png";
+import markDark from "@/assets/nine64-mark-dark.webp";
+import markLight from "@/assets/nine64-mark-light.webp";
 import { APP } from "@/config/app";
 import { cn } from "@/lib/utils";
 

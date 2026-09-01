@@ -1,5 +1,5 @@
-import logoDark from "@/assets/nine64-logo-dark.png";
-import logoLight from "@/assets/nine64-logo-light.png";
+import logoDark from "@/assets/nine64-logo-dark.webp";
+import logoLight from "@/assets/nine64-logo-light.webp";
 import { APP } from "@/config/app";
 import { cn } from "@/lib/utils";
 
