@@ -158,7 +158,7 @@ describe("health probe", () => {
       [403, "unauthorized"],
       [500, "unavailable"],
       [503, "unavailable"],
-      [0, "timeout"],
+      [0, "unavailable"], // network abort is surfaced as unavailable, never as an error
     ];
     for (const [status, expected] of cases) {
       envSetup();
