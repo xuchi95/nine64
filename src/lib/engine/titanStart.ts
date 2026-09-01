@@ -107,10 +107,12 @@ export function createTitanStarter<S>(deps: TitanStartDeps<S>): () => Promise<bo
         }
         deps.onStarted(res.snapshot);
         return true;
-      } catch {
-        // Raw exceptions never reach the UI.
-        deps.onError(null);
+      } catch (err) {
+        // Raw exceptions never reach the UI, but an auth failure must not be
+        // mislabelled as an engine outage.
+        deps.onError(titanThrownCode(err));
         return false;
+
       } finally {
         deps.onPending(false);
         inFlight = null;
