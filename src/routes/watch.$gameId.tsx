@@ -10,6 +10,7 @@ import { useT } from "@/lib/i18n";
 import { getBroadcastGame } from "@/lib/watch/watch.functions";
 import type { BroadcastGameDetail } from "@/lib/watch/types";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueTopic } from "@/lib/realtime";
 
 export const Route = createFileRoute("/watch/$gameId")({
   loader: ({ params }) => getBroadcastGame({ data: { gameId: params.gameId } }),
@@ -70,7 +71,7 @@ function BroadcastGamePage() {
 
   useEffect(() => {
     const channel = supabase
-      .channel(`watch:game:${gameId}`)
+      .channel(uniqueTopic(`watch:game:${gameId}`))
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "event_games", filter: `id=eq.${gameId}` },

@@ -5,6 +5,7 @@ import { getNotifications, markNotificationRead } from "@/lib/online.functions";
 import { useAuth } from "@/lib/auth";
 import { playSound } from "@/lib/sound";
 import type { Notification } from "@/lib/database.types";
+import { uniqueTopic } from "@/lib/realtime";
 
 /**
  * Notifications are produced server-side by the transactional outbox. The hook
@@ -79,30 +80,37 @@ export function useNotifications() {
     }
     void refresh();
 
-    const channel = supabase
-      .channel(`notifications:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const notification = payload.new as Notification;
-          setNotifications((prev) => {
-            const next = dedupeNotifications([notification, ...prev]);
-            if (next.length === prev.length) return prev; // duplicate delivery
-            return next;
-          });
-          playSound("notification");
-        },
-      )
-      .subscribe((status) => {
-        // A resubscribe after a dropped socket may have missed inserts.
-        if (status === "SUBSCRIBED") void refresh();
-      });
+    // Realtime is an enhancement: a failing socket must never take the page
+    // down, so subscription errors only degrade to polling on focus.
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(uniqueTopic(`notifications:${user.id}`))
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            const notification = payload.new as Notification;
+            setNotifications((prev) => {
+              const next = dedupeNotifications([notification, ...prev]);
+              if (next.length === prev.length) return prev; // duplicate delivery
+              return next;
+            });
+            playSound("notification");
+          },
+        )
+        .subscribe((status) => {
+          // A resubscribe after a dropped socket may have missed inserts.
+          if (status === "SUBSCRIBED") void refresh();
+        });
+    } catch {
+      channel = null;
+    }
 
     const onFocus = () => {
       if (document.visibilityState === "visible") void refresh();
@@ -113,9 +121,10 @@ export function useNotifications() {
     return () => {
       document.removeEventListener("visibilitychange", onFocus);
       window.removeEventListener("online", onFocus);
-      void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [refresh, user]);
+
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

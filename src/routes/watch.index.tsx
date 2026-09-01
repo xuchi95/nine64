@@ -13,6 +13,7 @@ import { useT } from "@/lib/i18n";
 import { listLiveBroadcasts } from "@/lib/watch/watch.functions";
 import type { BroadcastGameSummary } from "@/lib/watch/types";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueTopic } from "@/lib/realtime";
 
 export const Route = createFileRoute("/watch/")({
   head: () =>
@@ -49,7 +50,7 @@ function WatchHub() {
   // Realtime keeps the hub honest; the interval is the fallback when the socket drops.
   useEffect(() => {
     const channel = supabase
-      .channel("watch:hub")
+      .channel(uniqueTopic("watch:hub"))
       .on("postgres_changes", { event: "*", schema: "public", table: "event_games" }, () => {
         void refresh();
       })

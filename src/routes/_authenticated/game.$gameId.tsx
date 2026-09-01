@@ -65,6 +65,7 @@ import { buildPgn, shareUrl } from "@/lib/chess/share";
 import { useFairplayTelemetry } from "@/hooks/useFairplayTelemetry";
 import { ReportPlayerCard } from "@/components/game/ReportPlayerCard";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
+import { uniqueTopic } from "@/lib/realtime";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   head: () => ({
@@ -345,7 +346,7 @@ function OnlineGamePage() {
     // Realtime is a change *signal* only: never rebuild the board from the
     // event payload — always pull the canonical snapshot from the server.
     const movesChannel = supabase
-      .channel(`game_moves:${gameId}`)
+      .channel(uniqueTopic(`game_moves:${gameId}`))
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "game_moves", filter: `game_id=eq.${gameId}` },
@@ -356,7 +357,7 @@ function OnlineGamePage() {
       .subscribe(onChannelStatus);
 
     const gameChannel = supabase
-      .channel(`game:${gameId}`)
+      .channel(uniqueTopic(`game:${gameId}`))
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${gameId}` },
@@ -455,7 +456,7 @@ function OnlineGamePage() {
   useEffect(() => {
     if (!gameId) return;
     const ch = supabase
-      .channel(`draw:${gameId}`)
+      .channel(uniqueTopic(`draw:${gameId}`))
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "game_draw_offers", filter: `game_id=eq.${gameId}` },
@@ -489,7 +490,7 @@ function OnlineGamePage() {
   useEffect(() => {
     if (!gameId || !game?.allow_takeback) return;
     const ch = supabase
-      .channel(`takeback:${gameId}`)
+      .channel(uniqueTopic(`takeback:${gameId}`))
       .on(
         "postgres_changes",
         {
