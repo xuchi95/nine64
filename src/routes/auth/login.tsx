@@ -164,18 +164,18 @@ function LoginPage() {
     <AuthModal>
       <div className="text-center">
         <BrandMark className="mx-auto mb-4 size-14" />
-        <h1 className="text-2xl font-bold">{t("study.login.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("study.login.welcomeBack", { app: APP.name })}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("study.login.title")}</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">{t("study.login.welcomeBack", { app: APP.name })}</p>
       </div>
 
 
           {formError ? (
-            <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+            <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{formError}</p>
           ) : null}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t("study.login.email")}</Label>
+              <Label htmlFor="email" className="label-caps">{t("study.login.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -184,11 +184,12 @@ function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                className="h-11 bg-background/60 focus-ring-brass"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t("study.login.password")}</Label>
+              <Label htmlFor="password" className="label-caps">{t("study.login.password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -198,12 +199,12 @@ function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="pr-10"
+                  className="h-11 bg-background/60 pr-11 focus-ring-brass"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -211,22 +212,23 @@ function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" size="lg" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               {t("study.login.signIn")}
             </Button>
           </form>
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-5 flex items-center gap-3">
             <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">{t("study.login.or")}</span>
+            <span className="label-caps">{t("study.login.or")}</span>
             <Separator className="flex-1" />
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="mt-4 w-full"
+            size="lg"
+            className="mt-5 w-full border-border/80 bg-surface-2/40 hover:border-primary/40"
             onClick={async () => {
               setLoading(true);
               const result = await lovable.auth.signInWithOAuth("google", {
