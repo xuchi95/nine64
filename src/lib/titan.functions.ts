@@ -110,6 +110,10 @@ export const startTitanSession = createServerFn({ method: "POST" })
         // Accept the raw variant id so an unsupported variant is rejected
         // explicitly instead of being silently coerced to standard.
         variant: z.string().default("standard"),
+        // Protocol placeholder: Titan is a maximum-strength mode, so any
+        // personality other than Oracle is rejected rather than faked. Styles
+        // stay disabled here until the cloud MultiPV reranker ships.
+        personalityId: z.string().optional(),
       })
       .parse(input),
   )
@@ -122,7 +126,15 @@ export const startTitanSession = createServerFn({ method: "POST" })
         reason: titanVariantBlockCode(data.variant),
       };
     }
+    if (data.personalityId && data.personalityId !== "oracle") {
+      return {
+        ok: false as const,
+        code: "PERSONALITY_NOT_SUPPORTED",
+        reason: "Titan chạy ở chế độ sức mạnh tối đa: tính cách bot bị tắt.",
+      };
+    }
     const variant = data.variant;
+
     const { titanProfile } = await import("@/lib/engine/profiles.server");
     const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
     const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
