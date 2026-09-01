@@ -47,6 +47,7 @@ export default {
     "play.hub.soon.badge": "Sắp có",
     "play.ai.title": "Đấu với máy",
     "play.ai.subtitle": "Stockfish 18 (WASM) chạy trực tiếp trên thiết bị của bạn, đảm bảo tính riêng tư.",
+    "play.ai.subtitleCloud": "Nine64 Titan · Stockfish 18 chạy trên máy chủ hiệu năng cao.",
     "play.ai.strength": "Trình độ",
     "play.ai.levelLabel": "Cấp {level} — {title}",
     "play.ai.sliderBeginner": "Người mới",
@@ -472,6 +473,7 @@ export default {
     // ---------- Play vs AI ----------
     "play.ai.title": "Play the engine",
     "play.ai.subtitle": "Stockfish 18 (WASM) runs in a web worker on your device — nothing leaves the browser.",
+    "play.ai.subtitleCloud": "Nine64 Titan · Stockfish 18 runs on a high-performance server.",
     "play.ai.strength": "Strength",
     "play.ai.levelLabel": "Level {level} — {title}",
     "play.ai.sliderBeginner": "Beginner",
