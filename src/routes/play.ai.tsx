@@ -681,9 +681,9 @@ function PlayAi() {
                     <StatusPill tone="live">{t("play.ai.titanReady")}</StatusPill>
                   ) : null}
                 </div>
-                {titanStateMessage(titanState, t) && (
+                {titanStateMessage(titanState, t, titanCode) && (
                   <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
-                    {titanStateMessage(titanState, t)}
+                    {titanStateMessage(titanState, t, titanCode)}
                   </GameNotice>
                 )}
                 {titanState === "unavailable" && (
@@ -703,8 +703,9 @@ function PlayAi() {
               size="lg"
               className="w-full"
               onClick={start}
-              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState === "loading")}
+              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState !== "ready")}
             >
+
               {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>
 
