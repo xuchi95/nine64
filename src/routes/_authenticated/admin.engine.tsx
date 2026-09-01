@@ -600,23 +600,56 @@ function AdminEnginePage() {
                         <th>Passed</th>
                         <th>Issues</th>
                         <th>At</th>
+                        <th />
                       </tr>
                     </thead>
                     <tbody className="font-mono">
                       {data!.benchmarks.map((b) => (
-                        <tr key={b.id} className="border-t border-border/40">
-                          <td className="py-2">{b.kind}</td>
-                          <td>{b.engineVersion}</td>
-                          <td>{b.nps ?? "—"}</td>
-                          <td>{b.nodes ?? "—"}</td>
-                          <td>{b.depth ?? "—"}</td>
-                          <td>{b.score ?? "—"}</td>
-                          <td className={b.passed ? "text-emerald-400" : "text-destructive"}>
-                            {b.passed ? "yes" : "no"}
-                          </td>
-                          <td className="text-destructive">{benchmarkIssues(b) || "—"}</td>
-                          <td>{new Date(b.createdAt).toLocaleString()}</td>
-                        </tr>
+                        <Fragment key={b.id}>
+                          <tr className="border-t border-border/40">
+                            <td className="py-2">{b.kind}</td>
+                            <td>{b.engineVersion}</td>
+                            <td>{b.nps ?? "—"}</td>
+                            <td>{b.nodes ?? "—"}</td>
+                            <td>{b.depth ?? "—"}</td>
+                            <td>{b.score ?? "—"}</td>
+                            <td className={b.passed ? "text-emerald-400" : "text-destructive"}>
+                              {b.passed
+                                ? t("adminc.engine.d.passedYes")
+                                : t("adminc.engine.d.passedNo")}
+                            </td>
+                            <td className="text-destructive">{benchmarkIssues(b) || "—"}</td>
+                            <td>{new Date(b.createdAt).toLocaleString()}</td>
+                            <td className="text-right">
+                              <button
+                                type="button"
+                                aria-expanded={!!openRows[b.id]}
+                                className="rounded px-2 py-1 font-sans text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                                onClick={() =>
+                                  setOpenRows((prev) => ({ ...prev, [b.id]: !prev[b.id] }))
+                                }
+                              >
+                                {openRows[b.id] ? t("adminc.engine.hide") : t("adminc.engine.details")}
+                              </button>
+                            </td>
+                          </tr>
+                          {openRows[b.id] && (
+                            <tr className="border-t border-border/20 bg-muted/20">
+                              <td colSpan={10} className="p-3">
+                                <dl className="grid grid-cols-2 gap-x-6 gap-y-1 font-sans text-[11px] sm:grid-cols-3 lg:grid-cols-4">
+                                  {benchmarkDetailFields(b).map((field) => (
+                                    <div key={field.key} className="flex justify-between gap-2">
+                                      <dt className="text-muted-foreground">
+                                        {t(`adminc.engine.d.${field.key}`)}
+                                      </dt>
+                                      <dd className={cn("font-mono", field.tone)}>{field.value}</dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       ))}
                     </tbody>
                   </table>
