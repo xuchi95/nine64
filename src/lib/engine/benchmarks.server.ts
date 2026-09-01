@@ -122,5 +122,9 @@ export async function publishReadiness(slug = TITAN_SLUG): Promise<{
   else if (!tactics.passed) reasons.push("tactics_failed");
   const illegal = latest.find((r) => Number(r.result["illegalMoves"] ?? 0) > 0);
   if (illegal) reasons.push("illegal_moves");
+  // Execution failures are surfaced separately from rules failures.
+  for (const key of ["timeouts", "engineErrors", "noMove"] as const) {
+    if (latest.some((r) => Number(r.result[key] ?? 0) > 0)) reasons.push(`execution_${key}`);
+  }
   return { ready: reasons.length === 0, reasons, latest };
 }

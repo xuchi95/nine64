@@ -23,7 +23,18 @@ import {
   type EngineOverview,
 } from "@/lib/adminEngine.functions";
 import { engineConfigSchema, TITAN_SLUG, type EngineConfig } from "@/lib/engine/profileTypes";
-import { BENCHMARK_KINDS } from "@/lib/engine/benchmarkTypes";
+import { BENCHMARK_KINDS, type BenchmarkRow } from "@/lib/engine/benchmarkTypes";
+
+/** Typed, secret-free failure summary for a benchmark row. */
+function benchmarkIssues(row: BenchmarkRow): string {
+  const detail = row.result ?? {};
+  const reasons = Array.isArray(detail["failureReasons"]) ? (detail["failureReasons"] as string[]) : [];
+  const counts = (["illegalMoves", "noMove", "timeouts", "engineErrors"] as const)
+    .map((key) => [key, Number(detail[key] ?? 0)] as const)
+    .filter(([, value]) => value > 0)
+    .map(([key, value]) => `${key}=${value}`);
+  return [...new Set([...reasons, ...counts])].join(", ");
+}
 
 export const Route = createFileRoute("/_authenticated/admin/engine")({
   head: () => ({
@@ -473,6 +484,7 @@ function AdminEnginePage() {
                         <th>Depth</th>
                         <th>Score</th>
                         <th>Passed</th>
+                        <th>Issues</th>
                         <th>At</th>
                       </tr>
                     </thead>
@@ -488,6 +500,7 @@ function AdminEnginePage() {
                           <td className={b.passed ? "text-emerald-400" : "text-destructive"}>
                             {b.passed ? "yes" : "no"}
                           </td>
+                          <td className="text-destructive">{benchmarkIssues(b) || "—"}</td>
                           <td>{new Date(b.createdAt).toLocaleString()}</td>
                         </tr>
                       ))}
