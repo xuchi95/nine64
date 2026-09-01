@@ -113,3 +113,15 @@ describe("titan session starter", () => {
     expect(h.request).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("titanThrownCode", () => {
+  it("maps a 401 Response to UNAUTHORIZED", () => {
+    expect(titanThrownCode(new Response("Unauthorized", { status: 401 }))).toBe("UNAUTHORIZED");
+  });
+  it("maps a thrown Unauthorized error to UNAUTHORIZED", () => {
+    expect(titanThrownCode(new Error("Unauthorized"))).toBe("UNAUTHORIZED");
+  });
+  it("keeps other failures generic", () => {
+    expect(titanThrownCode(new Error("network down"))).toBeNull();
+  });
+});
