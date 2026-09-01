@@ -49,7 +49,15 @@ async function preflight(config: EngineConfig): Promise<{ ok: boolean; reason: s
   const env = engineEnvDiagnostics();
   if (!env.configured) return { ok: false, reason: `secrets_${env.code ?? "missing"}`, engineVersion: null };
 
-  const health = await cloudEngineHealthCached(0);
+  let health = await cloudEngineHealthCached(0);
+  // Cold starts and a temporarily saturated single-process pool are transient.
+  // Re-probe health briefly, but never retry auth/config/version failures.
+  for (let attempt = 1; attempt < 3; attempt += 1) {
+    const transient = health.status === "unavailable" || health.status === "degraded" || !health.engineVersion;
+    if (!transient) break;
+    await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+    health = await cloudEngineHealthCached(0);
+  }
   if (health.status === "unauthorized") return { ok: false, reason: "engine_auth_failed", engineVersion: null };
   if (health.status !== "healthy" && health.status !== "degraded") {
     return { ok: false, reason: "engine_unavailable", engineVersion: health.engineVersion };
@@ -130,10 +138,13 @@ export async function runTitanQualification(args: {
   const profile = await getEngineProfile(args.slug);
   const currentDraft = profile?.draftConfig ?? profile?.config ?? null;
   const currentSignature = currentDraft ? await engineConfigFingerprint(currentDraft) : null;
-  if (currentSignature && currentSignature !== signature) reasons.push("config_changed_during_run");
+  const configChanged = Boolean(currentSignature && currentSignature !== signature);
+  if (configChanged) reasons.push("config_changed_during_run");
 
-  const readiness = await publishReadiness(args.slug, args.config);
-  if (!readiness.ready) for (const r of readiness.reasons) if (!reasons.includes(r)) reasons.push(r);
+  // Never present readiness for a stale draft as if it described the current
+  // Admin form. Rows remain auditable under their original fingerprint.
+  const readiness = configChanged ? null : await publishReadiness(args.slug, args.config);
+  if (readiness && !readiness.ready) for (const r of readiness.reasons) if (!reasons.includes(r)) reasons.push(r);
 
   return {
     ok: reasons.length === 0,

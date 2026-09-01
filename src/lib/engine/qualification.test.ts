@@ -92,6 +92,7 @@ describe("titan qualification suite", () => {
     const result = await runSuite();
     expect(result.ok).toBe(false);
     expect(result.reasons).toContain("config_changed_during_run");
+    expect(result.readiness).toBeNull();
   });
 
   it("surfaces readiness reasons without duplicating them", async () => {
