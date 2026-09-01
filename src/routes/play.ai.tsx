@@ -590,20 +590,33 @@ function PlayAi() {
                 {t("play.ai.variant")}
               </h2>
               <div className="mt-3 grid gap-2">
-                {botVariants().map((v) => (
+                {botVariants().map((v) => {
+                  const blockedForTitan = isTitan && !titanSupportsVariant(v.id);
+                  const selected = config.variant === v.id;
+                  return (
                   <button
                     key={v.id}
                     type="button"
                     onClick={() => setConfig((c) => ({ ...c, variant: v.id }))}
+                    aria-disabled={blockedForTitan}
                     className={cn(
                       "rounded-md border px-3 py-2 text-left text-sm transition-colors",
-                      config.variant === v.id
-                        ? "border-primary/60 bg-primary/10"
-                        : "border-border bg-surface-2 hover:border-primary/40",
+                      selected && blockedForTitan
+                        ? "border-destructive/70 bg-destructive/10"
+                        : selected
+                          ? "border-primary/60 bg-primary/10"
+                          : "border-border bg-surface-2 hover:border-primary/40",
+                      blockedForTitan && !selected && "opacity-50",
                     )}
                   >
                     <span className="font-medium">{variantName(v.id)}</span>
+                    {blockedForTitan && (
+                      <span className="ml-2 rounded border border-destructive/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-destructive">
+                        {t("play.ai.titanVariantUnsupportedBadge")}
+                      </span>
+                    )}
                     <span className="mt-0.5 block text-xs text-muted-foreground">{variantBlurb(v.id)}</span>
+
                   </button>
                 ))}
               </div>
