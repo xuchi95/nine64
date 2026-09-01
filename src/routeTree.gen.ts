@@ -55,6 +55,7 @@ import { Route as PuzzlesIndexRouteImport } from './routes/puzzles.index'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as WatchIndexRouteImport } from './routes/watch.index'
 import { Route as WatchGameIdRouteImport } from './routes/watch.$gameId'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
@@ -320,6 +321,11 @@ const WatchGameIdRoute = WatchGameIdRouteImport.update({
   path: '/watch/$gameId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -550,6 +556,7 @@ export interface FileRoutesByFullPath {
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -630,6 +637,7 @@ export interface FileRoutesByTo {
   '/play': typeof PlayIndexRoute
   '/puzzles': typeof PuzzlesIndexRoute
   '/watch': typeof WatchIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -712,6 +720,7 @@ export interface FileRoutesById {
   '/play/': typeof PlayIndexRoute
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -794,6 +803,7 @@ export interface FileRouteTypes {
     | '/play/'
     | '/puzzles/'
     | '/watch/'
+    | '/.lovable/oauth/consent'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -874,6 +884,7 @@ export interface FileRouteTypes {
     | '/play'
     | '/puzzles'
     | '/watch'
+    | '/.lovable/oauth/consent'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -955,6 +966,7 @@ export interface FileRouteTypes {
     | '/play/'
     | '/puzzles/'
     | '/watch/'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
     | '/_authenticated/admin/intelligence'
@@ -1032,6 +1044,7 @@ export interface RootRouteChildren {
   PlayIndexRoute: typeof PlayIndexRoute
   PuzzlesIndexRoute: typeof PuzzlesIndexRoute
   WatchIndexRoute: typeof WatchIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   GamesOnlineGameIdRoute: typeof GamesOnlineGameIdRoute
   LearnCourseSlugRoute: typeof LearnCourseSlugRoute
   LearnLessonSlugRoute: typeof LearnLessonSlugRoute
@@ -1367,6 +1380,13 @@ declare module '@tanstack/react-router' {
       path: '/watch/$gameId'
       fullPath: '/watch/$gameId'
       preLoaderRoute: typeof WatchGameIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
@@ -1718,6 +1738,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayIndexRoute: PlayIndexRoute,
   PuzzlesIndexRoute: PuzzlesIndexRoute,
   WatchIndexRoute: WatchIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   GamesOnlineGameIdRoute: GamesOnlineGameIdRoute,
   LearnCourseSlugRoute: LearnCourseSlugRoute,
   LearnLessonSlugRoute: LearnLessonSlugRoute,
