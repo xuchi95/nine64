@@ -90,6 +90,7 @@ export function buildCsp(ctx: HeaderContext): string {
     // narrow directive for that and does NOT enable eval().
     "'wasm-unsafe-eval'",
     THEME_BOOTSTRAP_SCRIPT_HASH,
+    RECOVERY_BOOTSTRAP_SCRIPT_HASH,
     // TanStack Start emits per-request inline bootstrap scripts; they carry
     // this nonce so we never need 'unsafe-inline' in production.
     ...(ctx.nonce ? [`'nonce-${ctx.nonce}'`] : []),
