@@ -292,9 +292,14 @@ async function call<T>(
 }
 
 
+/** Production health endpoint. Cloud Run intercepts some `*z` paths. */
+export const HEALTH_PATH = "/health";
+
 /**
- * Defensive parse of the /healthz contract. A malformed or partial payload is
+ * Defensive parse of the /health contract. A malformed or partial payload is
  * never trusted: it downgrades the reported status instead of throwing.
+ * Healthy requires `status === "ok"` AND an engineVersion — a 200 alone is
+ * not enough.
  */
 export function interpretHealthPayload(
   raw: unknown,
@@ -304,6 +309,7 @@ export function interpretHealthPayload(
   const statusText = typeof body["status"] === "string" ? (body["status"] as string) : null;
   const engineVersion = typeof body["engineVersion"] === "string" ? (body["engineVersion"] as string) : null;
   const arch = typeof body["arch"] === "string" ? (body["arch"] as string) : null;
+  const checkedAt = Date.now();
 
   const rawPool = body["pool"];
   let pool: { size: number; busy: number } | null = null;
@@ -315,15 +321,29 @@ export function interpretHealthPayload(
     }
   }
 
-  if (!pool || statusText !== "ok") {
+  const rawStats = body["stats"];
+  let stats: CloudEngineHealth["stats"] = null;
+  if (rawStats && typeof rawStats === "object" && !Array.isArray(rawStats)) {
+    const s = rawStats as Record<string, unknown>;
+    stats = {
+      searches: Number(s["searches"] ?? 0) || 0,
+      timeouts: Number(s["timeouts"] ?? 0) || 0,
+      restarts: Number(s["restarts"] ?? 0) || 0,
+      illegal: Number(s["illegal"] ?? 0) || 0,
+    };
+  }
+
+  if (!pool || statusText !== "ok" || !engineVersion) {
     // Unknown shape or an engine that is still starting: never report healthy.
     return {
-      status: pool ? "degraded" : "unavailable",
+      status: pool && statusText === "ok" ? "degraded" : pool ? "degraded" : "unavailable",
       engineVersion,
       arch,
       pool,
+      stats,
       latencyMs,
-      detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /healthz không hợp lệ.",
+      checkedAt,
+      detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /health không hợp lệ.",
     };
   }
 
@@ -333,31 +353,37 @@ export function interpretHealthPayload(
     engineVersion,
     arch,
     pool,
+    stats,
     latencyMs,
+    checkedAt,
     detail: busy ? "Toàn bộ engine process đang bận." : "OK",
   };
 }
 
 export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
   const creds = credentials();
+  const empty = {
+    engineVersion: null,
+    arch: null,
+    pool: null,
+    stats: null,
+    checkedAt: Date.now(),
+  };
   if (!creds) {
     return {
+      ...empty,
       status: "not_configured",
-      engineVersion: null,
-      arch: null,
-      pool: null,
       latencyMs: null,
       detail: "Chưa cấu hình PLAY_ENGINE_URL / service account.",
     };
   }
   const startedAt = Date.now();
-  const res = await call<unknown>("/healthz", {}, 8_000);
+  const res = await callCloudEngine<unknown>(HEALTH_PATH, { method: "GET", timeoutMs: 8_000 });
   if (!res.ok) {
     return {
-      status: "unavailable",
-      engineVersion: null,
-      arch: null,
-      pool: null,
+      ...empty,
+      checkedAt: Date.now(),
+      status: res.status === "unauthorized" ? "unauthorized" : "unavailable",
       latencyMs: Date.now() - startedAt,
       detail: res.error,
     };
@@ -366,10 +392,11 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
 }
 
 // --------------------------------------------------------------------------
-// Short-lived health cache: the play preflight must not hammer /healthz.
+// Short-lived health cache: the play preflight must not hammer /health.
 // --------------------------------------------------------------------------
 let healthCache: { value: CloudEngineHealth; fetchedAt: number } | null = null;
 const HEALTH_TTL_MS = 10_000;
+
 
 export async function cloudEngineHealthCached(maxAgeMs = HEALTH_TTL_MS): Promise<CloudEngineHealth> {
   if (healthCache && Date.now() - healthCache.fetchedAt < maxAgeMs) return healthCache.value;
