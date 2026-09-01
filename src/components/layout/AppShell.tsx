@@ -499,7 +499,6 @@ function NotificationBell() {
 function AdminMenuItem() {
   const { t } = useT();
   const { pathname } = useLocation();
-  const accessFn = useServerFn(getAdminAccess);
   const [allowed, setAllowed] = useState(false);
   const active = isRouteActive(pathname, "/admin");
 
@@ -507,7 +506,10 @@ function AdminMenuItem() {
     let alive = true;
     void (async () => {
       try {
-        const access = (await accessFn()) as { role: string | null };
+        // Loaded lazily so the admin server-fn chunk stays out of the
+        // first-paint bundle for the 99% of visitors who are not admins.
+        const { getAdminAccess } = await import("@/lib/adminCenter.functions");
+        const access = (await getAdminAccess()) as { role: string | null };
         if (alive) setAllowed(access.role === "admin" || access.role === "moderator");
       } catch {
         if (alive) setAllowed(false);
@@ -516,7 +518,8 @@ function AdminMenuItem() {
     return () => {
       alive = false;
     };
-  }, [accessFn]);
+  }, []);
+
 
   if (!allowed) return null;
 
