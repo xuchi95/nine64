@@ -14,6 +14,11 @@ import { setupServiceWorker } from "@/lib/pwa/register";
 export function SettingsBridge() {
   const settings = useSettings();
 
+  // Marks a successful hydration for the inline recovery bootstrap.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-app-booted", "");
+  }, []);
+
   useEffect(() => {
     hydrateSettings();
     hydrateLocale();
