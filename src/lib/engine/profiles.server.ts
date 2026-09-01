@@ -92,6 +92,12 @@ export async function titanProfile(): Promise<{
   };
 }
 
+/** Full profile row (including its draft config) by slug. */
+export async function getEngineProfile(slug: string): Promise<EngineProfile | null> {
+  const { rows } = await listEngineProfiles();
+  return rows.find((r) => r.slug === slug) ?? null;
+}
+
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;

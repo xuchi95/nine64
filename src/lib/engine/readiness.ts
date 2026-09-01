@@ -6,11 +6,10 @@
  *     An older failing run must never keep publishing blocked once a newer
  *     green run for the same kind exists.
  *  2. Readiness is tied to the exact configuration being published through a
- *     deterministic config fingerprint, so a benchmark of config A can never
- *     approve a materially different config B.
+ *     server-generated config fingerprint (see `configFingerprint.ts`), so a
+ *     benchmark of config A can never approve a materially different config B.
  */
 import type { BenchmarkRow } from "./benchmarkTypes";
-import type { EngineConfig } from "./profileTypes";
 
 /** Benchmark kinds that gate publishing a live, enabled profile. */
 export const REQUIRED_BENCHMARK_KINDS = ["bench", "epd"] as const;
@@ -39,31 +38,6 @@ export interface ReadinessResult {
   reasons: ReadinessReason[];
   required: Record<RequiredKind, RequiredBenchmarkState>;
   latest: BenchmarkRow[];
-}
-
-/** Config fields that materially change engine behaviour or cost profile. */
-function fingerprintInput(config: EngineConfig): Array<[string, unknown]> {
-  const record = config as unknown as Record<string, unknown>;
-  return Object.keys(record)
-    .sort()
-    .map((key) => [key, record[key]] as [string, unknown]);
-}
-
-/** Deterministic, dependency-free fingerprint (FNV-1a, hex). */
-export function configSignature(config: EngineConfig): string {
-  const json = JSON.stringify(fingerprintInput(config));
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < json.length; i += 1) {
-    hash ^= json.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  // Second pass over the reversed string widens the fingerprint to 64 bits.
-  let hash2 = 0x811c9dc5;
-  for (let i = json.length - 1; i >= 0; i -= 1) {
-    hash2 ^= json.charCodeAt(i);
-    hash2 = Math.imul(hash2, 0x01000193) >>> 0;
-  }
-  return `${hash.toString(16).padStart(8, "0")}${hash2.toString(16).padStart(8, "0")}`;
 }
 
 /** Newest row per benchmark kind. Input order is not trusted. */

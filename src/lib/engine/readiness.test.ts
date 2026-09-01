@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { configSignature, evaluateReadiness, latestBenchmarkByKind } from "./readiness";
+import { evaluateReadiness, latestBenchmarkByKind } from "./readiness";
+import { canonicalConfigJson, engineConfigFingerprint } from "./configFingerprint";
 import { TITAN_FALLBACK_CONFIG } from "./profileTypes";
 import type { BenchmarkRow } from "./benchmarkTypes";
 
-const SIG = configSignature(TITAN_FALLBACK_CONFIG);
+const SIG = await engineConfigFingerprint(TITAN_FALLBACK_CONFIG);
 
 function row(over: Partial<BenchmarkRow> & { kind: BenchmarkRow["kind"]; createdAt: string }): BenchmarkRow {
   return {
@@ -90,8 +91,11 @@ describe("publish readiness", () => {
     expect(r.reasons).toEqual(["bench_failed"]);
   });
 
-  it("G. benchmarks from a different config fingerprint -> benchmark_config_mismatch", () => {
-    const other = configSignature({ ...TITAN_FALLBACK_CONFIG, threads: TITAN_FALLBACK_CONFIG.threads + 1 });
+  it("G. benchmarks from a different config fingerprint -> benchmark_config_mismatch", async () => {
+    const other = await engineConfigFingerprint({
+      ...TITAN_FALLBACK_CONFIG,
+      threads: TITAN_FALLBACK_CONFIG.threads + 1,
+    });
     expect(other).not.toBe(SIG);
     const r = evaluateReadiness(
       [
@@ -136,10 +140,38 @@ describe("publish readiness", () => {
     expect(map.get("epd")?.createdAt).toBe("2026-09-03T10:05:00Z");
   });
 
-  it("config fingerprints are deterministic and order-independent", () => {
+  it("config fingerprints are deterministic and key-order independent", async () => {
     const reordered = Object.fromEntries(
       Object.entries(TITAN_FALLBACK_CONFIG as unknown as Record<string, unknown>).reverse(),
     ) as typeof TITAN_FALLBACK_CONFIG;
-    expect(configSignature(reordered)).toBe(SIG);
+    expect(canonicalConfigJson(reordered)).toBe(canonicalConfigJson(TITAN_FALLBACK_CONFIG));
+    expect(await engineConfigFingerprint(reordered)).toBe(SIG);
+    expect(SIG).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("draft change regression: config A benchmarks never qualify config B", async () => {
+    const configA = TITAN_FALLBACK_CONFIG;
+    const configB = { ...TITAN_FALLBACK_CONFIG, hashMb: TITAN_FALLBACK_CONFIG.hashMb * 2 };
+    const sigA = await engineConfigFingerprint(configA);
+    const sigB = await engineConfigFingerprint(configB);
+    expect(sigA).not.toBe(sigB);
+
+    const runsForA = [
+      row({ kind: "bench", createdAt: "2026-09-01T10:00:00Z", configSignature: sigA }),
+      row({ kind: "epd", createdAt: "2026-09-01T10:05:00Z", configSignature: sigA }),
+    ];
+    // A is publishable, B is not — even though green rows exist.
+    expect(evaluateReadiness(runsForA, sigA).ready).toBe(true);
+    expect(evaluateReadiness(runsForA, sigB)).toMatchObject({
+      ready: false,
+      reasons: ["benchmark_config_mismatch"],
+    });
+
+    const runsForB = [
+      ...runsForA,
+      row({ kind: "bench", createdAt: "2026-09-02T10:00:00Z", configSignature: sigB }),
+      row({ kind: "epd", createdAt: "2026-09-02T10:05:00Z", configSignature: sigB }),
+    ];
+    expect(evaluateReadiness(runsForB, sigB).ready).toBe(true);
   });
 });

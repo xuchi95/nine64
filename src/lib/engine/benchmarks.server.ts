@@ -8,10 +8,12 @@
  */
 import { TITAN_SLUG } from "./profileTypes";
 import { BENCHMARK_KINDS, type BenchmarkKind, type BenchmarkRow, type Json } from "./benchmarkTypes";
-import { configSignature, evaluateReadiness, type ReadinessResult } from "./readiness";
+import { evaluateReadiness, type ReadinessResult } from "./readiness";
+import { engineConfigFingerprint } from "./configFingerprint";
 import type { EngineConfig } from "./profileTypes";
 
-export { configSignature, evaluateReadiness, latestBenchmarkByKind } from "./readiness";
+export { evaluateReadiness, latestBenchmarkByKind } from "./readiness";
+export { engineConfigFingerprint, canonicalConfigJson } from "./configFingerprint";
 
 export { BENCHMARK_KINDS };
 export type { BenchmarkKind, BenchmarkRow };
@@ -61,13 +63,20 @@ export interface BenchmarkOutcome {
 export async function runBenchmark(args: {
   kind: BenchmarkKind;
   actorId: string;
+  /** Profile the run is recorded against. */
+  slug?: string;
+  /** Server-validated config to benchmark — the admin's current draft. */
+  config?: EngineConfig;
 }): Promise<BenchmarkOutcome> {
-  const { titanProfile } = await import("./profiles.server");
+  const { titanProfile, getEngineProfile } = await import("./profiles.server");
   const { runCloudBenchmark, cloudEngineConfigured } = await import("./cloudEngine.server");
   if (!cloudEngineConfigured()) return { ok: false, code: "ENGINE_NOT_CONFIGURED" };
 
-  const profile = await titanProfile();
-  const run = await runCloudBenchmark(args.kind, profile.config);
+  const row = args.slug ? await getEngineProfile(args.slug) : null;
+  const profile = row ?? (await titanProfile());
+  // Benchmark exactly what the admin intends to publish, not the live config.
+  const config = args.config ?? row?.draftConfig ?? profile.config;
+  const run = await runCloudBenchmark(args.kind, config);
   if (run.status !== "ok") return { ok: false, code: run.status.toUpperCase() };
 
   const db = await admin();
@@ -87,7 +96,7 @@ export async function runBenchmark(args: {
       result: run.detail as never,
       signature: run.engineVersion ?? null,
       // Benchmarks are always recorded against the exact config they ran with.
-      config_signature: configSignature(profile.config),
+      config_signature: await engineConfigFingerprint(config),
       created_by: args.actorId,
     } as never)
     .select("*")
@@ -125,5 +134,5 @@ export async function publishReadiness(
   config?: EngineConfig | null,
 ): Promise<ReadinessResult> {
   const rows = await listBenchmarks(slug, 50);
-  return evaluateReadiness(rows, config ? configSignature(config) : null);
+  return evaluateReadiness(rows, config ? await engineConfigFingerprint(config) : null);
 }

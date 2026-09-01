@@ -457,8 +457,20 @@ function AdminEnginePage() {
                     key={kind}
                     size="sm"
                     variant="outline"
-                    disabled={busy || !reasonValid}
-                    onClick={() => void run(() => bench({ data: { kind, reason: reason.trim() } }))}
+                    disabled={busy || !reasonValid || !parsed?.success || !titan}
+                    onClick={() =>
+                      void run(() =>
+                        bench({
+                          data: {
+                            kind,
+                            reason: reason.trim(),
+                            slug: titan!.slug,
+                            // Benchmarks always measure the draft shown here.
+                            config: parsed!.data,
+                          },
+                        }),
+                      )
+                    }
                   >
                     {t("adminc.engine.runBench")}: {kind}
                   </Button>
