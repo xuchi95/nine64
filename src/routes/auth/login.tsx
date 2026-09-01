@@ -255,7 +255,7 @@ function LoginPage() {
             type="button"
             variant="outline"
             size="lg"
-            className="mt-5 w-full border-border/80 bg-surface-2/40 hover:border-primary/40"
+            className="mt-5 w-full gap-2.5 border-primary/40 bg-primary/10 font-semibold text-foreground shadow-sm transition-colors hover:border-primary/60 hover:bg-primary/15"
             onClick={async () => {
               setLoading(true);
               const result = await lovable.auth.signInWithOAuth("google", {
@@ -268,8 +268,10 @@ function LoginPage() {
             }}
             disabled={loading}
           >
+            <GoogleIcon className="size-5 text-primary" />
             {t("study.login.continueWithGoogle")}
           </Button>
+
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {t("study.login.noAccount")}{" "}
