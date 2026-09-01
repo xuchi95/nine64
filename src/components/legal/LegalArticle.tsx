@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useT, type Locale } from "@/lib/i18n";
 
 export interface LegalSection {
@@ -35,8 +36,8 @@ export function LegalArticle({
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <div className="flex items-center justify-between gap-4">
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-          Nine64
+        <Link to="/" aria-label="Nine64" className="group inline-flex items-center">
+          <BrandLogo className="h-8 transition-transform group-hover:scale-105 sm:h-9" />
         </Link>
         <div className="flex gap-1">
           <Button size="sm" variant={locale === "vi" ? "default" : "outline"} onClick={() => setLocale("vi")}>
