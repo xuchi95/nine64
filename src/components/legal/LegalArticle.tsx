@@ -57,7 +57,7 @@ export function LegalArticle({
         <p>{doc.intro}</p>
         {doc.sections.map((s, i) => (
           <div key={s.heading}>
-            <h2 className="text-lg font-semibold">
+            <h2 className="mt-8 border-l-2 border-primary/70 pl-3 text-xl font-extrabold tracking-tight text-foreground first:mt-0">
               {i + 1}. {s.heading}
             </h2>
             {s.body.map((p, j) => (
