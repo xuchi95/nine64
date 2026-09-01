@@ -11,7 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { guardAuthAttempt } from "@/lib/authGuard.functions";
 import { parseRateLimited, rateLimitMessage } from "@/lib/ratelimit/errors";
 import { lovable } from "@/integrations/lovable";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { useT } from "@/lib/i18n";
@@ -111,21 +111,24 @@ function LoginPage() {
   if (mfaFactorId) {
     return (
       <AuthModal>
-        <form onSubmit={handleMfa} className="space-y-4">
+        <form onSubmit={handleMfa} className="space-y-5">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">{t("study.login.mfaTitle")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <div className="mx-auto grid size-12 place-items-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
+              <ShieldCheck className="size-6" />
+            </div>
+            <h1 className="mt-4 text-2xl font-bold tracking-tight">{t("study.login.mfaTitle")}</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
               {t("study.login.mfaSubtitle")}
             </p>
           </div>
           {formInfo ? (
-            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">{formInfo}</p>
+            <p className="rounded-lg border border-primary/25 bg-primary/8 px-3 py-2.5 text-center text-sm text-muted-foreground">{formInfo}</p>
           ) : null}
           {formError ? (
-            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{formError}</p>
           ) : null}
           <div className="space-y-2">
-            <Label htmlFor="mfa-code">{t("study.login.mfaCode")}</Label>
+            <Label htmlFor="mfa-code" className="label-caps">{t("study.login.mfaCode")}</Label>
             <Input
               id="mfa-code"
               value={mfaCode}
@@ -133,17 +136,17 @@ function LoginPage() {
               inputMode="numeric"
               autoFocus
               placeholder="000000"
-              className="text-center font-mono text-lg tracking-[0.4em]"
+              className="h-14 border-primary/25 bg-background/60 text-center font-mono text-2xl tracking-[0.5em] focus-ring-brass"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
+          <Button type="submit" size="lg" className="w-full" disabled={loading || mfaCode.length !== 6}>
             {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
             {t("study.login.verify")}
           </Button>
           <Button
             type="button"
             variant="ghost"
-            className="w-full"
+            className="w-full text-muted-foreground"
             onClick={async () => {
               await supabase.auth.signOut();
               setMfaFactorId(null);
@@ -161,18 +164,18 @@ function LoginPage() {
     <AuthModal>
       <div className="text-center">
         <BrandMark className="mx-auto mb-4 size-14" />
-        <h1 className="text-2xl font-bold">{t("study.login.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("study.login.welcomeBack", { app: APP.name })}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("study.login.title")}</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">{t("study.login.welcomeBack", { app: APP.name })}</p>
       </div>
 
 
           {formError ? (
-            <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+            <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{formError}</p>
           ) : null}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t("study.login.email")}</Label>
+              <Label htmlFor="email" className="label-caps">{t("study.login.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -181,11 +184,12 @@ function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                className="h-11 bg-background/60 focus-ring-brass"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t("study.login.password")}</Label>
+              <Label htmlFor="password" className="label-caps">{t("study.login.password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -195,12 +199,12 @@ function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="pr-10"
+                  className="h-11 bg-background/60 pr-11 focus-ring-brass"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -208,22 +212,23 @@ function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" size="lg" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               {t("study.login.signIn")}
             </Button>
           </form>
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-5 flex items-center gap-3">
             <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">{t("study.login.or")}</span>
+            <span className="label-caps">{t("study.login.or")}</span>
             <Separator className="flex-1" />
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="mt-4 w-full"
+            size="lg"
+            className="mt-5 w-full border-border/80 bg-surface-2/40 hover:border-primary/40"
             onClick={async () => {
               setLoading(true);
               const result = await lovable.auth.signInWithOAuth("google", {
