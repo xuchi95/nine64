@@ -31,7 +31,7 @@ export const Route = createFileRoute("/auth/login")({
 });
 
 function LoginPage() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth/login" }) as { redirect?: string };
   const [email, setEmail] = useState("");
@@ -173,7 +173,34 @@ function LoginPage() {
             <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{formError}</p>
           ) : null}
 
-          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <div className="mt-5 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+            <ShieldCheck className="mr-1.5 inline size-3.5 text-primary" />
+            {locale === "vi" ? (
+              <>
+                Khi đăng nhập, bạn xác nhận tiếp tục đồng ý với{" "}
+                <Link to="/terms" className="text-primary hover:underline">Điều khoản sử dụng</Link>,{" "}
+                <Link to="/privacy" className="text-primary hover:underline">Chính sách quyền riêng tư</Link> và{" "}
+                <Link to="/cookie-policy" className="text-primary hover:underline">Chính sách cookie</Link>.{" "}
+                <Link to="/register-policy" search={{ redirect: redirectTo }} className="text-primary hover:underline">
+                  Xem lại tóm tắt chính sách
+                </Link>
+                .
+              </>
+            ) : (
+              <>
+                By signing in you confirm that you still agree to our{" "}
+                <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>,{" "}
+                <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> and{" "}
+                <Link to="/cookie-policy" className="text-primary hover:underline">Cookie Policy</Link>.{" "}
+                <Link to="/register-policy" search={{ redirect: redirectTo }} className="text-primary hover:underline">
+                  Review the policy summary
+                </Link>
+                .
+              </>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="label-caps">{t("study.login.email")}</Label>
               <Input
