@@ -61,9 +61,13 @@ describe("engine env validation", () => {
   it("treats PLAY_ENGINE_AUDIENCE as optional (defaults to the service URL)", () => {
     const d = classifyEngineEnv({ ...goodEnv, PLAY_ENGINE_AUDIENCE: undefined });
     expect(d.ok).toBe(true);
-    expect(d.present.PLAY_ENGINE_AUDIENCE).toBe(false);
+    // Falls back to PLAY_ENGINE_URL, so it still counts as configured.
+    expect(d.present.PLAY_ENGINE_AUDIENCE).toBe(true);
+    expect(d.configured).toBe(true);
+    expect(d.missing).toEqual([]);
   });
 });
+
 
 // --------------------------------------------------------------------------
 // Preflight decision table (mirrors startTitanSession, no DB writes on fail)
