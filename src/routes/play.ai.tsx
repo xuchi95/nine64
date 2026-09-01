@@ -21,7 +21,7 @@ import {
   humanThinkTime,
   type EngineLine,
 } from "@/lib/engine/stockfish";
-import { pickPersonalityMove, multiPvFor, personalityActive } from "@/lib/engine/personality";
+import { pickPersonalityMove, multiPvFor } from "@/lib/engine/personality";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
 import { saveGame } from "@/lib/history";
