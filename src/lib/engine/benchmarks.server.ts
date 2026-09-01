@@ -79,11 +79,16 @@ const POSITION_PROBES = [
 ] as const;
 const TRANSIENT_STATUSES = new Set(["timeout", "unavailable"]);
 
-function isLegalUci(fen: string, uci: string | null): boolean {
+export function isLegalBenchmarkMove(fen: string, uci: string | null): boolean {
   if (!uci || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return false;
   try {
     const chess = new Chess(fen);
-    return Boolean(chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }));
+    const promotion = uci[4];
+    return Boolean(chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      ...(promotion ? { promotion } : {}),
+    }));
   } catch {
     return false;
   }
@@ -147,7 +152,7 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
       expected: probe.moves,
       fen: probe.fen,
       attempts,
-      legal: result.status === "ok" && isLegalUci(probe.fen, result.bestmove),
+      legal: result.status === "ok" && isLegalBenchmarkMove(probe.fen, result.bestmove),
     });
   }
   const engineErrors = results.filter((result) => result.status !== "ok").length;
@@ -207,7 +212,7 @@ export async function runBenchmark(args: {
   config?: EngineConfig;
 }): Promise<BenchmarkOutcome> {
   const { titanProfile, getEngineProfile } = await import("./profiles.server");
-  const { runCloudBenchmark, cloudEngineConfigured } = await import("./cloudEngine.server");
+  const { cloudEngineConfigured } = await import("./cloudEngine.server");
   if (!cloudEngineConfigured()) return { ok: false, code: "ENGINE_NOT_CONFIGURED" };
 
   const row = args.slug ? await getEngineProfile(args.slug) : null;
@@ -217,7 +222,6 @@ export async function runBenchmark(args: {
   // All qualification kinds use bounded real searches. This avoids native
   // `bench` request ceilings and keeps qualification independent of a stale
   // benchmark suite deployment while still exercising Stockfish 18 itself.
-  void runCloudBenchmark;
   const run = await runBoundedBenchmark(args.kind, config);
 
   const db = await admin();
