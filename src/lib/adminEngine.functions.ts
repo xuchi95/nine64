@@ -11,6 +11,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin/guard";
 import { engineConfigSchema, ENGINE_PROFILE_STATUS } from "@/lib/engine/profileTypes";
 import { BENCHMARK_KINDS } from "@/lib/engine/benchmarkTypes";
+import { TITAN_SLUG } from "@/lib/engine/profileTypes";
 
 const reason = z.string().trim().min(10).max(500);
 const slug = z.string().trim().min(2).max(40).regex(/^[a-z0-9-]+$/);
@@ -27,13 +28,15 @@ export const getEngineOverview = createServerFn({ method: "GET" })
     const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
 
     await ensureTitanProfile();
-    const [{ rows, degraded }, health, benchmarks, readiness, sessions] = await Promise.all([
+    const [{ rows, degraded }, health, benchmarks, sessions] = await Promise.all([
       listEngineProfiles(true),
       cloudEngineHealth(),
       listBenchmarks(undefined, 20),
-      publishReadiness(),
       listActiveSessions(50),
     ]);
+    // Readiness is shown for the draft config the admin would actually publish.
+    const titan = rows.find((r) => r.slug === TITAN_SLUG) ?? rows[0];
+    const readiness = await publishReadiness(titan?.slug, titan?.draftConfig ?? null);
     await recordAdminAction({
       actorId: context.userId,
       action: "system_console_view",
