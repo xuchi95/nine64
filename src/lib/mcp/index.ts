@@ -17,5 +17,5 @@ export default defineMcp({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [getMyProfile, listMyGames, getGameMoves, getMyPuzzleStats] as AnyToolDefinition[],
+  tools: [getMyProfile, listMyGames, getGameMoves, getMyPuzzleStats].map((tool) => tool as never),
 });
