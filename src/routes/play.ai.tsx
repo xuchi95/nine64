@@ -37,12 +37,15 @@ import {
   titanMessage,
   titanStateMessage,
   titanStateOf,
+  titanThrownCode,
   type TitanState,
 } from "@/lib/engine/titanStart";
 import { titanSupportsVariant } from "@/lib/engine/titanVariants";
 
 import { createTitanSessionController } from "@/lib/engine/sessionLifecycle";
+import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
+
 
 export const Route = createFileRoute("/play/ai")({
   validateSearch: (search: Record<string, unknown>): { quick?: boolean } =>
@@ -154,9 +157,14 @@ function PlayAi() {
   const [titanState, setTitanState] = useState<TitanState>("loading");
   const [titanCode, setTitanCode] = useState<string | null>(null);
   const [titanProbe, setTitanProbe] = useState(0);
+  // Titan sessions are server-side and authenticated: a signed-out player must
+  // be told to sign in, not that the engine is down.
+  const { user, isLoading: authLoading } = useAuth();
+  const titanNeedsAuth = isTitan && !authLoading && !user;
   // Titan runs plain Stockfish: variants it cannot adjudicate are blocked,
   // never silently downgraded to standard chess.
   const titanVariantBlocked = isTitan && !titanSupportsVariant(config.variant);
+
 
 
   // Preflight the Titan service so the setup screen can explain the state
@@ -386,8 +394,9 @@ function PlayAi() {
           applyPremove();
         } catch (err) {
           if (!titanCancelled) {
-            setEngineError(err instanceof Error ? err.message : titanMessage(null, t));
+            setEngineError(titanMessage(titanThrownCode(err), t));
           }
+
         } finally {
           busy.current = false;
           setThinking(false);
@@ -681,20 +690,35 @@ function PlayAi() {
                     <StatusPill tone="live">{t("play.ai.titanReady")}</StatusPill>
                   ) : null}
                 </div>
-                {titanStateMessage(titanState, t, titanCode) && (
-                  <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
-                    {titanStateMessage(titanState, t, titanCode)}
-                  </GameNotice>
-                )}
-                {titanState === "unavailable" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setTitanProbe((n) => n + 1)}
-                  >
-                    <RefreshCw className="size-4" />
-                    {t("play.ai.titanRetry")}
-                  </Button>
+                {titanNeedsAuth ? (
+                  <>
+                    <GameNotice tone="warning">{t("play.ai.titanAuthRequired")}</GameNotice>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate({ to: "/auth/login" })}
+                    >
+                      {t("play.ai.titanSignIn")}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {titanStateMessage(titanState, t, titanCode) && (
+                      <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
+                        {titanStateMessage(titanState, t, titanCode)}
+                      </GameNotice>
+                    )}
+                    {titanState === "unavailable" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTitanProbe((n) => n + 1)}
+                      >
+                        <RefreshCw className="size-4" />
+                        {t("play.ai.titanRetry")}
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -703,8 +727,14 @@ function PlayAi() {
               size="lg"
               className="w-full"
               onClick={start}
-              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState !== "ready")}
+              disabled={
+                titanStarting ||
+                titanVariantBlocked ||
+                titanNeedsAuth ||
+                (isTitan && titanState !== "ready")
+              }
             >
+
 
               {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>

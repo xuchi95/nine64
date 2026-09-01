@@ -88,6 +88,22 @@ export interface TitanStartDeps<S> {
 }
 
 /**
+ * Classifies a thrown value from the Titan RPC. A 401 (no/expired session)
+ * maps to UNAUTHORIZED; everything else stays generic. Never leaks the raw
+ * message, URL or body.
+ */
+export function titanThrownCode(err: unknown): string | null {
+  const status =
+    typeof Response !== "undefined" && err instanceof Response
+      ? err.status
+      : (err as { status?: unknown } | null)?.status;
+  if (status === 401 || status === 403) return "UNAUTHORIZED";
+  const message = err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  return /unauthorized|401/i.test(message) ? "UNAUTHORIZED" : null;
+}
+
+
+/**
  * Single-flight Titan session starter. Concurrent calls (double click) resolve
  * to the same in-flight promise, so exactly one session is ever created.
  * Session creation is deliberately never auto-retried.
@@ -107,10 +123,12 @@ export function createTitanStarter<S>(deps: TitanStartDeps<S>): () => Promise<bo
         }
         deps.onStarted(res.snapshot);
         return true;
-      } catch {
-        // Raw exceptions never reach the UI.
-        deps.onError(null);
+      } catch (err) {
+        // Raw exceptions never reach the UI, but an auth failure must not be
+        // mislabelled as an engine outage.
+        deps.onError(titanThrownCode(err));
         return false;
+
       } finally {
         deps.onPending(false);
         inFlight = null;
