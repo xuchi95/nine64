@@ -68,13 +68,14 @@ export async function runBenchmark(args: {
   /** Server-validated config to benchmark — the admin's current draft. */
   config?: EngineConfig;
 }): Promise<BenchmarkOutcome> {
-  const { titanProfile, getProfile } = await import("./profiles.server");
+  const { titanProfile, getEngineProfile } = await import("./profiles.server");
   const { runCloudBenchmark, cloudEngineConfigured } = await import("./cloudEngine.server");
   if (!cloudEngineConfigured()) return { ok: false, code: "ENGINE_NOT_CONFIGURED" };
 
-  const profile = args.slug ? ((await getProfile(args.slug)) ?? (await titanProfile())) : await titanProfile();
+  const row = args.slug ? await getEngineProfile(args.slug) : null;
+  const profile = row ?? (await titanProfile());
   // Benchmark exactly what the admin intends to publish, not the live config.
-  const config = args.config ?? profile.draftConfig ?? profile.config;
+  const config = args.config ?? row?.draftConfig ?? profile.config;
   const run = await runCloudBenchmark(args.kind, config);
   if (run.status !== "ok") return { ok: false, code: run.status.toUpperCase() };
 

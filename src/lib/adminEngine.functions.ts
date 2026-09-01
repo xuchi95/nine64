@@ -165,6 +165,9 @@ export const runEngineBenchmark = createServerFn({ method: "POST" })
       .object({
         kind: z.enum(BENCHMARK_KINDS as unknown as [string, ...string[]]),
         reason,
+        slug: slug.default("titan"),
+        // Server-side validation: the browser never supplies a signature.
+        config: engineConfigSchema,
       })
       .parse(input),
   )
@@ -175,12 +178,24 @@ export const runEngineBenchmark = createServerFn({ method: "POST" })
     const { recordAdminActionStrict } = await import("@/lib/admin/auditLog.server");
 
     await enforceRateLimit("engine.benchmark", userSubject(identity.userId));
-    const result = await runBenchmark({ kind: data.kind as never, actorId: identity.userId });
+    const result = await runBenchmark({
+      kind: data.kind as never,
+      actorId: identity.userId,
+      slug: data.slug,
+      config: data.config,
+    });
     await recordAdminActionStrict({
       actorId: identity.userId,
       action: "engine_benchmark_run",
       note: data.reason,
-      detail: { kind: data.kind, ok: result.ok, code: result.code ?? null, benchmarkId: result.row?.id ?? null },
+      detail: {
+        kind: data.kind,
+        slug: data.slug,
+        ok: result.ok,
+        code: result.code ?? null,
+        benchmarkId: result.row?.id ?? null,
+        configSignature: result.row?.configSignature ?? null,
+      },
     });
     return result.ok
       ? { ok: true as const, row: result.row! }
