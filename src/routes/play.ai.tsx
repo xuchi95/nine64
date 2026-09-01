@@ -213,6 +213,12 @@ function PlayAi() {
     // Always clear the previous error before a new attempt.
     setEngineError(null);
     if (isTitan) {
+      // Never silently convert an unsupported variant into standard chess.
+      if (!titanSupportsVariant(config.variant)) {
+        setEngineError(t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) }));
+        return;
+      }
+      const titanVariant = config.variant;
       // A Titan game only exists once the server has created the session.
       titanStartRef.current = {
         request: async () => {
@@ -222,10 +228,11 @@ function PlayAi() {
           return startTitan({
             data: {
               playerColor: color,
-              variant: config.variant === "chess960" ? "chess960" : "standard",
+              variant: titanVariant,
             },
           });
         },
+
         onStarted: (snapshot) => {
           titanCtl.set({ id: snapshot.sessionId, version: snapshot.version });
           setPlayerColor(color);
