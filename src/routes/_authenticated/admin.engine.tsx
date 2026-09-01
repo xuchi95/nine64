@@ -575,6 +575,9 @@ function AdminEnginePage() {
                   </Button>
                 ))}
               </div>
+              {!reasonValid && (
+                <p className="text-xs text-amber-300">{t("adminc.engine.reasonHint")}</p>
+              )}
               <Textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
