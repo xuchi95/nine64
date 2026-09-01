@@ -27,6 +27,7 @@ export type RateLimitAction =
   | "titan.session"
   | "titan.move"
   | "engine.benchmark"
+  | "engine.qualification"
   | "openings.explorer"
   | "study.view"
   | "study.embed"
@@ -81,6 +82,9 @@ export const RATE_LIMIT_POLICY: Record<RateLimitAction, RateLimitRule> = {
   "titan.session": { windowSeconds: 3_600, limit: 20, failClosed: true, scope: "user" },
   "titan.move": { windowSeconds: 60, limit: 40, failClosed: true, scope: "user" },
   "engine.benchmark": { windowSeconds: 3_600, limit: 12, failClosed: true, scope: "admin" },
+  // The full qualification suite runs several controlled subtests internally,
+  // so it gets its own budget instead of consuming the manual benchmark one.
+  "engine.qualification": { windowSeconds: 3_600, limit: 4, failClosed: true, scope: "admin" },
 
   // Opening Explorer proxy — protects the upstream open database from abuse.
   "openings.explorer": { windowSeconds: 60, limit: 60, failClosed: false, scope: "ip-hmac" },
