@@ -39,6 +39,8 @@ import {
   titanStateOf,
   type TitanState,
 } from "@/lib/engine/titanStart";
+import { titanSupportsVariant } from "@/lib/engine/titanVariants";
+
 import { createTitanSessionController } from "@/lib/engine/sessionLifecycle";
 import { useT } from "@/lib/i18n";
 
