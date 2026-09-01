@@ -16,5 +16,7 @@ export interface BenchmarkRow {
   score: number | null;
   passed: boolean;
   result: Record<string, Json>;
+  /** Fingerprint of the engine config this run benchmarked (null for legacy rows). */
+  configSignature: string | null;
   createdAt: string;
 }

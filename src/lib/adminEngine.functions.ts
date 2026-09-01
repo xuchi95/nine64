@@ -118,7 +118,7 @@ export const publishEngineProfile = createServerFn({ method: "POST" })
 
     // A live, enabled profile requires green benchmarks recorded for the engine.
     if (data.enabled && data.status === "published" && !data.ignoreReadiness) {
-      const readiness = await publishReadiness(data.slug);
+      const readiness = await publishReadiness(data.slug, data.config);
       if (!readiness.ready) {
         return { ok: false as const, code: "BENCHMARK_REQUIRED", reasons: readiness.reasons };
       }
