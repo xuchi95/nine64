@@ -22,6 +22,7 @@ import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as OpeningsRouteImport } from './routes/openings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as RegisterPolicyRouteImport } from './routes/register-policy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -148,6 +149,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterPolicyRoute = RegisterPolicyRouteImport.update({
+  id: '/register-policy',
+  path: '/register-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -498,6 +504,7 @@ export interface FileRoutesByFullPath {
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
+  '/register-policy': typeof RegisterPolicyRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -575,6 +582,7 @@ export interface FileRoutesByTo {
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
+  '/register-policy': typeof RegisterPolicyRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -654,6 +662,7 @@ export interface FileRoutesById {
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
+  '/register-policy': typeof RegisterPolicyRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -733,6 +742,7 @@ export interface FileRouteTypes {
     | '/openings'
     | '/privacy'
     | '/progress'
+    | '/register-policy'
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
@@ -810,6 +820,7 @@ export interface FileRouteTypes {
     | '/openings'
     | '/privacy'
     | '/progress'
+    | '/register-policy'
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
@@ -888,6 +899,7 @@ export interface FileRouteTypes {
     | '/openings'
     | '/privacy'
     | '/progress'
+    | '/register-policy'
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
@@ -967,6 +979,7 @@ export interface RootRouteChildren {
   OpeningsRoute: typeof OpeningsRoute
   PrivacyRoute: typeof PrivacyRoute
   ProgressRoute: typeof ProgressRoute
+  RegisterPolicyRoute: typeof RegisterPolicyRoute
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
@@ -1096,6 +1109,13 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register-policy': {
+      id: '/register-policy'
+      path: '/register-policy'
+      fullPath: '/register-policy'
+      preLoaderRoute: typeof RegisterPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -1628,6 +1648,7 @@ const rootRouteChildren: RootRouteChildren = {
   OpeningsRoute: OpeningsRoute,
   PrivacyRoute: PrivacyRoute,
   ProgressRoute: ProgressRoute,
+  RegisterPolicyRoute: RegisterPolicyRoute,
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
