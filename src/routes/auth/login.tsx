@@ -11,7 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { guardAuthAttempt } from "@/lib/authGuard.functions";
 import { parseRateLimited, rateLimitMessage } from "@/lib/ratelimit/errors";
 import { lovable } from "@/integrations/lovable";
-import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldCheck, AlertTriangle } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { GoogleIcon } from "@/components/auth/GoogleIcon";
