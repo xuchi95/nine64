@@ -4,6 +4,7 @@ import {
   titanMessage,
   titanStateMessage,
   titanStateOf,
+  titanThrownCode,
 } from "@/lib/engine/titanStart";
 import playDict from "@/lib/i18n/dict/play";
 
