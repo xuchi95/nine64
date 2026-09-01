@@ -116,6 +116,7 @@ export const startTitanSession = createServerFn({ method: "POST" })
     const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
     const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
     const { createSession } = await import("@/lib/engine/botSessions.server");
+    type Snap = Extract<Awaited<ReturnType<typeof createSession>>, { ok: true }>["snapshot"];
     const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
     const { TITAN_LEVEL } = await import("@/lib/engine/profileTypes");
 
@@ -148,33 +149,41 @@ export const startTitanSession = createServerFn({ method: "POST" })
       };
     }
 
-    try {
-      const res = await createSession({
-        userId: context.userId,
-        playerColor: data.playerColor,
-        variant: data.variant,
-        config: profile.config,
-        level: TITAN_LEVEL,
-      });
-      if (!res.ok) return { ok: false as const, code: res.code };
+    const { startWithRollback } = await import("@/lib/engine/sessionLifecycle");
+    const { endSession, engineOpeningMove } = await import("@/lib/engine/botSessions.server");
 
-      // Player chose Black: the engine opens. Idempotent on the server.
-      if (data.playerColor === "b") {
-        const { engineOpeningMove } = await import("@/lib/engine/botSessions.server");
-        const opened = await engineOpeningMove({
-          sessionId: res.snapshot.sessionId,
+    // A start that fails after the row exists MUST roll the row back,
+    // otherwise repeated failures burn the maxConcurrentGames budget.
+    const started = await startWithRollback<Snap>({
+      create: async () => {
+        const res = await createSession({
           userId: context.userId,
+          playerColor: data.playerColor,
+          variant: data.variant,
           config: profile.config,
-          clock: null,
+          level: TITAN_LEVEL,
         });
-        if (!opened.ok) return { ok: false as const, code: opened.code };
-        return { ok: true as const, snapshot: opened.snapshot };
-      }
-      return { ok: true as const, snapshot: res.snapshot };
-    } catch {
-      // Raw exceptions never reach the UI.
-      return { ok: false as const, code: "ENGINE_UNAVAILABLE" };
-    }
+        return res.ok ? { ok: true, snapshot: res.snapshot } : { ok: false, code: res.code };
+      },
+      opening:
+        data.playerColor === "b"
+          ? async (snapshot) => {
+              const opened = await engineOpeningMove({
+                sessionId: snapshot.sessionId,
+                userId: context.userId,
+                config: profile.config,
+                clock: null,
+              });
+              return opened.ok ? { ok: true, snapshot: opened.snapshot } : { ok: false, code: opened.code };
+            }
+          : null,
+      abort: async (sessionId) => {
+        await endSession(sessionId, context.userId, "startup_failed");
+      },
+    });
+    return started.ok
+      ? { ok: true as const, snapshot: started.snapshot }
+      : { ok: false as const, code: started.code };
   });
 
 
@@ -234,7 +243,7 @@ export const getTitanSession = createServerFn({ method: "GET" })
 export const endTitanSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ sessionId: z.string().uuid(), reason: z.enum(["resign", "abort"]) }).parse(input),
+    z.object({ sessionId: z.string().uuid(), reason: z.enum(["resign", "abort", "draw", "timeout"]) }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { endSession } = await import("@/lib/engine/botSessions.server");

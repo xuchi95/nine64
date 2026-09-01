@@ -39,6 +39,7 @@ import {
   titanStateOf,
   type TitanState,
 } from "@/lib/engine/titanStart";
+import { createTitanSessionController } from "@/lib/engine/sessionLifecycle";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/play/ai")({
@@ -131,7 +132,18 @@ function PlayAi() {
   const startTitan = useServerFn(startTitanSession);
   const submitTitan = useServerFn(submitTitanMove);
   const endTitan = useServerFn(endTitanSession);
-  const titanRef = useRef<{ id: string; version: number } | null>(null);
+  const endTitanRef = useRef(endTitan);
+  endTitanRef.current = endTitan;
+  // Single owner of the current Titan session: every exit path closes it.
+  const titanCtlRef = useRef<ReturnType<typeof createTitanSessionController> | null>(null);
+  if (!titanCtlRef.current) {
+    titanCtlRef.current = createTitanSessionController({
+      end: async (sessionId, reason) => {
+        await endTitanRef.current({ data: { sessionId, reason } });
+      },
+    });
+  }
+  const titanCtl = titanCtlRef.current;
   const [titanStarting, setTitanStarting] = useState(false);
   const titanStatusFn = useServerFn(getTitanStatus);
   const [titanState, setTitanState] = useState<TitanState>("loading");
@@ -199,16 +211,23 @@ function PlayAi() {
     if (isTitan) {
       // A Titan game only exists once the server has created the session.
       titanStartRef.current = {
-        request: () =>
-          startTitan({
+        request: async () => {
+          // Rematch / retry: close any previous session before asking the
+          // server for a brand new one (fresh id, version and 960 position).
+          await titanCtl.closeAndClear("abort");
+          return startTitan({
             data: {
               playerColor: color,
               variant: config.variant === "chess960" ? "chess960" : "standard",
             },
-          }),
+          });
+        },
         onStarted: (snapshot) => {
-          titanRef.current = { id: snapshot.sessionId, version: snapshot.version };
+          titanCtl.set({ id: snapshot.sessionId, version: snapshot.version });
           setPlayerColor(color);
+          setPremove(null);
+          setShowResult(false);
+          setEngineInfo(null);
           // The server owns the starting array (critical for Chess960).
           game.loadFen(snapshot.initialFen);
           prevEval.current = 0;
@@ -228,7 +247,7 @@ function PlayAi() {
       void titanStarterRef.current?.();
       return;
     }
-    titanRef.current = null;
+    titanCtl.clear();
     setPlayerColor(color);
     game.reset();
     prevEval.current = 0;
@@ -236,6 +255,33 @@ function PlayAi() {
     playSound("matchFound");
   };
 
+
+  /**
+   * Titan rematch is a brand new server session (new id + version), never a
+   * local board reset on top of a stale session.
+   */
+  const rematch = () => {
+    setPremove(null);
+    setShowResult(false);
+    setEngineError(null);
+    if (isTitan) {
+      game.reset();
+      start();
+      return;
+    }
+    game.reset();
+  };
+
+  /** Leaving to setup must not strand an active Titan session. */
+  const newSetup = () => {
+    void titanCtl.closeAndClear("abort");
+    setPremove(null);
+    setShowResult(false);
+    setEngineError(null);
+    setEngineInfo(null);
+    setThinking(false);
+    setPhase("setup");
+  };
 
   const { quick } = Route.useSearch();
   const quickStarted = useRef(false);
@@ -261,7 +307,7 @@ function PlayAi() {
     if (busy.current) return;
 
     if (isTitan) {
-      const session = titanRef.current;
+      const session = titanCtl.get();
       const last = game.moves[game.moves.length - 1];
       if (!session || !last) return;
       let titanCancelled = false;
@@ -293,7 +339,12 @@ function PlayAi() {
             setEngineError(titanMessage(res.code, t));
             return;
           }
-          titanRef.current = { id: session.id, version: res.snapshot.version };
+          if (res.snapshot.status === "active") {
+            titanCtl.set({ id: session.id, version: res.snapshot.version });
+          } else {
+            // Server already committed the terminal state — no second close.
+            titanCtl.clear();
+          }
           setEngineError(null);
           if (res.snapshot.engine?.depth) {
             setEngineInfo({ depth: res.snapshot.engine.depth, eval: "" });
@@ -683,11 +734,7 @@ function PlayAi() {
                 onClick={() => {
                   if (!settings.confirmResign || window.confirm(t("play.ai.resignConfirm"))) {
                     game.resign(playerColor);
-                    if (titanRef.current) {
-                      void endTitan({ data: { sessionId: titanRef.current.id, reason: "resign" } }).catch(
-                        () => undefined,
-                      );
-                    }
+                    void titanCtl.closeAndClear("resign");
                   }
                 }}
                 disabled={!!game.result}
@@ -696,7 +743,10 @@ function PlayAi() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => game.declareDraw("Agreement")}
+                onClick={() => {
+                  game.declareDraw("Agreement");
+                  void titanCtl.closeAndClear("draw");
+                }}
                 disabled={!!game.result}
               >
                 <Handshake className="size-4" /> {t("play.ai.draw")}
@@ -705,11 +755,8 @@ function PlayAi() {
             <Button
               className="w-full"
               size="lg"
-              onClick={() => {
-                game.reset();
-                setPremove(null);
-                setShowResult(false);
-              }}
+              onClick={rematch}
+              disabled={isTitan && titanStarting}
             >
               <RefreshCw className="size-4" /> {t("play.ai.rematch")}
             </Button>
@@ -721,7 +768,7 @@ function PlayAi() {
             <Button
               variant="ghost"
               className="w-full text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground"
-              onClick={() => setPhase("setup")}
+              onClick={newSetup}
             >
               <RotateCcw className="size-4" /> {t("play.ai.newSetup")}
             </Button>
@@ -735,14 +782,10 @@ function PlayAi() {
         playerColor={playerColor}
         open={showResult}
         onOpenChange={setShowResult}
-        onRematch={() => {
-          game.reset();
-          setPremove(null);
-          setShowResult(false);
-        }}
+        onRematch={rematch}
         onNewGame={() => {
           setShowResult(false);
-          setPhase("setup");
+          newSetup();
         }}
         onAnalyse={() => navigate({ to: "/analysis", search: { fen: game.fen } })}
       />
