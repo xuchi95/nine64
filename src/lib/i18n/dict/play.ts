@@ -526,6 +526,10 @@ export default {
     "play.ai.titanTooMany": "You already have too many open Titan games. Finish one before starting another.",
     "play.ai.titanConflict": "This Titan game changed on the server. Reload to resync.",
     "play.ai.titanUnavailable": "Could not reach Nine64 Titan. Try again in a moment.",
+    "play.ai.titanVariantBlocked": "Nine64 Titan (level 16) does not support the {variant} variant yet. Pick Standard or Chess960, or go back to level 1–15.",
+    "play.ai.titanVariantUnsupportedBadge": "Not supported by Titan",
+    "play.ai.titanVariantHint": "Level 16 only plays Standard and Chess960. Your variant choice is kept as-is — nothing is switched automatically.",
+
     "play.ai.titanStarting": "Creating Titan game…",
     "play.ai.titanStatusTitle": "Nine64 Titan",
     "play.ai.titanChecking": "Checking the Nine64 Titan service…",
