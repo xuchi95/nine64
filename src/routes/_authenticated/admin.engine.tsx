@@ -189,6 +189,9 @@ function AdminEnginePage() {
             <p className="font-mono text-xs">
               {data?.health.engineVersion ?? "—"} · {data?.health.latencyMs ?? "—"}ms
             </p>
+            <p className="font-mono text-xs text-muted-foreground">
+              pool {data?.health.pool ? `${data.health.pool.busy}/${data.health.pool.size}` : "—"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -215,6 +218,36 @@ function AdminEnginePage() {
             <p className="font-mono text-xs text-muted-foreground">
               {(data?.readiness.reasons ?? []).join(", ") || "—"}
             </p>
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-3">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <ShieldAlert className="h-4 w-4" /> Backend secrets
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p
+              className={cn(
+                "font-semibold",
+                data?.env.ok ? "text-emerald-400" : "text-amber-400",
+              )}
+            >
+              {data?.env.code ?? "…"}
+            </p>
+            <div className="flex flex-wrap gap-2 font-mono text-xs">
+              {Object.entries(data?.env.present ?? {}).map(([name, present]) => (
+                <span
+                  key={name}
+                  className={cn(
+                    "rounded border px-2 py-0.5",
+                    present ? "border-emerald-500/40 text-emerald-400" : "border-amber-500/40 text-amber-400",
+                  )}
+                >
+                  {name}: {present ? "configured" : "missing"}
+                </span>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
