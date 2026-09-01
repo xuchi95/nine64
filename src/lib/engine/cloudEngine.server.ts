@@ -207,33 +207,65 @@ function noteSuccess(): void {
   breaker = { failures: 0, openUntil: 0 };
 }
 
-async function call<T>(
+export type CloudCallResult<T> =
+  | { ok: true; data: T; httpStatus: number }
+  | { ok: false; status: CloudEngineStatus; error: string; httpStatus: number | null };
+
+/**
+ * The single entry point for every Cloud Run call. It owns OIDC token
+ * acquisition, audience, timeout, JSON parsing, status mapping and
+ * secret-free logging, so no caller re-implements auth.
+ */
+export async function callCloudEngine<T>(
   path: string,
-  body: unknown,
-  timeoutMs: number,
-): Promise<{ ok: true; data: T } | { ok: false; status: CloudEngineStatus; error: string }> {
+  options: { method?: "GET" | "POST"; body?: unknown; timeoutMs?: number } = {},
+): Promise<CloudCallResult<T>> {
+  const method = options.method ?? "POST";
+  const timeoutMs = options.timeoutMs ?? 8_000;
   const creds = credentials();
-  if (!creds) return { ok: false, status: "not_configured", error: "PLAY_ENGINE_* is unset" };
+  if (!creds) {
+    return { ok: false, status: "not_configured", error: "PLAY_ENGINE_* is unset", httpStatus: null };
+  }
   if (Date.now() < breaker.openUntil) {
-    return { ok: false, status: "unavailable", error: "circuit_open" };
+    return { ok: false, status: "unavailable", error: "circuit_open", httpStatus: null };
   }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const token = await idToken(creds);
+    let token: string;
+    try {
+      token = await idToken(creds);
+    } catch {
+      // A bad key or a rejected assertion must never surface as a raw error.
+      return { ok: false, status: "unauthorized", error: "oidc_mint_failed", httpStatus: null };
+    }
+    const headers: Record<string, string> = { authorization: `Bearer ${token}` };
+    if (method === "POST") headers["content-type"] = "application/json";
     const res = await fetch(`${creds.url}${path}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify(body),
+      method,
+      headers,
+      body: method === "POST" ? JSON.stringify(options.body ?? {}) : undefined,
       signal: controller.signal,
     });
     if (!res.ok) {
       noteFailure();
-      return { ok: false, status: "unavailable", error: `http_${res.status}` };
+      const unauth = res.status === 401 || res.status === 403;
+      return {
+        ok: false,
+        status: unauth ? "unauthorized" : "unavailable",
+        error: `http_${res.status}`,
+        httpStatus: res.status,
+      };
     }
     noteSuccess();
-    return { ok: true, data: (await res.json()) as T };
+    let data: T;
+    try {
+      data = (await res.json()) as T;
+    } catch {
+      return { ok: false, status: "invalid", error: "invalid_json", httpStatus: res.status };
+    }
+    return { ok: true, data, httpStatus: res.status };
   } catch (err) {
     noteFailure();
     const aborted = err instanceof Error && err.name === "AbortError";
@@ -243,11 +275,22 @@ async function call<T>(
       ok: false,
       status: aborted ? "timeout" : "unavailable",
       error: aborted ? "timeout" : "network_error",
+      httpStatus: null,
     };
   } finally {
     clearTimeout(timer);
   }
 }
+
+async function call<T>(
+  path: string,
+  body: unknown,
+  timeoutMs: number,
+): Promise<{ ok: true; data: T } | { ok: false; status: CloudEngineStatus; error: string }> {
+  const res = await callCloudEngine<T>(path, { method: "POST", body, timeoutMs });
+  return res.ok ? { ok: true, data: res.data } : { ok: false, status: res.status, error: res.error };
+}
+
 
 /**
  * Defensive parse of the /healthz contract. A malformed or partial payload is
