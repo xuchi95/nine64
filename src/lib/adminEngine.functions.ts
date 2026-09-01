@@ -202,6 +202,44 @@ export const runEngineBenchmark = createServerFn({ method: "POST" })
       : { ok: false as const, code: result.code ?? "FAILED" };
   });
 
+/**
+ * One atomic production qualification suite. The admin rate limit is applied
+ * ONCE here; the controlled internal benchmark steps are not limited again so
+ * the suite cannot rate-limit itself into a failure.
+ */
+export const runTitanQualificationSuite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ reason, slug: slug.default("titan"), config: engineConfigSchema }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const identity = await assertAdmin(context, "engine");
+    const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    const { runTitanQualification } = await import("@/lib/engine/qualification.server");
+    const { recordAdminActionStrict } = await import("@/lib/admin/auditLog.server");
+
+    await enforceRateLimit("engine.qualification", userSubject(identity.userId));
+    const result = await runTitanQualification({
+      slug: data.slug,
+      config: data.config,
+      actorId: identity.userId,
+    });
+    await recordAdminActionStrict({
+      actorId: identity.userId,
+      action: "engine_qualification_run",
+      note: data.reason,
+      detail: {
+        slug: data.slug,
+        ok: result.ok,
+        configSignature: result.configSignature,
+        durationMs: result.durationMs,
+        reasons: result.reasons,
+        steps: result.steps.map((s) => ({ id: s.id, status: s.status, reason: s.reason })),
+      },
+    });
+    return result;
+  });
+
 export const disableEngineProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ slug, reason }).parse(input))
