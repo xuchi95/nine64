@@ -103,6 +103,8 @@ export default {
     "play.ai.titanProfileDisabled": "Nine64 Titan đang bị tắt bởi quản trị viên.",
     "play.ai.titanWriteFailed": "Không lưu được ván Titan. Vui lòng thử lại.",
     "play.ai.titanAuthRequired": "Bạn cần đăng nhập để chơi với Nine64 Titan.",
+    "play.ai.titanSignIn": "Đăng nhập",
+
     "play.ai.titanRetry": "Thử lại",
     "play.local.title": "Chơi 2 người",
     "play.local.subtitle": "Dùng chung một thiết bị và lần lượt đi quân.",
