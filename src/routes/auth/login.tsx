@@ -170,121 +170,127 @@ function LoginPage() {
         <p className="mt-1.5 text-sm text-muted-foreground">{t("study.login.welcomeBack", { app: APP.name })}</p>
       </div>
 
+      {formError ? (
+        <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-center text-sm text-destructive">
+          {formError}
+        </p>
+      ) : null}
 
-          {formError ? (
-            <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{formError}</p>
-          ) : null}
-
-          <div className="mt-5 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-            <ShieldCheck className="mr-1.5 inline size-3.5 text-primary" />
-            {locale === "vi" ? (
-              <>
-                Khi đăng nhập, bạn xác nhận tiếp tục đồng ý với{" "}
-                <Link to="/terms" className="text-primary hover:underline">Điều khoản sử dụng</Link>,{" "}
-                <Link to="/privacy" className="text-primary hover:underline">Chính sách quyền riêng tư</Link> và{" "}
-                <Link to="/cookie-policy" className="text-primary hover:underline">Chính sách cookie</Link>.{" "}
-                <Link to="/register-policy" search={{ redirect: redirectTo }} className="text-primary hover:underline">
-                  Xem lại tóm tắt chính sách
-                </Link>
-                .
-              </>
-            ) : (
-              <>
-                By signing in you confirm that you still agree to our{" "}
-                <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>,{" "}
-                <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> and{" "}
-                <Link to="/cookie-policy" className="text-primary hover:underline">Cookie Policy</Link>.{" "}
-                <Link to="/register-policy" search={{ redirect: redirectTo }} className="text-primary hover:underline">
-                  Review the policy summary
-                </Link>
-                .
-              </>
-            )}
+      <div className="mt-5 rounded-xl border border-border/80 bg-secondary/30 p-4 text-center">
+        <div className="mb-2 flex justify-center">
+          <div className="grid size-8 place-items-center rounded-full border border-warning/30 bg-warning/10 text-warning">
+            <AlertTriangle className="size-4" />
           </div>
-
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="label-caps">{t("study.login.email")}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="h-11 bg-background/60 focus-ring-brass"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="label-caps">{t("study.login.password")}</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  className="h-11 bg-background/60 pr-11 focus-ring-brass"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-            </div>
-
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              {t("study.login.signIn")}
-            </Button>
-          </form>
-
-          <div className="mt-5 flex items-center gap-3">
-            <Separator className="flex-1" />
-            <span className="label-caps">{t("study.login.or")}</span>
-            <Separator className="flex-1" />
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="mt-5 w-full gap-2.5 border-primary/40 bg-primary/10 font-semibold text-foreground shadow-sm transition-colors hover:border-primary/60 hover:bg-primary/15"
-            onClick={async () => {
-              setLoading(true);
-              const result = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: window.location.origin,
-              });
-              setLoading(false);
-              if (result.error) {
-                setFormError(result.error.message || t("study.login.googleFailed"));
-              }
-            }}
-            disabled={loading}
+        </div>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {t("study.login.consentIntro")}
+          <Link to="/terms" className="font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80">
+            {t("study.login.terms")}
+          </Link>
+          ,{" "}
+          <Link to="/privacy" className="font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80">
+            {t("study.login.privacy")}
+          </Link>{" "}
+          {locale === "vi" ? "và" : "and"}{" "}
+          <Link to="/cookie-policy" className="font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80">
+            {t("study.login.cookie")}
+          </Link>
+          {t("study.login.consentOutro")}{" "}
+          <Link
+            to="/register-policy"
+            search={{ redirect: redirectTo }}
+            className="font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
           >
-            <GoogleIcon className="size-5 text-primary" />
-            {t("study.login.continueWithGoogle")}
+            {t("study.login.reviewPolicy")}
+          </Link>
+          .
+        </p>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-border/60 bg-background/40 p-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="label-caps">{t("study.login.email")}</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              className="h-11 bg-background/60 focus-ring-brass"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password" className="label-caps">{t("study.login.password")}</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="h-11 bg-background/60 pr-11 focus-ring-brass"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+          </div>
+
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            {t("study.login.signIn")}
           </Button>
+        </form>
 
+        <div className="mt-4 flex items-center gap-3">
+          <Separator className="flex-1" />
+          <span className="label-caps">{t("study.login.or")}</span>
+          <Separator className="flex-1" />
+        </div>
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            {t("study.login.noAccount")}{" "}
-            <Link
-              to="/register-policy"
-              search={{ redirect: redirectTo }}
-              className="text-primary hover:underline"
-            >
-              {t("study.login.createOne")}
-            </Link>
-          </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="mt-4 w-full gap-2.5 border-primary/40 bg-primary/10 font-semibold text-foreground shadow-sm transition-colors hover:border-primary/60 hover:bg-primary/15"
+          onClick={async () => {
+            setLoading(true);
+            const result = await lovable.auth.signInWithOAuth("google", {
+              redirect_uri: window.location.origin,
+            });
+            setLoading(false);
+            if (result.error) {
+              setFormError(result.error.message || t("study.login.googleFailed"));
+            }
+          }}
+          disabled={loading}
+        >
+          <GoogleIcon className="size-5 text-primary" />
+          {t("study.login.continueWithGoogle")}
+        </Button>
+      </div>
+
+      <p className="mt-5 text-center text-sm text-muted-foreground">
+        {t("study.login.noAccount")}{" "}
+        <Link
+          to="/register-policy"
+          search={{ redirect: redirectTo }}
+          className="font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
+        >
+          {t("study.login.createOne")}
+        </Link>
+      </p>
     </AuthModal>
   );
 }
