@@ -1,4 +1,4 @@
-import type { BotLevel, BotPersonality } from "@/config/bots";
+import type { BotLevel } from "@/config/bots";
 
 export interface EngineCapability {
   cores: number;
@@ -305,28 +305,4 @@ export function humanThinkTime(opts: {
 
   const clockCap = Math.max(150, remainingMs * 0.08);
   return Math.round(Math.min(Math.max(ms, 180), Math.min(18000, clockCap)));
-}
-
-export function pickMoveWithPersonality(
-  lines: EngineLine[],
-  personality: BotPersonality,
-  level: BotLevel,
-): string {
-  if (lines.length === 0) return "";
-  if (level.level >= 13 || personality.evalTolerance === 0) return lines[0]!.move;
-
-  const best = lines[0]!;
-  const bestScore = scoreOf(best);
-  const acceptable = lines.filter((l) => {
-    if (l.mateIn !== null && l.mateIn > 0) return true;
-    return bestScore - scoreOf(l) <= personality.evalTolerance;
-  });
-  if (best.mateIn !== null) return best.move;
-  const pool = acceptable.length > 0 ? acceptable : [best];
-  return pool[Math.floor(Math.random() * pool.length)]!.move;
-}
-
-function scoreOf(line: EngineLine): number {
-  if (line.mateIn !== null) return line.mateIn > 0 ? 100000 - line.mateIn : -100000 - line.mateIn;
-  return line.cp ?? 0;
 }
