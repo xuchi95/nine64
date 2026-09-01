@@ -148,6 +148,7 @@ async function idToken(creds: Credentials): Promise<string> {
 /** Test seam. */
 export function __resetCloudEngineState(): void {
   tokenCache = null;
+  healthCache = null;
   breaker = { failures: 0, openUntil: 0 };
 }
 
@@ -287,6 +288,19 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     };
   }
   return interpretHealthPayload(res.data, Date.now() - startedAt);
+}
+
+// --------------------------------------------------------------------------
+// Short-lived health cache: the play preflight must not hammer /healthz.
+// --------------------------------------------------------------------------
+let healthCache: { value: CloudEngineHealth; fetchedAt: number } | null = null;
+const HEALTH_TTL_MS = 10_000;
+
+export async function cloudEngineHealthCached(maxAgeMs = HEALTH_TTL_MS): Promise<CloudEngineHealth> {
+  if (healthCache && Date.now() - healthCache.fetchedAt < maxAgeMs) return healthCache.value;
+  const value = await cloudEngineHealth();
+  healthCache = { value, fetchedAt: Date.now() };
+  return value;
 }
 
 /** Only the allowlisted UCI options ever leave this process. */
