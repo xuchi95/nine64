@@ -111,21 +111,24 @@ function LoginPage() {
   if (mfaFactorId) {
     return (
       <AuthModal>
-        <form onSubmit={handleMfa} className="space-y-4">
+        <form onSubmit={handleMfa} className="space-y-5">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">{t("study.login.mfaTitle")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <div className="mx-auto grid size-12 place-items-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
+              <ShieldCheck className="size-6" />
+            </div>
+            <h1 className="mt-4 text-2xl font-bold tracking-tight">{t("study.login.mfaTitle")}</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
               {t("study.login.mfaSubtitle")}
             </p>
           </div>
           {formInfo ? (
-            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">{formInfo}</p>
+            <p className="rounded-lg border border-primary/25 bg-primary/8 px-3 py-2.5 text-center text-sm text-muted-foreground">{formInfo}</p>
           ) : null}
           {formError ? (
-            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{formError}</p>
           ) : null}
           <div className="space-y-2">
-            <Label htmlFor="mfa-code">{t("study.login.mfaCode")}</Label>
+            <Label htmlFor="mfa-code" className="label-caps">{t("study.login.mfaCode")}</Label>
             <Input
               id="mfa-code"
               value={mfaCode}
@@ -133,17 +136,17 @@ function LoginPage() {
               inputMode="numeric"
               autoFocus
               placeholder="000000"
-              className="text-center font-mono text-lg tracking-[0.4em]"
+              className="h-14 border-primary/25 bg-background/60 text-center font-mono text-2xl tracking-[0.5em] focus-ring-brass"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading || mfaCode.length !== 6}>
+          <Button type="submit" size="lg" className="w-full" disabled={loading || mfaCode.length !== 6}>
             {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
             {t("study.login.verify")}
           </Button>
           <Button
             type="button"
             variant="ghost"
-            className="w-full"
+            className="w-full text-muted-foreground"
             onClick={async () => {
               await supabase.auth.signOut();
               setMfaFactorId(null);
