@@ -129,7 +129,11 @@ export function getPersonality(id: string): BotPersonality {
 import { translate } from "@/lib/i18n";
 
 export function botLevelTitle(level: number): string {
-  return translate(`play.bots.level.${level}.title`);
+  const key = `play.bots.level.${level}.title`;
+  const translated = translate(key);
+  // Never leak a raw i18n key to the UI — fall back to the config title.
+  if (translated === key) return getBotLevel(level).title;
+  return translated;
 }
 
 export function personalityName(id: string): string {

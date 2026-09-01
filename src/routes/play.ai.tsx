@@ -403,7 +403,9 @@ function PlayAi() {
     return (
       <AppShell>
         <h1 className="text-2xl font-bold">{t("play.ai.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("play.ai.subtitle")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {level.runtime === "cloud" ? t("play.ai.subtitleCloud") : t("play.ai.subtitle")}
+        </p>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
           <div className="panel p-5">
