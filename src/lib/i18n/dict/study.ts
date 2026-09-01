@@ -634,7 +634,7 @@ export default {
     "study.login.privacy": "Privacy Policy",
     "study.login.cookie": "Cookie Policy",
     "study.login.reviewPolicy": "Review the policy summary",
-    "study.login.consentOutro": "."
+    "study.login.consentOutro": ".",
 
     // ---- Auth: Register ----
     "study.register.metaTitle": "Create account — {app}",
