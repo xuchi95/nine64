@@ -172,6 +172,10 @@ export function AppShell({ children, wide }: { children: ReactNode; wide?: boole
             {t("shell.footer.cookiePolicy")}
           </Link>
           <span aria-hidden className="text-border">|</span>
+          <Link to="/data-rights" className="hover:text-foreground hover:underline">
+            {t("shell.footer.dataRights")}
+          </Link>
+          <span aria-hidden className="text-border">|</span>
           <Link to="/contact" className="hover:text-foreground hover:underline">
             {t("shell.footer.contact")}
           </Link>
