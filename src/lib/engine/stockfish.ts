@@ -1,4 +1,4 @@
-import type { BotLevel, BotPersonality } from "@/config/bots";
+import type { BotLevel } from "@/config/bots";
 
 export interface EngineCapability {
   cores: number;
@@ -33,8 +33,8 @@ export interface SearchRequest {
   multiPv?: number;
   skill?: number | null;
   uciElo?: number | null;
-  contempt?: number;
 }
+
 
 export type PerformanceMode = "performance" | "balanced" | "maximum";
 
@@ -73,6 +73,12 @@ export function detectCapability(mode: PerformanceMode): EngineCapability {
   };
 }
 
+/** Parses `option name X type spin ...` handshake lines into option names. */
+export function parseUciOptionName(line: string): string | null {
+  const m = /^option name (.+?) type /.exec(line.trim());
+  return m ? m[1]!.trim() : null;
+}
+
 /**
  * Thin UCI adapter over the Stockfish WASM worker. All search work happens off
  * the UI thread; this class only marshals UCI text.
@@ -82,6 +88,10 @@ export class StockfishEngine {
   private ready = false;
   private queue: ((line: string) => void)[] = [];
   private lineHandlers = new Set<(line: string) => void>();
+  /** Options the engine advertised during the `uci` handshake. We never send
+   * anything outside this set — Stockfish 18 Lite dropped `Contempt`, and
+   * unknown options just spam the log. */
+  private options = new Set<string>();
   /** Serialises searches: UCI is a single-position protocol, so overlapping
    * `go` commands would mix candidate lines from two different positions. */
   private chain: Promise<unknown> = Promise.resolve();
@@ -89,6 +99,20 @@ export class StockfishEngine {
 
   constructor(private mode: PerformanceMode = "balanced") {
     this.capability = detectCapability(mode);
+  }
+
+  supportsOption(name: string): boolean {
+    return this.options.has(name);
+  }
+
+  get advertisedOptions(): string[] {
+    return [...this.options];
+  }
+
+  private setOption(name: string, value: string | number | boolean) {
+    if (!this.options.has(name)) return false;
+    this.send(`setoption name ${name} value ${value}`);
+    return true;
   }
 
   async init(): Promise<void> {
@@ -101,14 +125,24 @@ export class StockfishEngine {
       this.lineHandlers.forEach((h) => h(data));
       this.queue.forEach((h) => h(data));
     };
+    const optionCollector = (line: string) => {
+      const name = parseUciOptionName(line);
+      if (name) this.options.add(name);
+    };
+    this.lineHandlers.add(optionCollector);
     this.send("uci");
-    await this.waitFor((l) => l.startsWith("uciok"), 20000);
-    this.send(`setoption name Threads value ${this.capability.threads}`);
-    this.send(`setoption name Hash value ${this.capability.hashMb}`);
-    this.send("setoption name Ponder value false");
+    try {
+      await this.waitFor((l) => l.startsWith("uciok"), 20000);
+    } finally {
+      this.lineHandlers.delete(optionCollector);
+    }
+    this.setOption("Threads", this.capability.threads);
+    this.setOption("Hash", this.capability.hashMb);
+    this.setOption("Ponder", false);
     await this.isReady();
     this.ready = true;
   }
+
 
   get performanceMode() {
     return this.mode;
@@ -160,26 +194,22 @@ export class StockfishEngine {
     // Set explicitly on EVERY search: a shared engine instance keeps UCI
     // options, so a previous Chess960 search must never leak into a standard
     // one (and vice versa).
-    this.send(
-      `setoption name UCI_Chess960 value ${req.variant === "chess960" ? "true" : "false"}`,
-    );
+    this.setOption("UCI_Chess960", req.variant === "chess960" ? "true" : "false");
 
     if (req.skill === null || req.skill === undefined) {
-      this.send("setoption name UCI_LimitStrength value false");
-      this.send("setoption name Skill Level value 20");
+      this.setOption("UCI_LimitStrength", "false");
+      this.setOption("Skill Level", 20);
     } else {
-      this.send(`setoption name Skill Level value ${req.skill}`);
+      this.setOption("Skill Level", req.skill);
       if (req.uciElo) {
-        this.send("setoption name UCI_LimitStrength value true");
-        this.send(`setoption name UCI_Elo value ${req.uciElo}`);
+        this.setOption("UCI_LimitStrength", "true");
+        this.setOption("UCI_Elo", req.uciElo);
       } else {
-        this.send("setoption name UCI_LimitStrength value false");
+        this.setOption("UCI_LimitStrength", "false");
       }
     }
-    if (typeof req.contempt === "number") {
-      this.send(`setoption name Contempt value ${Math.round(req.contempt)}`);
-    }
-    this.send(`setoption name MultiPV value ${multiPv}`);
+    this.setOption("MultiPV", multiPv);
+
     await this.isReady();
 
     const lines = new Map<number, EngineLine>();
@@ -275,28 +305,4 @@ export function humanThinkTime(opts: {
 
   const clockCap = Math.max(150, remainingMs * 0.08);
   return Math.round(Math.min(Math.max(ms, 180), Math.min(18000, clockCap)));
-}
-
-export function pickMoveWithPersonality(
-  lines: EngineLine[],
-  personality: BotPersonality,
-  level: BotLevel,
-): string {
-  if (lines.length === 0) return "";
-  if (level.level >= 13 || personality.evalTolerance === 0) return lines[0]!.move;
-
-  const best = lines[0]!;
-  const bestScore = scoreOf(best);
-  const acceptable = lines.filter((l) => {
-    if (l.mateIn !== null && l.mateIn > 0) return true;
-    return bestScore - scoreOf(l) <= personality.evalTolerance;
-  });
-  if (best.mateIn !== null) return best.move;
-  const pool = acceptable.length > 0 ? acceptable : [best];
-  return pool[Math.floor(Math.random() * pool.length)]!.move;
-}
-
-function scoreOf(line: EngineLine): number {
-  if (line.mateIn !== null) return line.mateIn > 0 ? 100000 - line.mateIn : -100000 - line.mateIn;
-  return line.cp ?? 0;
 }

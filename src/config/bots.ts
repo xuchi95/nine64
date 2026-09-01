@@ -43,11 +43,16 @@ export interface BotPersonality {
   id: string;
   name: string;
   blurb: string;
-  /** UCI Contempt-like aggression bias, applied as engine contempt */
-  contempt: number;
-  /** preferred first moves as white (SAN), used only below Engine tiers */
+  /**
+   * Preferred opening moves (SAN). Applied as a soft bonus inside the
+   * personality reranker during the opening phase only, and only for moves the
+   * engine already proposed within the level's eval-loss budget.
+   */
   openings: string[];
-  /** eval tolerance in centipawns when choosing among top engine moves */
+  /**
+   * Base eval tolerance in centipawns. Scaled down per level by
+   * `toleranceFor()` — style never buys a blunder.
+   */
   evalTolerance: number;
   accent: string;
 }
@@ -57,7 +62,6 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
     id: "atlas",
     name: "Atlas",
     blurb: "Balanced positional play. Builds slowly, punishes loose pieces.",
-    contempt: 0,
     openings: ["d4", "Nf3", "c4"],
     evalTolerance: 25,
     accent: "primary",
@@ -66,7 +70,6 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
     id: "viper",
     name: "Viper",
     blurb: "Aggressive tactician. Hunts the king from move one.",
-    contempt: 40,
     openings: ["e4", "f4"],
     evalTolerance: 45,
     accent: "destructive",
@@ -75,7 +78,6 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
     id: "fortress",
     name: "Fortress",
     blurb: "Defensive wall. Trades into safety and grinds endgames.",
-    contempt: -30,
     openings: ["d4", "e3", "Nf3"],
     evalTolerance: 20,
     accent: "accent",
@@ -84,7 +86,6 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
     id: "gambit",
     name: "Gambit",
     blurb: "Sacrifices material early for a dangerous initiative.",
-    contempt: 60,
     openings: ["e4", "d4", "b4"],
     evalTolerance: 60,
     accent: "warning",
@@ -93,7 +94,6 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
     id: "nova",
     name: "Nova",
     blurb: "Dynamic and sharp. Loves imbalanced structures.",
-    contempt: 20,
     openings: ["e4", "c4", "Nf3"],
     evalTolerance: 35,
     accent: "accent",
@@ -102,7 +102,6 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
     id: "oracle",
     name: "Oracle",
     blurb: "Maximum calculation. No style, only the best move.",
-    contempt: 0,
     openings: [],
     evalTolerance: 0,
     accent: "primary",
@@ -111,7 +110,6 @@ export const BOT_PERSONALITIES: BotPersonality[] = [
     id: "chaos",
     name: "Chaos",
     blurb: "Unpredictable move selection, still strong.",
-    contempt: 30,
     openings: ["e4", "d4", "c4", "Nf3", "g3", "b3"],
     evalTolerance: 70,
     accent: "warning",

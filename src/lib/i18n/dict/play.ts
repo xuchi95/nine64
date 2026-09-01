@@ -53,6 +53,8 @@ export default {
     "play.ai.sliderBeginner": "Người mới",
     "play.ai.sliderMax": "Máy tối đa",
     "play.ai.personality": "Tính cách",
+    "play.ai.titanPersonalityLocked":
+      "Titan ưu tiên nước mạnh nhất; tính cách bị tắt ở chế độ sức mạnh tối đa.",
     "play.ai.botBadge": "BOT",
     "play.ai.yourColor": "Quân của bạn",
     "play.ai.colorWhite": "Trắng",
@@ -491,6 +493,8 @@ export default {
     "play.ai.sliderBeginner": "Beginner",
     "play.ai.sliderMax": "Engine Max",
     "play.ai.personality": "Personality",
+    "play.ai.titanPersonalityLocked":
+      "Titan always plays the strongest move; personalities are disabled in maximum-strength mode.",
     "play.ai.botBadge": "BOT",
     "play.ai.yourColor": "Your colour",
     "play.ai.colorWhite": "White",
