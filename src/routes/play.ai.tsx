@@ -689,20 +689,35 @@ function PlayAi() {
                     <StatusPill tone="live">{t("play.ai.titanReady")}</StatusPill>
                   ) : null}
                 </div>
-                {titanStateMessage(titanState, t, titanCode) && (
-                  <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
-                    {titanStateMessage(titanState, t, titanCode)}
-                  </GameNotice>
-                )}
-                {titanState === "unavailable" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setTitanProbe((n) => n + 1)}
-                  >
-                    <RefreshCw className="size-4" />
-                    {t("play.ai.titanRetry")}
-                  </Button>
+                {titanNeedsAuth ? (
+                  <>
+                    <GameNotice tone="warning">{t("play.ai.titanAuthRequired")}</GameNotice>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate({ to: "/auth/login" })}
+                    >
+                      {t("play.ai.titanSignIn")}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {titanStateMessage(titanState, t, titanCode) && (
+                      <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
+                        {titanStateMessage(titanState, t, titanCode)}
+                      </GameNotice>
+                    )}
+                    {titanState === "unavailable" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTitanProbe((n) => n + 1)}
+                      >
+                        <RefreshCw className="size-4" />
+                        {t("play.ai.titanRetry")}
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -711,8 +726,14 @@ function PlayAi() {
               size="lg"
               className="w-full"
               onClick={start}
-              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState !== "ready")}
+              disabled={
+                titanStarting ||
+                titanVariantBlocked ||
+                titanNeedsAuth ||
+                (isTitan && titanState !== "ready")
+              }
             >
+
 
               {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>
