@@ -267,7 +267,11 @@ function PrivacyPage() {
           <Link to="/terms" className="text-foreground underline underline-offset-4 hover:text-primary">
             Terms of Service
           </Link>
-          .
+          . To export your game data or request deletion, open the{" "}
+          <Link to="/data-rights" className="text-foreground underline underline-offset-4 hover:text-primary">
+            Data rights
+          </Link>{" "}
+          page.
         </p>
       </div>
     </LegalArticle>
