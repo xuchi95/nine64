@@ -17,7 +17,7 @@ import {
 import { classifyEngineEnv } from "./engineEnv.server";
 
 const URL_PROD = "https://play-engine-v2-3fmlxradta-as.a.run.app";
-const BODY = "A".repeat(512) + "=";
+const BODY = "A".repeat(512);
 const PEM_MULTILINE = `-----BEGIN PRIVATE KEY-----\n${BODY}\n-----END PRIVATE KEY-----`;
 const PEM_ESCAPED = `-----BEGIN PRIVATE KEY-----\\n${BODY}\\n-----END PRIVATE KEY-----\\n`;
 
@@ -158,7 +158,7 @@ describe("health probe", () => {
       [403, "unauthorized"],
       [500, "unavailable"],
       [503, "unavailable"],
-      [0, "unavailable"],
+      [0, "timeout"],
     ];
     for (const [status, expected] of cases) {
       envSetup();
