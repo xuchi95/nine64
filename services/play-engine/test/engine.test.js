@@ -81,3 +81,126 @@ test("buildGoArgs reads the nested search block sent by the backend", () => {
   );
   assert.equal(buildGoArgs({}), "movetime 3000");
 });
+
+// ---------------------------------------------------------------------------
+// Benchmark result model
+// ---------------------------------------------------------------------------
+import {
+  EPD_SUITE,
+  POSITION_SUITE,
+  validateSuite,
+  evaluatePosition,
+  summarize,
+  runSuite,
+  suiteMovetime,
+  classifyEngineError,
+} from "../src/benchmark.js";
+import { handleBenchmark } from "../src/index.js";
+
+const mateEntry = EPD_SUITE[0]; // 6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1, mate = a1a8
+
+function run(kind, suite, outcomes) {
+  let i = 0;
+  return runSuite({
+    kind,
+    suite,
+    movetimeMs: 100,
+    engineVersion: "Stockfish 18",
+    search: async () => {
+      const outcome = outcomes[i++];
+      if (outcome instanceof Error) throw outcome;
+      return outcome;
+    },
+  });
+}
+
+test("timeout is never counted as an illegal move", async () => {
+  const out = await run("epd", [mateEntry], [new Error("timeout")]);
+  assert.equal(out.detail.timeouts, 1);
+  assert.equal(out.detail.illegalMoves, 0);
+  assert.equal(out.passed, false);
+  assert.ok(out.detail.failureReasons.includes("timeout"));
+});
+
+test("engine error is never counted as an illegal move", async () => {
+  const out = await run("epd", [mateEntry], [new Error("pool_busy")]);
+  assert.equal(out.detail.engineErrors, 1);
+  assert.equal(out.detail.illegalMoves, 0);
+  assert.ok(out.detail.failureReasons.includes("engine_error"));
+});
+
+test("missing bestmove is counted as noMove, not illegal", async () => {
+  const out = await run("epd", [mateEntry], [{ bestmove: null, depth: 4 }]);
+  assert.equal(out.detail.noMove, 1);
+  assert.equal(out.detail.illegalMoves, 0);
+  assert.ok(out.detail.failureReasons.includes("no_move"));
+});
+
+test("an actually illegal UCI move increments illegalMoves", () => {
+  const row = evaluatePosition(mateEntry, { ok: true, result: { bestmove: "a1a4", depth: 9 } });
+  assert.equal(row.legal, false);
+  assert.equal(row.errorCode, "illegal_move");
+  const out = summarize("epd", [row], "Stockfish 18");
+  assert.equal(out.detail.illegalMoves, 1);
+});
+
+test("a legal but non-tactical move is legal-not-solved, never illegal", () => {
+  const row = evaluatePosition(mateEntry, { ok: true, result: { bestmove: "a1a7", depth: 12 } });
+  assert.equal(row.legal, true);
+  assert.equal(row.solved, false);
+  const alt = evaluatePosition(EPD_SUITE[11], { ok: true, result: { bestmove: "c3b3", depth: 8 } });
+  assert.equal(alt.solved, true, "any move in acceptableMoves counts as solved");
+});
+
+test("positions suite passes when every returned move is legal", async () => {
+  const outcomes = [
+    { bestmove: "e2e4", depth: 12, nodes: 1000, nps: 5000, timeMs: 120 },
+    { bestmove: "e1g1", depth: 14 },
+    { bestmove: "e3d3", depth: 20 },
+    { bestmove: "e1g1", depth: 15 },
+    { bestmove: "b4b5", depth: 18 },
+    { bestmove: "e1e2", depth: 22 },
+  ];
+  const out = await run("positions", POSITION_SUITE, outcomes);
+  assert.equal(out.detail.legalMoves, POSITION_SUITE.length);
+  assert.equal(out.detail.illegalMoves, 0);
+  assert.equal(out.passed, true);
+  assert.equal(out.depth, 22, "depth is the max real depth reached");
+});
+
+test("EPD passes only at >=80% solved with zero execution failures", async () => {
+  const solveAll = EPD_SUITE.map((e) => ({ bestmove: e.acceptableMoves[0], depth: 20 }));
+  const perfect = await run("epd", EPD_SUITE, solveAll);
+  assert.equal(perfect.passed, true);
+  assert.equal(perfect.score, 1);
+
+  const missed = solveAll.slice();
+  missed[0] = { bestmove: "a1a7", depth: 20 }; // legal, not the mate
+  missed[1] = { bestmove: "f3f4", depth: 20 };
+  missed[2] = { bestmove: "c1c7", depth: 20 };
+  const weak = await run("epd", EPD_SUITE, missed);
+  assert.ok(weak.score < 0.8);
+  assert.equal(weak.passed, false);
+  assert.ok(weak.detail.failureReasons.includes("tactics_score"));
+  assert.equal(weak.detail.illegalMoves, 0);
+});
+
+test("unknown benchmark kind returns a typed 400", async () => {
+  const out = await handleBenchmark({ kind: "selfplay" });
+  assert.equal(out.status, 400);
+  assert.equal(out.payload.error, "unknown_kind");
+});
+
+test("every benchmark FEN and expected move is valid and legal", () => {
+  assert.deepEqual(validateSuite(EPD_SUITE), []);
+  assert.deepEqual(validateSuite(POSITION_SUITE), []);
+  assert.ok(EPD_SUITE.length >= 8);
+});
+
+test("suite movetime defaults per kind and clamps", () => {
+  assert.equal(suiteMovetime("epd", undefined), 3000);
+  assert.equal(suiteMovetime("positions", undefined), 1500);
+  assert.equal(suiteMovetime("epd", 99999), 10_000);
+  assert.equal(classifyEngineError(new Error("engine_exit")), "engine_error");
+  assert.equal(classifyEngineError(new Error("timeout")), "timeout");
+});
