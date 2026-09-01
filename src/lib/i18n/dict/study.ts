@@ -272,6 +272,12 @@ export default {
     "study.login.signInFailed": "Đăng nhập thất bại",
     "study.login.welcomeToast": "Chào mừng bạn trở lại!",
     "study.login.googleFailed": "Đăng nhập Google thất bại",
+    "study.login.consentIntro": "Khi đăng nhập, bạn xác nhận tiếp tục đồng ý với ",
+    "study.login.terms": "Điều khoản sử dụng",
+    "study.login.privacy": "Chính sách quyền riêng tư",
+    "study.login.cookie": "Chính sách cookie",
+    "study.login.reviewPolicy": "Xem lại tóm tắt chính sách",
+    "study.login.consentOutro": ".",
 
     // ---- Auth: Register ----
     "study.register.metaTitle": "Tạo tài khoản — {app}",
@@ -623,6 +629,12 @@ export default {
     "study.login.signInFailed": "Sign in failed",
     "study.login.welcomeToast": "Welcome back!",
     "study.login.googleFailed": "Google sign in failed",
+    "study.login.consentIntro": "By signing in you confirm that you still agree to our ",
+    "study.login.terms": "Terms of Service",
+    "study.login.privacy": "Privacy Policy",
+    "study.login.cookie": "Cookie Policy",
+    "study.login.reviewPolicy": "Review the policy summary",
+    "study.login.consentOutro": "."
 
     // ---- Auth: Register ----
     "study.register.metaTitle": "Create account — {app}",
