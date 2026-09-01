@@ -498,8 +498,10 @@ function NotificationBell() {
  */
 function AdminMenuItem() {
   const { t } = useT();
+  const { pathname } = useLocation();
   const accessFn = useServerFn(getAdminAccess);
   const [allowed, setAllowed] = useState(false);
+  const active = isRouteActive(pathname, "/admin");
 
   useEffect(() => {
     let alive = true;
@@ -519,10 +521,19 @@ function AdminMenuItem() {
   if (!allowed) return null;
 
   return (
-    <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-3.5 py-2.5">
-      <Link to="/admin" className="flex items-center">
-        <ShieldCheck className="mr-3 size-4 text-primary" />
-        <span className="flex-1">{t("adminc.title")}</span>
+    <DropdownMenuItem
+      asChild
+      className={cn(
+        "cursor-pointer rounded-lg px-3.5 py-2.5",
+        active && "bg-primary/10 text-foreground",
+      )}
+    >
+      <Link to="/admin" className="flex items-center justify-between">
+        <span className="flex items-center">
+          <ShieldCheck className={cn("mr-3 size-4", active ? "text-primary" : "text-muted-foreground")} />
+          <span className="flex-1">{t("adminc.title")}</span>
+        </span>
+        {active && <Check className="size-4 text-primary" />}
       </Link>
     </DropdownMenuItem>
   );
