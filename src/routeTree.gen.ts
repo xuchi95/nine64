@@ -18,6 +18,7 @@ import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
 import { Route as DataRightsRouteImport } from './routes/data-rights'
 import { Route as EndgamesRouteImport } from './routes/endgames'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as OpeningsRouteImport } from './routes/openings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -26,6 +27,7 @@ import { Route as RegisterPolicyRouteImport } from './routes/register-policy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedOnlineRouteImport } from './routes/_authenticated/online'
 import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
@@ -131,6 +133,11 @@ const InsightsRoute = InsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OfflineRoute = OfflineRouteImport.update({
   id: '/offline',
   path: '/offline',
@@ -171,6 +178,12 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -500,6 +513,7 @@ export interface FileRoutesByFullPath {
   '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/mcp': typeof McpRoute
   '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -508,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
   '/skills': typeof AuthenticatedSkillsRoute
@@ -578,6 +593,7 @@ export interface FileRoutesByTo {
   '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/mcp': typeof McpRoute
   '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -586,6 +602,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account': typeof AuthenticatedAccountRoute
   '/online': typeof AuthenticatedOnlineRouteWithChildren
   '/skills': typeof AuthenticatedSkillsRoute
@@ -658,6 +675,7 @@ export interface FileRoutesById {
   '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
+  '/mcp': typeof McpRoute
   '/offline': typeof OfflineRoute
   '/openings': typeof OpeningsRoute
   '/privacy': typeof PrivacyRoute
@@ -666,6 +684,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/online': typeof AuthenticatedOnlineRouteWithChildren
   '/_authenticated/skills': typeof AuthenticatedSkillsRoute
@@ -738,6 +757,7 @@ export interface FileRouteTypes {
     | '/data-rights'
     | '/endgames'
     | '/insights'
+    | '/mcp'
     | '/offline'
     | '/openings'
     | '/privacy'
@@ -746,6 +766,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/account'
     | '/online'
     | '/skills'
@@ -816,6 +837,7 @@ export interface FileRouteTypes {
     | '/data-rights'
     | '/endgames'
     | '/insights'
+    | '/mcp'
     | '/offline'
     | '/openings'
     | '/privacy'
@@ -824,6 +846,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/account'
     | '/online'
     | '/skills'
@@ -895,6 +918,7 @@ export interface FileRouteTypes {
     | '/data-rights'
     | '/endgames'
     | '/insights'
+    | '/mcp'
     | '/offline'
     | '/openings'
     | '/privacy'
@@ -903,6 +927,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/account'
     | '/_authenticated/online'
     | '/_authenticated/skills'
@@ -975,6 +1000,7 @@ export interface RootRouteChildren {
   DataRightsRoute: typeof DataRightsRoute
   EndgamesRoute: typeof EndgamesRoute
   InsightsRoute: typeof InsightsRoute
+  McpRoute: typeof McpRoute
   OfflineRoute: typeof OfflineRoute
   OpeningsRoute: typeof OpeningsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -983,6 +1009,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
@@ -1083,6 +1110,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/offline': {
       id: '/offline'
       path: '/offline'
@@ -1137,6 +1171,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account': {
@@ -1644,6 +1685,7 @@ const rootRouteChildren: RootRouteChildren = {
   DataRightsRoute: DataRightsRoute,
   EndgamesRoute: EndgamesRoute,
   InsightsRoute: InsightsRoute,
+  McpRoute: McpRoute,
   OfflineRoute: OfflineRoute,
   OpeningsRoute: OpeningsRoute,
   PrivacyRoute: PrivacyRoute,
@@ -1652,6 +1694,8 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
