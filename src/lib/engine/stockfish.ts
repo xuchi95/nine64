@@ -73,6 +73,12 @@ export function detectCapability(mode: PerformanceMode): EngineCapability {
   };
 }
 
+/** Parses `option name X type spin ...` handshake lines into option names. */
+export function parseUciOptionName(line: string): string | null {
+  const m = /^option name (.+?) type /.exec(line.trim());
+  return m ? m[1]!.trim() : null;
+}
+
 /**
  * Thin UCI adapter over the Stockfish WASM worker. All search work happens off
  * the UI thread; this class only marshals UCI text.
@@ -82,6 +88,10 @@ export class StockfishEngine {
   private ready = false;
   private queue: ((line: string) => void)[] = [];
   private lineHandlers = new Set<(line: string) => void>();
+  /** Options the engine advertised during the `uci` handshake. We never send
+   * anything outside this set — Stockfish 18 Lite dropped `Contempt`, and
+   * unknown options just spam the log. */
+  private options = new Set<string>();
   /** Serialises searches: UCI is a single-position protocol, so overlapping
    * `go` commands would mix candidate lines from two different positions. */
   private chain: Promise<unknown> = Promise.resolve();
@@ -89,6 +99,20 @@ export class StockfishEngine {
 
   constructor(private mode: PerformanceMode = "balanced") {
     this.capability = detectCapability(mode);
+  }
+
+  supportsOption(name: string): boolean {
+    return this.options.has(name);
+  }
+
+  get advertisedOptions(): string[] {
+    return [...this.options];
+  }
+
+  private setOption(name: string, value: string | number | boolean) {
+    if (!this.options.has(name)) return false;
+    this.send(`setoption name ${name} value ${value}`);
+    return true;
   }
 
   async init(): Promise<void> {
@@ -101,14 +125,24 @@ export class StockfishEngine {
       this.lineHandlers.forEach((h) => h(data));
       this.queue.forEach((h) => h(data));
     };
+    const optionCollector = (line: string) => {
+      const name = parseUciOptionName(line);
+      if (name) this.options.add(name);
+    };
+    this.lineHandlers.add(optionCollector);
     this.send("uci");
-    await this.waitFor((l) => l.startsWith("uciok"), 20000);
-    this.send(`setoption name Threads value ${this.capability.threads}`);
-    this.send(`setoption name Hash value ${this.capability.hashMb}`);
-    this.send("setoption name Ponder value false");
+    try {
+      await this.waitFor((l) => l.startsWith("uciok"), 20000);
+    } finally {
+      this.lineHandlers.delete(optionCollector);
+    }
+    this.setOption("Threads", this.capability.threads);
+    this.setOption("Hash", this.capability.hashMb);
+    this.setOption("Ponder", false);
     await this.isReady();
     this.ready = true;
   }
+
 
   get performanceMode() {
     return this.mode;
