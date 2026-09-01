@@ -19,6 +19,7 @@ import {
   runEngineBenchmark,
   saveEngineDraft,
   disableEngineProfile,
+  checkEngineConnection,
   type EngineOverview,
 } from "@/lib/adminEngine.functions";
 import { engineConfigSchema, TITAN_SLUG, type EngineConfig } from "@/lib/engine/profileTypes";
@@ -99,6 +100,8 @@ function AdminEnginePage() {
   const [enabled, setEnabled] = useState(false);
   const [reason, setReason] = useState("");
   const [versions, setVersions] = useState<Awaited<ReturnType<typeof getEngineVersions>>>([]);
+  const probe = useServerFn(checkEngineConnection);
+  const [probeResult, setProbeResult] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -190,8 +193,36 @@ function AdminEnginePage() {
               {data?.health.engineVersion ?? "—"} · {data?.health.latencyMs ?? "—"}ms
             </p>
             <p className="font-mono text-xs text-muted-foreground">
-              pool {data?.health.pool ? `${data.health.pool.busy}/${data.health.pool.size}` : "—"}
+              {data?.health.arch ?? "—"} · pool{" "}
+              {data?.health.pool ? `${data.health.pool.busy}/${data.health.pool.size}` : "—"}
             </p>
+            <p className="font-mono text-xs text-muted-foreground">
+              searches {data?.health.stats?.searches ?? 0} · timeouts {data?.health.stats?.timeouts ?? 0} ·
+              restarts {data?.health.stats?.restarts ?? 0} · illegal {data?.health.stats?.illegal ?? 0}
+            </p>
+            <p className="font-mono text-xs text-muted-foreground">
+              {data?.health.checkedAt ? new Date(data.health.checkedAt).toLocaleTimeString() : "—"}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                setProbeResult(null);
+                void run(async () => {
+                  const res = await probe({ data: {} });
+                  setProbeResult(
+                    res.ok
+                      ? `Đã kết nối Nine64 Titan · ${res.health?.engineVersion ?? "engine"}`
+                      : res.code,
+                  );
+                  return res;
+                });
+              }}
+            >
+              Kiểm tra kết nối
+            </Button>
+            {probeResult ? <p className="text-xs">{probeResult}</p> : null}
           </CardContent>
         </Card>
         <Card>
