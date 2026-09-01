@@ -15,6 +15,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
+import { Route as DataRightsRouteImport } from './routes/data-rights'
 import { Route as EndgamesRouteImport } from './routes/endgames'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as OfflineRouteImport } from './routes/offline'
@@ -112,6 +113,11 @@ const ContactRoute = ContactRouteImport.update({
 const CookiePolicyRoute = CookiePolicyRouteImport.update({
   id: '/cookie-policy',
   path: '/cookie-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataRightsRoute = DataRightsRouteImport.update({
+  id: '/data-rights',
+  path: '/data-rights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EndgamesRoute = EndgamesRouteImport.update({
@@ -485,6 +491,7 @@ export interface FileRoutesByFullPath {
   '/analysis': typeof AnalysisRoute
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
   '/offline': typeof OfflineRoute
@@ -561,6 +568,7 @@ export interface FileRoutesByTo {
   '/analysis': typeof AnalysisRoute
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
   '/offline': typeof OfflineRoute
@@ -639,6 +647,7 @@ export interface FileRoutesById {
   '/analysis': typeof AnalysisRoute
   '/contact': typeof ContactRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/data-rights': typeof DataRightsRoute
   '/endgames': typeof EndgamesRoute
   '/insights': typeof InsightsRoute
   '/offline': typeof OfflineRoute
@@ -717,6 +726,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/contact'
     | '/cookie-policy'
+    | '/data-rights'
     | '/endgames'
     | '/insights'
     | '/offline'
@@ -793,6 +803,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/contact'
     | '/cookie-policy'
+    | '/data-rights'
     | '/endgames'
     | '/insights'
     | '/offline'
@@ -870,6 +881,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/contact'
     | '/cookie-policy'
+    | '/data-rights'
     | '/endgames'
     | '/insights'
     | '/offline'
@@ -948,6 +960,7 @@ export interface RootRouteChildren {
   AnalysisRoute: typeof AnalysisRoute
   ContactRoute: typeof ContactRoute
   CookiePolicyRoute: typeof CookiePolicyRoute
+  DataRightsRoute: typeof DataRightsRoute
   EndgamesRoute: typeof EndgamesRoute
   InsightsRoute: typeof InsightsRoute
   OfflineRoute: typeof OfflineRoute
@@ -1034,6 +1047,13 @@ declare module '@tanstack/react-router' {
       path: '/cookie-policy'
       fullPath: '/cookie-policy'
       preLoaderRoute: typeof CookiePolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-rights': {
+      id: '/data-rights'
+      path: '/data-rights'
+      fullPath: '/data-rights'
+      preLoaderRoute: typeof DataRightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/endgames': {
@@ -1601,6 +1621,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalysisRoute: AnalysisRoute,
   ContactRoute: ContactRoute,
   CookiePolicyRoute: CookiePolicyRoute,
+  DataRightsRoute: DataRightsRoute,
   EndgamesRoute: EndgamesRoute,
   InsightsRoute: InsightsRoute,
   OfflineRoute: OfflineRoute,
