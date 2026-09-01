@@ -462,6 +462,7 @@ export type Database = {
       }
       engine_benchmarks: {
         Row: {
+          config_signature: string | null
           created_at: string
           created_by: string | null
           depth: number | null
@@ -479,6 +480,7 @@ export type Database = {
           signature: string | null
         }
         Insert: {
+          config_signature?: string | null
           created_at?: string
           created_by?: string | null
           depth?: number | null
@@ -496,6 +498,7 @@ export type Database = {
           signature?: string | null
         }
         Update: {
+          config_signature?: string | null
           created_at?: string
           created_by?: string | null
           depth?: number | null

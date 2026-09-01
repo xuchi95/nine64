@@ -8,6 +8,10 @@
  */
 import { TITAN_SLUG } from "./profileTypes";
 import { BENCHMARK_KINDS, type BenchmarkKind, type BenchmarkRow, type Json } from "./benchmarkTypes";
+import { configSignature, evaluateReadiness, type ReadinessResult } from "./readiness";
+import type { EngineConfig } from "./profileTypes";
+
+export { configSignature, evaluateReadiness, latestBenchmarkByKind } from "./readiness";
 
 export { BENCHMARK_KINDS };
 export type { BenchmarkKind, BenchmarkRow };
@@ -40,6 +44,9 @@ export async function listBenchmarks(slug = TITAN_SLUG, limit = 50): Promise<Ben
       score: row["score"] === null ? null : Number(row["score"]),
       passed: Boolean(row["passed"]),
       result: (row["result"] ?? {}) as Record<string, Json>,
+      configSignature: row["config_signature"] === null || row["config_signature"] === undefined
+        ? null
+        : String(row["config_signature"]),
       createdAt: String(row["created_at"]),
     };
   });
@@ -79,6 +86,8 @@ export async function runBenchmark(args: {
       passed: run.passed,
       result: run.detail as never,
       signature: run.engineVersion ?? null,
+      // Benchmarks are always recorded against the exact config they ran with.
+      config_signature: configSignature(profile.config),
       created_by: args.actorId,
     } as never)
     .select("*")
@@ -98,33 +107,23 @@ export async function runBenchmark(args: {
     score: row["score"] === null ? null : Number(row["score"]),
     passed: Boolean(row["passed"]),
     result: (row["result"] ?? {}) as Record<string, Json>,
+    configSignature: row["config_signature"] === null || row["config_signature"] === undefined
+      ? null
+      : String(row["config_signature"]),
     createdAt: String(row["created_at"]),
   }))[0]!;
   return { ok: true, row: mapped };
 }
 
 /**
- * Publish gate: Titan may only go live when the latest runs are green.
- * Missing benchmarks block publishing rather than being assumed to pass.
+ * Publish gate: Titan may only go live when the LATEST run of each required
+ * benchmark kind is green and was produced for the config being published.
+ * Older failed runs never poison readiness.
  */
-export async function publishReadiness(slug = TITAN_SLUG): Promise<{
-  ready: boolean;
-  reasons: string[];
-  latest: BenchmarkRow[];
-}> {
-  const latest = await listBenchmarks(slug, 10);
-  const reasons: string[] = [];
-  const bench = latest.find((r) => r.kind === "bench");
-  const tactics = latest.find((r) => r.kind === "epd");
-  if (!bench) reasons.push("missing_bench");
-  else if (!bench.passed) reasons.push("bench_failed");
-  if (!tactics) reasons.push("missing_tactics");
-  else if (!tactics.passed) reasons.push("tactics_failed");
-  const illegal = latest.find((r) => Number(r.result["illegalMoves"] ?? 0) > 0);
-  if (illegal) reasons.push("illegal_moves");
-  // Execution failures are surfaced separately from rules failures.
-  for (const key of ["timeouts", "engineErrors", "noMove"] as const) {
-    if (latest.some((r) => Number(r.result[key] ?? 0) > 0)) reasons.push(`execution_${key}`);
-  }
-  return { ready: reasons.length === 0, reasons, latest };
+export async function publishReadiness(
+  slug = TITAN_SLUG,
+  config?: EngineConfig | null,
+): Promise<ReadinessResult> {
+  const rows = await listBenchmarks(slug, 50);
+  return evaluateReadiness(rows, config ? configSignature(config) : null);
 }
