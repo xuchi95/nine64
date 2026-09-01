@@ -13,6 +13,7 @@ import os from "node:os";
 import { EnginePool } from "./pool.js";
 import { VARIANTS, createPosition, decodeEngineMove, isLegal } from "./rules.js";
 import { verifyIdToken } from "./auth.js";
+import { EPD_SUITE, POSITION_SUITE, runSuite, suiteMovetime } from "./benchmark.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const ALLOWED_OPTIONS = new Set([
@@ -169,56 +170,49 @@ async function handleBenchmark(body) {
         nodes: result.nodes,
         nps: result.nps,
         passed: Boolean(result.nps),
-        detail: { kind, hardware: { threads: Number(process.env.ENGINE_THREADS || 0) || null } },
+        detail: {
+          kind,
+          hardware: { threads: Number(process.env.ENGINE_THREADS || 0) || null },
+          failureReasons: result.nps ? [] : ["engine_error"],
+        },
       },
     };
   }
   if (kind === "epd" || kind === "positions") {
     const suite = kind === "epd" ? EPD_SUITE : POSITION_SUITE;
-    let solved = 0;
-    let illegal = 0;
-    let depth = 0;
-    for (const entry of suite) {
-      try {
-        const res = await pool.search({
+    const movetimeMs = suiteMovetime(kind, body.movetimeMs);
+    // Request timeout is comfortably larger than the search budget.
+    const timeoutMs = Math.max(movetimeMs * 4, 20_000);
+    const options = sanitizeOptions(body.options);
+    const run = await runSuite({
+      kind,
+      suite,
+      movetimeMs,
+      engineVersion: pool.engineVersion,
+      search: (entry) =>
+        pool.search({
           fen: entry.fen,
-          options: sanitizeOptions(body.options),
-          goArgs: `movetime ${Math.min(Number(body.movetimeMs) || 1000, 10_000)}`,
-          timeoutMs: 30_000,
+          options: { ...options, UCI_Chess960: "false" },
+          goArgs: `movetime ${movetimeMs}`,
+          timeoutMs,
           newGame: true,
-        });
-        depth = Math.max(depth, res.depth ?? 0);
-        if (!res.bestmove) illegal += 1;
-        else if (!entry.best || res.bestmove.startsWith(entry.best)) solved += 1;
-      } catch {
-        illegal += 1;
-      }
-    }
+        }),
+    });
+    pool.stats.illegal += Number(run.detail.illegalMoves || 0);
     return {
       status: 200,
       payload: {
-        engineVersion: pool.engineVersion,
-        depth,
-        score: suite.length ? solved / suite.length : 0,
-        passed: illegal === 0 && solved >= Math.ceil(suite.length * 0.8),
-        detail: { kind, solved, total: suite.length, illegalMoves: illegal },
+        engineVersion: run.engineVersion ?? pool.engineVersion,
+        depth: run.depth,
+        score: run.score,
+        passed: run.passed,
+        detail: { ...run.detail, movetimeMs },
       },
     };
   }
-  return { status: 400, payload: { error: "unknown_kind" } };
+  return { status: 400, payload: { error: "unknown_kind", kind } };
 }
 
-const EPD_SUITE = [
-  { fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", best: "a1a8" },
-  { fen: "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", best: "f3f7" },
-  { fen: "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1", best: "c1c8" },
-];
-
-const POSITION_SUITE = [
-  { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", best: null },
-  { fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", best: null },
-  { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", best: null },
-];
 
 /**
  * Stable, typed /health payload. `busy` is derived from the real engine
@@ -297,4 +291,4 @@ if (process.env.NODE_ENV !== "test") {
     });
 }
 
-export { server, pool, sanitizeOptions, buildGoArgs, handleBestMove };
+export { server, pool, sanitizeOptions, buildGoArgs, handleBestMove, handleBenchmark };
