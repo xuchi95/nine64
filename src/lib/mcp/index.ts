@@ -1,4 +1,4 @@
-import { auth, defineMcp, type AnyToolDefinition } from "@lovable.dev/mcp-js";
+import { auth, defineMcp } from "@lovable.dev/mcp-js";
 import getMyProfile from "./tools/get-my-profile";
 import listMyGames from "./tools/list-my-games";
 import getGameMoves from "./tools/get-game-moves";
