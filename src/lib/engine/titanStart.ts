@@ -27,7 +27,10 @@ export function titanMessage(code: string | null | undefined, t: (key: string) =
     case "ENGINE_NOT_CONFIGURED":
       return t("play.ai.titanNotConfigured");
     case "PROFILE_DISABLED":
+    case "PROFILE_MISSING":
       return t("play.ai.titanProfileDisabled");
+    case "INVALID_ENGINE_CREDENTIALS":
+      return t("play.ai.titanNotConfigured");
     case "QUOTA_EXCEEDED":
       return t("play.ai.titanQuota");
     case "TOO_MANY_SESSIONS":
