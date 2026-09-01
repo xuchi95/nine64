@@ -550,9 +550,45 @@ function PlayAi() {
                 onChange={(tc) => setConfig((c) => ({ ...c, timeControl: tc }))}
               />
             </div>
-            <Button size="lg" className="w-full" onClick={start} disabled={titanStarting}>
-              {t("play.ai.startGame")}
+            {isTitan && (
+              <div className="panel space-y-2 p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("play.ai.titanStatusTitle")}
+                  </h2>
+                  {titanState === "loading" ? (
+                    <StatusPill tone="neutral">{t("play.ai.titanChecking")}</StatusPill>
+                  ) : titanState === "ready" ? (
+                    <StatusPill tone="live">{t("play.ai.titanReady")}</StatusPill>
+                  ) : null}
+                </div>
+                {titanStateMessage(titanState, t) && (
+                  <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
+                    {titanStateMessage(titanState, t)}
+                  </GameNotice>
+                )}
+                {titanState === "unavailable" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTitanProbe((n) => n + 1)}
+                  >
+                    <RefreshCw className="size-4" />
+                    {t("play.ai.titanRetry")}
+                  </Button>
+                )}
+              </div>
+            )}
+            {engineError && <GameNotice tone="error">{engineError}</GameNotice>}
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={start}
+              disabled={titanStarting || (isTitan && titanState === "loading")}
+            >
+              {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>
+
           </div>
         </div>
       </AppShell>
