@@ -13,45 +13,89 @@ const uci = z
   .trim()
   .regex(/^[a-h][1-8][a-h][1-8][qrbn]?$/, "invalid uci");
 
-export const getTitanStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { titanProfile } = await import("@/lib/engine/profiles.server");
-  const { cloudEngineConfigured, cloudEngineHealth } = await import(
-    "@/lib/engine/cloudEngine.server"
-  );
+export type TitanState = "ready" | "not_configured" | "disabled" | "unavailable";
+
+export interface TitanStatus {
+  state: TitanState;
+  available: boolean;
+  configured: boolean;
+  enabled: boolean;
+  health: "healthy" | "degraded" | "unavailable" | "not_configured";
+  name: string;
+  stockfishVersion: string | null;
+  source: "database" | "fallback";
+  /** Stable diagnostic code — never a stack trace, URL or secret. */
+  code: string;
+}
+
+/**
+ * Public-safe readiness of Nine64 Titan. Every field is a boolean, an enum or
+ * a stable code: no credential, URL or internal error ever leaves here.
+ */
+export const getTitanStatus = createServerFn({ method: "GET" }).handler(async (): Promise<TitanStatus> => {
+  const base = {
+    name: "Nine64 Titan",
+    stockfishVersion: null as string | null,
+    source: "fallback" as const,
+  };
   try {
+    const { titanProfile } = await import("@/lib/engine/profiles.server");
+    const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+    const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
+
+    const env = engineEnvDiagnostics();
     const profile = await titanProfile();
-    const configured = cloudEngineConfigured();
-    let state: "ready" | "not_configured" | "disabled" | "unavailable";
-    if (!configured) state = "not_configured";
-    else if (!profile.enabled) state = "disabled";
-    else {
-      const health = await cloudEngineHealth();
-      state =
-        health.status === "healthy" || health.status === "degraded"
-          ? "ready"
-          : health.status === "not_configured"
-            ? "not_configured"
-            : "unavailable";
-    }
-    return {
-      state,
-      available: state === "ready",
-      configured,
-      enabled: profile.enabled,
+    const info = {
       name: profile.name,
       stockfishVersion: profile.stockfishVersion,
       source: profile.source,
     };
+    const configured = env.present.PLAY_ENGINE_URL && env.present.PLAY_ENGINE_SA_EMAIL && env.present.PLAY_ENGINE_SA_PRIVATE_KEY;
+
+    if (!configured) {
+      return {
+        ...info,
+        state: "not_configured",
+        available: false,
+        configured: false,
+        enabled: profile.enabled,
+        health: "not_configured",
+        code: env.code === "INVALID_ENGINE_CREDENTIALS" ? "INVALID_ENGINE_CREDENTIALS" : "ENGINE_NOT_CONFIGURED",
+      };
+    }
+    if (!profile.enabled) {
+      return {
+        ...info,
+        state: "disabled",
+        available: false,
+        configured: true,
+        enabled: false,
+        health: "not_configured",
+        code: profile.source === "fallback" ? "PROFILE_MISSING" : "PROFILE_DISABLED",
+      };
+    }
+
+    const health = await cloudEngineHealthCached();
+    const ready = health.status === "healthy" || health.status === "degraded";
+    return {
+      ...info,
+      state: ready ? "ready" : health.status === "not_configured" ? "not_configured" : "unavailable",
+      available: ready,
+      configured: true,
+      enabled: true,
+      health: health.status,
+      code: ready ? "OK" : "ENGINE_UNAVAILABLE",
+    };
   } catch {
     // Never surface stack traces, URLs or credentials to the client.
     return {
-      state: "unavailable" as const,
+      ...base,
+      state: "unavailable",
       available: false,
       configured: false,
       enabled: false,
-      name: "Nine64 Titan",
-      stockfishVersion: null,
-      source: "fallback" as const,
+      health: "unavailable",
+      code: "ENGINE_UNAVAILABLE",
     };
   }
 });
@@ -69,7 +113,8 @@ export const startTitanSession = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { titanProfile } = await import("@/lib/engine/profiles.server");
-    const { cloudEngineConfigured } = await import("@/lib/engine/cloudEngine.server");
+    const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+    const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
     const { createSession } = await import("@/lib/engine/botSessions.server");
     const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
     const { TITAN_LEVEL } = await import("@/lib/engine/profileTypes");
@@ -81,9 +126,27 @@ export const startTitanSession = createServerFn({ method: "POST" })
     } catch {
       return { ok: false as const, code: "QUOTA_EXCEEDED" };
     }
+    // Preflight, in order, before ANY database write. No session row is
+    // created unless the engine is genuinely reachable, and there is never a
+    // silent fallback to a weaker engine.
     const profile = await titanProfile();
-    if (!profile.enabled) return { ok: false as const, code: "PROFILE_DISABLED" };
-    if (!cloudEngineConfigured()) return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
+    if (!profile.enabled) {
+      return { ok: false as const, code: profile.source === "fallback" ? "PROFILE_MISSING" : "PROFILE_DISABLED" };
+    }
+    const env = engineEnvDiagnostics();
+    if (env.code === "INVALID_ENGINE_CREDENTIALS") {
+      return { ok: false as const, code: "INVALID_ENGINE_CREDENTIALS" };
+    }
+    if (!env.present.PLAY_ENGINE_URL || !env.present.PLAY_ENGINE_SA_EMAIL || !env.present.PLAY_ENGINE_SA_PRIVATE_KEY) {
+      return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
+    }
+    const health = await cloudEngineHealthCached();
+    if (health.status !== "healthy" && health.status !== "degraded") {
+      return {
+        ok: false as const,
+        code: health.status === "not_configured" ? "ENGINE_NOT_CONFIGURED" : "ENGINE_UNAVAILABLE",
+      };
+    }
 
     try {
       const res = await createSession({
