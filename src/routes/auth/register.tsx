@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { hasAcceptedPolicy } from "@/lib/policyConsent";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,14 @@ function RegisterPage() {
 
   const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
 
+  // Bắt buộc đồng ý chính sách trước khi đăng ký.
+  const [policyOk, setPolicyOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    const ok = hasAcceptedPolicy();
+    setPolicyOk(ok);
+    if (!ok) navigate({ to: "/register-policy", search: { redirect: redirectTo }, replace: true });
+  }, [navigate, redirectTo]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -92,6 +101,16 @@ function RegisterPage() {
     }
 
     navigate({ to: redirectTo, replace: true });
+  }
+
+  if (policyOk !== true) {
+    return (
+      <AuthModal>
+        <div className="py-6 text-center">
+          <Loader2 className="mx-auto size-5 animate-spin text-muted-foreground" />
+        </div>
+      </AuthModal>
+    );
   }
 
   return (
