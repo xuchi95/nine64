@@ -194,26 +194,22 @@ export class StockfishEngine {
     // Set explicitly on EVERY search: a shared engine instance keeps UCI
     // options, so a previous Chess960 search must never leak into a standard
     // one (and vice versa).
-    this.send(
-      `setoption name UCI_Chess960 value ${req.variant === "chess960" ? "true" : "false"}`,
-    );
+    this.setOption("UCI_Chess960", req.variant === "chess960" ? "true" : "false");
 
     if (req.skill === null || req.skill === undefined) {
-      this.send("setoption name UCI_LimitStrength value false");
-      this.send("setoption name Skill Level value 20");
+      this.setOption("UCI_LimitStrength", "false");
+      this.setOption("Skill Level", 20);
     } else {
-      this.send(`setoption name Skill Level value ${req.skill}`);
+      this.setOption("Skill Level", req.skill);
       if (req.uciElo) {
-        this.send("setoption name UCI_LimitStrength value true");
-        this.send(`setoption name UCI_Elo value ${req.uciElo}`);
+        this.setOption("UCI_LimitStrength", "true");
+        this.setOption("UCI_Elo", req.uciElo);
       } else {
-        this.send("setoption name UCI_LimitStrength value false");
+        this.setOption("UCI_LimitStrength", "false");
       }
     }
-    if (typeof req.contempt === "number") {
-      this.send(`setoption name Contempt value ${Math.round(req.contempt)}`);
-    }
-    this.send(`setoption name MultiPV value ${multiPv}`);
+    this.setOption("MultiPV", multiPv);
+
     await this.isReady();
 
     const lines = new Map<number, EngineLine>();
