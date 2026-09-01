@@ -107,11 +107,22 @@ export const startTitanSession = createServerFn({ method: "POST" })
     z
       .object({
         playerColor: z.enum(["w", "b"]),
-        variant: z.enum(["standard", "chess960"]).default("standard"),
+        // Accept the raw variant id so an unsupported variant is rejected
+        // explicitly instead of being silently coerced to standard.
+        variant: z.string().default("standard"),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { isTitanVariant, titanVariantBlockCode } = await import("@/lib/engine/titanVariants");
+    if (!isTitanVariant(data.variant)) {
+      return {
+        ok: false as const,
+        code: "VARIANT_NOT_SUPPORTED",
+        reason: titanVariantBlockCode(data.variant),
+      };
+    }
+    const variant = data.variant;
     const { titanProfile } = await import("@/lib/engine/profiles.server");
     const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
     const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
@@ -123,6 +134,7 @@ export const startTitanSession = createServerFn({ method: "POST" })
     // Server-authoritative: every condition is re-checked here, whatever the
     // client-side preflight status said.
     try {
+
       await enforceRateLimit("titan.session", userSubject(context.userId));
     } catch {
       return { ok: false as const, code: "QUOTA_EXCEEDED" };
