@@ -51,23 +51,49 @@ export function AuthModal({ children }: { children: ReactNode }) {
       </div>
 
       <div
-        className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-background/85 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-background/80 p-4 backdrop-blur-md animate-in fade-in duration-200"
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) close();
         }}
       >
+        {/* Brass halo behind the dialog */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 size-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, color-mix(in oklab, var(--color-primary) 18%, transparent) 0%, transparent 70%)",
+          }}
+        />
+
         <div
           ref={panelRef}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
-          className="panel relative my-auto w-full max-w-md p-6 shadow-2xl outline-none ring-1 ring-primary/15 animate-in fade-in zoom-in-95 duration-200 sm:p-8"
+          className="panel relative my-auto w-full max-w-md overflow-hidden p-6 outline-none ring-1 ring-primary/20 animate-in fade-in zoom-in-95 duration-200 sm:p-8"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, color-mix(in oklab, var(--color-primary) 7%, transparent) 0%, transparent 42%)",
+            boxShadow:
+              "0 1px 0 0 color-mix(in oklab, var(--color-primary) 22%, transparent) inset, 0 30px 70px -30px oklch(0 0 0 / 75%)",
+          }}
         >
+          {/* Brass hairline along the top edge */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-px"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-primary) 75%, transparent), transparent)",
+            }}
+          />
+
           <button
             type="button"
             onClick={close}
             aria-label={t("authModal.close")}
-            className="absolute right-3 top-3 grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-ring-brass"
+            className="absolute right-3 top-3 grid size-9 place-items-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-ring-brass"
           >
             <X className="size-4" />
           </button>
