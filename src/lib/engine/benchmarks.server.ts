@@ -11,6 +11,7 @@ import { BENCHMARK_KINDS, type BenchmarkKind, type BenchmarkRow, type Json } fro
 import { evaluateReadiness, type ReadinessResult } from "./readiness";
 import { engineConfigFingerprint } from "./configFingerprint";
 import type { EngineConfig } from "./profileTypes";
+import { Chess } from "chess.js";
 
 export { evaluateReadiness, latestBenchmarkByKind } from "./readiness";
 export { engineConfigFingerprint, canonicalConfigJson } from "./configFingerprint";
@@ -23,14 +24,19 @@ async function admin() {
   return supabaseAdmin;
 }
 
-export async function listBenchmarks(slug = TITAN_SLUG, limit = 50): Promise<BenchmarkRow[]> {
+export async function listBenchmarks(
+  slug = TITAN_SLUG,
+  limit = 50,
+  configSignature?: string | null,
+): Promise<BenchmarkRow[]> {
   const db = await admin();
-  const { data } = await db
+  let query = db
     .from("engine_benchmarks")
     .select("*")
     .eq("profile_slug", slug)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: false });
+  if (configSignature) query = query.eq("config_signature", configSignature);
+  const { data } = await query.limit(Math.min(Math.max(limit, 1), 500));
   return (data ?? []).map((r) => {
     const row = r as Record<string, unknown>;
     return {
@@ -66,6 +72,22 @@ const TACTICAL_PROBES = [
   { fen: "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1", moves: ["c1c8"] },
   { fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", moves: ["d1d8"] },
 ] as const;
+const POSITION_PROBES = [
+  { fen: PERFORMANCE_FEN, moves: [] as readonly string[] },
+  { fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", moves: [] as readonly string[] },
+  { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", moves: [] as readonly string[] },
+] as const;
+const TRANSIENT_STATUSES = new Set(["timeout", "unavailable"]);
+
+function isLegalUci(fen: string, uci: string | null): boolean {
+  if (!uci || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return false;
+  try {
+    const chess = new Chess(fen);
+    return Boolean(chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }));
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Bounded production probes. Cloud Run terminates Stockfish's native `bench`
@@ -76,15 +98,24 @@ const TACTICAL_PROBES = [
  */
 async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
   const { requestBestMove } = await import("./cloudEngine.server");
-  type ProbeResult = Awaited<ReturnType<typeof requestBestMove>> & { expected: readonly string[] };
-  const probes = kind === "epd" ? TACTICAL_PROBES : [{ fen: PERFORMANCE_FEN, moves: [] as string[] }];
+  type ProbeResult = Awaited<ReturnType<typeof requestBestMove>> & {
+    expected: readonly string[];
+    fen: string;
+    attempts: number;
+    legal: boolean;
+  };
+  const probes = kind === "epd"
+    ? TACTICAL_PROBES
+    : kind === "positions"
+      ? POSITION_PROBES
+      : [{ fen: PERFORMANCE_FEN, moves: [] as readonly string[] }];
   const movetimeMs = kind === "speedtest" ? 750 : kind === "bench" ? 2_000 : 1_500;
   const probeConfig: EngineConfig = {
     ...config,
     timePolicy: "movetime",
     moveTimeMs: movetimeMs,
     maxMoveTimeMs: movetimeMs,
-    requestTimeoutMs: Math.max(config.requestTimeoutMs, movetimeMs + 8_000),
+    requestTimeoutMs: Math.min(120_000, Math.max(config.requestTimeoutMs, movetimeMs + 12_000)),
     maxRetries: 0,
     ponder: false,
   };
@@ -92,28 +123,46 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
   for (let index = 0; index < probes.length; index += 1) {
     const probe = probes[index];
     if (!probe) continue;
-    const result = await requestBestMove({
+    let attempts = 0;
+    let result: Awaited<ReturnType<typeof requestBestMove>> | null = null;
+    // Retry only transient capacity/network failures. Invalid/auth/config
+    // failures remain fail-closed and are never hidden by retries.
+    while (attempts < 3) {
+      attempts += 1;
+      result = await requestBestMove({
+        fen: probe.fen,
+        variant: "standard",
+        config: probeConfig,
+        clock: null,
+        sessionId: `qualification-${kind}-${index}-${crypto.randomUUID()}`,
+        requestId: crypto.randomUUID(),
+        newGame: true,
+      });
+      if (result.status === "ok" || !TRANSIENT_STATUSES.has(result.status)) break;
+      await new Promise((resolve) => setTimeout(resolve, attempts * 250));
+    }
+    if (!result) continue;
+    results.push({
+      ...result,
+      expected: probe.moves,
       fen: probe.fen,
-      variant: "standard",
-      config: probeConfig,
-      clock: null,
-      sessionId: `qualification-${kind}-${index}`,
-      requestId: crypto.randomUUID(),
-      newGame: true,
+      attempts,
+      legal: result.status === "ok" && isLegalUci(probe.fen, result.bestmove),
     });
-    results.push({ ...result, expected: probe.moves });
   }
   const engineErrors = results.filter((result) => result.status !== "ok").length;
   const noMove = results.filter((result) => result.status === "ok" && !result.bestmove).length;
+  const illegalMoves = results.filter((result) => result.status === "ok" && result.bestmove && !result.legal).length;
   const solved = kind === "epd"
-    ? results.filter((result) => result.bestmove && result.expected.includes(result.bestmove as never)).length
-    : results.filter((result) => result.status === "ok" && result.bestmove).length;
+    ? results.filter((result) => result.legal && result.bestmove && result.expected.includes(result.bestmove as never)).length
+    : results.filter((result) => result.status === "ok" && result.bestmove && result.legal).length;
   const total = results.length;
-  const clean = total > 0 && engineErrors === 0 && noMove === 0;
-  const passed = clean && solved === total;
+  const clean = total === probes.length && engineErrors === 0 && noMove === 0 && illegalMoves === 0;
+  const engineVersion = results.find((result) => result.engineVersion)?.engineVersion ?? null;
+  const supportedVersion = /stockfish\s*18/i.test(engineVersion ?? "");
+  const passed = clean && solved === total && supportedVersion;
   const numeric = (key: "nodes" | "nps" | "depth") =>
     results.reduce((max, result) => Math.max(max, result[key] ?? 0), 0) || null;
-  const engineVersion = results.find((result) => result.engineVersion)?.engineVersion ?? null;
   return {
     kind,
     status: clean ? "ok" as const : results.find((result) => result.status !== "ok")?.status ?? "invalid" as const,
@@ -128,13 +177,23 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
       mode: "bounded_bestmove",
       solved,
       total,
-      legalMoves: results.filter((result) => result.status === "ok" && result.bestmove).length,
-      illegalMoves: 0,
+      legalMoves: results.filter((result) => result.status === "ok" && result.bestmove && result.legal).length,
+      illegalMoves,
       noMove,
       timeouts: results.filter((result) => result.status === "timeout").length,
       engineErrors: results.filter((result) => result.status !== "ok" && result.status !== "timeout").length,
       durationMs: results.reduce((sum, result) => sum + (result.timeMs ?? 0), 0),
-      failureReasons: passed ? [] : ["bounded_probe_failed"],
+      attempts: results.reduce((sum, result) => sum + result.attempts, 0),
+      failureReasons: passed
+        ? []
+        : [
+            ...(results.length !== probes.length ? ["incomplete_suite"] : []),
+            ...(engineErrors ? ["engine_error"] : []),
+            ...(noMove ? ["no_move"] : []),
+            ...(illegalMoves ? ["illegal_move"] : []),
+            ...(solved !== total ? [kind === "epd" ? "tactics_score" : "position_failed"] : []),
+            ...(!supportedVersion ? ["engine_version_unsupported"] : []),
+          ],
     },
   };
 }
@@ -155,12 +214,11 @@ export async function runBenchmark(args: {
   const profile = row ?? (await titanProfile());
   // Benchmark exactly what the admin intends to publish, not the live config.
   const config = args.config ?? row?.draftConfig ?? profile.config;
-  // Qualification kinds use bounded real searches so they complete within
-  // the production request ceiling. `positions` remains on the service suite.
-  const run = args.kind === "positions"
-    ? await runCloudBenchmark(args.kind, config)
-    : await runBoundedBenchmark(args.kind, config);
-  if (run.status !== "ok") return { ok: false, code: run.status.toUpperCase() };
+  // All qualification kinds use bounded real searches. This avoids native
+  // `bench` request ceilings and keeps qualification independent of a stale
+  // benchmark suite deployment while still exercising Stockfish 18 itself.
+  void runCloudBenchmark;
+  const run = await runBoundedBenchmark(args.kind, config);
 
   const db = await admin();
   const { data, error } = await db
@@ -204,7 +262,9 @@ export async function runBenchmark(args: {
       : String(row["config_signature"]),
     createdAt: String(row["created_at"]),
   }))[0]!;
-  return { ok: true, row: mapped };
+  return run.status === "ok"
+    ? { ok: true, row: mapped }
+    : { ok: false, code: run.status.toUpperCase(), row: mapped };
 }
 
 /**
@@ -216,6 +276,14 @@ export async function publishReadiness(
   slug = TITAN_SLUG,
   config?: EngineConfig | null,
 ): Promise<ReadinessResult> {
-  const rows = await listBenchmarks(slug, 50);
-  return evaluateReadiness(rows, config ? await engineConfigFingerprint(config) : null);
+  const signature = config ? await engineConfigFingerprint(config) : null;
+  if (!signature) return evaluateReadiness(await listBenchmarks(slug, 50), null);
+  // Fetch matching rows explicitly so heavy benchmark history from other
+  // drafts can never push the authoritative fingerprint out of a global limit.
+  const [matching, recent] = await Promise.all([
+    listBenchmarks(slug, 50, signature),
+    listBenchmarks(slug, 50),
+  ]);
+  const byId = new Map([...matching, ...recent].map((row) => [row.id, row]));
+  return evaluateReadiness([...byId.values()], signature);
 }
