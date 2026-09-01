@@ -15,7 +15,7 @@ describe("bounded Titan benchmark validation", () => {
   });
 
   it("preserves promotion information during validation", () => {
-    const promotion = "8/P7/8/8/8/8/7k/7K w - - 0 1";
+    const promotion = "8/P7/8/8/8/8/7k/K7 w - - 0 1";
     expect(isLegalBenchmarkMove(promotion, "a7a8q")).toBe(true);
     expect(isLegalBenchmarkMove(promotion, "a7a8")).toBe(false);
   });
