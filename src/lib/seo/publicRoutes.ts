@@ -35,6 +35,7 @@ export const STATIC_SITEMAP_ROUTES: StaticSitemapEntry[] = [
   { path: "/settings", changefreq: "yearly", priority: "0.3" },
   { path: "/contact", changefreq: "yearly", priority: "0.4" },
   { path: "/about", changefreq: "monthly", priority: "0.5" },
+  { path: "/data-rights", changefreq: "yearly", priority: "0.3" },
   { path: "/privacy", changefreq: "yearly", priority: "0.3" },
   { path: "/terms", changefreq: "yearly", priority: "0.3" },
   { path: "/cookie-policy", changefreq: "yearly", priority: "0.3" },
