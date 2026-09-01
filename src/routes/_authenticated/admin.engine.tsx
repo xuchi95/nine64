@@ -38,7 +38,7 @@ function benchmarkIssues(row: BenchmarkRow): string {
   return [...new Set([...reasons, ...counts])].join(", ");
 }
 
-type DetailField = { key: string; value: string; tone?: string };
+type DetailField = { key: string; value: string; tone?: string | undefined };
 
 /** Flattens a benchmark row into labelled diagnostic fields (no secrets). */
 function benchmarkDetailFields(row: import("@/lib/engine/benchmarkTypes").BenchmarkRow): DetailField[] {
