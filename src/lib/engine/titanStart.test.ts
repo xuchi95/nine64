@@ -5,10 +5,10 @@ import {
   titanStateMessage,
   titanStateOf,
 } from "@/lib/engine/titanStart";
-import { dict } from "@/lib/i18n/dict/play";
+import playDict from "@/lib/i18n/dict/play";
 
 const t = (key: string) => {
-  const vi = (dict as unknown as { vi: Record<string, string> }).vi;
+  const vi = (playDict as unknown as { vi: Record<string, string> }).vi;
   return vi[key] ?? key;
 };
 
