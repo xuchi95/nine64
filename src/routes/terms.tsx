@@ -165,6 +165,36 @@ const DOCS: Record<Locale, LegalDoc> = {
         ],
       },
       {
+        heading: "Signing in with Google",
+        body: [
+          "Nine64 offers Google sign-in. When you use it, Google authenticates you and shares your email address, display name, profile picture and user identifier (sub) with us. Nine64 does NOT request or access your Gmail, Google Drive, Calendar, Contacts or Google password.",
+          "Nine64's use of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements. Google data is used only to create and protect your account; it is never sold, never used for advertising, and never transferred to third parties other than infrastructure providers serving the core service.",
+          "You can revoke access at any time from your Google Account permissions page. After revoking, set a Nine64 password or use another sign-in method to keep access to your account.",
+          "Your use of your Google account is also governed by Google's own terms and policies. Nine64 does not control and is not responsible for Google's services.",
+        ],
+      },
+      {
+        heading: "Privacy and your data",
+        body: [
+          "How we collect, use, share, protect, retain and delete data is described in our Privacy Policy, which forms an integral part of these Terms.",
+          "You can export your data or request account deletion on the Data rights page. Deletion requests have a 72-hour grace period so you can cancel; afterwards personal identifiers are deleted or anonymised within 30 days, except where retention is legally required or needed for a Fair Play investigation.",
+        ],
+      },
+      {
+        heading: "Third-party services and integrations",
+        body: [
+          "Nine64 relies on third-party providers for infrastructure, authentication, high-performance chess engines and AI features. They process data only on our instructions and only as needed to deliver the service.",
+          "If you connect Nine64 to an external app, or an external app to Nine64, you are responsible for the scope of access you grant and may revoke it at any time.",
+        ],
+      },
+      {
+        heading: "Automated access and APIs",
+        body: [
+          "You may not use bots, scripts or automated tools to access Nine64 without our written permission, and you may not bypass rate limits, authentication or other protective measures.",
+          "Any credentials, tokens or API keys issued to you are personal and must not be shared; notify us immediately if you suspect they have been exposed.",
+        ],
+      },
+      {
         heading: "Nine64 intellectual property",
         body: [
           "Our brand, logo, interface, source code, puzzle database, courses and original content belong to Nine64.",
