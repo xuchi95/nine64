@@ -20,7 +20,7 @@ import { MaintenanceGate } from "@/components/system/MaintenanceGate";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { IdlePreloader } from "@/components/layout/IdlePreloader";
-import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/security/headers";
+import { RECOVERY_BOOTSTRAP_SCRIPT, THEME_BOOTSTRAP_SCRIPT } from "@/lib/security/headers";
 
 
 function NotFoundComponent() {
@@ -141,6 +141,9 @@ function RootShell({ children }: { children: ReactNode }) {
         {/* Applies the persisted colour mode before first paint: no light/dark
             flash on reload. Kept byte-identical to the CSP script hash. */}
         <script data-theme-boot="" dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+        {/* Self-heals a stale service-worker shell / dead chunk cache: reloads
+            once if the app has not hydrated. Byte-identical to the CSP hash. */}
+        <script data-recovery-boot="" dangerouslySetInnerHTML={{ __html: RECOVERY_BOOTSTRAP_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
