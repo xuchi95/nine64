@@ -31,6 +31,11 @@ export function titanMessage(code: string | null | undefined, t: (key: string) =
       return t("play.ai.titanProfileDisabled");
     case "INVALID_ENGINE_CREDENTIALS":
       return t("play.ai.titanNotConfigured");
+    case "ENGINE_AUTH_FAILED":
+      return t("play.ai.titanAuthFailed");
+    case "ENGINE_UNHEALTHY":
+    case "ENGINE_UNAVAILABLE":
+      return t("play.ai.titanUnavailable");
     case "QUOTA_EXCEEDED":
       return t("play.ai.titanQuota");
     case "TOO_MANY_SESSIONS":
@@ -51,18 +56,22 @@ export function titanMessage(code: string | null | undefined, t: (key: string) =
 export function titanStateMessage(
   state: TitanState,
   t: (key: string) => string,
+  code?: string | null,
 ): string | null {
+  if (state === "ready" || state === "loading") return null;
+  if (code === "ENGINE_AUTH_FAILED" || code === "INVALID_ENGINE_CREDENTIALS") {
+    return t(code === "ENGINE_AUTH_FAILED" ? "play.ai.titanAuthFailed" : "play.ai.titanNotConfigured");
+  }
   switch (state) {
     case "not_configured":
       return t("play.ai.titanNotConfigured");
     case "disabled":
       return t("play.ai.titanProfileDisabled");
-    case "unavailable":
-      return t("play.ai.titanUnavailable");
     default:
-      return null;
+      return t("play.ai.titanUnavailable");
   }
 }
+
 
 export interface TitanStartResult {
   ok: boolean;
