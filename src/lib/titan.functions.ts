@@ -15,18 +15,47 @@ const uci = z
 
 export const getTitanStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { titanProfile } = await import("@/lib/engine/profiles.server");
-  const { cloudEngineConfigured } = await import("@/lib/engine/cloudEngine.server");
-  const profile = await titanProfile();
-  const configured = cloudEngineConfigured();
-  return {
-    available: profile.enabled && configured,
-    configured,
-    enabled: profile.enabled,
-    name: profile.name,
-    stockfishVersion: profile.stockfishVersion,
-    source: profile.source,
-  };
+  const { cloudEngineConfigured, cloudEngineHealth } = await import(
+    "@/lib/engine/cloudEngine.server"
+  );
+  try {
+    const profile = await titanProfile();
+    const configured = cloudEngineConfigured();
+    let state: "ready" | "not_configured" | "disabled" | "unavailable";
+    if (!configured) state = "not_configured";
+    else if (!profile.enabled) state = "disabled";
+    else {
+      const health = await cloudEngineHealth();
+      state =
+        health.status === "healthy" || health.status === "degraded"
+          ? "ready"
+          : health.status === "not_configured"
+            ? "not_configured"
+            : "unavailable";
+    }
+    return {
+      state,
+      available: state === "ready",
+      configured,
+      enabled: profile.enabled,
+      name: profile.name,
+      stockfishVersion: profile.stockfishVersion,
+      source: profile.source,
+    };
+  } catch {
+    // Never surface stack traces, URLs or credentials to the client.
+    return {
+      state: "unavailable" as const,
+      available: false,
+      configured: false,
+      enabled: false,
+      name: "Nine64 Titan",
+      stockfishVersion: null,
+      source: "fallback" as const,
+    };
+  }
 });
+
 
 export const startTitanSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -45,34 +74,46 @@ export const startTitanSession = createServerFn({ method: "POST" })
     const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
     const { TITAN_LEVEL } = await import("@/lib/engine/profileTypes");
 
-    await enforceRateLimit("titan.session", userSubject(context.userId));
+    // Server-authoritative: every condition is re-checked here, whatever the
+    // client-side preflight status said.
+    try {
+      await enforceRateLimit("titan.session", userSubject(context.userId));
+    } catch {
+      return { ok: false as const, code: "QUOTA_EXCEEDED" };
+    }
     const profile = await titanProfile();
     if (!profile.enabled) return { ok: false as const, code: "PROFILE_DISABLED" };
     if (!cloudEngineConfigured()) return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
 
-    const res = await createSession({
-      userId: context.userId,
-      playerColor: data.playerColor,
-      variant: data.variant,
-      config: profile.config,
-      level: TITAN_LEVEL,
-    });
-    if (!res.ok) return { ok: false as const, code: res.code };
-
-    // Player chose Black: the engine opens. Idempotent on the server.
-    if (data.playerColor === "b") {
-      const { engineOpeningMove } = await import("@/lib/engine/botSessions.server");
-      const opened = await engineOpeningMove({
-        sessionId: res.snapshot.sessionId,
+    try {
+      const res = await createSession({
         userId: context.userId,
+        playerColor: data.playerColor,
+        variant: data.variant,
         config: profile.config,
-        clock: null,
+        level: TITAN_LEVEL,
       });
-      if (!opened.ok) return { ok: false as const, code: opened.code };
-      return { ok: true as const, snapshot: opened.snapshot };
+      if (!res.ok) return { ok: false as const, code: res.code };
+
+      // Player chose Black: the engine opens. Idempotent on the server.
+      if (data.playerColor === "b") {
+        const { engineOpeningMove } = await import("@/lib/engine/botSessions.server");
+        const opened = await engineOpeningMove({
+          sessionId: res.snapshot.sessionId,
+          userId: context.userId,
+          config: profile.config,
+          clock: null,
+        });
+        if (!opened.ok) return { ok: false as const, code: opened.code };
+        return { ok: true as const, snapshot: opened.snapshot };
+      }
+      return { ok: true as const, snapshot: res.snapshot };
+    } catch {
+      // Raw exceptions never reach the UI.
+      return { ok: false as const, code: "ENGINE_UNAVAILABLE" };
     }
-    return { ok: true as const, snapshot: res.snapshot };
   });
+
 
 export const submitTitanMove = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

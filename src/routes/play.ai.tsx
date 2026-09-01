@@ -31,7 +31,14 @@ import { cn } from "@/lib/utils";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
 import { useServerFn } from "@tanstack/react-start";
-import { startTitanSession, submitTitanMove, endTitanSession } from "@/lib/titan.functions";
+import { getTitanStatus, startTitanSession, submitTitanMove, endTitanSession } from "@/lib/titan.functions";
+import {
+  createTitanStarter,
+  titanMessage,
+  titanStateMessage,
+  titanStateOf,
+  type TitanState,
+} from "@/lib/engine/titanStart";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/play/ai")({
@@ -49,24 +56,6 @@ export const Route = createFileRoute("/play/ai")({
   component: PlayAi,
 });
 
-
-/** Maps a server error code to a user-facing message; never downgrades Titan. */
-function titanMessage(code: string | null, t: (key: string) => string): string {
-  switch (code) {
-    case "ENGINE_NOT_CONFIGURED":
-    case "PROFILE_DISABLED":
-      return t("play.ai.titanDisabled");
-    case "QUOTA_EXCEEDED":
-      return t("play.ai.titanQuota");
-    case "TOO_MANY_SESSIONS":
-      return t("play.ai.titanTooMany");
-    case "VERSION_CONFLICT":
-    case "SESSION_CLOSED":
-      return t("play.ai.titanConflict");
-    default:
-      return t("play.ai.titanUnavailable");
-  }
-}
 
 interface Config {
   level: number;
@@ -144,6 +133,31 @@ function PlayAi() {
   const endTitan = useServerFn(endTitanSession);
   const titanRef = useRef<{ id: string; version: number } | null>(null);
   const [titanStarting, setTitanStarting] = useState(false);
+  const titanStatusFn = useServerFn(getTitanStatus);
+  const [titanState, setTitanState] = useState<TitanState>("loading");
+  const [titanProbe, setTitanProbe] = useState(0);
+
+  // Preflight the Titan service so the setup screen can explain the state
+  // before the player presses Start. Status probes may be retried safely.
+  useEffect(() => {
+    if (!isTitan || phase !== "setup") return;
+    let cancelled = false;
+    setTitanState("loading");
+    void (async () => {
+      try {
+        const res = await titanStatusFn();
+        if (!cancelled) setTitanState(titanStateOf(res));
+      } catch {
+        if (!cancelled) setTitanState("unavailable");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTitan, phase, titanProbe]);
+
+  type TitanSnapshot = Extract<Awaited<ReturnType<typeof startTitan>>, { ok: true }>["snapshot"];
 
   useEffect(() => {
     if (phase !== "playing" || isTitan) return;
@@ -157,42 +171,61 @@ function PlayAi() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, settings.enginePerformance, isTitan]);
 
+  // Latest-value bridge so the single-flight starter can stay stable.
+  const titanStartRef = useRef<{
+    request: () => Promise<Awaited<ReturnType<typeof startTitan>>>;
+    onStarted: (snapshot: TitanSnapshot) => void;
+    onError: (code: string | null) => void;
+  }>({
+    request: () => Promise.reject(new Error("not ready")),
+    onStarted: () => {},
+    onError: () => {},
+  });
+  const titanStarterRef = useRef<(() => Promise<boolean>) | null>(null);
+  if (!titanStarterRef.current) {
+    titanStarterRef.current = createTitanStarter<TitanSnapshot>({
+      request: () => titanStartRef.current.request(),
+      onStarted: (snapshot) => titanStartRef.current.onStarted(snapshot),
+      onError: (code) => titanStartRef.current.onError(code),
+      onPending: setTitanStarting,
+    });
+  }
+
   const start = () => {
     const color: Color =
       config.color === "random" ? (Math.random() < 0.5 ? "w" : "b") : config.color;
+    // Always clear the previous error before a new attempt.
     setEngineError(null);
     if (isTitan) {
       // A Titan game only exists once the server has created the session.
-      setTitanStarting(true);
-      void (async () => {
-        try {
-          const res = await startTitan({
+      titanStartRef.current = {
+        request: () =>
+          startTitan({
             data: {
               playerColor: color,
               variant: config.variant === "chess960" ? "chess960" : "standard",
             },
-          });
-          if (!res.ok) {
-            setEngineError(titanMessage(res.code, t));
-            return;
-          }
-          titanRef.current = { id: res.snapshot.sessionId, version: res.snapshot.version };
+          }),
+        onStarted: (snapshot) => {
+          titanRef.current = { id: snapshot.sessionId, version: snapshot.version };
           setPlayerColor(color);
           // The server owns the starting array (critical for Chess960).
-          game.loadFen(res.snapshot.initialFen);
+          game.loadFen(snapshot.initialFen);
           prevEval.current = 0;
           setPhase("playing");
           playSound("matchFound");
           // Engine opened the game when the player is Black.
-          for (const move of res.snapshot.moves) {
+          for (const move of snapshot.moves) {
             game.makeMove(move.uci.slice(0, 2), move.uci.slice(2, 4), move.uci[4] as never);
           }
-        } catch (err) {
-          setEngineError(err instanceof Error ? err.message : titanMessage(null, t));
-        } finally {
-          setTitanStarting(false);
-        }
-      })();
+        },
+        onError: (code) => {
+          setEngineError(titanMessage(code, t));
+          setTitanProbe((n) => n + 1);
+        },
+      };
+      // Session creation is single-flight and never auto-retried.
+      void titanStarterRef.current?.();
       return;
     }
     titanRef.current = null;
@@ -202,6 +235,7 @@ function PlayAi() {
     setPhase("playing");
     playSound("matchFound");
   };
+
 
   const { quick } = Route.useSearch();
   const quickStarted = useRef(false);
@@ -516,9 +550,45 @@ function PlayAi() {
                 onChange={(tc) => setConfig((c) => ({ ...c, timeControl: tc }))}
               />
             </div>
-            <Button size="lg" className="w-full" onClick={start} disabled={titanStarting}>
-              {t("play.ai.startGame")}
+            {isTitan && (
+              <div className="panel space-y-2 p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("play.ai.titanStatusTitle")}
+                  </h2>
+                  {titanState === "loading" ? (
+                    <StatusPill tone="neutral">{t("play.ai.titanChecking")}</StatusPill>
+                  ) : titanState === "ready" ? (
+                    <StatusPill tone="live">{t("play.ai.titanReady")}</StatusPill>
+                  ) : null}
+                </div>
+                {titanStateMessage(titanState, t) && (
+                  <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
+                    {titanStateMessage(titanState, t)}
+                  </GameNotice>
+                )}
+                {titanState === "unavailable" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTitanProbe((n) => n + 1)}
+                  >
+                    <RefreshCw className="size-4" />
+                    {t("play.ai.titanRetry")}
+                  </Button>
+                )}
+              </div>
+            )}
+            {engineError && <GameNotice tone="error">{engineError}</GameNotice>}
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={start}
+              disabled={titanStarting || (isTitan && titanState === "loading")}
+            >
+              {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>
+
           </div>
         </div>
       </AppShell>
