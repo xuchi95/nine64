@@ -250,9 +250,14 @@ function PlayAi() {
           }
         },
         onError: (code) => {
+          if (code === "VARIANT_NOT_SUPPORTED") {
+            setEngineError(t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) }));
+            return;
+          }
           setEngineError(titanMessage(code, t));
           setTitanProbe((n) => n + 1);
         },
+
       };
       // Session creation is single-flight and never auto-retried.
       void titanStarterRef.current?.();
