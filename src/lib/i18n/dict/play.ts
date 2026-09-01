@@ -88,6 +88,10 @@ export default {
     "play.ai.titanTooMany": "Bạn đang có quá nhiều ván Titan đang mở. Hãy kết thúc bớt trước khi bắt đầu ván mới.",
     "play.ai.titanConflict": "Ván Titan đã thay đổi trên máy chủ. Hãy tải lại để đồng bộ.",
     "play.ai.titanUnavailable": "Không kết nối được Nine64 Titan. Thử lại sau ít phút.",
+    "play.ai.titanVariantBlocked": "Nine64 Titan (Level 16) chưa hỗ trợ biến thể {variant}. Hãy chọn Cờ tiêu chuẩn hoặc Chess960, hoặc quay lại Level 1–15.",
+    "play.ai.titanVariantUnsupportedBadge": "Titan chưa hỗ trợ",
+    "play.ai.titanVariantHint": "Level 16 chỉ chơi được Cờ tiêu chuẩn và Chess960. Lựa chọn biến thể của bạn được giữ nguyên, không tự đổi.",
+
     "play.ai.titanStarting": "Đang tạo ván Titan…",
     "play.ai.titanStatusTitle": "Nine64 Titan",
     "play.ai.titanChecking": "Đang kiểm tra dịch vụ Nine64 Titan…",
@@ -522,6 +526,10 @@ export default {
     "play.ai.titanTooMany": "You already have too many open Titan games. Finish one before starting another.",
     "play.ai.titanConflict": "This Titan game changed on the server. Reload to resync.",
     "play.ai.titanUnavailable": "Could not reach Nine64 Titan. Try again in a moment.",
+    "play.ai.titanVariantBlocked": "Nine64 Titan (level 16) does not support the {variant} variant yet. Pick Standard or Chess960, or go back to level 1–15.",
+    "play.ai.titanVariantUnsupportedBadge": "Not supported by Titan",
+    "play.ai.titanVariantHint": "Level 16 only plays Standard and Chess960. Your variant choice is kept as-is — nothing is switched automatically.",
+
     "play.ai.titanStarting": "Creating Titan game…",
     "play.ai.titanStatusTitle": "Nine64 Titan",
     "play.ai.titanChecking": "Checking the Nine64 Titan service…",

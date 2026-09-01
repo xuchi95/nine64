@@ -39,6 +39,8 @@ import {
   titanStateOf,
   type TitanState,
 } from "@/lib/engine/titanStart";
+import { titanSupportsVariant } from "@/lib/engine/titanVariants";
+
 import { createTitanSessionController } from "@/lib/engine/sessionLifecycle";
 import { useT } from "@/lib/i18n";
 
@@ -148,6 +150,10 @@ function PlayAi() {
   const titanStatusFn = useServerFn(getTitanStatus);
   const [titanState, setTitanState] = useState<TitanState>("loading");
   const [titanProbe, setTitanProbe] = useState(0);
+  // Titan runs plain Stockfish: variants it cannot adjudicate are blocked,
+  // never silently downgraded to standard chess.
+  const titanVariantBlocked = isTitan && !titanSupportsVariant(config.variant);
+
 
   // Preflight the Titan service so the setup screen can explain the state
   // before the player presses Start. Status probes may be retried safely.
@@ -209,6 +215,12 @@ function PlayAi() {
     // Always clear the previous error before a new attempt.
     setEngineError(null);
     if (isTitan) {
+      // Never silently convert an unsupported variant into standard chess.
+      if (!titanSupportsVariant(config.variant)) {
+        setEngineError(t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) }));
+        return;
+      }
+      const titanVariant = config.variant;
       // A Titan game only exists once the server has created the session.
       titanStartRef.current = {
         request: async () => {
@@ -218,10 +230,11 @@ function PlayAi() {
           return startTitan({
             data: {
               playerColor: color,
-              variant: config.variant === "chess960" ? "chess960" : "standard",
+              variant: titanVariant,
             },
           });
         },
+
         onStarted: (snapshot) => {
           titanCtl.set({ id: snapshot.sessionId, version: snapshot.version });
           setPlayerColor(color);
@@ -239,9 +252,14 @@ function PlayAi() {
           }
         },
         onError: (code) => {
+          if (code === "VARIANT_NOT_SUPPORTED") {
+            setEngineError(t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) }));
+            return;
+          }
           setEngineError(titanMessage(code, t));
           setTitanProbe((n) => n + 1);
         },
+
       };
       // Session creation is single-flight and never auto-retried.
       void titanStarterRef.current?.();
@@ -574,24 +592,50 @@ function PlayAi() {
                 {t("play.ai.variant")}
               </h2>
               <div className="mt-3 grid gap-2">
-                {botVariants().map((v) => (
+                {botVariants().map((v) => {
+                  const blockedForTitan = isTitan && !titanSupportsVariant(v.id);
+                  const selected = config.variant === v.id;
+                  return (
                   <button
                     key={v.id}
                     type="button"
                     onClick={() => setConfig((c) => ({ ...c, variant: v.id }))}
+                    aria-disabled={blockedForTitan}
                     className={cn(
                       "rounded-md border px-3 py-2 text-left text-sm transition-colors",
-                      config.variant === v.id
-                        ? "border-primary/60 bg-primary/10"
-                        : "border-border bg-surface-2 hover:border-primary/40",
+                      selected && blockedForTitan
+                        ? "border-destructive/70 bg-destructive/10"
+                        : selected
+                          ? "border-primary/60 bg-primary/10"
+                          : "border-border bg-surface-2 hover:border-primary/40",
+                      blockedForTitan && !selected && "opacity-50",
                     )}
                   >
                     <span className="font-medium">{variantName(v.id)}</span>
+                    {blockedForTitan && (
+                      <span className="ml-2 rounded border border-destructive/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-destructive">
+                        {t("play.ai.titanVariantUnsupportedBadge")}
+                      </span>
+                    )}
                     <span className="mt-0.5 block text-xs text-muted-foreground">{variantBlurb(v.id)}</span>
+
                   </button>
-                ))}
+                  );
+                })}
               </div>
+              {titanVariantBlocked && (
+                <div className="mt-3">
+                  <GameNotice tone="error">
+                    {t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) })}
+                  </GameNotice>
+                </div>
+              )}
+
+              {isTitan && !titanVariantBlocked && (
+                <p className="mt-3 text-xs text-muted-foreground">{t("play.ai.titanVariantHint")}</p>
+              )}
             </div>
+
             <div className="panel p-5">
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("play.ai.timeControl")}
@@ -635,7 +679,7 @@ function PlayAi() {
               size="lg"
               className="w-full"
               onClick={start}
-              disabled={titanStarting || (isTitan && titanState === "loading")}
+              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState === "loading")}
             >
               {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>
