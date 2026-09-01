@@ -64,10 +64,14 @@ function isUrl(raw: string | undefined, requireHttps = false): boolean {
 /** Pure classifier so tests can drive every branch without touching process.env. */
 export function classifyEngineEnv(env: Record<string, string | undefined>): EngineEnvDiagnostics {
   const keyState = classifyPrivateKey(env["PLAY_ENGINE_SA_PRIVATE_KEY"]);
+  const audience = (env["PLAY_ENGINE_AUDIENCE"] ?? "").trim();
   const present = {
-    PLAY_ENGINE_URL: isUrl(env["PLAY_ENGINE_URL"]),
-    PLAY_ENGINE_AUDIENCE: Boolean(env["PLAY_ENGINE_AUDIENCE"]),
-    PLAY_ENGINE_SA_EMAIL: /.+@.+\..+/.test(env["PLAY_ENGINE_SA_EMAIL"] ?? ""),
+    PLAY_ENGINE_URL: isUrl(env["PLAY_ENGINE_URL"], true),
+    // Optional: falls back to PLAY_ENGINE_URL when unset.
+    PLAY_ENGINE_AUDIENCE: audience ? isUrl(audience, true) : isUrl(env["PLAY_ENGINE_URL"], true),
+    PLAY_ENGINE_SA_EMAIL: /^[^\s@]+@[^\s@]+\.iam\.gserviceaccount\.com$/.test(
+      (env["PLAY_ENGINE_SA_EMAIL"] ?? "").trim(),
+    ),
     PLAY_ENGINE_SA_PRIVATE_KEY: keyState === "ok",
     SUPABASE_URL: isUrl(env["SUPABASE_URL"]),
     SUPABASE_SERVICE_ROLE_KEY: Boolean(env["SUPABASE_SERVICE_ROLE_KEY"]),
@@ -92,8 +96,18 @@ export function classifyEngineEnv(env: Record<string, string | undefined>): Engi
     code = keyState === "invalid" ? "INVALID_ENGINE_CREDENTIALS" : "MISSING_ENGINE_CONFIG";
   }
 
-  return { ok: problems.length === 0 && code === "OK", code, present, problems };
+  const configured =
+    present.PLAY_ENGINE_URL && present.PLAY_ENGINE_SA_EMAIL && present.PLAY_ENGINE_SA_PRIVATE_KEY;
+  return {
+    ok: problems.length === 0 && code === "OK",
+    configured,
+    code,
+    present,
+    missing: problems.filter((p) => p.startsWith("PLAY_ENGINE")),
+    problems,
+  };
 }
+
 
 export function engineEnvDiagnostics(): EngineEnvDiagnostics {
   return classifyEngineEnv(process.env as Record<string, string | undefined>);
