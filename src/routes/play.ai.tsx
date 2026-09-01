@@ -31,7 +31,14 @@ import { cn } from "@/lib/utils";
 import { BoardSkeleton } from "@/components/layout/PageSkeleton";
 import { pageHead } from "@/lib/seo";
 import { useServerFn } from "@tanstack/react-start";
-import { startTitanSession, submitTitanMove, endTitanSession } from "@/lib/titan.functions";
+import { getTitanStatus, startTitanSession, submitTitanMove, endTitanSession } from "@/lib/titan.functions";
+import {
+  createTitanStarter,
+  titanMessage,
+  titanStateMessage,
+  titanStateOf,
+  type TitanState,
+} from "@/lib/engine/titanStart";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/play/ai")({
@@ -49,24 +56,6 @@ export const Route = createFileRoute("/play/ai")({
   component: PlayAi,
 });
 
-
-/** Maps a server error code to a user-facing message; never downgrades Titan. */
-function titanMessage(code: string | null, t: (key: string) => string): string {
-  switch (code) {
-    case "ENGINE_NOT_CONFIGURED":
-    case "PROFILE_DISABLED":
-      return t("play.ai.titanDisabled");
-    case "QUOTA_EXCEEDED":
-      return t("play.ai.titanQuota");
-    case "TOO_MANY_SESSIONS":
-      return t("play.ai.titanTooMany");
-    case "VERSION_CONFLICT":
-    case "SESSION_CLOSED":
-      return t("play.ai.titanConflict");
-    default:
-      return t("play.ai.titanUnavailable");
-  }
-}
 
 interface Config {
   level: number;
