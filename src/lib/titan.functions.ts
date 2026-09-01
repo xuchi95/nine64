@@ -15,18 +15,47 @@ const uci = z
 
 export const getTitanStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { titanProfile } = await import("@/lib/engine/profiles.server");
-  const { cloudEngineConfigured } = await import("@/lib/engine/cloudEngine.server");
-  const profile = await titanProfile();
-  const configured = cloudEngineConfigured();
-  return {
-    available: profile.enabled && configured,
-    configured,
-    enabled: profile.enabled,
-    name: profile.name,
-    stockfishVersion: profile.stockfishVersion,
-    source: profile.source,
-  };
+  const { cloudEngineConfigured, cloudEngineHealth } = await import(
+    "@/lib/engine/cloudEngine.server"
+  );
+  try {
+    const profile = await titanProfile();
+    const configured = cloudEngineConfigured();
+    let state: "ready" | "not_configured" | "disabled" | "unavailable";
+    if (!configured) state = "not_configured";
+    else if (!profile.enabled) state = "disabled";
+    else {
+      const health = await cloudEngineHealth();
+      state =
+        health.status === "healthy" || health.status === "degraded"
+          ? "ready"
+          : health.status === "not_configured"
+            ? "not_configured"
+            : "unavailable";
+    }
+    return {
+      state,
+      available: state === "ready",
+      configured,
+      enabled: profile.enabled,
+      name: profile.name,
+      stockfishVersion: profile.stockfishVersion,
+      source: profile.source,
+    };
+  } catch {
+    // Never surface stack traces, URLs or credentials to the client.
+    return {
+      state: "unavailable" as const,
+      available: false,
+      configured: false,
+      enabled: false,
+      name: "Nine64 Titan",
+      stockfishVersion: null,
+      source: "fallback" as const,
+    };
+  }
 });
+
 
 export const startTitanSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
