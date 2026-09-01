@@ -19,9 +19,9 @@ import { useChessGame, type Color } from "@/hooks/useChessGame";
 import {
   StockfishEngine,
   humanThinkTime,
-  pickMoveWithPersonality,
   type EngineLine,
 } from "@/lib/engine/stockfish";
+import { pickPersonalityMove, multiPvFor, personalityActive } from "@/lib/engine/personality";
 import { playSound } from "@/lib/sound";
 import { useSettings } from "@/lib/settings";
 import { saveGame } from "@/lib/history";
@@ -88,7 +88,10 @@ function PlayAi() {
   const [showResult, setShowResult] = useState(false);
 
   const level = getBotLevel(config.level);
-  const personality = getPersonality(config.personality);
+  // Level 16 (Titan) is a maximum-strength mode: personality is forced to
+  // Oracle so the UI never claims a style the server does not honour.
+  const titanLevel = level.runtime === "cloud";
+  const personality = getPersonality(titanLevel ? "oracle" : config.personality);
   const botColor: Color = playerColor === "w" ? "b" : "w";
 
   const game = useChessGame({
@@ -130,7 +133,7 @@ function PlayAi() {
   const busy = useRef(false);
 
   // Titan (level 16) is server-authoritative: the browser never runs it.
-  const isTitan = level.runtime === "cloud";
+  const isTitan = titanLevel;
   const startTitan = useServerFn(startTitanSession);
   const submitTitan = useServerFn(submitTitanMove);
   const endTitan = useServerFn(endTitanSession);
@@ -399,7 +402,7 @@ function PlayAi() {
     const run = async () => {
       const startedAt = Date.now();
       const legal = game.legalMoveCount();
-      const multiPv = personality.evalTolerance > 0 && level.level < 13 ? 4 : 1;
+      const multiPv = multiPvFor(personality, level);
       let lines: EngineLine[] = [];
       try {
         lines = await engine.search({
@@ -410,7 +413,6 @@ function PlayAi() {
           multiPv,
           skill: level.skill,
           uciElo: level.uciElo,
-          contempt: personality.contempt,
         });
       } catch (e) {
         if (!cancelled) setEngineError((e as Error).message);
@@ -434,7 +436,14 @@ function PlayAi() {
             : `${cp >= 0 ? "+" : ""}${(cp / 100).toFixed(2)}`,
       });
 
-      const uci = pickMoveWithPersonality(lines, personality, level);
+      const uci = pickPersonalityMove({
+        lines,
+        personality,
+        level,
+        fen: game.fen,
+        ply: game.moves.length,
+        variant: config.variant === "chess960" ? "chess960" : "standard",
+      });
       const swing = cp - prevEval.current;
       prevEval.current = cp;
 
@@ -540,15 +549,22 @@ function PlayAi() {
             <h2 className="mt-7 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {t("play.ai.personality")}
             </h2>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {isTitan && (
+              <div className="mt-3">
+                <GameNotice tone="warning">{t("play.ai.titanPersonalityLocked")}</GameNotice>
+              </div>
+            )}
+            <div className={cn("mt-3 grid gap-2 sm:grid-cols-2", isTitan && "opacity-50")}>
               {BOT_PERSONALITIES.map((p) => (
                 <button
                   key={p.id}
                   type="button"
+                  disabled={isTitan}
                   onClick={() => setConfig((c) => ({ ...c, personality: p.id }))}
                   className={cn(
                     "rounded-md border p-3 text-left transition-colors",
-                    config.personality === p.id
+                    isTitan && "cursor-not-allowed",
+                    personality.id === p.id
                       ? "border-primary/60 bg-primary/10"
                       : "border-border bg-surface-2 hover:border-primary/40",
                   )}
