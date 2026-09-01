@@ -14,6 +14,8 @@ import { lovable } from "@/integrations/lovable";
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { GoogleIcon } from "@/components/auth/GoogleIcon";
+
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth/login")({
