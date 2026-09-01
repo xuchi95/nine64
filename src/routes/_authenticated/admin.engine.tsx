@@ -282,9 +282,18 @@ function AdminEnginePage() {
             <p className={cn("font-semibold", data?.readiness.ready ? "text-emerald-400" : "text-amber-400")}>
               {data?.readiness.ready ? t("adminc.engine.ready") : t("adminc.engine.notReady")}
             </p>
-            <p className="font-mono text-xs text-muted-foreground">
-              {(data?.readiness.reasons ?? []).join(", ") || "—"}
-            </p>
+            {(data?.readiness.reasons ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">—</p>
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {data!.readiness.reasons.map((code) => (
+                  <li key={code}>
+                    <p className="text-xs text-amber-300">{t(`adminc.engine.reason.${code}`)}</p>
+                    <p className="font-mono text-[10px] text-muted-foreground">{code}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
         <Card className="md:col-span-3">
