@@ -14,16 +14,25 @@
  */
 import type { EngineConfig } from "./profileTypes";
 
-export type CloudEngineStatus = "ok" | "not_configured" | "unavailable" | "timeout" | "invalid";
+export type CloudEngineStatus =
+  | "ok"
+  | "not_configured"
+  | "unavailable"
+  | "timeout"
+  | "invalid"
+  | "unauthorized";
 
 export interface CloudEngineHealth {
-  status: "healthy" | "degraded" | "unavailable" | "not_configured";
+  status: "healthy" | "degraded" | "unavailable" | "not_configured" | "unauthorized";
   engineVersion: string | null;
   arch: string | null;
   pool: { size: number; busy: number } | null;
+  stats: { searches: number; timeouts: number; restarts: number; illegal: number } | null;
   latencyMs: number | null;
+  checkedAt: number;
   detail: string;
 }
+
 
 export interface BestMoveRequest {
   /** Exact CURRENT position to search. Canonical contract: never replay history. */
