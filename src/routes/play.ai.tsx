@@ -37,12 +37,15 @@ import {
   titanMessage,
   titanStateMessage,
   titanStateOf,
+  titanThrownCode,
   type TitanState,
 } from "@/lib/engine/titanStart";
 import { titanSupportsVariant } from "@/lib/engine/titanVariants";
 
 import { createTitanSessionController } from "@/lib/engine/sessionLifecycle";
+import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
+
 
 export const Route = createFileRoute("/play/ai")({
   validateSearch: (search: Record<string, unknown>): { quick?: boolean } =>
