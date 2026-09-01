@@ -250,3 +250,11 @@ describe("secret hygiene", () => {
     expect(example).not.toMatch(/sb_secret_[A-Za-z0-9_-]+/);
   });
 });
+
+describe("recovery bootstrap", () => {
+  it("hash matches the inline script", async () => {
+    const { RECOVERY_BOOTSTRAP_SCRIPT, RECOVERY_BOOTSTRAP_SCRIPT_HASH } = await import("./headers");
+    const actual = `'sha256-${createHash("sha256").update(RECOVERY_BOOTSTRAP_SCRIPT, "utf8").digest("base64")}'`;
+    expect(actual).toBe(RECOVERY_BOOTSTRAP_SCRIPT_HASH);
+  });
+});
