@@ -618,9 +618,19 @@ function PlayAi() {
                     <span className="mt-0.5 block text-xs text-muted-foreground">{variantBlurb(v.id)}</span>
 
                   </button>
-                ))}
+                  );
+                })}
               </div>
+              {titanVariantBlocked && (
+                <GameNotice tone="error" className="mt-3">
+                  {t("play.ai.titanVariantBlocked", { variant: variantName(config.variant) })}
+                </GameNotice>
+              )}
+              {isTitan && !titanVariantBlocked && (
+                <p className="mt-3 text-xs text-muted-foreground">{t("play.ai.titanVariantHint")}</p>
+              )}
             </div>
+
             <div className="panel p-5">
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("play.ai.timeControl")}
