@@ -148,6 +148,10 @@ function PlayAi() {
   const titanStatusFn = useServerFn(getTitanStatus);
   const [titanState, setTitanState] = useState<TitanState>("loading");
   const [titanProbe, setTitanProbe] = useState(0);
+  // Titan runs plain Stockfish: variants it cannot adjudicate are blocked,
+  // never silently downgraded to standard chess.
+  const titanVariantBlocked = isTitan && !titanSupportsVariant(config.variant);
+
 
   // Preflight the Titan service so the setup screen can explain the state
   // before the player presses Start. Status probes may be retried safely.
