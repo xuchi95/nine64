@@ -546,6 +546,8 @@ export default {
     "play.ai.titanProfileDisabled": "Nine64 Titan has been disabled by an administrator.",
     "play.ai.titanWriteFailed": "Could not save the Titan game. Please try again.",
     "play.ai.titanAuthRequired": "Sign in to play against Nine64 Titan.",
+    "play.ai.titanSignIn": "Sign in",
+
     "play.ai.titanRetry": "Retry",
 
     // ---------- Play local ----------
