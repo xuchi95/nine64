@@ -54,6 +54,36 @@ const DOCS: Record<Locale, LegalDoc> = {
         ],
       },
       {
+        heading: "Đăng nhập bằng Google",
+        body: [
+          "Nine64 cho phép đăng nhập bằng tài khoản Google. Khi bạn chọn phương thức này, Google xác thực bạn và chuyển cho chúng tôi địa chỉ email, tên hiển thị, ảnh đại diện và mã định danh người dùng (sub). Nine64 KHÔNG yêu cầu và KHÔNG truy cập Gmail, Google Drive, Calendar, Danh bạ hay mật khẩu Google của bạn.",
+          "Việc Nine64 sử dụng thông tin nhận được từ Google API tuân thủ Chính sách Dữ liệu Người dùng Dịch vụ Google API (Google API Services User Data Policy), bao gồm các yêu cầu Sử dụng Giới hạn (Limited Use). Dữ liệu Google chỉ được dùng để tạo và bảo vệ tài khoản, không bán, không dùng cho quảng cáo và không chuyển cho bên thứ ba ngoài nhà cung cấp hạ tầng phục vụ chính dịch vụ.",
+          "Bạn có thể thu hồi quyền truy cập bất kỳ lúc nào tại trang Quyền ứng dụng của tài khoản Google. Sau khi thu hồi, bạn cần đặt mật khẩu Nine64 hoặc dùng phương thức đăng nhập khác để tiếp tục truy cập tài khoản.",
+          "Việc sử dụng tài khoản Google của bạn còn chịu điều chỉnh bởi điều khoản và chính sách của Google. Nine64 không kiểm soát và không chịu trách nhiệm về dịch vụ của Google.",
+        ],
+      },
+      {
+        heading: "Quyền riêng tư và dữ liệu",
+        body: [
+          "Cách chúng tôi thu thập, sử dụng, chia sẻ, bảo vệ, lưu giữ và xoá dữ liệu được mô tả trong Chính sách quyền riêng tư, là một phần không tách rời của Điều khoản này.",
+          "Bạn có thể tự xuất dữ liệu hoặc yêu cầu xoá tài khoản tại trang Quyền dữ liệu. Yêu cầu xoá có thời gian chờ 72 giờ để bạn kịp huỷ nếu đổi ý; sau đó định danh cá nhân sẽ được xoá hoặc ẩn danh trong vòng 30 ngày, trừ các trường hợp phải lưu theo pháp luật hoặc phục vụ điều tra Fair Play.",
+        ],
+      },
+      {
+        heading: "Dịch vụ và tích hợp bên thứ ba",
+        body: [
+          "Nine64 sử dụng nhà cung cấp bên thứ ba cho hạ tầng, xác thực, máy cờ hiệu năng cao và các tính năng AI. Họ chỉ xử lý dữ liệu theo chỉ dẫn của chúng tôi và trong phạm vi cần thiết để cung cấp dịch vụ.",
+          "Nếu bạn kết nối Nine64 với ứng dụng bên ngoài hoặc ngược lại, bạn chịu trách nhiệm về phạm vi quyền mà mình cấp và có thể thu hồi quyền đó bất cứ lúc nào.",
+        ],
+      },
+      {
+        heading: "Truy cập tự động và API",
+        body: [
+          "Bạn không được dùng bot, script hoặc công cụ tự động để truy cập Nine64 nếu không được chúng tôi cho phép bằng văn bản, và không được vượt qua giới hạn tần suất, cơ chế xác thực hay biện pháp bảo vệ khác.",
+          "Mọi thông tin đăng nhập, token hoặc khoá API cấp cho bạn là cá nhân, không được chia sẻ; bạn phải thông báo ngay cho chúng tôi nếu nghi ngờ bị lộ.",
+        ],
+      },
+      {
         heading: "Sở hữu trí tuệ của Nine64",
         body: [
           "Thương hiệu, logo, giao diện, mã nguồn, cơ sở dữ liệu câu đố, khoá học và nội dung do Nine64 tạo ra thuộc sở hữu của Nine64.",
