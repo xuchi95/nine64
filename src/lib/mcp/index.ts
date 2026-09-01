@@ -1,4 +1,4 @@
-import { auth, defineMcp } from "@lovable.dev/mcp-js";
+import { auth, defineMcp, type AnyToolDefinition } from "@lovable.dev/mcp-js";
 import getMyProfile from "./tools/get-my-profile";
 import listMyGames from "./tools/list-my-games";
 import getGameMoves from "./tools/get-game-moves";
@@ -17,5 +17,5 @@ export default defineMcp({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [getMyProfile, listMyGames, getGameMoves, getMyPuzzleStats],
+  tools: [getMyProfile, listMyGames, getGameMoves, getMyPuzzleStats] as AnyToolDefinition[],
 });
