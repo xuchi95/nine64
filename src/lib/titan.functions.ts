@@ -74,10 +74,18 @@ export const startTitanSession = createServerFn({ method: "POST" })
     const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
     const { TITAN_LEVEL } = await import("@/lib/engine/profileTypes");
 
-    await enforceRateLimit("titan.session", userSubject(context.userId));
+    // Server-authoritative: every condition is re-checked here, whatever the
+    // client-side preflight status said.
+    try {
+      await enforceRateLimit("titan.session", userSubject(context.userId));
+    } catch {
+      return { ok: false as const, code: "QUOTA_EXCEEDED" };
+    }
     const profile = await titanProfile();
     if (!profile.enabled) return { ok: false as const, code: "PROFILE_DISABLED" };
     if (!cloudEngineConfigured()) return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
+
+
 
     const res = await createSession({
       userId: context.userId,
