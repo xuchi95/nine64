@@ -119,6 +119,16 @@ const DOCS: Record<Locale, LegalDoc> = {
         ],
       },
       {
+        heading: "Câu hỏi thường gặp",
+        body: [
+          "Dữ liệu Google nào được truy cập? Chúng tôi chỉ nhận email, tên hiển thị, ảnh đại diện (nếu công khai) và mã định danh Google duy nhất (sub). Chúng tôi không đọc Gmail, Google Drive, Google Calendar, danh bạ, lịch sử tìm kiếm hay vị trí của bạn.",
+          "Limited Use của Google nghĩa là gì? Nghĩa là dữ liệu Google chỉ dùng để xác thực tài khoản, hiển thị hồ sơ, bảo mật và liên lạc thiết yếu. Chúng tôi không bán, không dùng cho quảng cáo, không theo dõi bạn trên web và không kết hợp với dữ liệu bên thứ ba.",
+          "Tôi có thể thu hồi quyền Google không? Có. Bạn có thể thu hồi quyền trong phần quản lý ứng dụng của Google Account, hoặc xoá tài khoản Nine64 trong phần Cài đặt. Lưu ý: thu hồi quyền Google có thể đăng xuất bạn nhưng không tự động xoá dữ liệu đã lưu trên Nine64.",
+          "Ai có quyền truy cập dữ liệu cá nhân của tôi? Chỉ bạn và nhân viên hoặc khối mã Nine64 được ủy quyền trong phạm vi công việc cần thiết. Dữ liệu được bảo vệ bằng TLS, chính sách bảo mật tầng hàng (RLS), phân quyền theo vai trò (RBAC), xác thực đa yếu tố cho admin và nhật ký kiểm tra.",
+          "Làm sao liên hệ hỗ trợ? Gửi yêu cầu qua trang Liên hệ trong ứng dụng hoặc email chính thức của Nine64. Chúng tôi phản hồi các câu hỏi về quyền riêng tư, dữ liệu Google và yêu cầu xoá tài khoản trong vòng 30 ngày.",
+        ],
+      },
+      {
         heading: "Thay đổi chính sách",
         body: [
           "Chúng tôi có thể cập nhật chính sách này theo thời gian. Thay đổi quan trọng sẽ được thông báo trong ứng dụng, qua email hoặc qua thông báo tài khoản trước khi có hiệu lực. Việc tiếp tục sử dụng dịch vụ sau khi cập nhật đồng nghĩa với việc bạn chấp nhận bản mới.",
@@ -226,6 +236,16 @@ const DOCS: Record<Locale, LegalDoc> = {
       {
         heading: "Children",
         body: ["The service is not intended for anyone under 13. Accounts found in breach will be removed along with related data."],
+      },
+      {
+        heading: "Frequently asked questions",
+        body: [
+          "Which Google data does Nine64 access? We receive only your email address, display name, profile picture (if public), and unique Google identifier (sub). We do not read Gmail, Google Drive, Google Calendar, contacts, search history, or location.",
+          "What is Google Limited Use? It means Google data is used solely for account authentication, profile display, security, and essential service communication. We do not sell it, use it for advertising, track you across the web, or combine it with third-party data.",
+          "Can I revoke Google access? Yes. You can revoke access from your Google Account permissions page, or delete your Nine64 account in Settings. Note: revoking Google access may sign you out but does not automatically erase data already stored on Nine64.",
+          "Who can access my personal data? Only you and authorized Nine64 personnel or code paths within the scope of their job. Data is protected by TLS, row-level security (RLS), role-based access control (RBAC), admin MFA, and audit logs.",
+          "How do I contact support? Submit a request through the in-app Contact page or the official Nine64 email. We respond to privacy, Google data, and account-deletion inquiries within 30 days.",
+        ],
       },
       {
         heading: "Changes to this policy",
