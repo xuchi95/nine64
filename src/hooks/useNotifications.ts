@@ -5,6 +5,7 @@ import { getNotifications, markNotificationRead } from "@/lib/online.functions";
 import { useAuth } from "@/lib/auth";
 import { playSound } from "@/lib/sound";
 import type { Notification } from "@/lib/database.types";
+import { uniqueTopic } from "@/lib/realtime";
 
 /**
  * Notifications are produced server-side by the transactional outbox. The hook
@@ -80,7 +81,7 @@ export function useNotifications() {
     void refresh();
 
     const channel = supabase
-      .channel(`notifications:${user.id}`)
+      .channel(uniqueTopic(`notifications:${user.id}`))
       .on(
         "postgres_changes",
         {

@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { playSound } from "@/lib/sound";
 import { errorDetail, logMmEvent } from "@/lib/matchmaking/diagnostics";
 import type { Game, MatchmakingQueue } from "@/lib/database.types";
+import { uniqueTopic } from "@/lib/realtime";
 
 export const MATCH_ACCEPT_SECONDS = 15;
 
@@ -160,7 +161,7 @@ export function useMatchmaking() {
 
         // Subscribe to our own queue row for realtime status changes
         channelRef.current = supabase
-          .channel(`queue:${entry.id}`)
+          .channel(uniqueTopic(`queue:${entry.id}`))
           .on(
             "postgres_changes",
             {

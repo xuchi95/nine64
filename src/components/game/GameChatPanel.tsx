@@ -13,6 +13,7 @@ import {
   type GameChatMessage,
 } from "@/lib/chat/messages";
 import { cn } from "@/lib/utils";
+import { uniqueTopic } from "@/lib/realtime";
 
 const POLL_MS = 5000;
 
@@ -79,7 +80,7 @@ export function GameChatPanel({
     void refresh();
     const timer = window.setInterval(() => void refresh(), POLL_MS);
     const channel = supabase
-      .channel(`game-chat:${gameId}`)
+      .channel(uniqueTopic(`game-chat:${gameId}`))
       .on(
         "postgres_changes",
         {
