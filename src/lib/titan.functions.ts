@@ -171,7 +171,7 @@ export const startTitanSession = createServerFn({ method: "POST" })
         const res = await createSession({
           userId: context.userId,
           playerColor: data.playerColor,
-          variant: data.variant,
+          variant,
           config: profile.config,
           level: TITAN_LEVEL,
         });
