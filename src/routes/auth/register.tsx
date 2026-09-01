@@ -103,6 +103,16 @@ function RegisterPage() {
     navigate({ to: redirectTo, replace: true });
   }
 
+  if (policyOk !== true) {
+    return (
+      <AuthModal>
+        <div className="py-6 text-center">
+          <Loader2 className="mx-auto size-5 animate-spin text-muted-foreground" />
+        </div>
+      </AuthModal>
+    );
+  }
+
   return (
     <AuthModal>
       <div className="text-center">
