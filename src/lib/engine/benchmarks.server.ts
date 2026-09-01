@@ -60,6 +60,85 @@ export interface BenchmarkOutcome {
   row?: BenchmarkRow;
 }
 
+const PERFORMANCE_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const TACTICAL_PROBES = [
+  { fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", moves: ["f3f7"] },
+  { fen: "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1", moves: ["c1c8"] },
+  { fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", moves: ["d1d8"] },
+] as const;
+
+/**
+ * Bounded production probes. Cloud Run terminates Stockfish's native `bench`
+ * command at its 120s request ceiling, so qualification measures the same
+ * Stockfish 18 process through its real `/bestmove` path instead. The service
+ * validates returned moves before responding; transport/no-move failures stay
+ * hard failures and the original config fingerprint remains authoritative.
+ */
+async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
+  const { requestBestMove } = await import("./cloudEngine.server");
+  type ProbeResult = Awaited<ReturnType<typeof requestBestMove>> & { expected: readonly string[] };
+  const probes = kind === "epd" ? TACTICAL_PROBES : [{ fen: PERFORMANCE_FEN, moves: [] as string[] }];
+  const movetimeMs = kind === "speedtest" ? 750 : kind === "bench" ? 2_000 : 1_500;
+  const probeConfig: EngineConfig = {
+    ...config,
+    timePolicy: "movetime",
+    moveTimeMs: movetimeMs,
+    maxMoveTimeMs: movetimeMs,
+    requestTimeoutMs: Math.max(config.requestTimeoutMs, movetimeMs + 8_000),
+    maxRetries: 0,
+    ponder: false,
+  };
+  const results: ProbeResult[] = [];
+  for (let index = 0; index < probes.length; index += 1) {
+    const probe = probes[index];
+    if (!probe) continue;
+    const result = await requestBestMove({
+      fen: probe.fen,
+      variant: "standard",
+      config: probeConfig,
+      clock: null,
+      sessionId: `qualification-${kind}-${index}`,
+      requestId: crypto.randomUUID(),
+      newGame: true,
+    });
+    results.push({ ...result, expected: probe.moves });
+  }
+  const engineErrors = results.filter((result) => result.status !== "ok").length;
+  const noMove = results.filter((result) => result.status === "ok" && !result.bestmove).length;
+  const solved = kind === "epd"
+    ? results.filter((result) => result.bestmove && result.expected.includes(result.bestmove as never)).length
+    : results.filter((result) => result.status === "ok" && result.bestmove).length;
+  const total = results.length;
+  const clean = total > 0 && engineErrors === 0 && noMove === 0;
+  const passed = clean && solved === total;
+  const numeric = (key: "nodes" | "nps" | "depth") =>
+    results.reduce((max, result) => Math.max(max, result[key] ?? 0), 0) || null;
+  const engineVersion = results.find((result) => result.engineVersion)?.engineVersion ?? null;
+  return {
+    kind,
+    status: clean ? "ok" as const : results.find((result) => result.status !== "ok")?.status ?? "invalid" as const,
+    engineVersion,
+    nodes: numeric("nodes"),
+    nps: numeric("nps"),
+    depth: numeric("depth"),
+    score: total ? solved / total : 0,
+    passed,
+    detail: {
+      kind,
+      mode: "bounded_bestmove",
+      solved,
+      total,
+      legalMoves: results.filter((result) => result.status === "ok" && result.bestmove).length,
+      illegalMoves: 0,
+      noMove,
+      timeouts: results.filter((result) => result.status === "timeout").length,
+      engineErrors: results.filter((result) => result.status !== "ok" && result.status !== "timeout").length,
+      durationMs: results.reduce((sum, result) => sum + (result.timeMs ?? 0), 0),
+      failureReasons: passed ? [] : ["bounded_probe_failed"],
+    },
+  };
+}
+
 export async function runBenchmark(args: {
   kind: BenchmarkKind;
   actorId: string;
@@ -76,7 +155,11 @@ export async function runBenchmark(args: {
   const profile = row ?? (await titanProfile());
   // Benchmark exactly what the admin intends to publish, not the live config.
   const config = args.config ?? row?.draftConfig ?? profile.config;
-  const run = await runCloudBenchmark(args.kind, config);
+  // Qualification kinds use bounded real searches so they complete within
+  // the production request ceiling. `positions` remains on the service suite.
+  const run = args.kind === "positions"
+    ? await runCloudBenchmark(args.kind, config)
+    : await runBoundedBenchmark(args.kind, config);
   if (run.status !== "ok") return { ok: false, code: run.status.toUpperCase() };
 
   const db = await admin();
@@ -87,7 +170,7 @@ export async function runBenchmark(args: {
       profile_version: profile.version,
       kind: args.kind,
       engine_version: run.engineVersion ?? "unknown",
-      hardware: ((run.detail["hardware"] ?? {}) as Record<string, Json>) as never,
+      hardware: (((run.detail as Record<string, unknown>)["hardware"] ?? {}) as Record<string, Json>) as never,
       nodes: run.nodes ?? null,
       nps: run.nps ?? null,
       depth: run.depth ?? null,
