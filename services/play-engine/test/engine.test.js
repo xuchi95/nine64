@@ -137,7 +137,7 @@ test("missing bestmove is counted as noMove, not illegal", async () => {
 });
 
 test("an actually illegal UCI move increments illegalMoves", () => {
-  const row = evaluatePosition(mateEntry, { ok: true, result: { bestmove: "a1a4", depth: 9 } });
+  const row = evaluatePosition(mateEntry, { ok: true, result: { bestmove: "g1g4", depth: 9 } });
   assert.equal(row.legal, false);
   assert.equal(row.errorCode, "illegal_move");
   const out = summarize("epd", [row], "Stockfish 18");
@@ -158,8 +158,8 @@ test("positions suite passes when every returned move is legal", async () => {
     { bestmove: "e1g1", depth: 14 },
     { bestmove: "e3d3", depth: 20 },
     { bestmove: "e1g1", depth: 15 },
-    { bestmove: "b4b5", depth: 18 },
-    { bestmove: "e1e2", depth: 22 },
+    { bestmove: "b4b1", depth: 18 },
+    { bestmove: "e2e4", depth: 22 },
   ];
   const out = await run("positions", POSITION_SUITE, outcomes);
   assert.equal(out.detail.legalMoves, POSITION_SUITE.length);
