@@ -73,18 +73,41 @@ export function cloudEngineConfigured(): boolean {
   );
 }
 
+/** Trim + drop a trailing slash. Never logged. */
+export function normalizeEngineUrl(raw: string | undefined): string | null {
+  const value = (raw ?? "").trim();
+  if (!value || /\s/.test(value)) return null;
+  if (!/^https:\/\//i.test(value)) return null;
+  return value.replace(/\/+$/, "");
+}
+
+/**
+ * Accepts both a real multiline PEM and a provider-escaped `\n` PEM and
+ * returns a valid PEM. Nothing else about the key is mutated, and the key is
+ * never logged — a parse failure only ever yields `null`.
+ */
+export function normalizePrivateKey(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const pem = raw.replace(/\\r/g, "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
+  if (!pem.startsWith("-----BEGIN PRIVATE KEY-----")) return null;
+  if (!pem.endsWith("-----END PRIVATE KEY-----")) return null;
+  return `${pem}\n`;
+}
+
 function credentials(): Credentials | null {
-  const url = process.env["PLAY_ENGINE_URL"];
-  const clientEmail = process.env["PLAY_ENGINE_SA_EMAIL"];
-  const privateKey = process.env["PLAY_ENGINE_SA_PRIVATE_KEY"];
+  const url = normalizeEngineUrl(process.env["PLAY_ENGINE_URL"]);
+  const clientEmail = (process.env["PLAY_ENGINE_SA_EMAIL"] ?? "").trim();
+  const privateKey = normalizePrivateKey(process.env["PLAY_ENGINE_SA_PRIVATE_KEY"]);
   if (!url || !clientEmail || !privateKey) return null;
   return {
-    url: url.replace(/\/$/, ""),
+    url,
     clientEmail,
-    privateKey: privateKey.replace(/\\n/g, "\n"),
-    audience: process.env["PLAY_ENGINE_AUDIENCE"] ?? url.replace(/\/$/, ""),
+    privateKey,
+    // Cloud Run ID tokens are minted for the service URL unless overridden.
+    audience: normalizeEngineUrl(process.env["PLAY_ENGINE_AUDIENCE"]) ?? url,
   };
 }
+
 
 // --------------------------------------------------------------------------
 // OIDC token minting (service-account JWT -> Google-signed ID token)
