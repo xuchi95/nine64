@@ -38,6 +38,47 @@ function benchmarkIssues(row: BenchmarkRow): string {
   return [...new Set([...reasons, ...counts])].join(", ");
 }
 
+type DetailField = { key: string; value: string; tone?: string };
+
+/** Flattens a benchmark row into labelled diagnostic fields (no secrets). */
+function benchmarkDetailFields(row: import("@/lib/engine/benchmarkTypes").BenchmarkRow): DetailField[] {
+  const d = row.result ?? {};
+  const hw = row.hardware ?? {};
+  const num = (key: string): number | null => {
+    const raw = d[key] ?? hw[key];
+    return typeof raw === "number" ? raw : null;
+  };
+  const show = (value: number | null) => (value === null ? "—" : String(value));
+  const durationMs = num("durationMs") ?? num("elapsedMs") ?? num("totalTimeMs");
+  const solved = num("solved");
+  const total = num("total");
+  const bad = (value: number | null) => ((value ?? 0) > 0 ? "text-destructive" : undefined);
+
+  return [
+    { key: "status", value: row.passed ? "OK" : "FAIL", tone: row.passed ? "text-emerald-400" : "text-destructive" },
+    { key: "kind", value: row.kind },
+    { key: "engineVersion", value: row.engineVersion || "—" },
+    { key: "fingerprint", value: row.configSignature ? `${row.configSignature.slice(0, 12)}…` : "—" },
+    { key: "nps", value: show(row.nps) },
+    { key: "nodes", value: show(row.nodes) },
+    { key: "depth", value: show(row.depth) },
+    { key: "score", value: row.score === null ? "—" : String(row.score) },
+    {
+      key: "passed",
+      value: row.passed ? "yes" : "no",
+      tone: row.passed ? "text-emerald-400" : "text-destructive",
+    },
+    { key: "solved", value: total === null ? "—" : `${solved ?? 0} / ${total}` },
+    { key: "legalMoves", value: show(num("legalMoves")) },
+    { key: "illegalMoves", value: show(num("illegalMoves")), tone: bad(num("illegalMoves")) },
+    { key: "noMove", value: show(num("noMove")), tone: bad(num("noMove")) },
+    { key: "timeouts", value: show(num("timeouts")), tone: bad(num("timeouts")) },
+    { key: "engineErrors", value: show(num("engineErrors")), tone: bad(num("engineErrors")) },
+    { key: "duration", value: durationMs === null ? "—" : `${(durationMs / 1000).toFixed(1)}s` },
+    { key: "createdAt", value: new Date(row.createdAt).toLocaleString() },
+  ];
+}
+
 export const Route = createFileRoute("/_authenticated/admin/engine")({
   head: () => ({
     meta: [
