@@ -14,6 +14,8 @@ export type EngineEnvCode =
 
 export interface EngineEnvDiagnostics {
   ok: boolean;
+  /** True when all four PLAY_ENGINE_* secrets are present and well-formed. */
+  configured: boolean;
   code: EngineEnvCode;
   /** Presence only — never the value. */
   present: {
@@ -25,13 +27,17 @@ export interface EngineEnvDiagnostics {
     SUPABASE_SERVICE_ROLE_KEY: boolean;
   };
   /** Names that are missing or malformed (no values). */
+  missing: string[];
   problems: string[];
 }
 
-/** PEM sanity check. Returns a code, never any part of the key. */
+/**
+ * PEM sanity check. Handles both a real multiline PEM and a provider-escaped
+ * `\n` PEM. Returns a code, never any part of the key.
+ */
 export function classifyPrivateKey(raw: string | undefined): "missing" | "invalid" | "ok" {
   if (!raw || raw.trim() === "") return "missing";
-  const pem = raw.replace(/\\n/g, "\n").trim();
+  const pem = raw.replace(/\\r/g, "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
   if (!pem.startsWith("-----BEGIN PRIVATE KEY-----")) return "invalid";
   if (!pem.endsWith("-----END PRIVATE KEY-----")) return "invalid";
   const body = pem
@@ -42,23 +48,30 @@ export function classifyPrivateKey(raw: string | undefined): "missing" | "invali
   return "ok";
 }
 
-function isUrl(raw: string | undefined): boolean {
-  if (!raw) return false;
+/** HTTPS, no whitespace, trailing slash normalized. */
+function isUrl(raw: string | undefined, requireHttps = false): boolean {
+  const value = (raw ?? "").trim();
+  if (!value || /\s/.test(value)) return false;
   try {
-    const u = new URL(raw);
-    return u.protocol === "https:" || u.protocol === "http:";
+    const u = new URL(value);
+    return requireHttps ? u.protocol === "https:" : u.protocol === "https:" || u.protocol === "http:";
   } catch {
     return false;
   }
 }
 
+
 /** Pure classifier so tests can drive every branch without touching process.env. */
 export function classifyEngineEnv(env: Record<string, string | undefined>): EngineEnvDiagnostics {
   const keyState = classifyPrivateKey(env["PLAY_ENGINE_SA_PRIVATE_KEY"]);
+  const audience = (env["PLAY_ENGINE_AUDIENCE"] ?? "").trim();
   const present = {
-    PLAY_ENGINE_URL: isUrl(env["PLAY_ENGINE_URL"]),
-    PLAY_ENGINE_AUDIENCE: Boolean(env["PLAY_ENGINE_AUDIENCE"]),
-    PLAY_ENGINE_SA_EMAIL: /.+@.+\..+/.test(env["PLAY_ENGINE_SA_EMAIL"] ?? ""),
+    PLAY_ENGINE_URL: isUrl(env["PLAY_ENGINE_URL"], true),
+    // Optional: falls back to PLAY_ENGINE_URL when unset.
+    PLAY_ENGINE_AUDIENCE: audience ? isUrl(audience, true) : isUrl(env["PLAY_ENGINE_URL"], true),
+    PLAY_ENGINE_SA_EMAIL: /^[^\s@]+@[^\s@]+\.iam\.gserviceaccount\.com$/.test(
+      (env["PLAY_ENGINE_SA_EMAIL"] ?? "").trim(),
+    ),
     PLAY_ENGINE_SA_PRIVATE_KEY: keyState === "ok",
     SUPABASE_URL: isUrl(env["SUPABASE_URL"]),
     SUPABASE_SERVICE_ROLE_KEY: Boolean(env["SUPABASE_SERVICE_ROLE_KEY"]),
@@ -83,8 +96,18 @@ export function classifyEngineEnv(env: Record<string, string | undefined>): Engi
     code = keyState === "invalid" ? "INVALID_ENGINE_CREDENTIALS" : "MISSING_ENGINE_CONFIG";
   }
 
-  return { ok: problems.length === 0 && code === "OK", code, present, problems };
+  const configured =
+    present.PLAY_ENGINE_URL && present.PLAY_ENGINE_SA_EMAIL && present.PLAY_ENGINE_SA_PRIVATE_KEY;
+  return {
+    ok: problems.length === 0 && code === "OK",
+    configured,
+    code,
+    present,
+    missing: problems.filter((p) => p.startsWith("PLAY_ENGINE")),
+    problems,
+  };
 }
+
 
 export function engineEnvDiagnostics(): EngineEnvDiagnostics {
   return classifyEngineEnv(process.env as Record<string, string | undefined>);

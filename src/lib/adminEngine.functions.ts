@@ -46,6 +46,36 @@ export const getEngineOverview = createServerFn({ method: "GET" })
 
 export type EngineOverview = Awaited<ReturnType<typeof getEngineOverview>>;
 
+/**
+ * "Kiểm tra kết nối": a *server-side* live probe of Cloud Run. The browser
+ * never talks to the engine and never sees a URL, token or secret value.
+ */
+export const checkEngineConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(() => ({}))
+  .handler(async ({ context }) => {
+    await assertAdmin(context, "engine");
+    const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+    const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
+    const env = engineEnvDiagnostics();
+    if (!env.configured) {
+      return { ok: false as const, code: env.code, health: null };
+    }
+    // maxAge 0 forces a real round-trip instead of the 10s cache.
+    const health = await cloudEngineHealthCached(0);
+    const ok = health.status === "healthy" || health.status === "degraded";
+    return {
+      ok,
+      code: ok
+        ? "READY"
+        : health.status === "unauthorized"
+          ? "ENGINE_AUTH_FAILED"
+          : "ENGINE_UNAVAILABLE",
+      health,
+    };
+  });
+
+
 export const saveEngineDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>

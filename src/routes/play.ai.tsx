@@ -152,6 +152,7 @@ function PlayAi() {
   const [titanStarting, setTitanStarting] = useState(false);
   const titanStatusFn = useServerFn(getTitanStatus);
   const [titanState, setTitanState] = useState<TitanState>("loading");
+  const [titanCode, setTitanCode] = useState<string | null>(null);
   const [titanProbe, setTitanProbe] = useState(0);
   // Titan runs plain Stockfish: variants it cannot adjudicate are blocked,
   // never silently downgraded to standard chess.
@@ -167,9 +168,15 @@ function PlayAi() {
     void (async () => {
       try {
         const res = await titanStatusFn();
-        if (!cancelled) setTitanState(titanStateOf(res));
+        if (!cancelled) {
+          setTitanState(titanStateOf(res));
+          setTitanCode(res.code ?? null);
+        }
       } catch {
-        if (!cancelled) setTitanState("unavailable");
+        if (!cancelled) {
+          setTitanState("unavailable");
+          setTitanCode("ENGINE_UNAVAILABLE");
+        }
       }
     })();
     return () => {
@@ -177,6 +184,7 @@ function PlayAi() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTitan, phase, titanProbe]);
+
 
   type TitanSnapshot = Extract<Awaited<ReturnType<typeof startTitan>>, { ok: true }>["snapshot"];
 
@@ -673,9 +681,9 @@ function PlayAi() {
                     <StatusPill tone="live">{t("play.ai.titanReady")}</StatusPill>
                   ) : null}
                 </div>
-                {titanStateMessage(titanState, t) && (
+                {titanStateMessage(titanState, t, titanCode) && (
                   <GameNotice tone={titanState === "unavailable" ? "warning" : "error"}>
-                    {titanStateMessage(titanState, t)}
+                    {titanStateMessage(titanState, t, titanCode)}
                   </GameNotice>
                 )}
                 {titanState === "unavailable" && (
@@ -695,8 +703,9 @@ function PlayAi() {
               size="lg"
               className="w-full"
               onClick={start}
-              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState === "loading")}
+              disabled={titanStarting || titanVariantBlocked || (isTitan && titanState !== "ready")}
             >
+
               {titanStarting ? t("play.ai.titanStarting") : t("play.ai.startGame")}
             </Button>
 

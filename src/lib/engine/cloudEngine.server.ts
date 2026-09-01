@@ -14,16 +14,25 @@
  */
 import type { EngineConfig } from "./profileTypes";
 
-export type CloudEngineStatus = "ok" | "not_configured" | "unavailable" | "timeout" | "invalid";
+export type CloudEngineStatus =
+  | "ok"
+  | "not_configured"
+  | "unavailable"
+  | "timeout"
+  | "invalid"
+  | "unauthorized";
 
 export interface CloudEngineHealth {
-  status: "healthy" | "degraded" | "unavailable" | "not_configured";
+  status: "healthy" | "degraded" | "unavailable" | "not_configured" | "unauthorized";
   engineVersion: string | null;
   arch: string | null;
   pool: { size: number; busy: number } | null;
+  stats: { searches: number; timeouts: number; restarts: number; illegal: number } | null;
   latencyMs: number | null;
+  checkedAt: number;
   detail: string;
 }
+
 
 export interface BestMoveRequest {
   /** Exact CURRENT position to search. Canonical contract: never replay history. */
@@ -64,18 +73,41 @@ export function cloudEngineConfigured(): boolean {
   );
 }
 
+/** Trim + drop a trailing slash. Never logged. */
+export function normalizeEngineUrl(raw: string | undefined): string | null {
+  const value = (raw ?? "").trim();
+  if (!value || /\s/.test(value)) return null;
+  if (!/^https:\/\//i.test(value)) return null;
+  return value.replace(/\/+$/, "");
+}
+
+/**
+ * Accepts both a real multiline PEM and a provider-escaped `\n` PEM and
+ * returns a valid PEM. Nothing else about the key is mutated, and the key is
+ * never logged — a parse failure only ever yields `null`.
+ */
+export function normalizePrivateKey(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const pem = raw.replace(/\\r/g, "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
+  if (!pem.startsWith("-----BEGIN PRIVATE KEY-----")) return null;
+  if (!pem.endsWith("-----END PRIVATE KEY-----")) return null;
+  return `${pem}\n`;
+}
+
 function credentials(): Credentials | null {
-  const url = process.env["PLAY_ENGINE_URL"];
-  const clientEmail = process.env["PLAY_ENGINE_SA_EMAIL"];
-  const privateKey = process.env["PLAY_ENGINE_SA_PRIVATE_KEY"];
+  const url = normalizeEngineUrl(process.env["PLAY_ENGINE_URL"]);
+  const clientEmail = (process.env["PLAY_ENGINE_SA_EMAIL"] ?? "").trim();
+  const privateKey = normalizePrivateKey(process.env["PLAY_ENGINE_SA_PRIVATE_KEY"]);
   if (!url || !clientEmail || !privateKey) return null;
   return {
-    url: url.replace(/\/$/, ""),
+    url,
     clientEmail,
-    privateKey: privateKey.replace(/\\n/g, "\n"),
-    audience: process.env["PLAY_ENGINE_AUDIENCE"] ?? url.replace(/\/$/, ""),
+    privateKey,
+    // Cloud Run ID tokens are minted for the service URL unless overridden.
+    audience: normalizeEngineUrl(process.env["PLAY_ENGINE_AUDIENCE"]) ?? url,
   };
 }
+
 
 // --------------------------------------------------------------------------
 // OIDC token minting (service-account JWT -> Google-signed ID token)
@@ -175,33 +207,65 @@ function noteSuccess(): void {
   breaker = { failures: 0, openUntil: 0 };
 }
 
-async function call<T>(
+export type CloudCallResult<T> =
+  | { ok: true; data: T; httpStatus: number }
+  | { ok: false; status: CloudEngineStatus; error: string; httpStatus: number | null };
+
+/**
+ * The single entry point for every Cloud Run call. It owns OIDC token
+ * acquisition, audience, timeout, JSON parsing, status mapping and
+ * secret-free logging, so no caller re-implements auth.
+ */
+export async function callCloudEngine<T>(
   path: string,
-  body: unknown,
-  timeoutMs: number,
-): Promise<{ ok: true; data: T } | { ok: false; status: CloudEngineStatus; error: string }> {
+  options: { method?: "GET" | "POST"; body?: unknown; timeoutMs?: number } = {},
+): Promise<CloudCallResult<T>> {
+  const method = options.method ?? "POST";
+  const timeoutMs = options.timeoutMs ?? 8_000;
   const creds = credentials();
-  if (!creds) return { ok: false, status: "not_configured", error: "PLAY_ENGINE_* is unset" };
+  if (!creds) {
+    return { ok: false, status: "not_configured", error: "PLAY_ENGINE_* is unset", httpStatus: null };
+  }
   if (Date.now() < breaker.openUntil) {
-    return { ok: false, status: "unavailable", error: "circuit_open" };
+    return { ok: false, status: "unavailable", error: "circuit_open", httpStatus: null };
   }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const token = await idToken(creds);
+    let token: string;
+    try {
+      token = await idToken(creds);
+    } catch {
+      // A bad key or a rejected assertion must never surface as a raw error.
+      return { ok: false, status: "unauthorized", error: "oidc_mint_failed", httpStatus: null };
+    }
+    const headers: Record<string, string> = { authorization: `Bearer ${token}` };
+    if (method === "POST") headers["content-type"] = "application/json";
     const res = await fetch(`${creds.url}${path}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify(body),
+      method,
+      headers,
+      body: method === "POST" ? JSON.stringify(options.body ?? {}) : null,
       signal: controller.signal,
     });
     if (!res.ok) {
       noteFailure();
-      return { ok: false, status: "unavailable", error: `http_${res.status}` };
+      const unauth = res.status === 401 || res.status === 403;
+      return {
+        ok: false,
+        status: unauth ? "unauthorized" : "unavailable",
+        error: `http_${res.status}`,
+        httpStatus: res.status,
+      };
     }
     noteSuccess();
-    return { ok: true, data: (await res.json()) as T };
+    let data: T;
+    try {
+      data = (await res.json()) as T;
+    } catch {
+      return { ok: false, status: "invalid", error: "invalid_json", httpStatus: res.status };
+    }
+    return { ok: true, data, httpStatus: res.status };
   } catch (err) {
     noteFailure();
     const aborted = err instanceof Error && err.name === "AbortError";
@@ -211,15 +275,31 @@ async function call<T>(
       ok: false,
       status: aborted ? "timeout" : "unavailable",
       error: aborted ? "timeout" : "network_error",
+      httpStatus: null,
     };
   } finally {
     clearTimeout(timer);
   }
 }
 
+async function call<T>(
+  path: string,
+  body: unknown,
+  timeoutMs: number,
+): Promise<{ ok: true; data: T } | { ok: false; status: CloudEngineStatus; error: string }> {
+  const res = await callCloudEngine<T>(path, { method: "POST", body, timeoutMs });
+  return res.ok ? { ok: true, data: res.data } : { ok: false, status: res.status, error: res.error };
+}
+
+
+/** Production health endpoint. Cloud Run intercepts some `*z` paths. */
+export const HEALTH_PATH = "/health";
+
 /**
- * Defensive parse of the /healthz contract. A malformed or partial payload is
+ * Defensive parse of the /health contract. A malformed or partial payload is
  * never trusted: it downgrades the reported status instead of throwing.
+ * Healthy requires `status === "ok"` AND an engineVersion — a 200 alone is
+ * not enough.
  */
 export function interpretHealthPayload(
   raw: unknown,
@@ -229,6 +309,7 @@ export function interpretHealthPayload(
   const statusText = typeof body["status"] === "string" ? (body["status"] as string) : null;
   const engineVersion = typeof body["engineVersion"] === "string" ? (body["engineVersion"] as string) : null;
   const arch = typeof body["arch"] === "string" ? (body["arch"] as string) : null;
+  const checkedAt = Date.now();
 
   const rawPool = body["pool"];
   let pool: { size: number; busy: number } | null = null;
@@ -240,15 +321,29 @@ export function interpretHealthPayload(
     }
   }
 
-  if (!pool || statusText !== "ok") {
+  const rawStats = body["stats"];
+  let stats: CloudEngineHealth["stats"] = null;
+  if (rawStats && typeof rawStats === "object" && !Array.isArray(rawStats)) {
+    const s = rawStats as Record<string, unknown>;
+    stats = {
+      searches: Number(s["searches"] ?? 0) || 0,
+      timeouts: Number(s["timeouts"] ?? 0) || 0,
+      restarts: Number(s["restarts"] ?? 0) || 0,
+      illegal: Number(s["illegal"] ?? 0) || 0,
+    };
+  }
+
+  if (!pool || statusText !== "ok" || !engineVersion) {
     // Unknown shape or an engine that is still starting: never report healthy.
     return {
-      status: pool ? "degraded" : "unavailable",
+      status: pool && statusText === "ok" ? "degraded" : pool ? "degraded" : "unavailable",
       engineVersion,
       arch,
       pool,
+      stats,
       latencyMs,
-      detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /healthz không hợp lệ.",
+      checkedAt,
+      detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /health không hợp lệ.",
     };
   }
 
@@ -258,31 +353,37 @@ export function interpretHealthPayload(
     engineVersion,
     arch,
     pool,
+    stats,
     latencyMs,
+    checkedAt,
     detail: busy ? "Toàn bộ engine process đang bận." : "OK",
   };
 }
 
 export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
   const creds = credentials();
+  const empty = {
+    engineVersion: null,
+    arch: null,
+    pool: null,
+    stats: null,
+    checkedAt: Date.now(),
+  };
   if (!creds) {
     return {
+      ...empty,
       status: "not_configured",
-      engineVersion: null,
-      arch: null,
-      pool: null,
       latencyMs: null,
       detail: "Chưa cấu hình PLAY_ENGINE_URL / service account.",
     };
   }
   const startedAt = Date.now();
-  const res = await call<unknown>("/healthz", {}, 8_000);
+  const res = await callCloudEngine<unknown>(HEALTH_PATH, { method: "GET", timeoutMs: 8_000 });
   if (!res.ok) {
     return {
-      status: "unavailable",
-      engineVersion: null,
-      arch: null,
-      pool: null,
+      ...empty,
+      checkedAt: Date.now(),
+      status: res.status === "unauthorized" ? "unauthorized" : "unavailable",
       latencyMs: Date.now() - startedAt,
       detail: res.error,
     };
@@ -291,10 +392,11 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
 }
 
 // --------------------------------------------------------------------------
-// Short-lived health cache: the play preflight must not hammer /healthz.
+// Short-lived health cache: the play preflight must not hammer /health.
 // --------------------------------------------------------------------------
 let healthCache: { value: CloudEngineHealth; fetchedAt: number } | null = null;
 const HEALTH_TTL_MS = 10_000;
+
 
 export async function cloudEngineHealthCached(maxAgeMs = HEALTH_TTL_MS): Promise<CloudEngineHealth> {
   if (healthCache && Date.now() - healthCache.fetchedAt < maxAgeMs) return healthCache.value;
