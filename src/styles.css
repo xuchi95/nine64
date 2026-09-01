@@ -186,7 +186,9 @@
     /* Không bao giờ để trang rộng hơn màn hình: tràn ngang khiến webview
        (Messenger/Chrome mobile) tự thu/phóng lại trang mỗi khi layout đổi,
        làm bàn cờ "nhảy" và phóng to sau mỗi nước đi. */
-    overflow-x: hidden;
+    /* `clip` thay cho `hidden`: không biến <html> thành scroll container
+       (tránh hiện tượng 2 thanh cuộn dọc chồng nhau). */
+    overflow-x: clip;
     max-width: 100%;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
