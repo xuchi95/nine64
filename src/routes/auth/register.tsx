@@ -12,6 +12,8 @@ import { lovable } from "@/integrations/lovable";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { GoogleIcon } from "@/components/auth/GoogleIcon";
+
 import { useT } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { guardAuthAttempt } from "@/lib/authGuard.functions";
