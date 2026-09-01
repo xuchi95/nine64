@@ -12,6 +12,8 @@ import { lovable } from "@/integrations/lovable";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
 import { BrandMark } from "@/components/layout/BrandMark";
+import { GoogleIcon } from "@/components/auth/GoogleIcon";
+
 import { useT } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { guardAuthAttempt } from "@/lib/authGuard.functions";
@@ -196,7 +198,8 @@ function RegisterPage() {
           <Button
             type="button"
             variant="outline"
-            className="mt-4 w-full"
+            size="lg"
+            className="mt-4 w-full gap-2.5 border-primary/40 bg-primary/10 font-semibold text-foreground shadow-sm transition-colors hover:border-primary/60 hover:bg-primary/15"
             onClick={async () => {
               setLoading(true);
               const result = await lovable.auth.signInWithOAuth("google", {
@@ -209,8 +212,10 @@ function RegisterPage() {
             }}
             disabled={loading}
           >
+            <GoogleIcon className="size-5 text-primary" />
             {t("study.register.continueWithGoogle")}
           </Button>
+
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {t("study.register.haveAccount")}{" "}
