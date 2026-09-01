@@ -85,31 +85,35 @@ export const startTitanSession = createServerFn({ method: "POST" })
     if (!profile.enabled) return { ok: false as const, code: "PROFILE_DISABLED" };
     if (!cloudEngineConfigured()) return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
 
-
-
-    const res = await createSession({
-      userId: context.userId,
-      playerColor: data.playerColor,
-      variant: data.variant,
-      config: profile.config,
-      level: TITAN_LEVEL,
-    });
-    if (!res.ok) return { ok: false as const, code: res.code };
-
-    // Player chose Black: the engine opens. Idempotent on the server.
-    if (data.playerColor === "b") {
-      const { engineOpeningMove } = await import("@/lib/engine/botSessions.server");
-      const opened = await engineOpeningMove({
-        sessionId: res.snapshot.sessionId,
+    try {
+      const res = await createSession({
         userId: context.userId,
+        playerColor: data.playerColor,
+        variant: data.variant,
         config: profile.config,
-        clock: null,
+        level: TITAN_LEVEL,
       });
-      if (!opened.ok) return { ok: false as const, code: opened.code };
-      return { ok: true as const, snapshot: opened.snapshot };
+      if (!res.ok) return { ok: false as const, code: res.code };
+
+      // Player chose Black: the engine opens. Idempotent on the server.
+      if (data.playerColor === "b") {
+        const { engineOpeningMove } = await import("@/lib/engine/botSessions.server");
+        const opened = await engineOpeningMove({
+          sessionId: res.snapshot.sessionId,
+          userId: context.userId,
+          config: profile.config,
+          clock: null,
+        });
+        if (!opened.ok) return { ok: false as const, code: opened.code };
+        return { ok: true as const, snapshot: opened.snapshot };
+      }
+      return { ok: true as const, snapshot: res.snapshot };
+    } catch {
+      // Raw exceptions never reach the UI.
+      return { ok: false as const, code: "ENGINE_UNAVAILABLE" };
     }
-    return { ok: true as const, snapshot: res.snapshot };
   });
+
 
 export const submitTitanMove = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
