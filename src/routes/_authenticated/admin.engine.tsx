@@ -20,10 +20,12 @@ import {
   saveEngineDraft,
   disableEngineProfile,
   checkEngineConnection,
+  runTitanQualificationSuite,
   type EngineOverview,
 } from "@/lib/adminEngine.functions";
 import { engineConfigSchema, TITAN_SLUG, type EngineConfig } from "@/lib/engine/profileTypes";
 import { BENCHMARK_KINDS, type BenchmarkRow } from "@/lib/engine/benchmarkTypes";
+import type { QualificationResult } from "@/lib/engine/qualificationTypes";
 
 /** Typed, secret-free failure summary for a benchmark row. */
 function benchmarkIssues(row: BenchmarkRow): string {
@@ -114,6 +116,9 @@ function AdminEnginePage() {
   const [versions, setVersions] = useState<Awaited<ReturnType<typeof getEngineVersions>>>([]);
   const probe = useServerFn(checkEngineConnection);
   const [probeResult, setProbeResult] = useState<string | null>(null);
+  const qualify = useServerFn(runTitanQualificationSuite);
+  const [qual, setQual] = useState<QualificationResult | null>(null);
+  const [qualBusy, setQualBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -148,6 +153,25 @@ function AdminEnginePage() {
       setNotice(err instanceof Error ? err.message : t("adminc.common.failed"));
     } finally {
       setBusy(false);
+    }
+  };
+
+  /** One atomic qualification suite; every step keeps its own benchmark row. */
+  const runQualification = async () => {
+    if (!titan || !parsed?.success) return;
+    setQualBusy(true);
+    setNotice(null);
+    setQual(null);
+    try {
+      const result = await qualify({
+        data: { reason: reason.trim(), slug: titan.slug, config: parsed.data },
+      });
+      setQual(result as QualificationResult);
+      await refresh();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : t("adminc.common.failed"));
+    } finally {
+      setQualBusy(false);
     }
   };
 
@@ -451,6 +475,71 @@ function AdminEnginePage() {
         <TabsContent value="benchmarks" className="mt-4 space-y-4">
           <Card>
             <CardContent className="space-y-3 p-4">
+              <div className="rounded-xl border border-border/60 bg-card/40 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">{t("adminc.engine.qualify.title")}</p>
+                    <p className="text-xs text-muted-foreground">{t("adminc.engine.qualify.hint")}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={busy || qualBusy || !reasonValid || !parsed?.success || !titan}
+                    onClick={() => void runQualification()}
+                  >
+                    <Gauge className="mr-2 h-4 w-4" />
+                    {qualBusy ? t("adminc.engine.qualify.running") : t("adminc.engine.qualify.run")}
+                  </Button>
+                </div>
+                {qual && (
+                  <div className="mt-3 space-y-2">
+                    <ul className="space-y-1 font-mono text-xs">
+                      {qual.steps.map((s) => (
+                        <li key={s.id} className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={cn(
+                              "w-4",
+                              s.status === "passed"
+                                ? "text-emerald-400"
+                                : s.status === "failed"
+                                  ? "text-destructive"
+                                  : "text-muted-foreground",
+                            )}
+                          >
+                            {s.status === "passed" ? "\u2713" : s.status === "failed" ? "\u2717" : "\u2013"}
+                          </span>
+                          <span className="w-32">{t(`adminc.engine.qualify.step.${s.id}`)}</span>
+                          <span className="text-muted-foreground">
+                            {(s.durationMs / 1000).toFixed(1)}s
+                            {s.engineVersion ? ` · ${s.engineVersion}` : ""}
+                            {s.nps !== null ? ` · ${s.nps} nps` : ""}
+                            {s.depth !== null ? ` · d${s.depth}` : ""}
+                            {s.score !== null ? ` · ${s.score}` : ""}
+                          </span>
+                          {s.reason && (
+                            <span className={s.status === "skipped" ? "text-muted-foreground" : "text-destructive"}>
+                              {s.reason}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    <p
+                      className={cn(
+                        "text-sm font-semibold",
+                        qual.ok ? "text-emerald-400" : "text-amber-400",
+                      )}
+                    >
+                      {qual.ok ? t("adminc.engine.qualify.pass") : t("adminc.engine.qualify.fail")}
+                    </p>
+                    {!qual.ok && qual.reasons.length > 0 && (
+                      <p className="text-xs text-destructive">{qual.reasons.join(" · ")}</p>
+                    )}
+                    <p className="font-mono text-[11px] text-muted-foreground">
+                      {qual.configSignature.slice(0, 16)}… · {(qual.durationMs / 1000).toFixed(1)}s
+                    </p>
+                  </div>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {BENCHMARK_KINDS.map((kind) => (
                   <Button

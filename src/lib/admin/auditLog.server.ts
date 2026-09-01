@@ -41,6 +41,7 @@ export type AdminAuditAction =
   | "engine_profile_publish"
   | "engine_profile_rollback"
   | "engine_benchmark_run"
+  | "engine_qualification_run"
   | "ai_prompt_publish"
   | "ai_prompt_rollback";
 
@@ -64,6 +65,7 @@ export const MUTATING_ADMIN_ACTIONS: readonly AdminAuditAction[] = [
   "engine_profile_publish",
   "engine_profile_rollback",
   "engine_benchmark_run",
+  "engine_qualification_run",
   "ai_prompt_publish",
   "ai_prompt_rollback",
 ];
