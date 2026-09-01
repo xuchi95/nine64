@@ -22,11 +22,11 @@ upstream tag (`STOCKFISH_REF`, default `sf_18`) and builds it unmodified with
 
 | Method | Path         | Purpose                                         |
 | ------ | ------------ | ----------------------------------------------- |
-| GET    | `/healthz`   | readiness + engine version + pool stats (open)   |
+| GET    | `/health`   | readiness + engine version + pool stats (open)   |
 | POST   | `/bestmove`  | one search for a validated position (OIDC only)  |
 | POST   | `/benchmark` | `bench`, `speedtest`, `epd`, `positions` (OIDC)  |
 
-### `/healthz` response contract (stable)
+### `/health` response contract (stable)
 
 ```json
 {
@@ -69,7 +69,7 @@ than being passed on.
 | `STOCKFISH_PATH`           | engine binary path                       |
 | `ENGINE_POOL_SIZE`         | engine processes (one search each)       |
 | `ENGINE_THREADS`           | threads reported in benchmark hardware   |
-| `ENGINE_ARCH`              | optional arch label for `/healthz`       |
+| `ENGINE_ARCH`              | optional arch label for `/health`       |
 | `PLAY_ENGINE_AUDIENCE`     | expected OIDC audience (the Run URL)     |
 | `ALLOWED_SERVICE_ACCOUNTS` | allowlisted caller service accounts      |
 

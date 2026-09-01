@@ -221,7 +221,7 @@ const POSITION_SUITE = [
 ];
 
 /**
- * Stable, typed /healthz payload. `busy` is derived from the real engine
+ * Stable, typed /health payload. `busy` is derived from the real engine
  * process states, never from a static number. Never contains credentials.
  */
 export function healthPayload(enginePool, isReady) {
@@ -248,7 +248,7 @@ export function healthPayload(enginePool, isReady) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
 
-  if (url.pathname === "/healthz") {
+  if (url.pathname === "/health" || url.pathname === "/healthz") {
     return json(res, ready ? 200 : 503, healthPayload(pool, ready));
   }
 
