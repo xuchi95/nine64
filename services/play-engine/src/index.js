@@ -248,7 +248,7 @@ export function healthPayload(enginePool, isReady) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
 
-  if (url.pathname === "/health" || url.pathname === "/healthz") {
+  if (url.pathname === "/health") {
     return json(res, ready ? 200 : 503, healthPayload(pool, ready));
   }
 
