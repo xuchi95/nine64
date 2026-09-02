@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import {
   ENGINE_PACK_ASSETS,
   ENGINE_PACK_ROUTES,
+  currentAppAssets,
+  discoverRouteAssets,
+  verifyPack,
   clearPacks,
   listPacks,
   offlineSupported,
@@ -27,12 +30,22 @@ export function OfflineManager() {
   const [packs, setPacks] = useState<OfflinePack[]>([]);
   const [usage, setUsage] = useState<{ usage: number; quota: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState<boolean | null>(null);
   const supported = offlineSupported();
 
   const refresh = useCallback(async () => {
-    setPacks(listPacks());
+    const next = listPacks();
+    setPacks(next);
     setUsage(await storageUsage());
+    if (next.some((p) => p.id === "engine-core")) {
+      const check = await verifyPack("engine-core");
+      setReady(check.ok);
+    } else {
+      setReady(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -42,20 +55,38 @@ export function OfflineManager() {
   const downloadEngine = async () => {
     setBusy(true);
     setMessage(null);
+    setError(null);
+    setProgress({ done: 0, total: 0 });
     try {
-      await savePack({
-        id: "engine-core",
-        kind: "engine",
-        title: "Engine Stockfish + màn chơi ngoại tuyến",
-        data: { version: "18-lite" },
-        routes: ENGINE_PACK_ROUTES,
-        assets: ENGINE_PACK_ASSETS,
-      });
+      const routeAssets = await discoverRouteAssets(ENGINE_PACK_ROUTES);
+      const assets = Array.from(
+        new Set([...ENGINE_PACK_ASSETS, ...currentAppAssets(), ...routeAssets]),
+      );
+      await savePack(
+        {
+          id: "engine-core",
+          kind: "engine",
+          title: "Engine Stockfish + màn chơi ngoại tuyến",
+          data: { version: "18-lite", savedAt: new Date().toISOString() },
+          routes: ENGINE_PACK_ROUTES,
+          assets,
+        },
+        (done, total) => setProgress({ done, total }),
+      );
+      const check = await verifyPack("engine-core");
+      if (!check.ok) throw new Error("PACK_INCOMPLETE");
       setMessage("Đã tải xong. Bạn có thể đấu bot và phân tích khi mất mạng.");
       await refresh();
-    } catch {
-      setMessage("Không tải được gói ngoại tuyến. Hãy thử lại khi có mạng ổn định.");
+    } catch (err) {
+      const failed = (err as { failed?: string[] })?.failed?.length ?? 0;
+      setError(
+        failed > 0
+          ? `Tải chưa hoàn tất: ${failed} tệp lỗi. Hãy kiểm tra mạng rồi tải lại.`
+          : "Không tải được gói ngoại tuyến. Hãy thử lại khi có mạng ổn định.",
+      );
+      await refresh();
     } finally {
+      setProgress(null);
       setBusy(false);
     }
   };
@@ -81,7 +112,11 @@ export function OfflineManager() {
         </h2>
         <Button size="sm" onClick={downloadEngine} disabled={busy}>
           <Download className="mr-2 h-4 w-4" aria-hidden />
-          {busy ? "Đang tải…" : "Tải gói chơi ngoại tuyến"}
+          {busy
+            ? progress && progress.total > 0
+              ? `Đang tải… ${progress.done}/${progress.total}`
+              : "Đang tải…"
+            : "Tải gói chơi ngoại tuyến"}
         </Button>
       </div>
 
@@ -90,9 +125,30 @@ export function OfflineManager() {
         trang quản trị không bao giờ được lưu đệm.
       </p>
 
+      {busy && progress && progress.total > 0 && (
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
+          />
+        </div>
+      )}
+
       {message && (
         <p className="mt-3 rounded-md border border-border/70 bg-surface-1 px-3 py-2 text-sm">
           {message}
+        </p>
+      )}
+
+      {error && (
+        <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+
+      {!busy && ready === false && (
+        <p className="mt-3 rounded-md border border-border/70 bg-surface-1 px-3 py-2 text-sm text-muted-foreground">
+          Gói ngoại tuyến thiếu tệp. Hãy tải lại để chơi được khi mất mạng.
         </p>
       )}
 
