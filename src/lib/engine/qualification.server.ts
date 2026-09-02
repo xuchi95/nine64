@@ -102,7 +102,7 @@ export async function runTitanQualification(args: {
   if (!pre.ok) {
     reasons.push(pre.reason ?? "preflight_failed");
     for (const kind of BENCHMARK_SEQUENCE) steps.push(step(kind, "skipped", { reason: "preflight_failed" }));
-    steps.push(step("selfplay", "skipped", { reason: "not_implemented" }));
+    steps.push(step("selfplay", "skipped", { reason: "run_separately" }));
     return { ok: false, configSignature: signature, steps, reasons, readiness: null, rows, durationMs: Date.now() - startedAt };
   }
 
@@ -130,9 +130,9 @@ export async function runTitanQualification(args: {
     if (!passed) reasons.push(`${kind}_failed`);
   }
 
-  // Self-play is not implemented by the engine service; it is reported as an
-  // explicit skip instead of a clickable step that returns unknown_kind.
-  steps.push(step("selfplay", "skipped", { reason: "not_implemented" }));
+  // Self-play is a separate regression (candidate vs published), run from the
+  // Admin self-play card; it is not a publish gate, so the suite reports a skip.
+  steps.push(step("selfplay", "skipped", { reason: "run_separately" }));
 
   // The draft must not have moved underneath the suite.
   const profile = await getEngineProfile(args.slug);

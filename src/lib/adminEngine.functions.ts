@@ -260,6 +260,58 @@ export const runTitanQualificationSuite = createServerFn({ method: "POST" })
     return result;
   });
 
+/**
+ * Self-play regression: the admin's candidate draft vs the currently published
+ * live config on the same Cloud Run engine. Records wins/draws/losses and both
+ * config fingerprints. No Elo is inferred and nothing is auto-published.
+ */
+export const runTitanSelfPlayRegression = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        reason,
+        slug: slug.default("titan"),
+        config: engineConfigSchema,
+        games: z.number().int().min(2).max(10).default(4),
+        moveTimeMs: z.number().int().min(100).max(2000).default(250),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const identity = await assertAdmin(context, "engine");
+    const { enforceRateLimit, userSubject } = await import("@/lib/ratelimit/limiter.server");
+    const { runSelfPlayRegression } = await import("@/lib/engine/selfplay.server");
+    const { recordAdminActionStrict } = await import("@/lib/admin/auditLog.server");
+
+    await enforceRateLimit("engine.qualification", userSubject(identity.userId));
+    const result = await runSelfPlayRegression({
+      slug: data.slug,
+      candidate: data.config,
+      actorId: identity.userId,
+      games: data.games,
+      moveTimeMs: data.moveTimeMs,
+    });
+    await recordAdminActionStrict({
+      actorId: identity.userId,
+      action: "engine_benchmark_run",
+      note: data.reason,
+      detail: {
+        kind: "selfplay",
+        slug: data.slug,
+        ok: result.ok,
+        code: result.code,
+        wins: result.wins,
+        draws: result.draws,
+        losses: result.losses,
+        candidateSignature: result.candidateSignature,
+        baselineSignature: result.baselineSignature,
+        benchmarkId: result.benchmarkId,
+      },
+    });
+    return result;
+  });
+
 export const disableEngineProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ slug, reason }).parse(input))

@@ -17,7 +17,7 @@ import fs from "node:fs";
 import os from "node:os";
 
 /** Bump whenever the benchmark suites change in a way that affects scoring. */
-export const BENCHMARK_SUITE_VERSION = "titan-v6-1";
+export const BENCHMARK_SUITE_VERSION = "titan-v6-2";
 
 /** Tablebase file extensions written by the Syzygy generator. */
 const TB_EXTENSIONS = [".rtbw", ".rtbz"];
