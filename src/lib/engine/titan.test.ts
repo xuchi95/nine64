@@ -80,7 +80,8 @@ describe("cloud engine health contract", () => {
   it("never reports healthy for a malformed payload", () => {
     expect(interpretHealthPayload({ status: "ok", pool: 3 }, 5).status).toBe("unavailable");
     expect(interpretHealthPayload(null, 5).status).toBe("unavailable");
-    expect(interpretHealthPayload({ status: "starting", pool: { size: 1, busy: 0 } }, 5).status).toBe("degraded");
+    // A warming service is never "healthy": it reports its own starting state.
+    expect(interpretHealthPayload({ status: "starting", pool: { size: 1, busy: 0 } }, 5).status).toBe("starting");
   });
 
   it("does not echo credentials in the health detail", () => {
