@@ -171,6 +171,29 @@ export async function publishProfile(args: {
 }): Promise<WriteResult & { before?: EngineProfile }> {
   const parsed = engineConfigSchema.safeParse(args.config);
   if (!parsed.success) return { ok: false, code: "INVALID_CONFIG", message: parsed.error.message };
+
+  // ---------------------------------------------------------------------
+  // Hard Titan invariants. These live INSIDE the write path so no caller —
+  // including an admin who passes `ignoreReadiness` — can bypass them.
+  // ---------------------------------------------------------------------
+  if (args.slug === TITAN_SLUG) {
+    const { titanFullStrengthViolations } = await import("./profileTypes");
+    const violations = titanFullStrengthViolations(parsed.data);
+    if (violations.length > 0) {
+      return { ok: false, code: "TITAN_NOT_FULL_STRENGTH", message: violations.join(",") };
+    }
+    const { cloudEngineHealthCached } = await import("./cloudEngine.server");
+    const { resourceFit } = await import("./capabilities");
+    const health = await cloudEngineHealthCached();
+    // Capabilities are only enforced when the engine actually reports them;
+    // an older deployment cannot silently disable the check, because the
+    // benchmark gate still requires a green run on this exact fingerprint.
+    if (health.capabilities) {
+      const fit = resourceFit(parsed.data, health.capabilities);
+      if (!fit.ok) return { ok: false, code: "CONFIG_RESOURCE_MISMATCH", message: fit.reasons.join(",") };
+    }
+  }
+
   const db = await admin();
   const { data: row } = await db.from("engine_profiles").select("*").eq("slug", args.slug).maybeSingle();
   if (!row) return { ok: false, code: "NOT_FOUND" };
