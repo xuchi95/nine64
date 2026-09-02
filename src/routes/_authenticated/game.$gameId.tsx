@@ -440,6 +440,10 @@ function OnlineGamePage() {
   // monotonic timer. Nothing here is ever written back to the database.
   useEffect(() => {
     if (!game || game.status !== "active") return;
+    // Daily games have no running countdown (base clock is 0ms); they are ruled
+    // by `deadline_at` on the server. Running the extrapolator there would flag
+    // instantly and spam timeout claims.
+    if (game.pace === "daily") return;
     const id = window.setInterval(() => {
       const base = clockBaseRef.current;
       if (!base.running) return;
@@ -453,11 +457,12 @@ function OnlineGamePage() {
         },
         performance.now() - base.localAt,
       );
-      setClock({ w: next.w, b: next.b });
+      setClock((prev) => (prev.w === next.w && prev.b === next.b ? prev : { w: next.w, b: next.b }));
       if (next.expired) setAwaitingFlag(true);
     }, 100);
     return () => window.clearInterval(id);
   }, [game, boardRev]);
+
 
 
   // Resync canonical state on reconnect and when the tab regains focus.
