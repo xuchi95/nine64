@@ -290,6 +290,27 @@ function AdminEnginePage() {
         {t("adminc.engine.attribution")}
       </p>
 
+      {data && data.health.status !== "unavailable" && staleDeployment ? (
+        <Card className="mt-4 border-destructive/50 bg-destructive/5">
+          <CardContent className="space-y-2 p-4 text-sm">
+            <p className="font-semibold text-destructive">{t("adminc.engine.staleDeploy.title")}</p>
+            <p className="text-muted-foreground">{t("adminc.engine.staleDeploy.body")}</p>
+            <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/60 p-3 font-mono text-[11px] leading-relaxed">
+{`gcloud builds submit services/play-engine \\
+  --tag gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION}
+gcloud run deploy play-engine-v2 \\
+  --image gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION} \\
+  --region asia-southeast1 --project chess-nine64`}
+            </pre>
+            <p className="font-mono text-[10px] text-muted-foreground">
+              suite {data.health.benchmarkSuiteVersion ?? "—"} / {EXPECTED_BENCHMARK_SUITE_VERSION} · capabilities{" "}
+              {caps ? "ok" : "unavailable"}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+
       {error ? (
         <Card className="mt-4 border-destructive/40">
           <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
