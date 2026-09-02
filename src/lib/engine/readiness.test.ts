@@ -78,7 +78,8 @@ describe("publish readiness", () => {
     );
     expect(r.ready).toBe(false);
     expect(r.reasons).toContain("illegal_moves");
-    expect(r.reasons).toContain("tactics_failed");
+    // An execution/rules failure is reported as itself, never as a tactical miss.
+    expect(r.reasons).not.toContain("tactics_failed");
     expect(new Set(r.reasons).size).toBe(r.reasons.length);
   });
 
