@@ -114,6 +114,46 @@ export const TITAN_FALLBACK_CONFIG: EngineConfig = engineConfigSchema.parse({
   personalityTolerance: 0,
 });
 
+/**
+ * Titan v6 "Max" baseline for a Cloud Run instance with 8 vCPU / 16 GiB and
+ * ENGINE_POOL_SIZE=1.
+ *
+ * - `clock` policy so Stockfish runs its OWN time manager (`go wtime btime …`).
+ * - `moveTimeMs` is the untimed/casual budget (12s), `maxMoveTimeMs` (30s) is a
+ *   hard outer safety cap enforced by the engine service, not a UCI movetime.
+ * - Full strength: no `UCI_LimitStrength`, no Elo cap, Skill 20, MultiPV 1, no
+ *   randomness and no personality tolerance.
+ * - Ponder stays OFF: Cloud Run is stateless and pondering between requests
+ *   would only burn CPU.
+ * - Syzygy stays OFF here; it is enabled only when /health proves that real
+ *   tablebase files are installed.
+ */
+export const TITAN_V6_RECOMMENDED_CONFIG: EngineConfig = engineConfigSchema.parse({
+  timePolicy: "clock",
+  moveTimeMs: 12_000,
+  clockFraction: 0.04,
+  maxMoveTimeMs: 30_000,
+  depth: null,
+  nodes: null,
+  threads: 8,
+  hashMb: 4_096,
+  multiPv: 1,
+  ponder: false,
+  moveOverheadMs: 300,
+  limitStrength: false,
+  skill: 20,
+  uciElo: null,
+  syzygyEnabled: false,
+  syzygyPieces: 0,
+  syzygyProbeLimit: 0,
+  openingRandomness: 0,
+  personalityTolerance: 0,
+  perUserDailyMoves: 600,
+  maxConcurrentGames: 2,
+  requestTimeoutMs: 45_000,
+  maxRetries: 1,
+});
+
 export function parseEngineConfig(value: unknown): EngineConfig {
   const parsed = engineConfigSchema.safeParse(value ?? {});
   return parsed.success ? parsed.data : TITAN_FALLBACK_CONFIG;
@@ -121,12 +161,21 @@ export function parseEngineConfig(value: unknown): EngineConfig {
 
 /** Competition profiles must never weaken the engine on purpose. */
 export function isFullStrength(config: EngineConfig): boolean {
-  return (
-    config.limitStrength === false &&
-    config.uciElo === null &&
-    (config.skill === null || config.skill === 20) &&
-    config.multiPv === 1 &&
-    config.openingRandomness === 0 &&
-    config.personalityTolerance === 0
-  );
+  return titanFullStrengthViolations(config).length === 0;
 }
+
+/**
+ * Every way a config would make Titan deliberately weaker. Returned as stable
+ * machine codes so the publish gate can explain exactly what it rejected.
+ */
+export function titanFullStrengthViolations(config: EngineConfig): string[] {
+  const out: string[] = [];
+  if (config.limitStrength) out.push("limit_strength_enabled");
+  if (config.uciElo !== null) out.push("uci_elo_capped");
+  if (config.skill !== null && config.skill !== 20) out.push("skill_below_max");
+  if (config.multiPv !== 1) out.push("multipv_not_1");
+  if (config.openingRandomness !== 0) out.push("opening_randomness");
+  if (config.personalityTolerance !== 0) out.push("personality_tolerance");
+  return out;
+}
+
