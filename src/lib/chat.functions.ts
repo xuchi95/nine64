@@ -62,3 +62,25 @@ export const sendGameChat = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return row as unknown as GameChatMessage;
   });
+
+/**
+ * Lets the opponent answer in a ranked-AI game. No-ops for human games.
+ * Called after the viewer posts, so the send itself is never slowed down.
+ */
+export const requestAiChatReply = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => LIST_SCHEMA.omit({ since: true }).extend({
+    ply: z.number().int().min(0).max(2000),
+  }).parse(input))
+  .handler(async ({ data, context }) => {
+    // RLS: only a participant (or allowed viewer) can read the game row.
+    const { data: game } = await context.supabase
+      .from("games")
+      .select("id")
+      .eq("id", data.gameId)
+      .maybeSingle();
+    if (!game) return { replied: false };
+
+    const { maybeAiChatReply } = await import("@/lib/rankedAi/chat.server");
+    return { replied: await maybeAiChatReply(data.gameId, data.ply) };
+  });
