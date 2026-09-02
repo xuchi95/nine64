@@ -15,18 +15,9 @@
  */
 import fs from "node:fs";
 import os from "node:os";
+import { BENCHMARK_SUITE_VERSION } from "./version.js";
 
-/** Bump whenever the benchmark suites change in a way that affects scoring. */
-export const BENCHMARK_SUITE_VERSION = "titan-v6-3";
-
-/**
- * Safe build identity of THIS container image. Overridable at build time with
- * SERVICE_BUILD_ID (e.g. a short git SHA). Never contains secrets.
- */
-export const SERVICE_BUILD_ID = (() => {
-  const raw = (process.env.SERVICE_BUILD_ID ?? "").trim();
-  return /^[\w.\-]{1,64}$/.test(raw) ? raw : "play-engine-titan-v6.3";
-})();
+export { BENCHMARK_SUITE_VERSION, SERVICE_BUILD_ID, SERVICE_VERSION } from "./version.js";
 
 /** Tablebase file extensions written by the Syzygy generator. */
 const TB_EXTENSIONS = [".rtbw", ".rtbz"];

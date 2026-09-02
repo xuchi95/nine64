@@ -22,12 +22,11 @@ import {
   validateSuite,
 } from "./benchmark.js";
 import {
-  BENCHMARK_SUITE_VERSION,
-  SERVICE_BUILD_ID,
   capabilities,
   inspectSyzygy,
   syzygyPath,
 } from "./capabilities.js";
+import { BENCHMARK_SUITE_VERSION, SERVICE_BUILD_ID, SERVICE_VERSION } from "./version.js";
 
 const PORT = Number(process.env.PORT || 8080);
 /**
@@ -337,6 +336,7 @@ export function healthPayload(enginePool, isReady) {
     pool: { size, busy: alive.filter((e) => e.busy).length },
     capabilities: capabilities(size || 1),
     benchmarkSuiteVersion: BENCHMARK_SUITE_VERSION,
+    serviceVersion: SERVICE_VERSION,
     serviceBuildId: SERVICE_BUILD_ID,
     stats: {
       searches: Number(stats.searches ?? 0),

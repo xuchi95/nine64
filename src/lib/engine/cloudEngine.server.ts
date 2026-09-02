@@ -24,7 +24,7 @@ export type CloudEngineStatus =
   | "unauthorized";
 
 export interface CloudEngineHealth {
-  status: "healthy" | "degraded" | "unavailable" | "not_configured" | "unauthorized";
+  status: "healthy" | "degraded" | "starting" | "unavailable" | "not_configured" | "unauthorized";
   engineVersion: string | null;
   arch: string | null;
   pool: { size: number; busy: number } | null;
@@ -41,6 +41,8 @@ export interface CloudEngineHealth {
   benchmarkSuiteVersion: string | null;
   /** Safe build identity of the deployed container image. */
   serviceBuildId: string | null;
+  /** Stable service release identity, independent from the image build SHA. */
+  serviceVersion: string | null;
   latencyMs: number | null;
   checkedAt: number;
   detail: string;
@@ -232,7 +234,7 @@ export type CloudCallResult<T> =
  */
 export async function callCloudEngine<T>(
   path: string,
-  options: { method?: "GET" | "POST"; body?: unknown; timeoutMs?: number } = {},
+  options: { method?: "GET" | "POST"; body?: unknown; timeoutMs?: number; parseErrorStatuses?: number[] } = {},
 ): Promise<CloudCallResult<T>> {
   const method = options.method ?? "POST";
   const timeoutMs = options.timeoutMs ?? 8_000;
@@ -262,7 +264,7 @@ export async function callCloudEngine<T>(
       body: method === "POST" ? JSON.stringify(options.body ?? {}) : null,
       signal: controller.signal,
     });
-    if (!res.ok) {
+    if (!res.ok && !options.parseErrorStatuses?.includes(res.status)) {
       noteFailure();
       const unauth = res.status === 401 || res.status === 403;
       return {
@@ -351,9 +353,28 @@ export function interpretHealthPayload(
   const capabilities = parseCapabilities(body["capabilities"]);
   const buildRaw = body["serviceBuildId"];
   const serviceBuildId = typeof buildRaw === "string" && /^[\w.\-]{1,64}$/.test(buildRaw) ? buildRaw : null;
+  const versionRaw = body["serviceVersion"];
+  const serviceVersion = typeof versionRaw === "string" && /^[\w.\-]{1,64}$/.test(versionRaw) ? versionRaw : null;
   const suiteRaw = body["benchmarkSuiteVersion"];
   const benchmarkSuiteVersion =
     typeof suiteRaw === "string" && suiteRaw ? suiteRaw : (capabilities?.benchmarkSuiteVersion ?? null);
+
+  if (statusText === "starting") {
+    return {
+      status: "starting",
+      engineVersion,
+      arch,
+      pool,
+      stats,
+      capabilities,
+      benchmarkSuiteVersion,
+      serviceBuildId,
+      serviceVersion,
+      latencyMs,
+      checkedAt,
+      detail: "Engine đang khởi động.",
+    };
+  }
 
   if (!pool || statusText !== "ok" || !engineVersion) {
     // Unknown shape or an engine that is still starting: never report healthy.
@@ -366,6 +387,7 @@ export function interpretHealthPayload(
       capabilities,
       benchmarkSuiteVersion,
       serviceBuildId,
+      serviceVersion,
       latencyMs,
       checkedAt,
       detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /health không hợp lệ.",
@@ -382,6 +404,7 @@ export function interpretHealthPayload(
     capabilities,
     benchmarkSuiteVersion,
     serviceBuildId,
+    serviceVersion,
     latencyMs,
     checkedAt,
     detail: busy ? "Toàn bộ engine process đang bận." : "OK",
@@ -398,6 +421,7 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     capabilities: null,
     benchmarkSuiteVersion: null,
     serviceBuildId: null,
+    serviceVersion: null,
     checkedAt: Date.now(),
   };
   if (!creds) {
@@ -409,7 +433,12 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     };
   }
   const startedAt = Date.now();
-  const res = await callCloudEngine<unknown>(HEALTH_PATH, { method: "GET", timeoutMs: 8_000 });
+  const res = await callCloudEngine<unknown>(HEALTH_PATH, {
+    method: "GET",
+    timeoutMs: 8_000,
+    // A conforming cold service returns its full contract with HTTP 503.
+    parseErrorStatuses: [503],
+  });
   if (!res.ok) {
     return {
       ...empty,
