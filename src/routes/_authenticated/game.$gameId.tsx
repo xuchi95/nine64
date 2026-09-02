@@ -1,6 +1,7 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { requestAiTurn } from "@/lib/rankedAi/rankedAi.functions";
 import { rulesFor, type AppliedMove, type RulesPosition } from "@/lib/chess/rules";
 import type { VariantId } from "@/config/variants";
 import { AppShell } from "@/components/layout/AppShell";
@@ -116,6 +117,7 @@ function OnlineGamePage() {
   const touchPresenceFn = useServerFn(touchPresence);
   const createChallengeFn = useServerFn(createChallenge);
   const getGamePlayersFn = useServerFn(getGamePlayers);
+  const requestAiTurnFn = useServerFn(requestAiTurn);
   const [playerNames, setPlayerNames] = useState<{ whiteName: string; blackName: string } | null>(
     null,
   );
@@ -750,8 +752,16 @@ function OnlineGamePage() {
             res.serverNow,
             sideToMoveFromFen(res.game.current_fen),
           );
+          // AI opponent seat: ask the server to play its reply. Idempotent and
+          // version-guarded, and realtime delivers the resulting move.
+          if (res.aiToMove) {
+            void requestAiTurnFn({ data: { gameId: game.id } })
+              .then(() => refresh().catch(() => undefined))
+              .catch(() => undefined);
+          }
           return;
         }
+
 
         // ---- Rejected: resync canonical state, never blind-retry ----
         setPendingMove(null);
@@ -777,7 +787,7 @@ function OnlineGamePage() {
         inFlightRef.current = false;
       }
     },
-    [applyServerState, game, makeMoveFn, myColor, refresh],
+    [applyServerState, game, makeMoveFn, myColor, refresh, requestAiTurnFn],
   );
 
 

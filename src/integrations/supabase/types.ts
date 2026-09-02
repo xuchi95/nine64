@@ -150,6 +150,109 @@ export type Database = {
           },
         ]
       }
+      ai_move_jobs: {
+        Row: {
+          attempts: number
+          available_at: string
+          created_at: string
+          expected_version: number
+          game_id: string
+          id: string
+          last_error: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          expected_version: number
+          game_id: string
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          expected_version?: number
+          game_id?: string
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_move_jobs_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_players: {
+        Row: {
+          ai_key: string
+          base_target_rating: number
+          chess960_enabled: boolean
+          created_at: string
+          enabled: boolean
+          engine_level: number
+          last_assigned_at: string | null
+          max_concurrent_games: number
+          max_think_ms: number
+          min_think_ms: number
+          personality_id: string
+          profile_id: string
+          standard_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          ai_key: string
+          base_target_rating: number
+          chess960_enabled?: boolean
+          created_at?: string
+          enabled?: boolean
+          engine_level: number
+          last_assigned_at?: string | null
+          max_concurrent_games?: number
+          max_think_ms?: number
+          min_think_ms?: number
+          personality_id: string
+          profile_id: string
+          standard_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ai_key?: string
+          base_target_rating?: number
+          chess960_enabled?: boolean
+          created_at?: string
+          enabled?: boolean
+          engine_level?: number
+          last_assigned_at?: string | null
+          max_concurrent_games?: number
+          max_think_ms?: number
+          min_think_ms?: number
+          personality_id?: string
+          profile_id?: string
+          standard_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_players_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_prompt_versions: {
         Row: {
           body: string
@@ -1553,6 +1656,8 @@ export type Database = {
       }
       games: {
         Row: {
+          ai_game: boolean
+          ai_profile_id: string | null
           allow_takeback: boolean
           black_id: string
           black_rating: number
@@ -1593,6 +1698,8 @@ export type Database = {
           winner_id: string | null
         }
         Insert: {
+          ai_game?: boolean
+          ai_profile_id?: string | null
           allow_takeback?: boolean
           black_id: string
           black_rating: number
@@ -1633,6 +1740,8 @@ export type Database = {
           winner_id?: string | null
         }
         Update: {
+          ai_game?: boolean
+          ai_profile_id?: string | null
           allow_takeback?: boolean
           black_id?: string
           black_rating?: number
@@ -1673,6 +1782,13 @@ export type Database = {
           winner_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "games_ai_profile_id_fkey"
+            columns: ["ai_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "games_rematch_of_fkey"
             columns: ["rematch_of"]
@@ -2515,6 +2631,7 @@ export type Database = {
           draws: number
           games_played: number
           id: string
+          is_ai: boolean
           last_rated_at: string | null
           losses: number
           peak_rating: number
@@ -2531,6 +2648,7 @@ export type Database = {
           draws?: number
           games_played?: number
           id: string
+          is_ai?: boolean
           last_rated_at?: string | null
           losses?: number
           peak_rating?: number
@@ -2547,6 +2665,7 @@ export type Database = {
           draws?: number
           games_played?: number
           id?: string
+          is_ai?: boolean
           last_rated_at?: string | null
           losses?: number
           peak_rating?: number
@@ -4625,6 +4744,16 @@ export type Database = {
           _window_seconds: number
         }
         Returns: Json
+      }
+      create_ai_match: {
+        Args: {
+          _initial_fen: string
+          _min_wait_ms?: number
+          _queue_id: string
+          _user_id: string
+          _white_is_requester: boolean
+        }
+        Returns: string
       }
       create_online_match: {
         Args: {

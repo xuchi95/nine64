@@ -181,7 +181,45 @@ export const SETTING_REGISTRY = {
     max: 90,
     failClosed: true,
   }),
+  /** Kill switch for the Nine64 AI Player Network. OFF restores the exact
+   *  pre-AI matchmaking behaviour. */
+  ranked_ai_enabled: def({
+    key: "ranked_ai_enabled",
+    scope: "server_only",
+    group: "features",
+    schema: bool,
+    default: false,
+    control: "boolean",
+    failClosed: true,
+    highImpact: true,
+  }),
+  /** Human-first grace period before an AI opponent may be assigned. */
+  ranked_ai_fallback_delay_ms: def({
+    key: "ranked_ai_fallback_delay_ms",
+    scope: "server_only",
+    group: "limits",
+    schema: z.number().int().min(0).max(15_000),
+    default: 3000,
+    control: "number",
+    min: 0,
+    max: 15_000,
+    failClosed: false,
+  }),
+  /** Deterministic per-user rollout share (hash of the user id). */
+  ranked_ai_rollout_percent: def({
+    key: "ranked_ai_rollout_percent",
+    scope: "server_only",
+    group: "features",
+    schema: z.number().int().min(0).max(100),
+    default: 0,
+    control: "number",
+    min: 0,
+    max: 100,
+    failClosed: true,
+    highImpact: true,
+  }),
   matchmaking_rating_range: def({
+
     key: "matchmaking_rating_range",
     scope: "server_only",
     group: "limits",

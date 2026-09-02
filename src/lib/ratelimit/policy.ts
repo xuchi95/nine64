@@ -19,6 +19,8 @@ export type RateLimitAction =
   | "auth.identifier"
   | "matchmaking.join"
   | "matchmaking.leave"
+  | "rankedai.turn"
+  | "rankedai.seed"
   | "fairplay.report.user"
   | "fairplay.report.game"
   | "fairplay.signals"
@@ -68,6 +70,10 @@ export const RATE_LIMIT_POLICY: Record<RateLimitAction, RateLimitRule> = {
   // Matchmaking — generous enough that normal bullet play never trips it.
   "matchmaking.join": { windowSeconds: 60, limit: 30, failClosed: false, scope: "user" },
   "matchmaking.leave": { windowSeconds: 60, limit: 40, failClosed: false, scope: "user" },
+  // Ranked AI — one nudge per AI move plus retries; seeding is admin-only.
+  "rankedai.turn": { windowSeconds: 60, limit: 120, failClosed: false, scope: "user" },
+  "rankedai.seed": { windowSeconds: 3_600, limit: 4, failClosed: true, scope: "user" },
+
 
   // Fair-play complaints — one report per game, few per day.
   "fairplay.report.user": { windowSeconds: 86_400, limit: 20, failClosed: false, scope: "user" },

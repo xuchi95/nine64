@@ -23,7 +23,7 @@ export type { MoveErrorCode } from "@/lib/online/moveEngine";
 
 /** Canonical result of a move attempt. Clocks always come from the server. */
 export type MoveOutcome =
-  | { ok: true; game: Game; move: GameMove; serverNow: string }
+  | { ok: true; game: Game; move: GameMove; serverNow: string; aiToMove?: boolean }
   | { ok: false; code: MoveErrorCode; game?: Game; serverNow?: string };
 
 /** Canonical clock snapshot the UI counts down from. */
@@ -117,14 +117,40 @@ export const tryMatch = createServerFn({ method: "POST" })
     });
 
     if (matchError) throw new Error(matchError.message);
-    if (!gameId || typeof gameId !== "string") {
+    let resolvedGameId = typeof gameId === "string" ? gameId : null;
+
+    // Human-first: only when no real opponent could be paired do we consider an
+    // AI seat, and only after the configured grace period, for users inside the
+    // rollout, with the feature explicitly enabled.
+    if (!resolvedGameId) {
+      const { getSetting } = await import("@/lib/system/settings.server");
+      if (await getSetting("ranked_ai_enabled")) {
+        const { inRankedAiRollout } = await import("@/lib/rankedAi/rollout");
+        const percent = await getSetting("ranked_ai_rollout_percent");
+        if (inRankedAiRollout(context.userId, percent)) {
+          const delayMs = await getSetting("ranked_ai_fallback_delay_ms");
+          const { data: aiGameId, error: aiError } = await supabaseAdmin.rpc("create_ai_match", {
+            _queue_id: entry.id,
+            _user_id: context.userId,
+            _initial_fen: startFen,
+            _white_is_requester: Math.random() < 0.5,
+            _min_wait_ms: delayMs,
+          });
+          if (aiError) console.error("AI fallback match failed", aiError.message);
+          else if (typeof aiGameId === "string") resolvedGameId = aiGameId;
+        }
+      }
+    }
+
+    if (!resolvedGameId) {
       return { game: null as Game | null };
     }
+
 
     const { data: game, error: gameError } = await supabase
       .from("games")
       .select("*")
-      .eq("id", gameId)
+      .eq("id", resolvedGameId)
       .maybeSingle();
 
     if (gameError || !game) throw new Error(gameError?.message || "Failed to load created game");
@@ -399,7 +425,13 @@ export const makeMove = createServerFn({ method: "POST" })
     // when the game ends, so kick the drain there and nowhere else.
     if (committedGame.status === "completed") await kickNotificationOutbox();
 
-    return { ok: true, game: committedGame, move: payload.move, serverNow };
+    // Tell the client an AI seat now has to move, so it can nudge the server
+    // turn processor. The nudge is idempotent and version-guarded.
+    const aiToMove =
+      committedGame.status === "active" &&
+      Boolean((committedGame as { ai_game?: boolean }).ai_game);
+
+    return { ok: true, game: committedGame, move: payload.move, serverNow, aiToMove };
   });
 
 
