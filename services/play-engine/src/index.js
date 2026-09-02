@@ -258,21 +258,33 @@ async function handleBenchmark(body) {
   }
   if (kind === "epd" || kind === "positions") {
     const suite = kind === "epd" ? EPD_SUITE : POSITION_SUITE;
+    // A malformed suite must fail loudly rather than score the engine wrongly.
+    const problems = validateSuite(suite);
+    if (problems.length) {
+      return { status: 500, payload: { error: "invalid_suite", detail: problems.slice(0, 5) } };
+    }
     const movetimeMs = suiteMovetime(kind, body.movetimeMs);
-    // Request timeout is comfortably larger than the search budget.
-    const timeoutMs = Math.max(movetimeMs * 4, 20_000);
-    const options = sanitizeOptions(body.options);
+    const timeoutMs = suiteRequestTimeout(movetimeMs);
+    const requested = sanitizeOptions(body.options);
+    // Caller-supplied probe limits never reach the engine directly.
+    const wantsSyzygy = requested["SyzygyProbeLimit"];
+    const options = { ...requested };
+    delete options["SyzygyProbeLimit"];
     const run = await runSuite({
       kind,
       suite,
       movetimeMs,
       engineVersion: pool.engineVersion,
+      // Sequential by construction (see runSuite): a pool of size 1 is never
+      // asked to run two positions concurrently.
       search: (entry) =>
         pool.search({
           fen: entry.fen,
           options: {
             ...options,
-            ...syzygyOptions(options),
+            ...syzygyOptions({ SyzygyProbeLimit: wantsSyzygy }),
+            // Explicit on EVERY search: a 960 entry must not leak into the
+            // next standard entry on a reused process.
             UCI_Chess960: entry.variant === "chess960" ? "true" : "false",
           },
           goArgs: `movetime ${movetimeMs}`,
@@ -281,15 +293,24 @@ async function handleBenchmark(body) {
         }),
     });
     pool.stats.illegal += Number(run.detail.illegalMoves || 0);
+    const tb = inspectSyzygy();
     return {
       status: 200,
       payload: {
+        kind,
         engineVersion: run.engineVersion ?? pool.engineVersion,
         depth: run.depth,
         score: run.score,
         passed: run.passed,
         suiteVersion: BENCHMARK_SUITE_VERSION,
-        detail: { ...run.detail, movetimeMs, suiteVersion: BENCHMARK_SUITE_VERSION },
+        serviceBuildId: SERVICE_BUILD_ID,
+        detail: {
+          ...run.detail,
+          movetimeMs,
+          suiteVersion: BENCHMARK_SUITE_VERSION,
+          serviceBuildId: SERVICE_BUILD_ID,
+          syzygyReady: tb.ready,
+        },
       },
     };
   }
