@@ -176,7 +176,8 @@ export async function publishProfile(args: {
   // Hard Titan invariants. These live INSIDE the write path so no caller —
   // including an admin who passes `ignoreReadiness` — can bypass them.
   // ---------------------------------------------------------------------
-  if (args.slug === TITAN_SLUG) {
+  const goingLive = args.enabled && args.status === "published";
+  if (args.slug === TITAN_SLUG && goingLive) {
     const { titanFullStrengthViolations } = await import("./profileTypes");
     const violations = titanFullStrengthViolations(parsed.data);
     if (violations.length > 0) {
@@ -185,14 +186,12 @@ export async function publishProfile(args: {
     const { cloudEngineHealthCached } = await import("./cloudEngine.server");
     const { resourceFit } = await import("./capabilities");
     const health = await cloudEngineHealthCached();
-    // Capabilities are only enforced when the engine actually reports them;
-    // an older deployment cannot silently disable the check, because the
-    // benchmark gate still requires a green run on this exact fingerprint.
-    if (health.capabilities) {
-      const fit = resourceFit(parsed.data, health.capabilities);
-      if (!fit.ok) return { ok: false, code: "CONFIG_RESOURCE_MISMATCH", message: fit.reasons.join(",") };
-    }
+    // Fail closed: a config may only go live when the engine reports the
+    // hardware it will actually run on and that hardware fits the config.
+    const fit = resourceFit(parsed.data, health.capabilities ?? null);
+    if (!fit.ok) return { ok: false, code: "CONFIG_RESOURCE_MISMATCH", message: fit.reasons.join(",") };
   }
+
 
   const db = await admin();
   const { data: row } = await db.from("engine_profiles").select("*").eq("slug", args.slug).maybeSingle();
