@@ -1173,7 +1173,7 @@ function OnlineGamePage() {
               className="max-h-[420px]"
               bodyClassName="overflow-hidden p-4"
             >
-              <MoveJournal entries={journalEntries} statusLine={statusLine} />
+              <MoveJournal entries={journalEntries} statusLine={statusLine} showClocks={hasLiveClock} />
             </GamePanel>
 
             <GameChatPanel

@@ -22,9 +22,17 @@ export interface MoveJournalProps {
   statusLine?: string;
   footer?: React.ReactNode;
   className?: string;
+  /** Daily games have no ticking clock: hide the per-move clock column. */
+  showClocks?: boolean;
 }
 
-export function MoveJournal({ entries, statusLine, footer, className }: MoveJournalProps) {
+export function MoveJournal({
+  entries,
+  statusLine,
+  footer,
+  className,
+  showClocks = true,
+}: MoveJournalProps) {
   const { t } = useT();
   const scroller = useRef<HTMLDivElement | null>(null);
 
@@ -73,12 +81,12 @@ export function MoveJournal({ entries, statusLine, footer, className }: MoveJour
                   {e.color === "w" ? "W" : "B"}
                 </span>
                 <span className="tabular flex-1 text-sm font-semibold">{e.san}</span>
-                {e.spentMs != null && (
+                {showClocks && e.spentMs != null && (
                   <span className="tabular text-xs text-muted-foreground">
                     {formatDuration(e.spentMs)}
                   </span>
                 )}
-                {e.clockMs != null && (
+                {showClocks && e.clockMs != null && (
                   <span className="tabular w-14 text-right text-xs text-muted-foreground">
                     {formatClock(e.clockMs)}
                   </span>
