@@ -214,7 +214,7 @@ function AdminEnginePage() {
       setQual(result as QualificationResult);
       await refresh();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : t("adminc.common.failed"));
+      setNotice({ kind: "error", text: err instanceof Error ? err.message : t("adminc.common.failed") });
     } finally {
       setQualBusy(false);
     }
