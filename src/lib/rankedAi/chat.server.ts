@@ -50,16 +50,32 @@ async function callGateway(system: string, user: string): Promise<string | null>
         ],
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[rankedAi.chat] gateway error", res.status);
+      return null;
+    }
     const json = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
     };
     const raw = json.choices?.[0]?.message?.content;
     return typeof raw === "string" ? raw : null;
-  } catch {
+  } catch (err) {
+    console.error("[rankedAi.chat] gateway call failed", err instanceof Error ? err.message : err);
     return null;
   }
 }
+
+/** Human-sounding canned lines, used only when the model gives us nothing. */
+const FALLBACK: Record<string, string[]> = {
+  friendly: ["hey :)", "hi, good luck!", "all good here"],
+  quiet: ["yep", "hm", "ok"],
+  cocky: ["watch this", "we'll see", "haha ok"],
+  sporty: ["gl hf", "nice one", "let's go"],
+  nerdy: ["interesting game so far", "focused here", "yeah agreed"],
+  grumpy: ["busy thinking", "hm ok", "sure"],
+  playful: ["hehe hi", "oh hello there", "haha"],
+  zen: ["taking it slow", "all in the flow", "peaceful game"],
+};
 
 /**
  * Writes one AI chat message for `gameId` when it makes sense.
@@ -93,8 +109,8 @@ export async function maybeAiChatReply(gameId: string, ply: number): Promise<boo
   if (lastAi && Date.now() - Date.parse(lastAi.created_at) < COOLDOWN_MS) return false;
 
   const persona = chatPersonaFor(aiId);
-  // Deterministic-per-message randomness: unpredictable, but never a flood.
-  if (Math.random() > persona.replyChance) return false;
+  // A message addressed to the opponent always gets an answer — silence reads
+  // as a broken bot. Variety lives in tone/length, not in dropping replies.
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
@@ -124,8 +140,9 @@ export async function maybeAiChatReply(gameId: string, ply: number): Promise<boo
     .join("\n");
 
   const raw = await callGateway(system, `Move number: ${Math.floor(ply / 2) + 1}\n${transcript}`);
-  const body = raw ? sanitizeAiChat(raw) : "";
-  if (!body) return false;
+  const modelBody = raw ? sanitizeAiChat(raw) : "";
+  const pool = FALLBACK[persona.tone] ?? FALLBACK["friendly"]!;
+  const body = modelBody || pool[Math.floor(Math.random() * pool.length)]!;
 
   const { error } = await supabaseAdmin.from("game_chat_messages").insert({
     game_id: gameId,
@@ -133,5 +150,9 @@ export async function maybeAiChatReply(gameId: string, ply: number): Promise<boo
     body,
     ply,
   });
-  return !error;
+  if (error) {
+    console.error("[rankedAi.chat] insert failed", error.message);
+    return false;
+  }
+  return true;
 }
