@@ -296,6 +296,8 @@ export default {
     "adminc.engine.reason.illegal_moves": "The engine returned at least one genuinely illegal move",
     "adminc.engine.reason.benchmark_timeout": "At least one benchmark position timed out",
     "adminc.engine.reason.benchmark_engine_error": "A Stockfish process error occurred during the benchmark",
+    "adminc.engine.reason.benchmark_engine_busy": "The engine pool was busy, so the suite did not complete",
+    "adminc.engine.reason.benchmark_no_move": "The engine returned no move for at least one position",
     "adminc.engine.reason.benchmark_config_mismatch": "Benchmark does not match the current Titan configuration",
     "adminc.engine.reason.benchmark_suite_outdated": "Benchmark came from an older suite — run qualification again",
     "adminc.engine.inspector": "Strength inspector",
