@@ -20,6 +20,8 @@ function row(over: Partial<BenchmarkRow> & { kind: BenchmarkRow["kind"]; created
     passed: true,
     result: {},
     configSignature: SIG,
+    suiteVersion: null,
+
     ...over,
   };
 }
