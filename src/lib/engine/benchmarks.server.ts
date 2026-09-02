@@ -104,26 +104,17 @@ export function isLegalBenchmarkMove(fen: string, uci: string | null): boolean {
 }
 
 /**
- * Bounded production probes. Cloud Run terminates Stockfish's native `bench`
- * command at its 120s request ceiling, so qualification measures the same
- * Stockfish 18 process through its real `/bestmove` path instead. The service
- * validates returned moves before responding; transport/no-move failures stay
- * hard failures and the original config fingerprint remains authoritative.
+ * Bounded PERFORMANCE probe for `bench`/`speedtest` only.
+ *
+ * Cloud Run terminates Stockfish's native `bench` command at its request
+ * ceiling, so throughput health is measured through the real `/bestmove` path
+ * instead. This path contains NO tactical scoring: EPD and positions are
+ * scored exclusively by the canonical service-side suite.
  */
-async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
+async function runBoundedBenchmark(kind: "bench" | "speedtest", config: EngineConfig) {
   const { requestBestMove } = await import("./cloudEngine.server");
-  type ProbeResult = Awaited<ReturnType<typeof requestBestMove>> & {
-    expected: readonly string[];
-    fen: string;
-    attempts: number;
-    legal: boolean;
-  };
-  const probes = kind === "epd"
-    ? TACTICAL_PROBES
-    : kind === "positions"
-      ? POSITION_PROBES
-      : [{ fen: PERFORMANCE_FEN, moves: [] as readonly string[] }];
-  const movetimeMs = kind === "speedtest" ? 750 : kind === "bench" ? 2_000 : 1_500;
+  const probe: Probe = { fen: PERFORMANCE_FEN, moves: [] };
+  const movetimeMs = kind === "speedtest" ? 750 : 2_000;
   const probeConfig: EngineConfig = {
     ...config,
     timePolicy: "movetime",
@@ -133,91 +124,122 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
     maxRetries: 0,
     ponder: false,
   };
-  const results: ProbeResult[] = [];
-  for (let index = 0; index < probes.length; index += 1) {
-    const probe = probes[index];
-    if (!probe) continue;
-    let attempts = 0;
-    let result: Awaited<ReturnType<typeof requestBestMove>> | null = null;
-    // Retry only transient capacity/network failures. Invalid/auth/config
-    // failures remain fail-closed and are never hidden by retries.
-    while (attempts < 3) {
-      attempts += 1;
-      result = await requestBestMove({
-        fen: probe.fen,
-        variant: probe.variant ?? "standard",
-        config: probeConfig,
-        clock: null,
-        sessionId: `qualification-${kind}-${index}-${crypto.randomUUID()}`,
-        requestId: crypto.randomUUID(),
-        newGame: true,
-      });
-      if (result.status === "ok" || !TRANSIENT_STATUSES.has(result.status)) break;
-      await new Promise((resolve) => setTimeout(resolve, attempts * 250));
-    }
-    if (!result) continue;
-    results.push({
-      ...result,
-      expected: probe.moves,
+  let attempts = 0;
+  let result: Awaited<ReturnType<typeof requestBestMove>> | null = null;
+  // Retry only transient capacity/network failures; auth/config failures stay
+  // fail-closed and are never hidden behind a retry.
+  while (attempts < 3) {
+    attempts += 1;
+    result = await requestBestMove({
       fen: probe.fen,
-      attempts,
-      // Standard positions are re-validated locally with chess.js. Chess960
-      // castling uses king-takes-rook encoding that chess.js cannot verify, so
-      // there the engine service's own variant-aware legality check is
-      // authoritative — an illegal 960 move comes back as an engine error.
-      legal:
-        result.status === "ok" &&
-        (probe.variant === "chess960"
-          ? Boolean(result.bestmove)
-          : isLegalBenchmarkMove(probe.fen, result.bestmove)),
+      variant: "standard",
+      config: probeConfig,
+      clock: null,
+      sessionId: `qualification-${kind}-${crypto.randomUUID()}`,
+      requestId: crypto.randomUUID(),
+      newGame: true,
     });
+    if (result.status === "ok" || !TRANSIENT_STATUSES.has(result.status)) break;
+    await new Promise((resolve) => setTimeout(resolve, attempts * 250));
   }
-  const engineErrors = results.filter((result) => result.status !== "ok").length;
-  const noMove = results.filter((result) => result.status === "ok" && !result.bestmove).length;
-  const illegalMoves = results.filter((result) => result.status === "ok" && result.bestmove && !result.legal).length;
-  const solved = kind === "epd"
-    ? results.filter((result) => result.legal && result.bestmove && result.expected.includes(result.bestmove as never)).length
-    : results.filter((result) => result.status === "ok" && result.bestmove && result.legal).length;
-  const total = results.length;
-  const clean = total === probes.length && engineErrors === 0 && noMove === 0 && illegalMoves === 0;
-  const engineVersion = results.find((result) => result.engineVersion)?.engineVersion ?? null;
+
+  const status = result?.status ?? "unavailable";
+  const bestmove = result?.bestmove ?? null;
+  const legal = status === "ok" && isLegalBenchmarkMove(probe.fen, bestmove);
+  const timeouts = status === "timeout" ? 1 : 0;
+  const engineErrors = status !== "ok" && status !== "timeout" ? 1 : 0;
+  const noMove = status === "ok" && !bestmove ? 1 : 0;
+  const illegalMoves = status === "ok" && bestmove && !legal ? 1 : 0;
+  const engineVersion = result?.engineVersion ?? null;
   const supportedVersion = /stockfish\s*18/i.test(engineVersion ?? "");
-  const passed = clean && solved === total && supportedVersion;
-  const numeric = (key: "nodes" | "nps" | "depth") =>
-    results.reduce((max, result) => Math.max(max, result[key] ?? 0), 0) || null;
+  const passed = legal && timeouts === 0 && engineErrors === 0 && noMove === 0 && supportedVersion;
   return {
     kind,
-    status: clean ? "ok" as const : results.find((result) => result.status !== "ok")?.status ?? "invalid" as const,
+    status: passed ? ("ok" as const) : status === "ok" ? ("invalid" as const) : status,
     engineVersion,
-    nodes: numeric("nodes"),
-    nps: numeric("nps"),
-    depth: numeric("depth"),
-    score: total ? solved / total : 0,
+    nodes: result?.nodes ?? null,
+    nps: result?.nps ?? null,
+    depth: result?.depth ?? null,
+    score: passed ? 1 : 0,
     passed,
+    suiteVersion: null as string | null,
+    serviceBuildId: null as string | null,
     detail: {
       kind,
       mode: "bounded_bestmove",
-      suiteVersion: QUALIFICATION_SUITE_VERSION,
-      solved,
-      total,
-      legalMoves: results.filter((result) => result.status === "ok" && result.bestmove && result.legal).length,
+      solved: passed ? 1 : 0,
+      total: 1,
+      legalMoves: legal ? 1 : 0,
+      legalUnsolved: 0,
       illegalMoves,
       noMove,
-      timeouts: results.filter((result) => result.status === "timeout").length,
-      engineErrors: results.filter((result) => result.status !== "ok" && result.status !== "timeout").length,
-      durationMs: results.reduce((sum, result) => sum + (result.timeMs ?? 0), 0),
-      attempts: results.reduce((sum, result) => sum + result.attempts, 0),
+      timeouts,
+      poolBusy: 0,
+      engineErrors,
+      durationMs: result?.timeMs ?? 0,
+      attempts,
       failureReasons: passed
         ? []
         : [
-            ...(results.length !== probes.length ? ["incomplete_suite"] : []),
             ...(engineErrors ? ["engine_error"] : []),
+            ...(timeouts ? ["timeout"] : []),
             ...(noMove ? ["no_move"] : []),
             ...(illegalMoves ? ["illegal_move"] : []),
-            ...(solved !== total ? [kind === "epd" ? "tactics_score" : "position_failed"] : []),
             ...(!supportedVersion ? ["engine_version_unsupported"] : []),
           ],
-    },
+    } as Record<string, unknown>,
+  };
+}
+
+/**
+ * Canonical EPD / positions run.
+ *
+ * The suite, the scoring and the failure classification all live in
+ * `services/play-engine/src/benchmark.js`. The backend does NOT recompute a
+ * second verdict here: it verifies the response contract (suite identity,
+ * engine version, structured counters) and stores the raw result.
+ */
+async function runCanonicalSuite(kind: "epd" | "positions", config: EngineConfig) {
+  const { runCloudBenchmark } = await import("./cloudEngine.server");
+  const run = await runCloudBenchmark(kind, config);
+  const detail = (run.detail ?? {}) as Record<string, unknown>;
+  const suiteVersion = typeof detail["suiteVersion"] === "string" ? (detail["suiteVersion"] as string) : null;
+  const serviceBuildId =
+    typeof detail["serviceBuildId"] === "string" ? (detail["serviceBuildId"] as string) : null;
+  const engineVersion = run.engineVersion;
+  const supportedVersion = /stockfish\s*18/i.test(engineVersion ?? "");
+  const total = Number(detail["total"] ?? 0);
+  // A response that does not carry the expected suite identity is never
+  // allowed to become a passing row for that suite.
+  const contractOk = suiteVersion === EXPECTED_BENCHMARK_SUITE_VERSION && total > 0 && supportedVersion;
+  const passed = run.status === "ok" && run.passed === true && contractOk;
+  const failureReasons = Array.isArray(detail["failureReasons"])
+    ? (detail["failureReasons"] as string[])
+    : [];
+  return {
+    kind,
+    status: run.status,
+    engineVersion,
+    nodes: run.nodes,
+    nps: run.nps,
+    depth: run.depth,
+    score: run.score ?? 0,
+    passed,
+    suiteVersion,
+    serviceBuildId,
+    detail: {
+      ...detail,
+      kind,
+      mode: "cloud_suite",
+      failureReasons: passed
+        ? []
+        : [
+            ...failureReasons,
+            ...(run.status !== "ok" ? [`transport_${run.status}`] : []),
+            ...(!supportedVersion ? ["engine_version_unsupported"] : []),
+            ...(suiteVersion !== EXPECTED_BENCHMARK_SUITE_VERSION ? ["suite_version_mismatch"] : []),
+          ],
+    } as Record<string, unknown>,
   };
 }
 
