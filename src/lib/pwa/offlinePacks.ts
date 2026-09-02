@@ -237,4 +237,13 @@ export const ENGINE_PACK_ASSETS = [
   "/engine/stockfish-18-lite.wasm",
 ];
 
-export const ENGINE_PACK_ROUTES = ["/play/ai", "/play/local", "/analysis", "/play/variants"];
+export const ENGINE_PACK_ROUTES = [
+  "/",
+  "/offline",
+  "/play",
+  "/play/ai",
+  "/play/local",
+  "/analysis",
+  "/play/variants",
+  "/manifest.webmanifest",
+];
