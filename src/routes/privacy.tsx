@@ -23,6 +23,23 @@ const DOCS: Record<Locale, LegalDoc> = {
       `Chào mừng bạn đến với ${APP.name} — nền tảng cờ vua trực tuyến tập trung vào tính công bằng, phân tích chuyên sâu và trải nghiệm học tập cá nhân hoá. Chính sách này giải thích rõ ràng dữ liệu chúng tôi thu thập, lý do thu thập, cách chúng tôi bảo vệ dữ liệu và quyền của bạn khi sử dụng ứng dụng web, ứng dụng di động và các dịch vụ liên quan. Bằng việc sử dụng dịch vụ, bạn đồng ý với chính sách này.`,
     sections: [
       {
+        heading: "Đơn vị vận hành và cách liên hệ",
+        body: [
+          `Ứng dụng: ${APP.name} (nền tảng cờ vua trực tuyến), truy cập tại ${APP.siteUrl}. Chính sách này áp dụng cho website ${APP.siteUrl}, ứng dụng di động Nine64 và mọi dịch vụ liên quan do Nine64 vận hành.`,
+          `Đơn vị chịu trách nhiệm dữ liệu (data controller): đội ngũ Nine64. Mọi câu hỏi, yêu cầu truy cập, chỉnh sửa hoặc xoá dữ liệu xin gửi tới ${APP.contactEmail} hoặc trang Liên hệ trong ứng dụng. Chúng tôi phản hồi trong vòng 30 ngày.`,
+          `Có hiệu lực từ ${APP.legalEffectiveDate}. Địa chỉ chính sách này: ${APP.siteUrl}/privacy.`,
+        ],
+      },
+      {
+        heading: "Phạm vi quyền Google mà chúng tôi yêu cầu (OAuth scopes)",
+        body: [
+          "openid — dùng để nhận mã định danh Google duy nhất (sub) và tạo tài khoản Nine64 tương ứng.",
+          "https://www.googleapis.com/auth/userinfo.email — dùng để lấy địa chỉ email nhằm nhận diện tài khoản, khôi phục truy cập và gửi thông báo bảo mật thiết yếu.",
+          "https://www.googleapis.com/auth/userinfo.profile — dùng để lấy tên hiển thị và ảnh đại diện hiển thị trên hồ sơ người chơi.",
+          "Chúng tôi không yêu cầu bất kỳ phạm vi nhạy cảm (sensitive) hay hạn chế (restricted) nào, không truy cập Gmail, Drive, Calendar, Contacts, Photos, YouTube hay dữ liệu vị trí. Chúng tôi không truy cập dữ liệu Google khi bạn không đăng nhập và không gọi API Google nền (offline access) sau phiên đăng nhập.",
+        ],
+      },
+      {
         heading: "Dữ liệu chúng tôi thu thập",
         body: [
           "Dữ liệu tài khoản: địa chỉ email, tên hiển thị, ảnh đại diện, mã định danh người dùng, ngôn ngữ, tùy chọn theme bàn cờ và cài đặt hiển thị.",
@@ -42,7 +59,7 @@ const DOCS: Record<Locale, LegalDoc> = {
       {
         heading: "Cam kết Sử dụng hạn chế của Google (Limited Use)",
         body: [
-          "Nine64 tuân thủ nghiêm ngặt Chính sách dữ liệu người dùng dịch vụ API của Google, kể cả các yêu cầu Sử dụng hạn chế.",
+          "Việc Nine64 sử dụng và chuyển giao thông tin nhận được từ các API của Google sang bất kỳ ứng dụng nào khác đều tuân thủ Chính sách dữ liệu người dùng dịch vụ API của Google, bao gồm các yêu cầu Sử dụng hạn chế (https://developers.google.com/terms/api-services-user-data-policy).",
           "Dữ liệu người dùng Google của bạn chỉ được sử dụng để cung cấp và cải thiện tính năng đăng nhập, hồ sơ tài khoản, bảo mật và liên lạc thiết yếu liên quan đến dịch vụ Nine64.",
           "Chúng tôi không bán, cho thuê, chuyển nhượng hoặc chia sẻ dữ liệu Google của bạn cho bên thứ ba nhằm mục đích quảng cáo, tiếp thị, phân tích hành vi tiêu dùng, hoặc xây dựng hồ sơ người dùng bên ngoài Nine64.",
           "Chúng tôi không sử dụng dữ liệu Google để cá nhân hoá quảng cáo, không kết hợp với dữ liệu từ nguồn bên thứ ba để theo dõi người dùng trên web, và không cho phép nhân viên hoặc nhà cung cấp truy cập rộng rãi ngoài phạm vi công việc cần thiết.",
@@ -77,7 +94,8 @@ const DOCS: Record<Locale, LegalDoc> = {
         heading: "Chia sẻ và chuyển giao dữ liệu",
         body: [
           "Chúng tôi không bán, trao đổi hoặc cho thuê dữ liệu cá nhân của bạn, kể cả dữ liệu Google, dưới bất kỳ hình thức nào.",
-          "Chúng tôi sử dụng các nhà cung cấp hạ tầng cần thiết (lưu trữ đám mây, cơ sở dữ liệu, máy chủ cờ, dịch vụ AI phân tích, gửi email, chống lạm dụng) được chọn lọc. Họ chỉ xử lý dữ liệu theo chỉ dẫn của chúng tôi và theo các điều khoản bảo mật tương đương.",
+          "Danh sách nhà cung cấp xử lý dữ liệu (sub-processor): Supabase (xác thực, cơ sở dữ liệu, lưu trữ), Cloudflare (CDN, bảo mật mạng, vận hành ứng dụng), Google Cloud Run (máy chủ engine cờ và dịch vụ phân tích Fair Play), Google AI / Gemini (phân tích ván đấu và huấn luyện viên AI). Họ chỉ xử lý dữ liệu theo chỉ dẫn bằng văn bản của chúng tôi và theo nghĩa vụ bảo mật tương đương.",
+          "Dữ liệu có thể được xử lý trên máy chủ đặt ngoài quốc gia của bạn, bao gồm Hoa Kỳ và Liên minh châu Âu. Khi cần thiết, việc chuyển dữ liệu được bảo đảm bằng Điều khoản hợp đồng tiêu chuẩn (SCC) hoặc cơ chế tương đương.",
           "Chúng tôi chỉ tiết lộ dữ liệu khi luật pháp yêu cầu, khi cần thiết để bảo vệ quyền lợi hợp pháp, an toàn của người dùng và của Nine64, hoặc khi bạn đã đồng ý rõ ràng.",
         ],
       },
@@ -144,6 +162,23 @@ const DOCS: Record<Locale, LegalDoc> = {
       `Welcome to ${APP.name} — an online chess platform focused on fair play, deep game analysis, and personalized learning. This policy explains what data we collect, why we collect it, how we protect it, and your rights when using our web app, mobile app, and related services. By using the service you agree to this policy.`,
     sections: [
       {
+        heading: "Who we are and how to contact us",
+        body: [
+          `Application: ${APP.name}, an online chess platform available at ${APP.siteUrl}. This policy covers the ${APP.siteUrl} website, the Nine64 mobile app and all related services operated by Nine64.`,
+          `Data controller: the Nine64 team. For any privacy question, data access, correction, export or deletion request, email ${APP.contactEmail} or use the in-app Contact page. We respond within 30 days.`,
+          `Effective date: ${APP.legalEffectiveDate}. Canonical address of this policy: ${APP.siteUrl}/privacy.`,
+        ],
+      },
+      {
+        heading: "Google OAuth scopes we request and why",
+        body: [
+          "openid — to receive your unique Google identifier (sub) and create the matching Nine64 account.",
+          "https://www.googleapis.com/auth/userinfo.email — to obtain your email address for account identification, account recovery and essential security notifications.",
+          "https://www.googleapis.com/auth/userinfo.profile — to obtain your display name and profile picture, shown on your public player profile.",
+          "We request no sensitive or restricted scopes. We never access Gmail, Drive, Calendar, Contacts, Photos, YouTube or location data, never access Google data while you are not signed in, and do not request offline access or call Google APIs in the background after your sign-in session.",
+        ],
+      },
+      {
         heading: "Data we collect",
         body: [
           "Account data: email address, display name, avatar, user identifier, language, board theme and display preferences.",
@@ -163,7 +198,7 @@ const DOCS: Record<Locale, LegalDoc> = {
       {
         heading: "Google Limited Use commitment",
         body: [
-          `${APP.name} strictly adheres to the Google API Services User Data Policy, including the Limited Use requirements.`,
+          `${APP.name}'s use and transfer of information received from Google APIs to any other app will adhere to the Google API Services User Data Policy, including the Limited Use requirements (https://developers.google.com/terms/api-services-user-data-policy).`,
           "Your Google user data is used only to provide and improve sign-in, account profile, security, and essential service-related communications for Nine64.",
           "We do not sell, lease, transfer, or share Google data with third parties for advertising, marketing, consumer behavior analysis, or building user profiles outside of Nine64.",
           "We do not use Google data to personalize ads, do not combine it with third-party data to track users across the web, and do not allow broad employee or vendor access beyond what is strictly necessary for their job function.",
@@ -198,7 +233,8 @@ const DOCS: Record<Locale, LegalDoc> = {
         heading: "Sharing and transfer",
         body: [
           "We do not sell, trade, or rent your personal data, including Google data, in any form.",
-          "We rely on select infrastructure providers (cloud hosting, database, chess engine servers, AI analysis services, email delivery, abuse prevention). They process data only on our instructions and under equivalent security obligations.",
+          "Our sub-processors are: Supabase (authentication, database and storage), Cloudflare (content delivery, network security and application hosting), Google Cloud Run (chess engine and Fair Play analysis services), and Google AI / Gemini (game analysis and AI coach text generation). They process data only on our documented instructions and under equivalent security and confidentiality obligations.",
+          "Data may be processed on servers located outside your country, including in the United States and the European Union. Where required, transfers rely on Standard Contractual Clauses or equivalent safeguards.",
           "We may disclose data where required by law, where necessary to protect the legitimate rights and safety of users and Nine64, or where you have given explicit consent.",
         ],
       },
