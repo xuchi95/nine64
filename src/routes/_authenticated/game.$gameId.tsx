@@ -978,8 +978,14 @@ function OnlineGamePage() {
     );
   }
 
-  const opponentName = myColor === "w" ? game.black_id.slice(0, 8) : game.white_id.slice(0, 8);
-  const myName = user?.email?.split("@")[0] ?? "You";
+  const opponentId = myColor === "w" ? game.black_id : game.white_id;
+  const opponentName =
+    (myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
+    opponentId.slice(0, 8);
+  const myName =
+    (myColor === "w" ? playerNames?.whiteName : playerNames?.blackName) ??
+    user?.email?.split("@")[0] ??
+    "You";
   const turn = gameRef.current.turn() as PieceColor;
   const live = game.status === "active" && !result;
   const statusLine = live
