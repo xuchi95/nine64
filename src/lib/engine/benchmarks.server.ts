@@ -55,6 +55,7 @@ export async function listBenchmarks(
       configSignature: row["config_signature"] === null || row["config_signature"] === undefined
         ? null
         : String(row["config_signature"]),
+      suiteVersion: row["suite_version"] ? String(row["suite_version"]) : null,
       createdAt: String(row["created_at"]),
     };
   });
@@ -66,18 +67,57 @@ export interface BenchmarkOutcome {
   row?: BenchmarkRow;
 }
 
+/**
+ * Identity of the qualification suite. Stored on every row so a result can
+ * never be compared against a run produced by a different set of positions.
+ * Bump this whenever the probe sets below change.
+ */
+export const QUALIFICATION_SUITE_VERSION = "titan-v6-1";
+
 const PERFORMANCE_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-const TACTICAL_PROBES = [
+
+type Probe = {
+  fen: string;
+  moves: readonly string[];
+  variant?: "standard" | "chess960";
+};
+
+/**
+ * Deterministic tactical probes: every entry is a forced mate whose complete
+ * mating-move set is enumerated, so a healthy Stockfish 18 must find one.
+ */
+const TACTICAL_PROBES: readonly Probe[] = [
   { fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", moves: ["f3f7"] },
   { fen: "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1", moves: ["c1c8"] },
   { fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", moves: ["d1d8"] },
-] as const;
-const POSITION_PROBES = [
-  { fen: PERFORMANCE_FEN, moves: [] as readonly string[] },
-  { fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", moves: [] as readonly string[] },
-  { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", moves: [] as readonly string[] },
-] as const;
+  { fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", moves: ["a1a8"] },
+  { fen: "7k/6pp/8/8/8/8/6PP/5R1K w - - 0 1", moves: ["f1f8"] },
+  { fen: "k7/7R/1K6/8/8/8/8/8 w - - 0 1", moves: ["h7h8"] },
+  // Smothered mate.
+  { fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", moves: ["h6f7"] },
+  // Promotion mate: the promotion piece is part of the expected UCI.
+  { fen: "6k1/4Pppp/8/8/8/8/5PPP/6K1 w - - 0 1", moves: ["e7e8q", "e7e8r"] },
+  // Black to move: two mating queen moves are both acceptable.
+  { fen: "8/8/8/8/8/2k5/1q6/K7 b - - 0 1", moves: ["c3c2", "c3b3"] },
+];
+
+/**
+ * Legality probes: any legal move passes. Includes Chess960 start positions —
+ * the engine service validates 960 castling encoding itself, so a regression
+ * there surfaces as an engine error here instead of only in a live game.
+ */
+const POSITION_PROBES: readonly Probe[] = [
+  { fen: PERFORMANCE_FEN, moves: [] },
+  { fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", moves: [] },
+  { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", moves: [] },
+  { fen: "r3k2r/pppq1ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPPQ1PPP/R3K2R w KQkq - 6 8", moves: [] },
+  { fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", moves: [] },
+  { fen: "bqnbrkrn/pppppppp/8/8/8/8/PPPPPPPP/BQNBRKRN w KQkq - 0 1", moves: [], variant: "chess960" },
+  { fen: "rknbbqnr/pppppppp/8/8/8/8/PPPPPPPP/RKNBBQNR w KQkq - 0 1", moves: [], variant: "chess960" },
+];
+
 const TRANSIENT_STATUSES = new Set(["timeout", "unavailable"]);
+
 
 export function isLegalBenchmarkMove(fen: string, uci: string | null): boolean {
   if (!uci || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return false;
@@ -136,7 +176,7 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
       attempts += 1;
       result = await requestBestMove({
         fen: probe.fen,
-        variant: "standard",
+        variant: probe.variant ?? "standard",
         config: probeConfig,
         clock: null,
         sessionId: `qualification-${kind}-${index}-${crypto.randomUUID()}`,
@@ -152,7 +192,15 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
       expected: probe.moves,
       fen: probe.fen,
       attempts,
-      legal: result.status === "ok" && isLegalBenchmarkMove(probe.fen, result.bestmove),
+      // Standard positions are re-validated locally with chess.js. Chess960
+      // castling uses king-takes-rook encoding that chess.js cannot verify, so
+      // there the engine service's own variant-aware legality check is
+      // authoritative — an illegal 960 move comes back as an engine error.
+      legal:
+        result.status === "ok" &&
+        (probe.variant === "chess960"
+          ? Boolean(result.bestmove)
+          : isLegalBenchmarkMove(probe.fen, result.bestmove)),
     });
   }
   const engineErrors = results.filter((result) => result.status !== "ok").length;
@@ -180,6 +228,7 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
     detail: {
       kind,
       mode: "bounded_bestmove",
+      suiteVersion: QUALIFICATION_SUITE_VERSION,
       solved,
       total,
       legalMoves: results.filter((result) => result.status === "ok" && result.bestmove && result.legal).length,
@@ -242,6 +291,7 @@ export async function runBenchmark(args: {
       signature: run.engineVersion ?? null,
       // Benchmarks are always recorded against the exact config they ran with.
       config_signature: await engineConfigFingerprint(config),
+      suite_version: QUALIFICATION_SUITE_VERSION,
       created_by: args.actorId,
     } as never)
     .select("*")
@@ -264,6 +314,7 @@ export async function runBenchmark(args: {
     configSignature: row["config_signature"] === null || row["config_signature"] === undefined
       ? null
       : String(row["config_signature"]),
+    suiteVersion: row["suite_version"] ? String(row["suite_version"]) : null,
     createdAt: String(row["created_at"]),
   }))[0]!;
   return run.status === "ok"
@@ -281,7 +332,7 @@ export async function publishReadiness(
   config?: EngineConfig | null,
 ): Promise<ReadinessResult> {
   const signature = config ? await engineConfigFingerprint(config) : null;
-  if (!signature) return evaluateReadiness(await listBenchmarks(slug, 50), null);
+  if (!signature) return evaluateReadiness(await listBenchmarks(slug, 50), null, QUALIFICATION_SUITE_VERSION);
   // Fetch matching rows explicitly so heavy benchmark history from other
   // drafts can never push the authoritative fingerprint out of a global limit.
   const [matching, recent] = await Promise.all([
@@ -289,5 +340,5 @@ export async function publishReadiness(
     listBenchmarks(slug, 50),
   ]);
   const byId = new Map([...matching, ...recent].map((row) => [row.id, row]));
-  return evaluateReadiness([...byId.values()], signature);
+  return evaluateReadiness([...byId.values()], signature, QUALIFICATION_SUITE_VERSION);
 }

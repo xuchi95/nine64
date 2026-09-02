@@ -13,9 +13,15 @@ import os from "node:os";
 import { EnginePool } from "./pool.js";
 import { VARIANTS, createPosition, decodeEngineMove, isLegal } from "./rules.js";
 import { verifyIdToken } from "./auth.js";
-import { EPD_SUITE, POSITION_SUITE, runSuite, suiteMovetime } from "./benchmark.js";
+import { EPD_SUITE, POSITION_SUITE, runSuite, suiteMovetime, BENCHMARK_SUITE_VERSION } from "./benchmark.js";
+import { capabilities, inspectSyzygy, syzygyPath } from "./capabilities.js";
 
 const PORT = Number(process.env.PORT || 8080);
+/**
+ * UCI options a CALLER may set. `SyzygyPath` is deliberately absent: a
+ * filesystem path must never be controlled from outside the container. The
+ * service injects the real path itself, and only when tablebase files exist.
+ */
 const ALLOWED_OPTIONS = new Set([
   "Threads",
   "Hash",
@@ -26,7 +32,6 @@ const ALLOWED_OPTIONS = new Set([
   "Move Overhead",
   "Ponder",
   "SyzygyProbeLimit",
-  "SyzygyPath",
   "UCI_Chess960",
 ]);
 
@@ -50,6 +55,36 @@ function sanitizeOptions(raw) {
   return out;
 }
 
+/**
+ * Server-owned Syzygy options. A caller can ask for probing, but the path and
+ * the advertised piece count come from what is really installed on disk.
+ */
+export function syzygyOptions(requested = {}, tb = inspectSyzygy(), path = syzygyPath()) {
+  const wants = Number(requested["SyzygyProbeLimit"] ?? 0);
+  if (!tb.ready || !path || !(wants > 0)) return {};
+  return { SyzygyPath: path, SyzygyProbeLimit: String(Math.min(Math.trunc(wants), tb.pieces)) };
+}
+
+/**
+ * Rejects a configuration that does not fit the container instead of silently
+ * clamping it. Returns a reason string, or null when the config fits.
+ */
+export function resourceMismatch(options, caps = capabilities(pool.size)) {
+  const threads = Number(options["Threads"] ?? 0);
+  const hash = Number(options["Hash"] ?? 0);
+  if (threads > caps.maxThreadsPerEngine) return `threads>${caps.maxThreadsPerEngine}`;
+  if (hash > caps.maxSafeHashMb) return `hash>${caps.maxSafeHashMb}`;
+  return null;
+}
+
+/**
+ * Builds the native `go` arguments.
+ *
+ * In clock mode Stockfish MUST manage its own time: `wtime/btime/winc/binc`
+ * only. Adding `movetime` here would replace Stockfish's time manager with a
+ * flat per-move budget and measurably weaken play, so the caller's
+ * `maxMoveTimeMs` is applied as an outer hard stop instead (see `hardStopFor`).
+ */
 function buildGoArgs(body) {
   // The backend sends a typed `search` block; legacy top-level fields stay supported.
   const search = body.search && typeof body.search === "object" ? body.search : {};
@@ -62,18 +97,7 @@ function buildGoArgs(body) {
     return `nodes ${Math.min(Math.max(Math.trunc(Number(search.nodes)), 1), 1_000_000_000)}`;
   }
 
-  const clock =
-    body.clock && Number.isFinite(body.clock.whiteMs) && Number.isFinite(body.clock.blackMs)
-      ? body.clock
-      : Number.isFinite(Number(search.wtimeMs)) && Number.isFinite(Number(search.btimeMs))
-        ? {
-            whiteMs: Number(search.wtimeMs),
-            blackMs: Number(search.btimeMs),
-            whiteIncMs: Number(search.wincMs) || 0,
-            blackIncMs: Number(search.bincMs) || 0,
-          }
-        : null;
-
+  const clock = readClock(body);
   if (clock) {
     const parts = [
       `wtime ${Math.max(1, Math.trunc(clock.whiteMs))}`,
@@ -81,8 +105,6 @@ function buildGoArgs(body) {
     ];
     if (clock.whiteIncMs) parts.push(`winc ${Math.trunc(clock.whiteIncMs)}`);
     if (clock.blackIncMs) parts.push(`binc ${Math.trunc(clock.blackIncMs)}`);
-    const cap = Number(search.maxMoveTimeMs);
-    if (Number.isFinite(cap) && cap > 0) parts.push(`movetime ${Math.min(Math.trunc(cap), 60_000)}`);
     return parts.join(" ");
   }
 
@@ -90,6 +112,30 @@ function buildGoArgs(body) {
   const movetime = Math.min(Math.max(requested, 50), 60_000);
   return `movetime ${movetime}`;
 }
+
+function readClock(body) {
+  const search = body.search && typeof body.search === "object" ? body.search : {};
+  if (body.clock && Number.isFinite(body.clock.whiteMs) && Number.isFinite(body.clock.blackMs)) return body.clock;
+  if (Number.isFinite(Number(search.wtimeMs)) && Number.isFinite(Number(search.btimeMs))) {
+    return {
+      whiteMs: Number(search.wtimeMs),
+      blackMs: Number(search.btimeMs),
+      whiteIncMs: Number(search.wincMs) || 0,
+      blackIncMs: Number(search.bincMs) || 0,
+    };
+  }
+  return null;
+}
+
+/** Outer safety cap in ms, or null when the search is already bounded. */
+export function hardStopFor(body) {
+  if (!readClock(body)) return null;
+  const search = body.search && typeof body.search === "object" ? body.search : {};
+  const cap = Number(search.maxMoveTimeMs);
+  if (!Number.isFinite(cap) || cap <= 0) return null;
+  return Math.min(Math.trunc(cap), 120_000);
+}
+
 
 
 async function readBody(req, limit = 256 * 1024) {
@@ -130,17 +176,28 @@ async function handleBestMove(body) {
   }
 
   const timeoutMs = Math.min(Math.max(Number(body.timeoutMs) || 30_000, 1_000), 120_000);
+  const requested = sanitizeOptions(body.options);
+  const mismatch = resourceMismatch(requested);
+  if (mismatch) {
+    return { status: 422, payload: { error: "config_resource_mismatch", detail: mismatch } };
+  }
   try {
     const result = await pool.search({
       fen: body.fen,
       moves,
       // Set on EVERY search so a Chess960 request can never leave a pooled
       // engine process in 960 mode for the next standard request.
-      options: { ...sanitizeOptions(body.options), UCI_Chess960: variant === "chess960" ? "true" : "false" },
+      options: {
+        ...requested,
+        ...syzygyOptions(requested),
+        UCI_Chess960: variant === "chess960" ? "true" : "false",
+      },
       goArgs: buildGoArgs(body),
       timeoutMs,
+      hardStopMs: hardStopFor(body),
       newGame: Boolean(body.newGame),
     });
+
     if (!result.bestmove) return { status: 409, payload: { error: "no_move" } };
     // The engine's move must be legal in the resulting position. For Chess960
     // it is decoded out of Stockfish notation first — legality checking is
@@ -170,8 +227,10 @@ async function handleBenchmark(body) {
         nodes: result.nodes,
         nps: result.nps,
         passed: Boolean(result.nps),
+        suiteVersion: BENCHMARK_SUITE_VERSION,
         detail: {
           kind,
+          suiteVersion: BENCHMARK_SUITE_VERSION,
           hardware: { threads: Number(process.env.ENGINE_THREADS || 0) || null },
           failureReasons: result.nps ? [] : ["engine_error"],
         },
@@ -192,7 +251,11 @@ async function handleBenchmark(body) {
       search: (entry) =>
         pool.search({
           fen: entry.fen,
-          options: { ...options, UCI_Chess960: "false" },
+          options: {
+            ...options,
+            ...syzygyOptions(options),
+            UCI_Chess960: entry.variant === "chess960" ? "true" : "false",
+          },
           goArgs: `movetime ${movetimeMs}`,
           timeoutMs,
           newGame: true,
@@ -206,7 +269,8 @@ async function handleBenchmark(body) {
         depth: run.depth,
         score: run.score,
         passed: run.passed,
-        detail: { ...run.detail, movetimeMs },
+        suiteVersion: BENCHMARK_SUITE_VERSION,
+        detail: { ...run.detail, movetimeMs, suiteVersion: BENCHMARK_SUITE_VERSION },
       },
     };
   }
@@ -216,28 +280,31 @@ async function handleBenchmark(body) {
 
 /**
  * Stable, typed /health payload. `busy` is derived from the real engine
- * process states, never from a static number. Never contains credentials.
+ * process states, never from a static number. Never contains credentials,
+ * filesystem paths or environment values.
  */
 export function healthPayload(enginePool, isReady) {
   const engines = Array.isArray(enginePool?.engines) ? enginePool.engines : [];
   const alive = engines.filter((e) => !e.dead);
   const stats = enginePool?.stats ?? {};
+  const size = Number(enginePool?.size ?? alive.length) || alive.length;
   return {
     status: isReady ? "ok" : "starting",
     engineVersion: enginePool?.engineVersion ?? null,
     arch: process.env.ENGINE_ARCH || os.arch() || null,
-    pool: {
-      size: Number(enginePool?.size ?? alive.length) || alive.length,
-      busy: alive.filter((e) => e.busy).length,
-    },
+    pool: { size, busy: alive.filter((e) => e.busy).length },
+    capabilities: capabilities(size || 1),
+    benchmarkSuiteVersion: BENCHMARK_SUITE_VERSION,
     stats: {
       searches: Number(stats.searches ?? 0),
       timeouts: Number(stats.timeouts ?? 0),
       restarts: Number(stats.restarts ?? 0),
       illegal: Number(stats.illegal ?? 0),
+      hardStops: Number(stats.hardStops ?? 0),
     },
   };
 }
+
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
@@ -283,8 +350,11 @@ if (process.env.NODE_ENV !== "test") {
     .init()
     .then(() => {
       ready = true;
+      // Safe startup diagnostics: hardware shape only, no paths or secrets.
+      console.log(JSON.stringify({ msg: "engine_ready", capabilities: capabilities(pool.size) }));
       server.listen(PORT, () => console.log(JSON.stringify({ msg: "play-engine listening", port: PORT })));
     })
+
     .catch((err) => {
       console.error(JSON.stringify({ msg: "engine_start_failed", error: err.message }));
       process.exit(1);

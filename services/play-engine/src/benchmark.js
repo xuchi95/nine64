@@ -36,7 +36,11 @@ export const EPD_SUITE = [
   { fen: "8/8/8/8/8/2k5/1q6/K7 b - - 0 1", acceptableMoves: ["c3c2", "c3b3"] },
 ];
 
-/** Health suite: any legal move passes; there is no expected tactical move. */
+/**
+ * Health suite: any legal move passes; there is no expected tactical move.
+ * It also carries the Chess960 smoke positions, so a castling-encoding
+ * regression in 960 mode fails the suite instead of only failing in a game.
+ */
 export const POSITION_SUITE = [
   { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", acceptableMoves: [] },
   { fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", acceptableMoves: [] },
@@ -44,10 +48,20 @@ export const POSITION_SUITE = [
   { fen: "r3k2r/pppq1ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPPQ1PPP/R3K2R w KQkq - 6 8", acceptableMoves: [] },
   { fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", acceptableMoves: [] },
   { fen: "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1", acceptableMoves: [] },
+  // Rook + pawn endgame, and a queen endgame: deeper search, still bounded.
+  { fen: "8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 0 1", acceptableMoves: [] },
+  { fen: "8/8/1p1r1k2/p1pPN1p1/P3KnP1/1P6/8/3R4 b - - 0 1", acceptableMoves: [] },
+  // Chess960 smoke: castling rights on non-standard start files.
+  { fen: "bqnbrkrn/pppppppp/8/8/8/8/PPPPPPPP/BQNBRKRN w KQkq - 0 1", acceptableMoves: [], variant: "chess960" },
+  { fen: "rknbbqnr/pppppppp/8/8/8/8/PPPPPPPP/RKNBBQNR w KQkq - 0 1", acceptableMoves: [], variant: "chess960" },
 ];
+
+/** Suite identity: stored with every benchmark row so results stay comparable. */
+export { BENCHMARK_SUITE_VERSION } from "./capabilities.js";
 
 export const BENCHMARK_DEFAULT_MOVETIME_MS = { epd: 3000, positions: 1500 };
 export const BENCHMARK_MAX_MOVETIME_MS = 10_000;
+
 
 /** Full UCI normalization: lowercase, promotion piece preserved. */
 export function normalizeUci(uci) {
@@ -193,7 +207,9 @@ export async function runSuite({ kind, suite, search, movetimeMs, engineVersion,
     } catch (err) {
       outcome = { ok: false, errorCode: classifyEngineError(err) };
     }
-    rows.push(evaluatePosition(entry, outcome, variant));
+    // A per-entry variant wins so one suite can mix Standard and Chess960.
+    rows.push(evaluatePosition(entry, outcome, entry.variant ?? variant));
+
   }
   return summarize(kind, rows, engineVersion);
 }

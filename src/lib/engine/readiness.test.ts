@@ -20,6 +20,8 @@ function row(over: Partial<BenchmarkRow> & { kind: BenchmarkRow["kind"]; created
     passed: true,
     result: {},
     configSignature: SIG,
+    suiteVersion: null,
+
     ...over,
   };
 }
@@ -192,5 +194,28 @@ describe("publish readiness", () => {
       row({ kind: "epd", createdAt: "2026-09-02T10:05:00Z", configSignature: sigB }),
     ];
     expect(evaluateReadiness(runsForB, sigB).ready).toBe(true);
+  });
+});
+
+describe("benchmark suite identity", () => {
+  const SUITE = "titan-v6-1";
+
+  it("accepts rows produced by the current suite", () => {
+    const rows = [
+      row({ kind: "bench", createdAt: "2026-01-01T00:00:00Z", suiteVersion: SUITE }),
+      row({ kind: "epd", createdAt: "2026-01-01T00:01:00Z", suiteVersion: SUITE }),
+    ];
+    expect(evaluateReadiness(rows, SIG, SUITE).ready).toBe(true);
+  });
+
+  it("rejects rows from an older suite instead of treating them as missing", () => {
+    const rows = [
+      row({ kind: "bench", createdAt: "2026-01-01T00:00:00Z", suiteVersion: "titan-v5" }),
+      row({ kind: "epd", createdAt: "2026-01-01T00:01:00Z", suiteVersion: null }),
+    ];
+    const result = evaluateReadiness(rows, SIG, SUITE);
+    expect(result.ready).toBe(false);
+    expect(result.reasons).toContain("benchmark_suite_outdated");
+    expect(result.reasons).not.toContain("missing_bench");
   });
 });

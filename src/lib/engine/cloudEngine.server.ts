@@ -13,6 +13,7 @@
  * we never fake health and never silently downgrade to a weaker engine.
  */
 import type { EngineConfig } from "./profileTypes";
+import { parseCapabilities, type EngineCapabilities } from "./capabilities";
 
 export type CloudEngineStatus =
   | "ok"
@@ -27,11 +28,22 @@ export interface CloudEngineHealth {
   engineVersion: string | null;
   arch: string | null;
   pool: { size: number; busy: number } | null;
-  stats: { searches: number; timeouts: number; restarts: number; illegal: number } | null;
+  stats: {
+    searches: number;
+    timeouts: number;
+    restarts: number;
+    illegal: number;
+    hardStops: number;
+  } | null;
+  /** Real container hardware, or null when the service predates capabilities. */
+  capabilities: EngineCapabilities | null;
+  /** Identity of the benchmark suites this engine build ships. */
+  benchmarkSuiteVersion: string | null;
   latencyMs: number | null;
   checkedAt: number;
   detail: string;
 }
+
 
 
 export interface BestMoveRequest {
@@ -330,8 +342,14 @@ export function interpretHealthPayload(
       timeouts: Number(s["timeouts"] ?? 0) || 0,
       restarts: Number(s["restarts"] ?? 0) || 0,
       illegal: Number(s["illegal"] ?? 0) || 0,
+      hardStops: Number(s["hardStops"] ?? 0) || 0,
     };
   }
+
+  const capabilities = parseCapabilities(body["capabilities"]);
+  const suiteRaw = body["benchmarkSuiteVersion"];
+  const benchmarkSuiteVersion =
+    typeof suiteRaw === "string" && suiteRaw ? suiteRaw : (capabilities?.benchmarkSuiteVersion ?? null);
 
   if (!pool || statusText !== "ok" || !engineVersion) {
     // Unknown shape or an engine that is still starting: never report healthy.
@@ -341,6 +359,8 @@ export function interpretHealthPayload(
       arch,
       pool,
       stats,
+      capabilities,
+      benchmarkSuiteVersion,
       latencyMs,
       checkedAt,
       detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /health không hợp lệ.",
@@ -354,6 +374,8 @@ export function interpretHealthPayload(
     arch,
     pool,
     stats,
+    capabilities,
+    benchmarkSuiteVersion,
     latencyMs,
     checkedAt,
     detail: busy ? "Toàn bộ engine process đang bận." : "OK",
@@ -367,6 +389,8 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     arch: null,
     pool: null,
     stats: null,
+    capabilities: null,
+    benchmarkSuiteVersion: null,
     checkedAt: Date.now(),
   };
   if (!creds) {

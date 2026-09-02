@@ -111,7 +111,7 @@ export class EnginePool {
     this.size = Math.max(1, size);
     this.engines = [];
     this.waiters = [];
-    this.stats = { searches: 0, timeouts: 0, restarts: 0, illegal: 0 };
+    this.stats = { searches: 0, timeouts: 0, restarts: 0, illegal: 0, hardStops: 0 };
   }
 
   async init() {
@@ -182,11 +182,28 @@ export class EnginePool {
   /**
    * Runs one search. `goArgs` is built by the caller (clock-based when the
    * caller supplies a clock, movetime otherwise).
+   *
+   * `hardStopMs` is an OUTER safety cap that is independent of the UCI search
+   * budget: when it elapses the engine is asked to `stop` and is given
+   * `graceMs` to emit its bestmove. Only if it stays silent past the grace
+   * period is the process treated as hung, killed and replaced. This keeps a
+   * clock-based search truly native (no `movetime`) while still bounding the
+   * worst case.
    */
-  async search({ fen, moves = [], options = {}, goArgs, timeoutMs = 30_000, newGame = false }) {
+  async search({
+    fen,
+    moves = [],
+    options = {},
+    goArgs,
+    timeoutMs = 30_000,
+    newGame = false,
+    hardStopMs = null,
+    graceMs = 1_500,
+  }) {
     const engine = await this.#acquire(Math.min(timeoutMs, 15_000));
-    const info = { depth: null, nodes: null, nps: null, tbhits: null, timeMs: null };
+    const info = { depth: null, nodes: null, nps: null, tbhits: null, timeMs: null, hardStopped: false };
     const started = Date.now();
+    let stopTimer = null;
     const onLine = (line) => {
       if (!line.startsWith("info ")) return;
       const depth = /\bdepth (\d+)/.exec(line);
@@ -209,7 +226,23 @@ export class EnginePool {
       const position = moves.length ? `position fen ${fen} moves ${moves.join(" ")}` : `position fen ${fen}`;
       engine.send(position);
       engine.send(`go ${goArgs}`);
-      const line = await engine.waitFor((l) => l.startsWith("bestmove"), timeoutMs);
+
+      // Outer hard cap: graceful `stop` first, hard timeout only after grace.
+      let waitMs = timeoutMs;
+      if (Number.isFinite(hardStopMs) && hardStopMs > 0) {
+        waitMs = Math.min(timeoutMs, hardStopMs + graceMs);
+        stopTimer = setTimeout(() => {
+          info.hardStopped = true;
+          this.stats.hardStops += 1;
+          try {
+            engine.send("stop");
+          } catch {
+            /* engine already gone; waitFor rejects */
+          }
+        }, hardStopMs);
+      }
+
+      const line = await engine.waitFor((l) => l.startsWith("bestmove"), waitMs);
       const parts = line.split(/\s+/);
       info.timeMs = Date.now() - started;
       this.stats.searches += 1;
@@ -227,10 +260,12 @@ export class EnginePool {
       }
       throw err;
     } finally {
+      if (stopTimer) clearTimeout(stopTimer);
       engine.off("line", onLine);
       if (!engine.dead) this.#release(engine);
     }
   }
+
 
   async bench(timeoutMs = 180_000) {
     const engine = await this.#acquire(15_000);

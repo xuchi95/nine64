@@ -178,6 +178,7 @@ describe("health probe", () => {
       "degraded",
     );
     expect(interpretHealthPayload({}, 10).status).toBe("unavailable");
-    expect(interpretHealthPayload(HEALTHY, 10).stats).toEqual(HEALTHY.stats);
+    // `hardStops` is reported as 0 when an older engine build omits it.
+    expect(interpretHealthPayload(HEALTHY, 10).stats).toEqual({ hardStops: 0, ...HEALTHY.stats });
   });
 });

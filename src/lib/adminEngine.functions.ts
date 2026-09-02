@@ -97,6 +97,26 @@ export const saveEngineDraft = createServerFn({ method: "POST" })
     return saveProfileDraft(data.slug, data.config, data.expectedVersion);
   });
 
+/**
+ * Builds a Titan v6 draft that matches the hardware the engine is really
+ * running on. It only RETURNS a config — nothing is saved or published, so the
+ * admin still goes through Save draft → qualification → Publish.
+ */
+export const recommendTitanDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(() => ({}))
+  .handler(async ({ context }) => {
+    await assertAdmin(context, "engine");
+    const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+    const { recommendTitanConfig, resourceFit } = await import("@/lib/engine/capabilities");
+    const health = await cloudEngineHealthCached(0);
+    const caps = health.capabilities ?? null;
+    if (!caps) return { ok: false as const, code: "CAPABILITIES_UNKNOWN" };
+    const config = recommendTitanConfig(caps);
+    return { ok: true as const, config, capabilities: caps, fit: resourceFit(config, caps) };
+  });
+
+
 export const publishEngineProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>

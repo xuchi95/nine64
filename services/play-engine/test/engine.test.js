@@ -60,13 +60,13 @@ test("healthPayload reports a healthy pool with real busy counts", () => {
   assert.equal(out.engineVersion, "Stockfish 18");
   assert.equal(typeof out.arch, "string");
   assert.deepEqual(out.pool, { size: 2, busy: 1 });
-  assert.deepEqual(out.stats, { searches: 3, timeouts: 0, restarts: 1, illegal: 0 });
+  assert.deepEqual(out.stats, { searches: 3, timeouts: 0, restarts: 1, illegal: 0, hardStops: 0 });
 });
 
 test("healthPayload reports starting before the pool is ready and never leaks env", () => {
   const out = healthPayload({ size: 1, engines: [], stats: {} }, false);
   assert.equal(out.status, "starting");
-  assert.deepEqual(out.stats, { searches: 0, timeouts: 0, restarts: 0, illegal: 0 });
+  assert.deepEqual(out.stats, { searches: 0, timeouts: 0, restarts: 0, illegal: 0, hardStops: 0 });
   const serialized = JSON.stringify(out);
   assert.ok(!/PLAY_ENGINE|PRIVATE KEY|Bearer/i.test(serialized));
 });
@@ -160,6 +160,10 @@ test("positions suite passes when every returned move is legal", async () => {
     { bestmove: "e1g1", depth: 15 },
     { bestmove: "b4b1", depth: 18 },
     { bestmove: "e2e4", depth: 22 },
+    { bestmove: "e6e7", depth: 19 },
+    { bestmove: "f6e7", depth: 21 },
+    { bestmove: "e2e4", depth: 16 },
+    { bestmove: "e2e4", depth: 16 },
   ];
   const out = await run("positions", POSITION_SUITE, outcomes);
   assert.equal(out.detail.legalMoves, POSITION_SUITE.length);
@@ -203,4 +207,84 @@ test("suite movetime defaults per kind and clamps", () => {
   assert.equal(suiteMovetime("epd", 99999), 10_000);
   assert.equal(classifyEngineError(new Error("engine_exit")), "engine_error");
   assert.equal(classifyEngineError(new Error("timeout")), "timeout");
+});
+
+// ---------------------------------------------------------------------------
+// Titan v6: native time management, resource fit, Syzygy and suite identity.
+// ---------------------------------------------------------------------------
+import { hardStopFor, resourceMismatch, syzygyOptions } from "../src/index.js";
+import { capabilities, inspectSyzygy, recommendedHashMb, maxSafeHashMb } from "../src/capabilities.js";
+import { BENCHMARK_SUITE_VERSION, POSITION_SUITE as SUITE_960 } from "../src/benchmark.js";
+
+test("clock mode never appends movetime, even with a max move time cap", () => {
+  const body = {
+    search: { policy: "clock", wtimeMs: 60000, btimeMs: 60000, wincMs: 0, bincMs: 0, maxMoveTimeMs: 30000 },
+  };
+  const args = buildGoArgs(body);
+  assert.equal(args, "wtime 60000 btime 60000");
+  assert.ok(!args.includes("movetime"), "Stockfish must manage its own clock");
+  assert.equal(hardStopFor(body), 30000, "the cap becomes an outer hard stop instead");
+});
+
+test("untimed play still uses an explicit 12s movetime and has no hard stop", () => {
+  const body = { search: { policy: "movetime", movetimeMs: 12000, maxMoveTimeMs: 30000 } };
+  assert.equal(buildGoArgs(body), "movetime 12000");
+  assert.equal(hardStopFor(body), null);
+});
+
+test("SyzygyPath can never be set by a caller", () => {
+  const out = sanitizeOptions({ SyzygyPath: "/etc", SyzygyProbeLimit: 6 });
+  assert.deepEqual(out, { SyzygyProbeLimit: "6" });
+});
+
+test("Syzygy options are only injected when real tablebase files exist", () => {
+  assert.deepEqual(syzygyOptions({ SyzygyProbeLimit: "6" }, { ready: false, pieces: 0 }, null), {});
+  assert.deepEqual(syzygyOptions({}, { ready: true, pieces: 6 }, "/tb"), {}, "no probing requested");
+  assert.deepEqual(
+    syzygyOptions({ SyzygyProbeLimit: "7" }, { ready: true, pieces: 5 }, "/tb"),
+    { SyzygyPath: "/tb", SyzygyProbeLimit: "5" },
+    "never advertise more pieces than are installed",
+  );
+});
+
+test("inspectSyzygy fails closed when nothing is configured", () => {
+  const tb = inspectSyzygy("");
+  assert.equal(tb.ready, false);
+  assert.equal(tb.pieces, 0);
+});
+
+test("a config that does not fit the container is rejected, not clamped", () => {
+  const caps = { maxThreadsPerEngine: 8, maxSafeHashMb: 8192 };
+  assert.equal(resourceMismatch({ Threads: "8", Hash: "4096" }, caps), null);
+  assert.equal(resourceMismatch({ Threads: "16" }, caps), "threads>8");
+  assert.equal(resourceMismatch({ Hash: "16384" }, caps), "hash>8192");
+});
+
+test("hash policy leaves headroom for NNUE, threads and the Node process", () => {
+  assert.equal(recommendedHashMb(16384), 4096);
+  assert.equal(recommendedHashMb(32768), 8192);
+  assert.ok(maxSafeHashMb(16384) > recommendedHashMb(16384));
+});
+
+test("capabilities are browser-safe and describe the real container", () => {
+  const caps = capabilities(1);
+  assert.ok(caps.cpuCount >= 1);
+  assert.ok(caps.memoryMb > 0);
+  assert.equal(caps.poolSize, 1);
+  assert.equal(caps.maxThreadsPerEngine, caps.cpuCount);
+  assert.equal(caps.benchmarkSuiteVersion, BENCHMARK_SUITE_VERSION);
+  const serialized = JSON.stringify(caps);
+  assert.ok(!/PLAY_ENGINE|PRIVATE KEY|Bearer|\//.test(serialized), "no secrets or paths");
+});
+
+test("health advertises the benchmark suite version", () => {
+  const out = healthPayload({ size: 1, engines: [], stats: {} }, true);
+  assert.equal(out.benchmarkSuiteVersion, BENCHMARK_SUITE_VERSION);
+  assert.equal(out.capabilities.benchmarkSuiteVersion, BENCHMARK_SUITE_VERSION);
+});
+
+test("the position suite covers Chess960 as well as standard chess", () => {
+  const variants = new Set(SUITE_960.map((e) => e.variant ?? "standard"));
+  assert.ok(variants.has("chess960"));
+  assert.ok(variants.has("standard"));
 });

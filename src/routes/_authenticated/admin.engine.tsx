@@ -21,9 +21,16 @@ import {
   disableEngineProfile,
   checkEngineConnection,
   runTitanQualificationSuite,
+  recommendTitanDraft,
   type EngineOverview,
 } from "@/lib/adminEngine.functions";
-import { engineConfigSchema, TITAN_SLUG, type EngineConfig } from "@/lib/engine/profileTypes";
+import {
+  engineConfigSchema,
+  TITAN_SLUG,
+  titanFullStrengthViolations,
+  type EngineConfig,
+} from "@/lib/engine/profileTypes";
+import { resourceFit } from "@/lib/engine/capabilities";
 import { BENCHMARK_KINDS, type BenchmarkRow } from "@/lib/engine/benchmarkTypes";
 import type { QualificationResult } from "@/lib/engine/qualificationTypes";
 
@@ -156,6 +163,7 @@ function AdminEnginePage() {
   const [reason, setReason] = useState("");
   const [versions, setVersions] = useState<Awaited<ReturnType<typeof getEngineVersions>>>([]);
   const probe = useServerFn(checkEngineConnection);
+  const recommend = useServerFn(recommendTitanDraft);
   const [probeResult, setProbeResult] = useState<string | null>(null);
   const qualify = useServerFn(runTitanQualificationSuite);
   const [qual, setQual] = useState<QualificationResult | null>(null);
@@ -227,6 +235,16 @@ function AdminEnginePage() {
       return { ...prev, [key]: Number.isNaN(value as number) ? prev[key] : value } as EngineConfig;
     });
   };
+
+  const caps = data?.health.capabilities ?? null;
+  const strengthViolations = draft && titan?.slug === TITAN_SLUG ? titanFullStrengthViolations(draft) : [];
+  const fit = resourceFit(draft ?? ({} as EngineConfig), caps);
+  /** Only the fields that really differ between draft and the live profile. */
+  const publishedDiff = draft && titan
+    ? (Object.keys(draft) as (keyof EngineConfig)[])
+        .filter((key) => JSON.stringify(draft[key]) !== JSON.stringify(titan.config[key]))
+        .map((key) => `${String(key)}: ${JSON.stringify(titan.config[key])} → ${JSON.stringify(draft[key])}`)
+    : [];
 
   const parsed = draft ? engineConfigSchema.safeParse(draft) : null;
   const reasonValid = reason.trim().length >= 10;
@@ -353,6 +371,78 @@ function AdminEnginePage() {
                 ))}
               </ul>
             )}
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-3">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Cpu className="h-4 w-4" /> {t("adminc.engine.inspector")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="text-muted-foreground">{t("adminc.engine.hardware")}</p>
+              <p className="font-mono">
+                {caps ? `${caps.cpuCount} vCPU · ${caps.memoryMb} MB · pool ${caps.poolSize}` : "—"}
+              </p>
+              <p className="font-mono text-muted-foreground">
+                {caps ? `threads ≤ ${caps.maxThreadsPerEngine} · hash ≤ ${caps.maxSafeHashMb} MB` : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Syzygy</p>
+              <p className="font-mono">
+                {caps ? (caps.syzygyReady ? `ready · ${caps.syzygyPieces}p` : "not installed") : "—"}
+              </p>
+              <p className="text-muted-foreground">{t("adminc.engine.suite")}</p>
+              <p className="font-mono">{data?.health.benchmarkSuiteVersion ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">{t("adminc.engine.fullStrength")}</p>
+              <p className={cn("font-semibold", strengthViolations.length ? "text-destructive" : "text-emerald-400")}>
+                {strengthViolations.length ? t("adminc.engine.fail") : t("adminc.engine.ok")}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">{strengthViolations.join(", ") || "—"}</p>
+              <p className="mt-1 text-muted-foreground">{t("adminc.engine.resourceFit")}</p>
+              <p className={cn("font-semibold", fit.ok ? "text-emerald-400" : "text-destructive")}>
+                {fit.ok ? t("adminc.engine.ok") : t("adminc.engine.fail")}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">{fit.reasons.join(", ") || "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">{t("adminc.engine.diff")}</p>
+              {publishedDiff.length === 0 ? (
+                <p className="text-muted-foreground">{t("adminc.engine.noDiff")}</p>
+              ) : (
+                <ul className="space-y-0.5 font-mono text-[10px]">
+                  {publishedDiff.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              )}
+              <Button
+                className="mt-2"
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
+                  void (async () => {
+                    setNotice(null);
+                    const res = (await recommend({ data: {} })) as
+                      | { ok: true; config: EngineConfig }
+                      | { ok: false; code: string };
+                    if (res.ok) {
+                      setDraft(res.config);
+                      setNotice({ kind: "success", text: t("adminc.engine.recommended") });
+                    } else {
+                      setNotice({ kind: "error", text: res.code });
+                    }
+                  })()
+                }
+              >
+                {t("adminc.engine.recommend")}
+              </Button>
+            </div>
           </CardContent>
         </Card>
         <Card className="md:col-span-3">

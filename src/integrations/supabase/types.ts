@@ -478,6 +478,7 @@ export type Database = {
           result: Json
           score: number | null
           signature: string | null
+          suite_version: string | null
         }
         Insert: {
           config_signature?: string | null
@@ -496,6 +497,7 @@ export type Database = {
           result?: Json
           score?: number | null
           signature?: string | null
+          suite_version?: string | null
         }
         Update: {
           config_signature?: string | null
@@ -514,6 +516,7 @@ export type Database = {
           result?: Json
           score?: number | null
           signature?: string | null
+          suite_version?: string | null
         }
         Relationships: []
       }
