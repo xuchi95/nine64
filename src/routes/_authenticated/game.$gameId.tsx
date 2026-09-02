@@ -115,6 +115,10 @@ function OnlineGamePage() {
   const respondTakebackFn = useServerFn(respondTakeback);
   const touchPresenceFn = useServerFn(touchPresence);
   const createChallengeFn = useServerFn(createChallenge);
+  const getGamePlayersFn = useServerFn(getGamePlayers);
+  const [playerNames, setPlayerNames] = useState<{ whiteName: string; blackName: string } | null>(
+    null,
+  );
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
