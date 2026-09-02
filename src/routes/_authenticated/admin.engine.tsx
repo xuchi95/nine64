@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Activity, Cpu, Gauge, History, RefreshCw, ShieldAlert } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Cpu, Gauge, History, RefreshCw, ShieldAlert } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -454,14 +454,16 @@ function AdminEnginePage() {
                       size="sm"
                       disabled={busy || !parsed?.success || !titan}
                       onClick={() =>
-                        void run(() =>
-                          saveDraft({
-                            data: {
-                              slug: titan!.slug,
-                              config: parsed!.data,
-                              expectedVersion: titan!.version,
-                            },
-                          }),
+                        void run(
+                          () =>
+                            saveDraft({
+                              data: {
+                                slug: titan!.slug,
+                                config: parsed!.data,
+                                expectedVersion: titan!.version,
+                              },
+                            }),
+                          t("adminc.engine.draftSaved"),
                         )
                       }
                     >
@@ -471,18 +473,20 @@ function AdminEnginePage() {
                       size="sm"
                       disabled={busy || !parsed?.success || !reasonValid || !titan}
                       onClick={() =>
-                        void run(() =>
-                          publish({
-                            data: {
-                              slug: titan!.slug,
-                              config: parsed!.data,
-                              status: "published",
-                              enabled,
-                              reason: reason.trim(),
-                              expectedVersion: titan!.version,
-                              ignoreReadiness: false,
-                            },
-                          }),
+                        void run(
+                          () =>
+                            publish({
+                              data: {
+                                slug: titan!.slug,
+                                config: parsed!.data,
+                                status: "published",
+                                enabled,
+                                reason: reason.trim(),
+                                expectedVersion: titan!.version,
+                                ignoreReadiness: false,
+                              },
+                            }),
+                          t("adminc.engine.published").replace("{v}", String(titan!.version + 1)),
                         )
                       }
                     >
@@ -493,7 +497,10 @@ function AdminEnginePage() {
                       size="sm"
                       disabled={busy || !reasonValid || !titan}
                       onClick={() =>
-                        void run(() => disable({ data: { slug: titan!.slug, reason: reason.trim() } }))
+                        void run(
+                          () => disable({ data: { slug: titan!.slug, reason: reason.trim() } }),
+                          t("adminc.engine.disabled"),
+                        )
                       }
                     >
                       {t("adminc.engine.disable")}
