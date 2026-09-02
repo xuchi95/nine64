@@ -69,18 +69,28 @@ function GamesPage() {
         else if (g.playerColor === null) continue;
         else if (g.result.winner === g.playerColor) wins += 1;
         else losses += 1;
-
       } else {
         const g = item.game;
-        if (g.status !== "completed" || !g.result) continue;
+        // Finished online games can be marked completed/finished/aborted; rely
+        // on the canonical result (and winner_id when present) instead.
+        const result = g.result ?? null;
+        const winnerId = (g as { winner_id?: string | null }).winner_id ?? null;
+        if (!result && !winnerId) continue;
+        if (result === "1/2-1/2") {
+          draws += 1;
+          continue;
+        }
         const isWhite = g.white_id === user?.id;
-        if (g.result === "1/2-1/2") draws += 1;
-        else if ((g.result === "1-0" && isWhite) || (g.result === "0-1" && !isWhite)) wins += 1;
+        const won = winnerId
+          ? winnerId === user?.id
+          : (result === "1-0" && isWhite) || (result === "0-1" && !isWhite);
+        if (won) wins += 1;
         else losses += 1;
       }
     }
     return { total: items.length, wins, draws, losses };
   }, [items, user?.id]);
+
 
 
   return (
