@@ -47,6 +47,7 @@ export function GameChatPanel({
 }: GameChatPanelProps) {
   const listFn = useServerFn(listGameChat);
   const sendFn = useServerFn(sendGameChat);
+  const aiReplyFn = useServerFn(requestAiChatReply);
   const [messages, setMessages] = useState<GameChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
