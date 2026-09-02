@@ -601,10 +601,44 @@ export function ChessBoard(props: ChessBoardProps) {
 
   const finishPromotion = (piece: "q" | "r" | "b" | "n") => {
     if (!promotion) return;
-    onMove(promotion.from, promotion.to, piece);
+    const { from, to } = promotion;
+    // Close first: `onMove` can trigger a synchronous re-render (or fail), and
+    // a lingering overlay would lock the board behind an opaque backdrop.
     setPromotion(null);
     setSelected(null);
+    setDragging(null);
+    const ok = onMove(from, to, piece);
+    if (!ok) playSound("illegal");
   };
+
+  const cancelPromotion = useCallback(() => {
+    setPromotion(null);
+    setSelected(null);
+    setDragging(null);
+  }, []);
+
+  /** Escape closes the picker instead of trapping the player behind it. */
+  useEffect(() => {
+    if (!promotion) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") cancelPromotion();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [promotion, cancelPromotion]);
+
+  /**
+   * A stale picker (opponent moved, takeback, game ended, board rewound) must
+   * never stay on screen: the pawn it refers to is no longer there.
+   */
+  const promotionPiece = promotion
+    ? pieces.find((p) => p.square === promotion.from && p.type === "p")
+    : undefined;
+  useEffect(() => {
+    if (!promotion) return;
+    if (!interactive || !promotionPiece) cancelPromotion();
+  }, [promotion, promotionPiece, interactive, cancelPromotion]);
+
 
   // Spring-like travel curve: quick launch, tiny settle at the target square.
   const travelEase = "cubic-bezier(0.22, 1.16, 0.32, 1)";
@@ -1243,14 +1277,25 @@ export function ChessBoard(props: ChessBoardProps) {
           </svg>
         )}
 
-        {promotion && (
-
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/65 backdrop-blur-[2px]">
+        {promotion && promotionPiece && (
+          <div
+            className="absolute inset-0 z-40 flex items-center justify-center bg-black/65 backdrop-blur-[2px]"
+            role="dialog"
+            aria-modal="true"
+            // Tapping the backdrop cancels instead of trapping the player.
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              if (e.target === e.currentTarget) cancelPromotion();
+            }}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+          >
             <div className="panel animate-nexus-pop flex gap-1 p-2">
               {(["q", "r", "b", "n"] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => finishPromotion(p)}
                   // min 44px keeps the tap target usable on 390px-wide phones.
                   className="flex min-h-11 min-w-11 items-center justify-center rounded-md bg-surface-2 p-1 transition-colors hover:bg-primary/20"
@@ -1258,7 +1303,7 @@ export function ChessBoard(props: ChessBoardProps) {
                 >
                   <Piece
                     type={p}
-                    color={promotion.from[1] === "7" ? "w" : "b"}
+                    color={promotionPiece.color}
                     set={pieceSet}
                     size={Math.max(36, Math.min(64, squareSize))}
                   />
@@ -1268,6 +1313,7 @@ export function ChessBoard(props: ChessBoardProps) {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
