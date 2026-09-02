@@ -175,7 +175,7 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
       attempts += 1;
       result = await requestBestMove({
         fen: probe.fen,
-        variant: "standard",
+        variant: probe.variant ?? "standard",
         config: probeConfig,
         clock: null,
         sessionId: `qualification-${kind}-${index}-${crypto.randomUUID()}`,
@@ -191,7 +191,15 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
       expected: probe.moves,
       fen: probe.fen,
       attempts,
-      legal: result.status === "ok" && isLegalBenchmarkMove(probe.fen, result.bestmove),
+      // Standard positions are re-validated locally with chess.js. Chess960
+      // castling uses king-takes-rook encoding that chess.js cannot verify, so
+      // there the engine service's own variant-aware legality check is
+      // authoritative — an illegal 960 move comes back as an engine error.
+      legal:
+        result.status === "ok" &&
+        (probe.variant === "chess960"
+          ? Boolean(result.bestmove)
+          : isLegalBenchmarkMove(probe.fen, result.bestmove)),
     });
   }
   const engineErrors = results.filter((result) => result.status !== "ok").length;
@@ -219,6 +227,7 @@ async function runBoundedBenchmark(kind: BenchmarkKind, config: EngineConfig) {
     detail: {
       kind,
       mode: "bounded_bestmove",
+      suiteVersion: QUALIFICATION_SUITE_VERSION,
       solved,
       total,
       legalMoves: results.filter((result) => result.status === "ok" && result.bestmove && result.legal).length,
@@ -281,6 +290,7 @@ export async function runBenchmark(args: {
       signature: run.engineVersion ?? null,
       // Benchmarks are always recorded against the exact config they ran with.
       config_signature: await engineConfigFingerprint(config),
+      suite_version: QUALIFICATION_SUITE_VERSION,
       created_by: args.actorId,
     } as never)
     .select("*")
