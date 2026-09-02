@@ -1064,7 +1064,7 @@ function OnlineGamePage() {
               }}
               seconds={(opponentColor === "w" ? clock.w : clock.b) / 1000}
               active={turn !== myColor && live}
-              clockEnabled={!!game.time_control}
+              clockEnabled={hasLiveClock}
               captured={[]}
             />
             <PlayerCard
@@ -1075,7 +1075,7 @@ function OnlineGamePage() {
               }}
               seconds={((myColor ?? "w") === "w" ? clock.w : clock.b) / 1000}
               active={turn === myColor && live}
-              clockEnabled={!!game.time_control}
+              clockEnabled={hasLiveClock}
               captured={[]}
             />
             <GamePanel
@@ -1090,12 +1090,15 @@ function OnlineGamePage() {
               <StatRow label="Variant" value={game.variant} />
               <StatRow label="Time control" value={timeControlLabel(game.time_control)} mono />
               <StatRow label="Pool" value={game.pool ?? "—"} />
-              {game.pace === "daily" && game.deadline_at && live && (
+              {isDaily && game.deadline_at && live && (
                 <StatRow
                   label="Hạn nước đi"
-                  value={new Date(game.deadline_at).toLocaleString("vi-VN")}
+                  value={`${new Date(game.deadline_at).toLocaleString("vi-VN")}${
+                    deadlineLabel ? ` · ${deadlineLabel}` : ""
+                  }`}
                 />
               )}
+
               <StatRow label="Sync" value={syncMode === "realtime" ? "Realtime" : "Backup"} />
               {result && <StatRow label="Result" value={`${result.reason} · ${result.code}`} />}
             </GamePanel>
