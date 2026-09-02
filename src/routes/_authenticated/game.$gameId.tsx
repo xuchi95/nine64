@@ -1015,12 +1015,9 @@ function OnlineGamePage() {
   }
 
   const opponentId = myColor === "w" ? game.black_id : game.white_id;
-  const opponentIsAi = Boolean(
-    myColor === "w" ? playerNames?.blackIsAi : playerNames?.whiteIsAi,
-  );
   const opponentName =
-    ((myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
-      opponentId.slice(0, 8)) + (opponentIsAi ? " (AI)" : "");
+    (myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
+    opponentId.slice(0, 8);
   const myName =
     (myColor === "w" ? playerNames?.whiteName : playerNames?.blackName) ??
     user?.email?.split("@")[0] ??

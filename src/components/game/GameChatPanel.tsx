@@ -4,7 +4,7 @@ import { Send } from "lucide-react";
 import { GamePanel } from "@/components/game/GamePanel";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { listGameChat, sendGameChat } from "@/lib/chat.functions";
+import { listGameChat, requestAiChatReply, sendGameChat } from "@/lib/chat.functions";
 import {
   buildChatTimeline,
   mergeChatMessages,
@@ -47,6 +47,7 @@ export function GameChatPanel({
 }: GameChatPanelProps) {
   const listFn = useServerFn(listGameChat);
   const sendFn = useServerFn(sendGameChat);
+  const aiReplyFn = useServerFn(requestAiChatReply);
   const [messages, setMessages] = useState<GameChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -115,6 +116,10 @@ export function GameChatPanel({
       const row = (await sendFn({ data: { gameId, body, ply } })) as GameChatMessage;
       ingest([row]);
       setDraft("");
+      // Opponent answer runs after the send resolves; realtime delivers it.
+      void aiReplyFn({ data: { gameId, ply } })
+        .then(() => window.setTimeout(() => void refresh(), 600))
+        .catch(() => undefined);
     } catch {
       setError("Không gửi được tin nhắn. Thử lại nhé.");
     } finally {
