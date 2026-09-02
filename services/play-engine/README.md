@@ -34,7 +34,11 @@ upstream tag (`STOCKFISH_REF`, default `sf_18`) and builds it unmodified with
   "engineVersion": "Stockfish 18",
   "arch": "x64",
   "pool": { "size": 1, "busy": 0 },
-  "stats": { "searches": 0, "timeouts": 0, "restarts": 0, "illegal": 0 }
+  "capabilities": { "cpuCount": 8, "memoryMb": 16384, "poolSize": 1, "maxThreadsPerEngine": 8 },
+  "benchmarkSuiteVersion": "titan-v6-3",
+  "serviceVersion": "play-engine-titan-v6.3",
+  "serviceBuildId": "play-engine-titan-v6.3-a1b2c3d4e5f6",
+  "stats": { "searches": 0, "timeouts": 0, "restarts": 0, "illegal": 0, "hardStops": 0 }
 }
 ```
 
@@ -70,6 +74,7 @@ than being passed on.
 | `ENGINE_POOL_SIZE`         | engine processes (one search each)       |
 | `ENGINE_THREADS`           | threads reported in benchmark hardware   |
 | `ENGINE_ARCH`              | optional arch label for `/health`       |
+| `SERVICE_BUILD_ID`         | immutable image identity from Cloud Build|
 | `PLAY_ENGINE_AUDIENCE`     | expected OIDC audience (the Run URL)     |
 | `ALLOWED_SERVICE_ACCOUNTS` | allowlisted caller service accounts      |
 
@@ -110,21 +115,33 @@ gcloud iam service-accounts create play-engine-run
 gcloud iam service-accounts create nine64-backend
 ```
 
-### 4. Build the image — build context is `services/play-engine`
+### 4. Build, deploy and verify (canonical workflow)
 
 ```bash
-cd services/play-engine
-gcloud builds submit . \
-  --tag REGION-docker.pkg.dev/PROJECT_ID/nine64/play-engine:sf18
+PROJECT_ID=PROJECT_ID REGION=REGION MAX_INSTANCES=4 ./scripts/deploy-play-engine.sh
 ```
 
+The script uses `services/play-engine/cloudbuild.yaml`, injects an immutable
+`play-engine-titan-v6.3-<git-sha>` build ID, pushes to Artifact Registry,
+deploys a private 8 vCPU / 16 GiB revision, waits for readiness, grants only the
+backend caller `run.invoker`, then executes the strict health contract verifier.
 The build compiles Stockfish from source (10–20 minutes on the first run).
 
-### 5. Deploy privately
+To verify an existing revision without deploying:
+
+```bash
+PLAY_ENGINE_URL=https://YOUR-SERVICE-URL ./scripts/verify-play-engine.sh
+```
+
+The verifier mints an audience-bound identity token through the active `gcloud`
+identity when available. It fails unless suite, build ID, Stockfish 18,
+capabilities, pool size and Titan v6 Max resources all match exactly.
+
+### 5. Manual deployment reference
 
 ```bash
 gcloud run deploy play-engine \
-  --image REGION-docker.pkg.dev/PROJECT_ID/nine64/play-engine:sf18 \
+  --image REGION-docker.pkg.dev/PROJECT_ID/nine64/play-engine:titan-v6-3 \
   --region REGION \
   --no-allow-unauthenticated \
   --service-account play-engine-run@PROJECT_ID.iam.gserviceaccount.com \
@@ -208,3 +225,32 @@ use **Emergency disable** or rollback if anything regresses.
 
 No NPS, Elo or "production ready" claim may be made before a real deployment has
 produced these benchmark rows.
+
+## Revision inspection and rollback
+
+```bash
+gcloud run revisions list --service play-engine-v2 --region asia-southeast1
+gcloud run services describe play-engine-v2 --region asia-southeast1 \
+  --format='value(status.latestReadyRevisionName,status.traffic)'
+gcloud artifacts docker images list \
+  asia-southeast1-docker.pkg.dev/chess-nine64/nine64/play-engine \
+  --include-tags
+
+# Roll traffic back to a previously verified immutable revision.
+gcloud run services update-traffic play-engine-v2 --region asia-southeast1 \
+  --to-revisions PREVIOUS_REVISION=100
+```
+
+After rollback, run `scripts/verify-play-engine.sh` again. A revision is never
+considered compatible merely because Cloud Run reports it Ready.
+
+## Local Docker smoke test
+
+```bash
+cd services/play-engine
+./test/docker-smoke.sh
+```
+
+This compiles the real Stockfish binary, starts the image and waits for a real
+UCI handshake. It prints `SKIP` when Docker is unavailable rather than claiming
+the image passed.
