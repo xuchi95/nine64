@@ -18,8 +18,8 @@ export function TimeControlPicker({
         className={cn(
           "w-full rounded-md border px-3 py-2 text-left text-sm transition-colors",
           value === null
-            ? "border-primary/60 bg-primary/15"
-            : "border-border bg-surface-2 hover:border-primary/40",
+            ? "border-primary bg-primary font-semibold text-primary-foreground shadow-sm ring-2 ring-primary/35"
+            : "border-border bg-surface-2 text-muted-foreground hover:border-primary/50 hover:text-foreground",
         )}
       >
         {t("game.timeControl.unlimited")}
