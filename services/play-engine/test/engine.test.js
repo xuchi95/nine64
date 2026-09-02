@@ -2,6 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { sanitizeOptions, buildGoArgs, healthPayload } from "../src/index.js";
 import { verifyIdToken } from "../src/auth.js";
+import {
+  BENCHMARK_SUITE_VERSION as CANONICAL_SUITE,
+  SERVICE_BUILD_ID,
+  SERVICE_VERSION,
+} from "../src/version.js";
 
 test("sanitizeOptions drops anything outside the allowlist", () => {
   const out = sanitizeOptions({
@@ -49,7 +54,10 @@ test("auth rejects a missing bearer token", async () => {
 test("healthPayload reports a healthy pool with real busy counts", () => {
   const pool = {
     size: 2,
-    engines: [{ busy: false, dead: false, version: "Stockfish 18" }, { busy: true, dead: false }],
+    engines: [
+      { busy: false, dead: false, version: "Stockfish 18" },
+      { busy: true, dead: false },
+    ],
     stats: { searches: 3, timeouts: 0, restarts: 1, illegal: 0 },
     get engineVersion() {
       return "Stockfish 18";
@@ -61,6 +69,8 @@ test("healthPayload reports a healthy pool with real busy counts", () => {
   assert.equal(typeof out.arch, "string");
   assert.deepEqual(out.pool, { size: 2, busy: 1 });
   assert.deepEqual(out.stats, { searches: 3, timeouts: 0, restarts: 1, illegal: 0, hardStops: 0 });
+  assert.equal(out.serviceVersion, SERVICE_VERSION);
+  assert.equal(out.serviceBuildId, SERVICE_BUILD_ID);
 });
 
 test("healthPayload reports starting before the pool is ready and never leaks env", () => {
@@ -74,9 +84,14 @@ test("healthPayload reports starting before the pool is ready and never leaks en
 test("buildGoArgs reads the nested search block sent by the backend", () => {
   assert.equal(buildGoArgs({ search: { policy: "depth", depth: 22 } }), "depth 22");
   assert.equal(buildGoArgs({ search: { policy: "nodes", nodes: 500000 } }), "nodes 500000");
-  assert.equal(buildGoArgs({ search: { policy: "movetime", movetimeMs: 12000 } }), "movetime 12000");
   assert.equal(
-    buildGoArgs({ search: { policy: "clock", wtimeMs: 60000, btimeMs: 45000, wincMs: 2000, bincMs: 2000 } }),
+    buildGoArgs({ search: { policy: "movetime", movetimeMs: 12000 } }),
+    "movetime 12000",
+  );
+  assert.equal(
+    buildGoArgs({
+      search: { policy: "clock", wtimeMs: 60000, btimeMs: 45000, wincMs: 2000, bincMs: 2000 },
+    }),
     "wtime 60000 btime 45000 winc 2000 binc 2000",
   );
   assert.equal(buildGoArgs({}), "movetime 3000");
@@ -125,7 +140,11 @@ test("timeout is never counted as an illegal move", async () => {
 });
 
 test("engine exit is never counted as an illegal move", async () => {
-  const out = await run("epd", [mateEntry], [new Error("engine_exit"), new Error("engine_exit"), new Error("engine_exit")]);
+  const out = await run(
+    "epd",
+    [mateEntry],
+    [new Error("engine_exit"), new Error("engine_exit"), new Error("engine_exit")],
+  );
   assert.equal(out.detail.engineErrors, 1);
   assert.equal(out.detail.illegalMoves, 0);
   assert.equal(out.detail.timeouts, 0);
@@ -133,7 +152,11 @@ test("engine exit is never counted as an illegal move", async () => {
 });
 
 test("pool_busy has its own counter, is retried, and is never illegal", async () => {
-  const out = await run("epd", [mateEntry], [new Error("pool_busy"), new Error("pool_busy"), new Error("pool_busy")]);
+  const out = await run(
+    "epd",
+    [mateEntry],
+    [new Error("pool_busy"), new Error("pool_busy"), new Error("pool_busy")],
+  );
   assert.equal(out.detail.poolBusy, 1);
   assert.equal(out.detail.illegalMoves, 0);
   assert.equal(out.detail.engineErrors, 0);
@@ -170,12 +193,27 @@ test("a legal but non-tactical move is legal-not-solved, never illegal", () => {
   // Semantic goal: ANY legal mating move solves the position, even one that a
   // hard-coded expected-UCI list would have rejected.
   const black = EPD_SUITE.find((e) => e.id === "black_mate_01");
-  assert.equal(evaluatePosition(black, { ok: true, result: { bestmove: "c3c2", depth: 8 } }).solved, true);
-  assert.equal(evaluatePosition(black, { ok: true, result: { bestmove: "c3b3", depth: 8 } }).solved, true);
+  assert.equal(
+    evaluatePosition(black, { ok: true, result: { bestmove: "c3c2", depth: 8 } }).solved,
+    true,
+  );
+  assert.equal(
+    evaluatePosition(black, { ok: true, result: { bestmove: "c3b3", depth: 8 } }).solved,
+    true,
+  );
   const promo = EPD_SUITE.find((e) => e.id === "promotion_mate_01");
-  assert.equal(evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8q", depth: 8 } }).solved, true);
-  assert.equal(evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8r", depth: 8 } }).solved, true);
-  assert.equal(evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8n", depth: 8 } }).solved, false);
+  assert.equal(
+    evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8q", depth: 8 } }).solved,
+    true,
+  );
+  assert.equal(
+    evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8r", depth: 8 } }).solved,
+    true,
+  );
+  assert.equal(
+    evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8n", depth: 8 } }).solved,
+    false,
+  );
 });
 
 test("positions suite passes when every returned move is legal", async () => {
@@ -284,12 +322,24 @@ test("suite movetime defaults per kind and clamps to the stable window", () => {
 // Titan v6: native time management, resource fit, Syzygy and suite identity.
 // ---------------------------------------------------------------------------
 import { hardStopFor, resourceMismatch, syzygyOptions } from "../src/index.js";
-import { capabilities, inspectSyzygy, recommendedHashMb, maxSafeHashMb } from "../src/capabilities.js";
+import {
+  capabilities,
+  inspectSyzygy,
+  recommendedHashMb,
+  maxSafeHashMb,
+} from "../src/capabilities.js";
 import { BENCHMARK_SUITE_VERSION, POSITION_SUITE as SUITE_960 } from "../src/benchmark.js";
 
 test("clock mode never appends movetime, even with a max move time cap", () => {
   const body = {
-    search: { policy: "clock", wtimeMs: 60000, btimeMs: 60000, wincMs: 0, bincMs: 0, maxMoveTimeMs: 30000 },
+    search: {
+      policy: "clock",
+      wtimeMs: 60000,
+      btimeMs: 60000,
+      wincMs: 0,
+      bincMs: 0,
+      maxMoveTimeMs: 30000,
+    },
   };
   const args = buildGoArgs(body);
   assert.equal(args, "wtime 60000 btime 60000");
@@ -310,7 +360,11 @@ test("SyzygyPath can never be set by a caller", () => {
 
 test("Syzygy options are only injected when real tablebase files exist", () => {
   assert.deepEqual(syzygyOptions({ SyzygyProbeLimit: "6" }, { ready: false, pieces: 0 }, null), {});
-  assert.deepEqual(syzygyOptions({}, { ready: true, pieces: 6 }, "/tb"), {}, "no probing requested");
+  assert.deepEqual(
+    syzygyOptions({}, { ready: true, pieces: 6 }, "/tb"),
+    {},
+    "no probing requested",
+  );
   assert.deepEqual(
     syzygyOptions({ SyzygyProbeLimit: "7" }, { ready: true, pieces: 5 }, "/tb"),
     { SyzygyPath: "/tb", SyzygyProbeLimit: "5" },
@@ -352,6 +406,14 @@ test("health advertises the benchmark suite version", () => {
   const out = healthPayload({ size: 1, engines: [], stats: {} }, true);
   assert.equal(out.benchmarkSuiteVersion, BENCHMARK_SUITE_VERSION);
   assert.equal(out.capabilities.benchmarkSuiteVersion, BENCHMARK_SUITE_VERSION);
+});
+
+test("canonical version source drives every public contract field", () => {
+  const out = healthPayload({ size: 1, engines: [], stats: {} }, false);
+  assert.equal(out.benchmarkSuiteVersion, CANONICAL_SUITE);
+  assert.equal(out.capabilities.benchmarkSuiteVersion, CANONICAL_SUITE);
+  assert.equal(out.serviceVersion, SERVICE_VERSION);
+  assert.match(out.serviceBuildId, /^[\w.-]{1,64}$/);
 });
 
 test("the position suite covers Chess960 as well as standard chess", () => {

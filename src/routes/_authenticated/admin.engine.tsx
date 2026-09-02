@@ -1,7 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Activity, AlertTriangle, CheckCircle2, Cpu, Gauge, History, RefreshCw, ShieldAlert } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Cpu,
+  Gauge,
+  History,
+  RefreshCw,
+  ShieldAlert,
+} from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +41,10 @@ import {
   type EngineConfig,
 } from "@/lib/engine/profileTypes";
 import { resourceFit } from "@/lib/engine/capabilities";
-import { EXPECTED_BENCHMARK_SUITE_VERSION } from "@/lib/engine/engineContractTypes";
+import {
+  EXPECTED_BENCHMARK_SUITE_VERSION,
+  EXPECTED_ENGINE_SERVICE_VERSION,
+} from "@/lib/engine/engineContractTypes";
 import { BENCHMARK_KINDS, type BenchmarkRow } from "@/lib/engine/benchmarkTypes";
 import type { QualificationResult } from "@/lib/engine/qualificationTypes";
 import type { SelfPlayRegression } from "@/lib/engine/selfplayTypes";
@@ -40,7 +52,9 @@ import type { SelfPlayRegression } from "@/lib/engine/selfplayTypes";
 /** Typed, secret-free failure summary for a benchmark row. */
 function benchmarkIssues(row: BenchmarkRow): string {
   const detail = row.result ?? {};
-  const reasons = Array.isArray(detail["failureReasons"]) ? (detail["failureReasons"] as string[]) : [];
+  const reasons = Array.isArray(detail["failureReasons"])
+    ? (detail["failureReasons"] as string[])
+    : [];
   const counts = (["illegalMoves", "noMove", "timeouts", "engineErrors"] as const)
     .map((key) => [key, Number(detail[key] ?? 0)] as const)
     .filter(([, value]) => value > 0)
@@ -51,7 +65,9 @@ function benchmarkIssues(row: BenchmarkRow): string {
 type DetailField = { key: string; value: string; tone?: string | undefined };
 
 /** Flattens a benchmark row into labelled diagnostic fields (no secrets). */
-function benchmarkDetailFields(row: import("@/lib/engine/benchmarkTypes").BenchmarkRow): DetailField[] {
+function benchmarkDetailFields(
+  row: import("@/lib/engine/benchmarkTypes").BenchmarkRow,
+): DetailField[] {
   const d = row.result ?? {};
   const hw = row.hardware ?? {};
   const num = (key: string): number | null => {
@@ -65,10 +81,17 @@ function benchmarkDetailFields(row: import("@/lib/engine/benchmarkTypes").Benchm
   const bad = (value: number | null) => ((value ?? 0) > 0 ? "text-destructive" : undefined);
 
   return [
-    { key: "status", value: row.passed ? "OK" : "FAIL", tone: row.passed ? "text-emerald-400" : "text-destructive" },
+    {
+      key: "status",
+      value: row.passed ? "OK" : "FAIL",
+      tone: row.passed ? "text-emerald-400" : "text-destructive",
+    },
     { key: "kind", value: row.kind },
     { key: "engineVersion", value: row.engineVersion || "—" },
-    { key: "fingerprint", value: row.configSignature ? `${row.configSignature.slice(0, 12)}…` : "—" },
+    {
+      key: "fingerprint",
+      value: row.configSignature ? `${row.configSignature.slice(0, 12)}…` : "—",
+    },
     { key: "nps", value: show(row.nps) },
     { key: "nodes", value: show(row.nodes) },
     { key: "depth", value: show(row.depth) },
@@ -95,7 +118,8 @@ export const Route = createFileRoute("/_authenticated/admin/engine")({
       { title: `Máy cờ · ${APP.name}` },
       {
         name: "description",
-        content: "Quản trị hồ sơ máy cờ Nine64 Titan, benchmark, phiên chơi và trạng thái dịch vụ engine.",
+        content:
+          "Quản trị hồ sơ máy cờ Nine64 Titan, benchmark, phiên chơi và trạng thái dịch vụ engine.",
       },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: `Máy cờ · ${APP.name}` },
@@ -113,6 +137,7 @@ export const Route = createFileRoute("/_authenticated/admin/engine")({
 const HEALTH_TONE: Record<string, string> = {
   healthy: "text-emerald-400",
   degraded: "text-amber-400",
+  starting: "text-amber-400",
   unavailable: "text-destructive",
   unauthorized: "text-destructive",
   not_configured: "text-muted-foreground",
@@ -191,6 +216,19 @@ function AdminEnginePage() {
     }
   }, [load]);
 
+  const refreshLive = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await probe({ data: {} });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "refresh_failed");
+    } finally {
+      setBusy(false);
+    }
+  }, [probe, refresh]);
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -209,7 +247,10 @@ function AdminEnginePage() {
       }
       await refresh();
     } catch (err) {
-      setNotice({ kind: "error", text: err instanceof Error ? err.message : t("adminc.common.failed") });
+      setNotice({
+        kind: "error",
+        text: err instanceof Error ? err.message : t("adminc.common.failed"),
+      });
     } finally {
       setBusy(false);
     }
@@ -228,7 +269,10 @@ function AdminEnginePage() {
       setQual(result as QualificationResult);
       await refresh();
     } catch (err) {
-      setNotice({ kind: "error", text: err instanceof Error ? err.message : t("adminc.common.failed") });
+      setNotice({
+        kind: "error",
+        text: err instanceof Error ? err.message : t("adminc.common.failed"),
+      });
     } finally {
       setQualBusy(false);
     }
@@ -242,12 +286,21 @@ function AdminEnginePage() {
     setRegression(null);
     try {
       const result = await selfPlay({
-        data: { reason: reason.trim(), slug: titan.slug, config: parsed.data, games: 4, moveTimeMs: 250 },
+        data: {
+          reason: reason.trim(),
+          slug: titan.slug,
+          config: parsed.data,
+          games: 4,
+          moveTimeMs: 250,
+        },
       });
       setRegression(result as SelfPlayRegression);
       await refresh();
     } catch (err) {
-      setNotice({ kind: "error", text: err instanceof Error ? err.message : t("adminc.common.failed") });
+      setNotice({
+        kind: "error",
+        text: err instanceof Error ? err.message : t("adminc.common.failed"),
+      });
     } finally {
       setRegressionBusy(false);
     }
@@ -262,18 +315,21 @@ function AdminEnginePage() {
   };
 
   const caps = data?.health.capabilities ?? null;
-  /** Old Cloud Run image: no capabilities block and/or a different benchmark suite. */
-  const staleDeployment =
-    !caps || data?.health.benchmarkSuiteVersion !== EXPECTED_BENCHMARK_SUITE_VERSION;
-  const strengthViolations = draft && titan?.slug === TITAN_SLUG ? titanFullStrengthViolations(draft) : [];
+  const staleDeployment = data ? !data.contract.deploymentCompatible : false;
+  const strengthViolations =
+    draft && titan?.slug === TITAN_SLUG ? titanFullStrengthViolations(draft) : [];
   const fit = resourceFit(draft ?? ({} as EngineConfig), caps);
 
   /** Only the fields that really differ between draft and the live profile. */
-  const publishedDiff = draft && titan
-    ? (Object.keys(draft) as (keyof EngineConfig)[])
-        .filter((key) => JSON.stringify(draft[key]) !== JSON.stringify(titan.config[key]))
-        .map((key) => `${String(key)}: ${JSON.stringify(titan.config[key])} → ${JSON.stringify(draft[key])}`)
-    : [];
+  const publishedDiff =
+    draft && titan
+      ? (Object.keys(draft) as (keyof EngineConfig)[])
+          .filter((key) => JSON.stringify(draft[key]) !== JSON.stringify(titan.config[key]))
+          .map(
+            (key) =>
+              `${String(key)}: ${JSON.stringify(titan.config[key])} → ${JSON.stringify(draft[key])}`,
+          )
+      : [];
 
   const parsed = draft ? engineConfigSchema.safeParse(draft) : null;
   const reasonValid = reason.trim().length >= 10;
@@ -285,7 +341,7 @@ function AdminEnginePage() {
           <h1 className="text-2xl font-bold">{t("adminc.engine.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("adminc.engine.subtitle")}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={busy}>
+        <Button variant="outline" size="sm" onClick={() => void refreshLive()} disabled={busy}>
           <RefreshCw className="mr-2 h-4 w-4" /> {t("adminc.common.refresh")}
         </Button>
       </div>
@@ -294,26 +350,20 @@ function AdminEnginePage() {
         {t("adminc.engine.attribution")}
       </p>
 
-      {data && data.health.status !== "unavailable" && staleDeployment ? (
+      {data && staleDeployment ? (
         <Card className="mt-4 border-destructive/50 bg-destructive/5">
           <CardContent className="space-y-2 p-4 text-sm">
             <p className="font-semibold text-destructive">{t("adminc.engine.staleDeploy.title")}</p>
             <p className="text-muted-foreground">{t("adminc.engine.staleDeploy.body")}</p>
             <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/60 p-3 font-mono text-[11px] leading-relaxed">
-{`gcloud builds submit services/play-engine \\
-  --tag gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION}
-gcloud run deploy play-engine-v2 \\
-  --image gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION} \\
-  --region asia-southeast1 --project chess-nine64`}
+              ./scripts/deploy-play-engine.sh
             </pre>
             <p className="font-mono text-[10px] text-muted-foreground">
-              suite {data.health.benchmarkSuiteVersion ?? "—"} / {EXPECTED_BENCHMARK_SUITE_VERSION} · capabilities{" "}
-              {caps ? "ok" : "unavailable"}
+              {data.contract.code ?? "ENGINE_UNAVAILABLE"}
             </p>
           </CardContent>
         </Card>
       ) : null}
-
 
       {error ? (
         <Card className="mt-4 border-destructive/40">
@@ -360,8 +410,9 @@ gcloud run deploy play-engine-v2 \\
               {data?.health.pool ? `${data.health.pool.busy}/${data.health.pool.size}` : "—"}
             </p>
             <p className="font-mono text-xs text-muted-foreground">
-              searches {data?.health.stats?.searches ?? 0} · timeouts {data?.health.stats?.timeouts ?? 0} ·
-              restarts {data?.health.stats?.restarts ?? 0} · illegal {data?.health.stats?.illegal ?? 0}
+              searches {data?.health.stats?.searches ?? 0} · timeouts{" "}
+              {data?.health.stats?.timeouts ?? 0} · restarts {data?.health.stats?.restarts ?? 0} ·
+              illegal {data?.health.stats?.illegal ?? 0}
             </p>
             <p className="font-mono text-xs text-muted-foreground">
               {data?.health.checkedAt ? new Date(data.health.checkedAt).toLocaleTimeString() : "—"}
@@ -374,9 +425,18 @@ gcloud run deploy play-engine-v2 \\
                 setProbeResult(null);
                 void run(async () => {
                   const res = await probe({ data: {} });
+                  if (res.health && res.contract) {
+                    const liveHealth = res.health;
+                    const liveContract = res.contract;
+                    setData((current) =>
+                      current
+                        ? { ...current, health: liveHealth, contract: liveContract }
+                        : current,
+                    );
+                  }
                   setProbeResult(
                     res.ok
-                      ? `Đã kết nối Nine64 Titan · ${res.health?.engineVersion ?? "engine"}`
+                      ? `Deployment PASS · Engine READY · ${res.health?.engineVersion ?? "engine"}`
                       : res.code,
                   );
                   return res;
@@ -396,7 +456,9 @@ gcloud run deploy play-engine-v2 \\
           </CardHeader>
           <CardContent className="text-sm">
             <p className="font-semibold">{data?.breaker.open ? "OPEN" : "CLOSED"}</p>
-            <p className="font-mono text-xs text-muted-foreground">failures: {data?.breaker.failures ?? 0}</p>
+            <p className="font-mono text-xs text-muted-foreground">
+              failures: {data?.breaker.failures ?? 0}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -406,7 +468,12 @@ gcloud run deploy play-engine-v2 \\
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
-            <p className={cn("font-semibold", data?.readiness.ready ? "text-emerald-400" : "text-amber-400")}>
+            <p
+              className={cn(
+                "font-semibold",
+                data?.readiness.ready ? "text-emerald-400" : "text-amber-400",
+              )}
+            >
               {data?.readiness.ready ? t("adminc.engine.ready") : t("adminc.engine.notReady")}
             </p>
             {(data?.readiness.reasons ?? []).length === 0 ? (
@@ -436,13 +503,19 @@ gcloud run deploy play-engine-v2 \\
                 {caps ? `${caps.cpuCount} vCPU · ${caps.memoryMb} MB · pool ${caps.poolSize}` : "—"}
               </p>
               <p className="font-mono text-muted-foreground">
-                {caps ? `threads ≤ ${caps.maxThreadsPerEngine} · hash ≤ ${caps.maxSafeHashMb} MB` : "—"}
+                {caps
+                  ? `threads ≤ ${caps.maxThreadsPerEngine} · hash ≤ ${caps.maxSafeHashMb} MB`
+                  : "—"}
               </p>
             </div>
             <div>
               <p className="text-muted-foreground">Syzygy</p>
               <p className="font-mono">
-                {caps ? (caps.syzygyReady ? `ready · ${caps.syzygyPieces}p` : "not installed") : "—"}
+                {caps
+                  ? caps.syzygyReady
+                    ? `ready · ${caps.syzygyPieces}p`
+                    : "not installed"
+                  : "—"}
               </p>
               <p className="text-muted-foreground">{t("adminc.engine.suite")}</p>
               <p
@@ -460,18 +533,69 @@ gcloud run deploy play-engine-v2 \\
               </p>
             </div>
             <div>
+              <p className="text-muted-foreground">Deployment contract</p>
+              <p
+                className={cn(
+                  "font-semibold",
+                  data?.contract.deploymentCompatible ? "text-emerald-400" : "text-destructive",
+                )}
+              >
+                {data?.contract.deploymentCompatible ? "PASS" : "FAIL"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Backend: {EXPECTED_ENGINE_SERVICE_VERSION} / {EXPECTED_BENCHMARK_SUITE_VERSION}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Engine: {data?.health.serviceVersion ?? "—"} /{" "}
+                {data?.health.benchmarkSuiteVersion ?? "—"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Build: {data?.health.serviceBuildId ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Engine readiness</p>
+              <p
+                className={cn(
+                  "font-semibold",
+                  data?.contract.engineReady ? "text-emerald-400" : "text-amber-400",
+                )}
+              >
+                {data?.contract.engineReady
+                  ? "READY"
+                  : data?.health.status === "starting"
+                    ? "WARMING UP"
+                    : "BLOCKED"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Qualification: {data?.contract.ok ? "ALLOWED" : "BLOCKED"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                {data?.contract.code ?? "—"}
+              </p>
+            </div>
+            <div>
               <p className="text-muted-foreground">{t("adminc.engine.fullStrength")}</p>
-              <p className={cn("font-semibold", strengthViolations.length ? "text-destructive" : "text-emerald-400")}>
+              <p
+                className={cn(
+                  "font-semibold",
+                  strengthViolations.length ? "text-destructive" : "text-emerald-400",
+                )}
+              >
                 {strengthViolations.length ? t("adminc.engine.fail") : t("adminc.engine.ok")}
               </p>
-              <p className="font-mono text-[10px] text-muted-foreground">{strengthViolations.join(", ") || "—"}</p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                {strengthViolations.join(", ") || "—"}
+              </p>
               <p className="mt-1 text-muted-foreground">{t("adminc.engine.resourceFit")}</p>
               <p className={cn("font-semibold", fit.ok ? "text-emerald-400" : "text-destructive")}>
                 {fit.ok ? t("adminc.engine.ok") : t("adminc.engine.fail")}
               </p>
-              <p className="font-mono text-[10px] text-muted-foreground">{fit.reasons.join(", ") || "—"}</p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                {fit.reasons.join(", ") || "—"}
+              </p>
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <p className="text-muted-foreground">{t("adminc.engine.diff")}</p>
               {publishedDiff.length === 0 ? (
                 <p className="text-muted-foreground">{t("adminc.engine.noDiff")}</p>
@@ -491,8 +615,7 @@ gcloud run deploy play-engine-v2 \\
                   void (async () => {
                     setNotice(null);
                     const res = (await recommend({ data: {} })) as
-                      | { ok: true; config: EngineConfig }
-                      | { ok: false; code: string };
+                      { ok: true; config: EngineConfig } | { ok: false; code: string };
                     if (res.ok) {
                       setDraft(res.config);
                       setNotice({ kind: "success", text: t("adminc.engine.recommended") });
@@ -515,10 +638,7 @@ gcloud run deploy play-engine-v2 \\
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
             <p
-              className={cn(
-                "font-semibold",
-                data?.env.ok ? "text-emerald-400" : "text-amber-400",
-              )}
+              className={cn("font-semibold", data?.env.ok ? "text-emerald-400" : "text-amber-400")}
             >
               {data?.env.code ?? "…"}
             </p>
@@ -528,7 +648,9 @@ gcloud run deploy play-engine-v2 \\
                   key={name}
                   className={cn(
                     "rounded border px-2 py-0.5",
-                    present ? "border-emerald-500/40 text-emerald-400" : "border-amber-500/40 text-amber-400",
+                    present
+                      ? "border-emerald-500/40 text-emerald-400"
+                      : "border-amber-500/40 text-amber-400",
                   )}
                 >
                   {name}: {present ? "configured" : "missing"}
@@ -551,8 +673,8 @@ gcloud run deploy play-engine-v2 \\
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
-                <Cpu className="h-4 w-4" /> {titan?.name ?? "Nine64 Titan"} · v{titan?.version ?? 0} ·{" "}
-                {titan?.status ?? "draft"}
+                <Cpu className="h-4 w-4" /> {titan?.name ?? "Nine64 Titan"} · v{titan?.version ?? 0}{" "}
+                · {titan?.status ?? "draft"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -578,7 +700,9 @@ gcloud run deploy play-engine-v2 \\
                         <Switch
                           checked={Boolean(draft[field.key])}
                           onCheckedChange={(v) =>
-                            setDraft((prev) => (prev ? ({ ...prev, [field.key]: v } as EngineConfig) : prev))
+                            setDraft((prev) =>
+                              prev ? ({ ...prev, [field.key]: v } as EngineConfig) : prev,
+                            )
                           }
                         />
                         {field.label}
@@ -591,7 +715,9 @@ gcloud run deploy play-engine-v2 \\
                   </div>
                   {parsed && !parsed.success ? (
                     <p className="text-xs text-destructive">
-                      {parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(" · ")}
+                      {parsed.error.issues
+                        .map((i) => `${i.path.join(".")}: ${i.message}`)
+                        .join(" · ")}
                     </p>
                   ) : null}
                   <Textarea
@@ -706,7 +832,9 @@ gcloud run deploy play-engine-v2 \\
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold">{t("adminc.engine.qualify.title")}</p>
-                    <p className="text-xs text-muted-foreground">{t("adminc.engine.qualify.hint")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("adminc.engine.qualify.hint")}
+                    </p>
                   </div>
                   <Button
                     size="sm"
@@ -732,7 +860,11 @@ gcloud run deploy play-engine-v2 \\
                                   : "text-muted-foreground",
                             )}
                           >
-                            {s.status === "passed" ? "\u2713" : s.status === "failed" ? "\u2717" : "\u2013"}
+                            {s.status === "passed"
+                              ? "\u2713"
+                              : s.status === "failed"
+                                ? "\u2717"
+                                : "\u2013"}
                           </span>
                           <span className="w-32">{t(`adminc.engine.qualify.step.${s.id}`)}</span>
                           <span className="text-muted-foreground">
@@ -743,7 +875,13 @@ gcloud run deploy play-engine-v2 \\
                             {s.score !== null ? ` · ${s.score}` : ""}
                           </span>
                           {s.reason && (
-                            <span className={s.status === "skipped" ? "text-muted-foreground" : "text-destructive"}>
+                            <span
+                              className={
+                                s.status === "skipped"
+                                  ? "text-muted-foreground"
+                                  : "text-destructive"
+                              }
+                            >
                               {(() => {
                                 const key = `adminc.engine.reason.${s.reason}`;
                                 const label = t(key);
@@ -751,7 +889,6 @@ gcloud run deploy play-engine-v2 \\
                               })()}
                             </span>
                           )}
-
                         </li>
                       ))}
                     </ul>
@@ -772,16 +909,25 @@ gcloud run deploy play-engine-v2 \\
                   </div>
                 )}
               </div>
-                  <div className="rounded-xl border border-border/60 bg-card/40 p-3">
+              <div className="rounded-xl border border-border/60 bg-card/40 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold">{t("adminc.engine.selfplay.title")}</p>
-                    <p className="text-xs text-muted-foreground">{t("adminc.engine.selfplay.hint")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("adminc.engine.selfplay.hint")}
+                    </p>
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={busy || qualBusy || regressionBusy || !reasonValid || !parsed?.success || !titan}
+                    disabled={
+                      busy ||
+                      qualBusy ||
+                      regressionBusy ||
+                      !reasonValid ||
+                      !parsed?.success ||
+                      !titan
+                    }
                     onClick={() => void runRegression()}
                   >
                     <Gauge className="mr-2 h-4 w-4" />
@@ -792,25 +938,36 @@ gcloud run deploy play-engine-v2 \\
                 </div>
                 {regression && (
                   <div className="mt-3 space-y-2 text-xs">
-                    <p className={cn("text-sm font-semibold", regression.ok ? "text-emerald-400" : "text-amber-400")}>
-                      {t("adminc.engine.selfplay.score")}: {regression.wins}W / {regression.draws}D / {regression.losses}L
-                      {regression.score !== null ? ` · ${(regression.score * 100).toFixed(0)}%` : ""}
+                    <p
+                      className={cn(
+                        "text-sm font-semibold",
+                        regression.ok ? "text-emerald-400" : "text-amber-400",
+                      )}
+                    >
+                      {t("adminc.engine.selfplay.score")}: {regression.wins}W / {regression.draws}D
+                      / {regression.losses}L
+                      {regression.score !== null
+                        ? ` · ${(regression.score * 100).toFixed(0)}%`
+                        : ""}
                     </p>
                     {!regression.ok && (
-                      <p className="text-destructive">{regression.code ?? t("adminc.common.failed")}</p>
+                      <p className="text-destructive">
+                        {regression.code ?? t("adminc.common.failed")}
+                      </p>
                     )}
                     <ul className="space-y-1 font-mono text-[11px] text-muted-foreground">
                       {regression.detail.map((g) => (
                         <li key={g.index}>
-                          #{g.index + 1} · {g.candidateColor} · {g.result} · {g.plies} plies · {g.termination}
+                          #{g.index + 1} · {g.candidateColor} · {g.result} · {g.plies} plies ·{" "}
+                          {g.termination}
                           {g.error ? ` · ${g.error}` : ""}
                         </li>
                       ))}
                     </ul>
                     <p className="font-mono text-[11px] text-muted-foreground">
-                      draft {regression.candidateSignature.slice(0, 12)}… vs v{regression.baselineVersion}{" "}
-                      {regression.baselineSignature.slice(0, 12)}… · {regression.moveTimeMs}ms/move ·{" "}
-                      {(regression.durationMs / 1000).toFixed(1)}s
+                      draft {regression.candidateSignature.slice(0, 12)}… vs v
+                      {regression.baselineVersion} {regression.baselineSignature.slice(0, 12)}… ·{" "}
+                      {regression.moveTimeMs}ms/move · {(regression.durationMs / 1000).toFixed(1)}s
                       {regression.engineVersion ? ` · ${regression.engineVersion}` : ""}
                     </p>
                   </div>
@@ -895,7 +1052,9 @@ gcloud run deploy play-engine-v2 \\
                                   setOpenRows((prev) => ({ ...prev, [b.id]: !prev[b.id] }))
                                 }
                               >
-                                {openRows[b.id] ? t("adminc.engine.hide") : t("adminc.engine.details")}
+                                {openRows[b.id]
+                                  ? t("adminc.engine.hide")
+                                  : t("adminc.engine.details")}
                               </button>
                             </td>
                           </tr>

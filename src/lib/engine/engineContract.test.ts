@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { evaluateEngineContract, EXPECTED_BENCHMARK_SUITE_VERSION } from "./engineContract.server";
+import { EXPECTED_ENGINE_SERVICE_VERSION } from "./engineContractTypes";
 import type { CloudEngineHealth } from "./cloudEngine.server";
 import type { EngineConfig } from "./profileTypes";
 
@@ -21,7 +22,8 @@ function health(overrides: Partial<CloudEngineHealth> = {}): CloudEngineHealth {
     pool: { size: 1, busy: 0 },
     capabilities,
     benchmarkSuiteVersion: EXPECTED_BENCHMARK_SUITE_VERSION,
-    serviceBuildId: "play-engine-titan-v6.3",
+    serviceVersion: EXPECTED_ENGINE_SERVICE_VERSION,
+    serviceBuildId: `${EXPECTED_ENGINE_SERVICE_VERSION}-abc123`,
     ...overrides,
   } as CloudEngineHealth;
 }
@@ -32,8 +34,10 @@ describe("engine deployment contract", () => {
   it("accepts a healthy, capability-complete Stockfish 18 running the expected suite", () => {
     const contract = evaluateEngineContract(health(), config);
     expect(contract.ok).toBe(true);
+    expect(contract.deploymentCompatible).toBe(true);
+    expect(contract.engineReady).toBe(true);
     expect(contract.code).toBeNull();
-    expect(contract.serviceBuildId).toBe("play-engine-titan-v6.3");
+    expect(contract.serviceBuildId).toBe(`${EXPECTED_ENGINE_SERVICE_VERSION}-abc123`);
   });
 
   it("blocks when the deployed image reports no capabilities", () => {
@@ -43,9 +47,39 @@ describe("engine deployment contract", () => {
   });
 
   it("blocks when the engine ships a different benchmark suite", () => {
-    const contract = evaluateEngineContract(health({ benchmarkSuiteVersion: "titan-v6-2" }), config);
+    const contract = evaluateEngineContract(
+      health({ benchmarkSuiteVersion: "titan-v6-2" }),
+      config,
+    );
     expect(contract.ok).toBe(false);
     expect(contract.code).toBe("ENGINE_BENCHMARK_SUITE_MISMATCH");
+  });
+
+  it("treats a current starting deployment as compatible but not ready", () => {
+    const contract = evaluateEngineContract(
+      health({ status: "starting", engineVersion: null }),
+      config,
+    );
+    expect(contract.ok).toBe(false);
+    expect(contract.deploymentCompatible).toBe(true);
+    expect(contract.engineReady).toBe(false);
+    expect(contract.code).toBe("ENGINE_STARTING");
+  });
+
+  it("blocks missing or stale service identities", () => {
+    expect(evaluateEngineContract(health({ serviceBuildId: null }), config).code).toBe(
+      "SERVICE_BUILD_OUTDATED",
+    );
+    expect(
+      evaluateEngineContract(health({ serviceBuildId: EXPECTED_ENGINE_SERVICE_VERSION }), config)
+        .code,
+    ).toBe("SERVICE_BUILD_OUTDATED");
+    expect(evaluateEngineContract(health({ serviceVersion: null }), config).code).toBe(
+      "SERVICE_BUILD_OUTDATED",
+    );
+    expect(evaluateEngineContract(health({ serviceBuildId: "old-image" }), config).code).toBe(
+      "SERVICE_BUILD_OUTDATED",
+    );
   });
 
   it("blocks a config that does not fit the reported hardware", () => {

@@ -20,7 +20,7 @@ export interface TitanStatus {
   available: boolean;
   configured: boolean;
   enabled: boolean;
-  health: "healthy" | "degraded" | "unavailable" | "not_configured";
+  health: "healthy" | "degraded" | "starting" | "unavailable" | "not_configured";
   name: string;
   stockfishVersion: string | null;
   source: "database" | "fallback";
@@ -32,84 +32,87 @@ export interface TitanStatus {
  * Public-safe readiness of Nine64 Titan. Every field is a boolean, an enum or
  * a stable code: no credential, URL or internal error ever leaves here.
  */
-export const getTitanStatus = createServerFn({ method: "GET" }).handler(async (): Promise<TitanStatus> => {
-  const base = {
-    name: "Nine64 Titan",
-    stockfishVersion: null as string | null,
-    source: "fallback" as const,
-  };
-  try {
-    const { titanProfile } = await import("@/lib/engine/profiles.server");
-    const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
-    const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
-
-    const env = engineEnvDiagnostics();
-    const profile = await titanProfile();
-    const info = {
-      name: profile.name,
-      stockfishVersion: profile.stockfishVersion,
-      source: profile.source,
+export const getTitanStatus = createServerFn({ method: "GET" }).handler(
+  async (): Promise<TitanStatus> => {
+    const base = {
+      name: "Nine64 Titan",
+      stockfishVersion: null as string | null,
+      source: "fallback" as const,
     };
-    const configured = env.configured;
+    try {
+      const { titanProfile } = await import("@/lib/engine/profiles.server");
+      const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+      const { evaluateEngineContract } = await import("@/lib/engine/engineContract.server");
+      const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
 
-    if (!configured) {
+      const env = engineEnvDiagnostics();
+      const profile = await titanProfile();
+      const info = {
+        name: profile.name,
+        stockfishVersion: profile.stockfishVersion,
+        source: profile.source,
+      };
+      const configured = env.configured;
+
+      if (!configured) {
+        return {
+          ...info,
+          state: "not_configured",
+          available: false,
+          configured: false,
+          enabled: profile.enabled,
+          health: "not_configured",
+          code:
+            env.code === "INVALID_ENGINE_CREDENTIALS"
+              ? "INVALID_ENGINE_CREDENTIALS"
+              : "ENGINE_NOT_CONFIGURED",
+        };
+      }
+      if (!profile.enabled) {
+        return {
+          ...info,
+          state: "disabled",
+          available: false,
+          configured: true,
+          enabled: false,
+          health: "not_configured",
+          code: profile.source === "fallback" ? "PROFILE_MISSING" : "PROFILE_DISABLED",
+        };
+      }
+
+      const health = await cloudEngineHealthCached();
+      const contract = evaluateEngineContract(health, profile.config);
+      const ready = contract.ok;
+      const code = ready ? "READY" : (contract.code ?? "ENGINE_UNAVAILABLE");
       return {
         ...info,
-        state: "not_configured",
+        // The live engine version wins over the stored profile metadata.
+        stockfishVersion: health.engineVersion ?? info.stockfishVersion,
+        state: ready
+          ? "ready"
+          : health.status === "not_configured"
+            ? "not_configured"
+            : "unavailable",
+        available: ready,
+        configured: true,
+        enabled: true,
+        health: health.status === "unauthorized" ? "unavailable" : health.status,
+        code,
+      };
+    } catch {
+      // Never surface stack traces, URLs or credentials to the client.
+      return {
+        ...base,
+        state: "unavailable",
         available: false,
         configured: false,
-        enabled: profile.enabled,
-        health: "not_configured",
-        code: env.code === "INVALID_ENGINE_CREDENTIALS" ? "INVALID_ENGINE_CREDENTIALS" : "ENGINE_NOT_CONFIGURED",
-      };
-    }
-    if (!profile.enabled) {
-      return {
-        ...info,
-        state: "disabled",
-        available: false,
-        configured: true,
         enabled: false,
-        health: "not_configured",
-        code: profile.source === "fallback" ? "PROFILE_MISSING" : "PROFILE_DISABLED",
+        health: "unavailable",
+        code: "ENGINE_UNAVAILABLE",
       };
     }
-
-    const health = await cloudEngineHealthCached();
-    const ready = health.status === "healthy" || health.status === "degraded";
-    const code = ready
-      ? "READY"
-      : health.status === "unauthorized"
-        ? "ENGINE_AUTH_FAILED"
-        : health.status === "not_configured"
-          ? "ENGINE_NOT_CONFIGURED"
-          : "ENGINE_UNAVAILABLE";
-    return {
-      ...info,
-      // The live engine version wins over the stored profile metadata.
-      stockfishVersion: health.engineVersion ?? info.stockfishVersion,
-      state: ready ? "ready" : health.status === "not_configured" ? "not_configured" : "unavailable",
-      available: ready,
-      configured: true,
-      enabled: true,
-      health: health.status === "unauthorized" ? "unavailable" : health.status,
-      code,
-    };
-
-  } catch {
-    // Never surface stack traces, URLs or credentials to the client.
-    return {
-      ...base,
-      state: "unavailable",
-      available: false,
-      configured: false,
-      enabled: false,
-      health: "unavailable",
-      code: "ENGINE_UNAVAILABLE",
-    };
-  }
-});
-
+  },
+);
 
 export const startTitanSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -147,6 +150,7 @@ export const startTitanSession = createServerFn({ method: "POST" })
 
     const { titanProfile } = await import("@/lib/engine/profiles.server");
     const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+    const { evaluateEngineContract } = await import("@/lib/engine/engineContract.server");
     const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
     const { createSession } = await import("@/lib/engine/botSessions.server");
     type Snap = Extract<Awaited<ReturnType<typeof createSession>>, { ok: true }>["snapshot"];
@@ -156,7 +160,6 @@ export const startTitanSession = createServerFn({ method: "POST" })
     // Server-authoritative: every condition is re-checked here, whatever the
     // client-side preflight status said.
     try {
-
       await enforceRateLimit("titan.session", userSubject(context.userId));
     } catch {
       return { ok: false as const, code: "QUOTA_EXCEEDED" };
@@ -166,7 +169,10 @@ export const startTitanSession = createServerFn({ method: "POST" })
     // silent fallback to a weaker engine.
     const profile = await titanProfile();
     if (!profile.enabled) {
-      return { ok: false as const, code: profile.source === "fallback" ? "PROFILE_MISSING" : "PROFILE_DISABLED" };
+      return {
+        ok: false as const,
+        code: profile.source === "fallback" ? "PROFILE_MISSING" : "PROFILE_DISABLED",
+      };
     }
     const env = engineEnvDiagnostics();
     if (env.code === "INVALID_ENGINE_CREDENTIALS") {
@@ -176,18 +182,8 @@ export const startTitanSession = createServerFn({ method: "POST" })
       return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
     }
     const health = await cloudEngineHealthCached();
-    if (health.status !== "healthy" && health.status !== "degraded") {
-      return {
-        ok: false as const,
-        code:
-          health.status === "unauthorized"
-            ? "ENGINE_AUTH_FAILED"
-            : health.status === "not_configured"
-              ? "ENGINE_NOT_CONFIGURED"
-              : "ENGINE_UNAVAILABLE",
-      };
-    }
-
+    const contract = evaluateEngineContract(health, profile.config);
+    if (!contract.ok) return { ok: false as const, code: contract.code ?? "ENGINE_UNAVAILABLE" };
 
     const { startWithRollback } = await import("@/lib/engine/sessionLifecycle");
     const { endSession, engineOpeningMove } = await import("@/lib/engine/botSessions.server");
@@ -214,7 +210,9 @@ export const startTitanSession = createServerFn({ method: "POST" })
                 config: profile.config,
                 clock: null,
               });
-              return opened.ok ? { ok: true, snapshot: opened.snapshot } : { ok: false, code: opened.code };
+              return opened.ok
+                ? { ok: true, snapshot: opened.snapshot }
+                : { ok: false, code: opened.code };
             }
           : null,
       abort: async (sessionId) => {
@@ -225,7 +223,6 @@ export const startTitanSession = createServerFn({ method: "POST" })
       ? { ok: true as const, snapshot: started.snapshot }
       : { ok: false as const, code: started.code };
   });
-
 
 export const submitTitanMove = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -238,8 +235,16 @@ export const submitTitanMove = createServerFn({ method: "POST" })
         idempotencyKey: z.string().min(8).max(80),
         clock: z
           .object({
-            whiteMs: z.number().int().min(0).max(24 * 3600_000),
-            blackMs: z.number().int().min(0).max(24 * 3600_000),
+            whiteMs: z
+              .number()
+              .int()
+              .min(0)
+              .max(24 * 3600_000),
+            blackMs: z
+              .number()
+              .int()
+              .min(0)
+              .max(24 * 3600_000),
             whiteIncMs: z.number().int().min(0).max(600_000),
             blackIncMs: z.number().int().min(0).max(600_000),
           })
@@ -277,16 +282,25 @@ export const getTitanSession = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { getSession } = await import("@/lib/engine/botSessions.server");
     const res = await getSession(data.sessionId, context.userId);
-    return res.ok ? { ok: true as const, snapshot: res.snapshot } : { ok: false as const, code: res.code };
+    return res.ok
+      ? { ok: true as const, snapshot: res.snapshot }
+      : { ok: false as const, code: res.code };
   });
 
 export const endTitanSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ sessionId: z.string().uuid(), reason: z.enum(["resign", "abort", "draw", "timeout"]) }).parse(input),
+    z
+      .object({
+        sessionId: z.string().uuid(),
+        reason: z.enum(["resign", "abort", "draw", "timeout"]),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { endSession } = await import("@/lib/engine/botSessions.server");
     const res = await endSession(data.sessionId, context.userId, data.reason);
-    return res.ok ? { ok: true as const, snapshot: res.snapshot } : { ok: false as const, code: res.code };
+    return res.ok
+      ? { ok: true as const, snapshot: res.snapshot }
+      : { ok: false as const, code: res.code };
   });

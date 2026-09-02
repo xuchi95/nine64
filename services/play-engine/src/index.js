@@ -21,13 +21,8 @@ import {
   suiteRequestTimeout,
   validateSuite,
 } from "./benchmark.js";
-import {
-  BENCHMARK_SUITE_VERSION,
-  SERVICE_BUILD_ID,
-  capabilities,
-  inspectSyzygy,
-  syzygyPath,
-} from "./capabilities.js";
+import { capabilities, inspectSyzygy, syzygyPath } from "./capabilities.js";
+import { BENCHMARK_SUITE_VERSION, SERVICE_BUILD_ID, SERVICE_VERSION } from "./version.js";
 
 const PORT = Number(process.env.PORT || 8080);
 /**
@@ -62,7 +57,8 @@ function sanitizeOptions(raw) {
   for (const [key, value] of Object.entries(raw ?? {})) {
     if (!ALLOWED_OPTIONS.has(key)) continue;
     if (typeof value === "boolean") out[key] = value ? "true" : "false";
-    else if (typeof value === "number" && Number.isFinite(value)) out[key] = String(Math.trunc(value));
+    else if (typeof value === "number" && Number.isFinite(value))
+      out[key] = String(Math.trunc(value));
     else if (typeof value === "string" && /^[\w\-./: ]{1,120}$/.test(value)) out[key] = value;
   }
   return out;
@@ -128,7 +124,8 @@ function buildGoArgs(body) {
 
 function readClock(body) {
   const search = body.search && typeof body.search === "object" ? body.search : {};
-  if (body.clock && Number.isFinite(body.clock.whiteMs) && Number.isFinite(body.clock.blackMs)) return body.clock;
+  if (body.clock && Number.isFinite(body.clock.whiteMs) && Number.isFinite(body.clock.blackMs))
+    return body.clock;
   if (Number.isFinite(Number(search.wtimeMs)) && Number.isFinite(Number(search.btimeMs))) {
     return {
       whiteMs: Number(search.wtimeMs),
@@ -149,8 +146,6 @@ export function hardStopFor(body) {
   return Math.min(Math.trunc(cap), 120_000);
 }
 
-
-
 async function readBody(req, limit = 256 * 1024) {
   let size = 0;
   const chunks = [];
@@ -166,7 +161,9 @@ async function handleBestMove(body) {
   if (typeof body.fen !== "string") return { status: 400, payload: { error: "fen_required" } };
   const variant = typeof body.variant === "string" ? body.variant : "standard";
   if (!VARIANTS.has(variant)) return { status: 400, payload: { error: "unknown_variant" } };
-  const moves = Array.isArray(body.moves) ? body.moves.filter((m) => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m)) : [];
+  const moves = Array.isArray(body.moves)
+    ? body.moves.filter((m) => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m))
+    : [];
 
   // Validate the position locally, with the CORRECT variant rules, before
   // spending engine time on it.
@@ -230,7 +227,8 @@ async function handleBestMove(body) {
     }
     return { status: 200, payload: result };
   } catch (err) {
-    const code = err.message === "timeout" ? "timeout" : err.message === "pool_busy" ? "busy" : "engine_error";
+    const code =
+      err.message === "timeout" ? "timeout" : err.message === "pool_busy" ? "busy" : "engine_error";
     return { status: code === "busy" ? 429 : 504, payload: { error: code } };
   }
 }
@@ -319,7 +317,6 @@ async function handleBenchmark(body) {
   return { status: 400, payload: { error: "unknown_kind", kind } };
 }
 
-
 /**
  * Stable, typed /health payload. `busy` is derived from the real engine
  * process states, never from a static number. Never contains credentials,
@@ -337,6 +334,7 @@ export function healthPayload(enginePool, isReady) {
     pool: { size, busy: alive.filter((e) => e.busy).length },
     capabilities: capabilities(size || 1),
     benchmarkSuiteVersion: BENCHMARK_SUITE_VERSION,
+    serviceVersion: SERVICE_VERSION,
     serviceBuildId: SERVICE_BUILD_ID,
     stats: {
       searches: Number(stats.searches ?? 0),
@@ -347,7 +345,6 @@ export function healthPayload(enginePool, isReady) {
     },
   };
 }
-
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
@@ -368,7 +365,10 @@ const server = http.createServer(async (req, res) => {
     return json(res, 413, { error: "payload_too_large" });
   }
 
-  const correlationId = String(body.requestId || req.headers["x-correlation-id"] || "-").slice(0, 80);
+  const correlationId = String(body.requestId || req.headers["x-correlation-id"] || "-").slice(
+    0,
+    80,
+  );
   const started = Date.now();
   let out;
   if (url.pathname === "/bestmove") out = await handleBestMove(body);
@@ -395,7 +395,9 @@ if (process.env.NODE_ENV !== "test") {
       ready = true;
       // Safe startup diagnostics: hardware shape only, no paths or secrets.
       console.log(JSON.stringify({ msg: "engine_ready", capabilities: capabilities(pool.size) }));
-      server.listen(PORT, () => console.log(JSON.stringify({ msg: "play-engine listening", port: PORT })));
+      server.listen(PORT, () =>
+        console.log(JSON.stringify({ msg: "play-engine listening", port: PORT })),
+      );
     })
 
     .catch((err) => {

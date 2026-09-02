@@ -1,28 +1,41 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { EngineConfig } from "./profileTypes";
 
-const health = { value: {
-  status: "healthy",
-  engineVersion: "Stockfish 18",
-  pool: { size: 4, busy: 0 },
-  benchmarkSuiteVersion: "titan-v6-3",
-  serviceBuildId: "play-engine-titan-v6.3",
-  capabilities: {
-    cpuCount: 8,
-    memoryMb: 16384,
-    poolSize: 1,
-    maxThreadsPerEngine: 8,
-    recommendedHashMb: 4096,
-    maxSafeHashMb: 8192,
-    syzygyReady: false,
-    syzygyPieces: 0,
-  },
-} as never };
+const health = {
+  value: {
+    status: "healthy",
+    engineVersion: "Stockfish 18",
+    pool: { size: 4, busy: 0 },
+    benchmarkSuiteVersion: "titan-v6-3",
+    serviceBuildId: "play-engine-titan-v6.3-test",
+    serviceVersion: "play-engine-titan-v6.3",
+    capabilities: {
+      cpuCount: 8,
+      memoryMb: 16384,
+      poolSize: 1,
+      maxThreadsPerEngine: 8,
+      recommendedHashMb: 4096,
+      maxSafeHashMb: 8192,
+      syzygyReady: false,
+      syzygyPieces: 0,
+    },
+  } as never,
+};
 const env = { value: { configured: true, code: null } as never };
 const benchOutcome: { impl: (kind: string) => unknown } = {
   impl: (kind: string) => ({
     ok: true,
-    row: { id: `row-${kind}`, kind, passed: true, engineVersion: "Stockfish 18", nps: 1_000_000, depth: 20, score: 10, result: {}, configSignature: "sig" },
+    row: {
+      id: `row-${kind}`,
+      kind,
+      passed: true,
+      engineVersion: "Stockfish 18",
+      nps: 1_000_000,
+      depth: 20,
+      score: 10,
+      result: {},
+      configSignature: "sig",
+    },
   }),
 };
 const readiness = { value: { ready: true, reasons: [] as string[] } };
@@ -51,28 +64,39 @@ async function runSuite() {
 describe("titan qualification suite", () => {
   beforeEach(() => {
     health.value = {
-  status: "healthy",
-  engineVersion: "Stockfish 18",
-  pool: { size: 4, busy: 0 },
-  benchmarkSuiteVersion: "titan-v6-3",
-  serviceBuildId: "play-engine-titan-v6.3",
-  capabilities: {
-    cpuCount: 8,
-    memoryMb: 16384,
-    poolSize: 1,
-    maxThreadsPerEngine: 8,
-    recommendedHashMb: 4096,
-    maxSafeHashMb: 8192,
-    syzygyReady: false,
-    syzygyPieces: 0,
-  },
-} as never;
+      status: "healthy",
+      engineVersion: "Stockfish 18",
+      pool: { size: 4, busy: 0 },
+      benchmarkSuiteVersion: "titan-v6-3",
+      serviceBuildId: "play-engine-titan-v6.3-test",
+      serviceVersion: "play-engine-titan-v6.3",
+      capabilities: {
+        cpuCount: 8,
+        memoryMb: 16384,
+        poolSize: 1,
+        maxThreadsPerEngine: 8,
+        recommendedHashMb: 4096,
+        maxSafeHashMb: 8192,
+        syzygyReady: false,
+        syzygyPieces: 0,
+      },
+    } as never;
     env.value = { configured: true, code: null } as never;
     readiness.value = { ready: true, reasons: [] };
     draft.value = { multipv: 1 } as unknown as EngineConfig;
     benchOutcome.impl = (kind: string) => ({
       ok: true,
-      row: { id: `row-${kind}`, kind, passed: true, engineVersion: "Stockfish 18", nps: 1_000_000, depth: 20, score: 10, result: {}, configSignature: "sig" },
+      row: {
+        id: `row-${kind}`,
+        kind,
+        passed: true,
+        engineVersion: "Stockfish 18",
+        nps: 1_000_000,
+        depth: 20,
+        score: 10,
+        result: {},
+        configSignature: "sig",
+      },
     });
   });
 
@@ -94,7 +118,17 @@ describe("titan qualification suite", () => {
   it("treats HTTP success with passed=false as a failed step", async () => {
     benchOutcome.impl = (kind: string) => ({
       ok: true,
-      row: { id: `row-${kind}`, kind, passed: kind !== "epd", engineVersion: "Stockfish 18", nps: 1, depth: 1, score: 1, result: { failureReasons: ["illegal_moves"] }, configSignature: "sig" },
+      row: {
+        id: `row-${kind}`,
+        kind,
+        passed: kind !== "epd",
+        engineVersion: "Stockfish 18",
+        nps: 1,
+        depth: 1,
+        score: 1,
+        result: { failureReasons: ["illegal_moves"] },
+        configSignature: "sig",
+      },
     });
     const result = await runSuite();
     expect(result.ok).toBe(false);
@@ -105,7 +139,24 @@ describe("titan qualification suite", () => {
   });
 
   it("fails closed and skips benchmarks when the engine version is unsupported", async () => {
-    health.value = { status: "healthy", engineVersion: "Stockfish 16", pool: { size: 2, busy: 0 } } as never;
+    health.value = {
+      status: "healthy",
+      engineVersion: "Stockfish 16",
+      pool: { size: 4, busy: 0 },
+      benchmarkSuiteVersion: "titan-v6-3",
+      serviceBuildId: "play-engine-titan-v6.3-test",
+      serviceVersion: "play-engine-titan-v6.3",
+      capabilities: {
+        cpuCount: 8,
+        memoryMb: 16384,
+        poolSize: 1,
+        maxThreadsPerEngine: 8,
+        recommendedHashMb: 4096,
+        maxSafeHashMb: 8192,
+        syzygyReady: false,
+        syzygyPieces: 0,
+      },
+    } as never;
     const result = await runSuite();
     expect(result.ok).toBe(false);
     expect(result.steps[0]!.reason).toBe("engine_version_unsupported");

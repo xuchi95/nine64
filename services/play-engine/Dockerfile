@@ -21,6 +21,8 @@ RUN make -j"$(nproc)" profile-build ARCH=${ARCH} && make net && strip stockfish
 
 FROM node:20-slim AS runtime
 
+ARG SERVICE_BUILD_ID=play-engine-titan-v6.3
+
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
@@ -37,8 +39,11 @@ COPY LICENSE README.md ./
 ENV NODE_ENV=production \
     PORT=8080 \
     STOCKFISH_PATH=/usr/local/bin/stockfish \
-    ENGINE_POOL_SIZE=1
+    ENGINE_POOL_SIZE=1 \
+    SERVICE_BUILD_ID=${SERVICE_BUILD_ID}
 
 USER node
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:8080/health').then(r=>{if(r.status!==200)process.exit(1)}).catch(()=>process.exit(1))"
 CMD ["node", "src/index.js"]

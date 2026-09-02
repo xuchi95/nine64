@@ -16,15 +16,10 @@ import type { EngineConfig } from "./profileTypes";
 import { parseCapabilities, type EngineCapabilities } from "./capabilities";
 
 export type CloudEngineStatus =
-  | "ok"
-  | "not_configured"
-  | "unavailable"
-  | "timeout"
-  | "invalid"
-  | "unauthorized";
+  "ok" | "not_configured" | "unavailable" | "timeout" | "invalid" | "unauthorized";
 
 export interface CloudEngineHealth {
-  status: "healthy" | "degraded" | "unavailable" | "not_configured" | "unauthorized";
+  status: "healthy" | "degraded" | "starting" | "unavailable" | "not_configured" | "unauthorized";
   engineVersion: string | null;
   arch: string | null;
   pool: { size: number; busy: number } | null;
@@ -41,12 +36,12 @@ export interface CloudEngineHealth {
   benchmarkSuiteVersion: string | null;
   /** Safe build identity of the deployed container image. */
   serviceBuildId: string | null;
+  /** Stable service release identity, independent from the image build SHA. */
+  serviceVersion: string | null;
   latencyMs: number | null;
   checkedAt: number;
   detail: string;
 }
-
-
 
 export interface BestMoveRequest {
   /** Exact CURRENT position to search. Canonical contract: never replay history. */
@@ -82,8 +77,8 @@ interface Credentials {
 export function cloudEngineConfigured(): boolean {
   return Boolean(
     process.env["PLAY_ENGINE_URL"] &&
-      process.env["PLAY_ENGINE_SA_EMAIL"] &&
-      process.env["PLAY_ENGINE_SA_PRIVATE_KEY"],
+    process.env["PLAY_ENGINE_SA_EMAIL"] &&
+    process.env["PLAY_ENGINE_SA_PRIVATE_KEY"],
   );
 }
 
@@ -122,15 +117,13 @@ function credentials(): Credentials | null {
   };
 }
 
-
 // --------------------------------------------------------------------------
 // OIDC token minting (service-account JWT -> Google-signed ID token)
 // --------------------------------------------------------------------------
 let tokenCache: { token: string; expiresAt: number } | null = null;
 
 function b64url(bytes: Uint8Array | string): string {
-  const raw =
-    typeof bytes === "string" ? bytes : String.fromCharCode(...Array.from(bytes));
+  const raw = typeof bytes === "string" ? bytes : String.fromCharCode(...Array.from(bytes));
   return btoa(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
@@ -206,7 +199,11 @@ const BREAKER_THRESHOLD = 4;
 const BREAKER_COOLDOWN_MS = 30_000;
 
 export function breakerState(): { open: boolean; failures: number; openUntil: number } {
-  return { open: Date.now() < breaker.openUntil, failures: breaker.failures, openUntil: breaker.openUntil };
+  return {
+    open: Date.now() < breaker.openUntil,
+    failures: breaker.failures,
+    openUntil: breaker.openUntil,
+  };
 }
 
 function noteFailure(): void {
@@ -232,13 +229,23 @@ export type CloudCallResult<T> =
  */
 export async function callCloudEngine<T>(
   path: string,
-  options: { method?: "GET" | "POST"; body?: unknown; timeoutMs?: number } = {},
+  options: {
+    method?: "GET" | "POST";
+    body?: unknown;
+    timeoutMs?: number;
+    parseErrorStatuses?: number[];
+  } = {},
 ): Promise<CloudCallResult<T>> {
   const method = options.method ?? "POST";
   const timeoutMs = options.timeoutMs ?? 8_000;
   const creds = credentials();
   if (!creds) {
-    return { ok: false, status: "not_configured", error: "PLAY_ENGINE_* is unset", httpStatus: null };
+    return {
+      ok: false,
+      status: "not_configured",
+      error: "PLAY_ENGINE_* is unset",
+      httpStatus: null,
+    };
   }
   if (Date.now() < breaker.openUntil) {
     return { ok: false, status: "unavailable", error: "circuit_open", httpStatus: null };
@@ -262,7 +269,7 @@ export async function callCloudEngine<T>(
       body: method === "POST" ? JSON.stringify(options.body ?? {}) : null,
       signal: controller.signal,
     });
-    if (!res.ok) {
+    if (!res.ok && !options.parseErrorStatuses?.includes(res.status)) {
       noteFailure();
       const unauth = res.status === 401 || res.status === 403;
       return {
@@ -302,9 +309,10 @@ async function call<T>(
   timeoutMs: number,
 ): Promise<{ ok: true; data: T } | { ok: false; status: CloudEngineStatus; error: string }> {
   const res = await callCloudEngine<T>(path, { method: "POST", body, timeoutMs });
-  return res.ok ? { ok: true, data: res.data } : { ok: false, status: res.status, error: res.error };
+  return res.ok
+    ? { ok: true, data: res.data }
+    : { ok: false, status: res.status, error: res.error };
 }
-
 
 /** Production health endpoint. Cloud Run intercepts some `*z` paths. */
 export const HEALTH_PATH = "/health";
@@ -315,13 +323,11 @@ export const HEALTH_PATH = "/health";
  * Healthy requires `status === "ok"` AND an engineVersion — a 200 alone is
  * not enough.
  */
-export function interpretHealthPayload(
-  raw: unknown,
-  latencyMs: number,
-): CloudEngineHealth {
+export function interpretHealthPayload(raw: unknown, latencyMs: number): CloudEngineHealth {
   const body = (raw ?? {}) as Record<string, unknown>;
   const statusText = typeof body["status"] === "string" ? (body["status"] as string) : null;
-  const engineVersion = typeof body["engineVersion"] === "string" ? (body["engineVersion"] as string) : null;
+  const engineVersion =
+    typeof body["engineVersion"] === "string" ? (body["engineVersion"] as string) : null;
   const arch = typeof body["arch"] === "string" ? (body["arch"] as string) : null;
   const checkedAt = Date.now();
 
@@ -350,10 +356,33 @@ export function interpretHealthPayload(
 
   const capabilities = parseCapabilities(body["capabilities"]);
   const buildRaw = body["serviceBuildId"];
-  const serviceBuildId = typeof buildRaw === "string" && /^[\w.\-]{1,64}$/.test(buildRaw) ? buildRaw : null;
+  const serviceBuildId =
+    typeof buildRaw === "string" && /^[\w.-]{1,64}$/.test(buildRaw) ? buildRaw : null;
+  const versionRaw = body["serviceVersion"];
+  const serviceVersion =
+    typeof versionRaw === "string" && /^[\w.-]{1,64}$/.test(versionRaw) ? versionRaw : null;
   const suiteRaw = body["benchmarkSuiteVersion"];
   const benchmarkSuiteVersion =
-    typeof suiteRaw === "string" && suiteRaw ? suiteRaw : (capabilities?.benchmarkSuiteVersion ?? null);
+    typeof suiteRaw === "string" && suiteRaw
+      ? suiteRaw
+      : (capabilities?.benchmarkSuiteVersion ?? null);
+
+  if (statusText === "starting") {
+    return {
+      status: "starting",
+      engineVersion,
+      arch,
+      pool,
+      stats,
+      capabilities,
+      benchmarkSuiteVersion,
+      serviceBuildId,
+      serviceVersion,
+      latencyMs,
+      checkedAt,
+      detail: "Engine đang khởi động.",
+    };
+  }
 
   if (!pool || statusText !== "ok" || !engineVersion) {
     // Unknown shape or an engine that is still starting: never report healthy.
@@ -366,6 +395,7 @@ export function interpretHealthPayload(
       capabilities,
       benchmarkSuiteVersion,
       serviceBuildId,
+      serviceVersion,
       latencyMs,
       checkedAt,
       detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /health không hợp lệ.",
@@ -382,6 +412,7 @@ export function interpretHealthPayload(
     capabilities,
     benchmarkSuiteVersion,
     serviceBuildId,
+    serviceVersion,
     latencyMs,
     checkedAt,
     detail: busy ? "Toàn bộ engine process đang bận." : "OK",
@@ -398,6 +429,7 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     capabilities: null,
     benchmarkSuiteVersion: null,
     serviceBuildId: null,
+    serviceVersion: null,
     checkedAt: Date.now(),
   };
   if (!creds) {
@@ -409,7 +441,12 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     };
   }
   const startedAt = Date.now();
-  const res = await callCloudEngine<unknown>(HEALTH_PATH, { method: "GET", timeoutMs: 8_000 });
+  const res = await callCloudEngine<unknown>(HEALTH_PATH, {
+    method: "GET",
+    timeoutMs: 8_000,
+    // A conforming cold service returns its full contract with HTTP 503.
+    parseErrorStatuses: [503],
+  });
   if (!res.ok) {
     return {
       ...empty,
@@ -428,8 +465,9 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
 let healthCache: { value: CloudEngineHealth; fetchedAt: number } | null = null;
 const HEALTH_TTL_MS = 10_000;
 
-
-export async function cloudEngineHealthCached(maxAgeMs = HEALTH_TTL_MS): Promise<CloudEngineHealth> {
+export async function cloudEngineHealthCached(
+  maxAgeMs = HEALTH_TTL_MS,
+): Promise<CloudEngineHealth> {
   if (healthCache && Date.now() - healthCache.fetchedAt < maxAgeMs) return healthCache.value;
   const value = await cloudEngineHealth();
   healthCache = { value, fetchedAt: Date.now() };
@@ -473,7 +511,17 @@ export async function requestBestMove(req: BestMoveRequest): Promise<BestMoveRes
   }
 
   const attempts = config.maxRetries + 1;
-  let last: BestMoveResult = { status: "unavailable", bestmove: null, ponder: null, depth: null, nodes: null, nps: null, timeMs: null, tbHits: null, engineVersion: null };
+  let last: BestMoveResult = {
+    status: "unavailable",
+    bestmove: null,
+    ponder: null,
+    depth: null,
+    nodes: null,
+    nps: null,
+    timeMs: null,
+    tbHits: null,
+    engineVersion: null,
+  };
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const res = await call<{
       bestmove?: string;
@@ -495,7 +543,10 @@ export async function requestBestMove(req: BestMoveRequest): Promise<BestMoveRes
         options: { ...uciOptions(config), UCI_Chess960: req.variant === "chess960" },
         search,
         // Top-level fields the engine service reads directly.
-        movetimeMs: config.timePolicy === "movetime" ? Math.min(config.moveTimeMs, config.maxMoveTimeMs) : undefined,
+        movetimeMs:
+          config.timePolicy === "movetime"
+            ? Math.min(config.moveTimeMs, config.maxMoveTimeMs)
+            : undefined,
         clock: config.timePolicy === "clock" && req.clock ? req.clock : undefined,
         timeoutMs: config.requestTimeoutMs,
         newGame: req.newGame,
@@ -520,7 +571,13 @@ export async function requestBestMove(req: BestMoveRequest): Promise<BestMoveRes
     }
     last = {
       status: res.ok ? "invalid" : res.status,
-      bestmove: null, ponder: null, depth: null, nodes: null, nps: null, timeMs: null, tbHits: null,
+      bestmove: null,
+      ponder: null,
+      depth: null,
+      nodes: null,
+      nps: null,
+      timeMs: null,
+      tbHits: null,
       engineVersion: null,
       error: res.ok ? "missing_bestmove" : res.error,
     };
