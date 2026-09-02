@@ -318,6 +318,7 @@ function OnlineGamePage() {
       } finally {
         if (opts?.showSpinner) setSyncing(false);
       }
+
     },
     [applyServerState, gameId, syncStateFn],
   );
