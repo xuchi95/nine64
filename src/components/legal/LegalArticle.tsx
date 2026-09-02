@@ -31,7 +31,7 @@ export function LegalArticle({
 }) {
   const { locale, setLocale } = useT();
   const doc = docs[locale];
-  const date = new Date().toLocaleDateString(locale === "vi" ? "vi-VN" : "en-GB");
+  const date = new Date(APP.legalEffectiveDate).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-GB");
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -51,26 +51,51 @@ export function LegalArticle({
 
       <h1 className="mt-6 text-3xl font-bold tracking-tight">{doc.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {doc.updatedLabel}: {date}
+        {doc.updatedLabel}: {date} · {APP.name} · {APP.siteUrl} ·{" "}
+        <a className="underline underline-offset-4" href={`mailto:${APP.contactEmail}`}>
+          {APP.contactEmail}
+        </a>
       </p>
 
-      <section className="mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
-        <p>{doc.intro}</p>
-        {doc.sections.map((s, i) => (
-          <div key={s.heading}>
-            <h2 className="mt-8 border-l-2 border-primary/70 pl-3 text-xl font-extrabold tracking-tight text-foreground first:mt-0">
-              {i + 1}. {s.heading}
-            </h2>
-            {s.body.map((p, j) => (
-              <p key={j} className="mt-2">
-                {p}
-              </p>
-            ))}
-          </div>
-        ))}
+      <DocBody doc={doc}>
         <p className="text-muted-foreground">{doc.contact}</p>
         {children}
-      </section>
+      </DocBody>
+
+      {/* The English text is always present in the HTML so reviewers (and
+          crawlers) never see a Vietnamese-only document. */}
+      {locale !== "en" ? (
+        <div className="mt-14 border-t border-border pt-8">
+          <h2 className="text-2xl font-bold tracking-tight">English version</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {docs.en.updatedLabel}: {new Date(APP.legalEffectiveDate).toLocaleDateString("en-GB")} · {APP.contactEmail}
+          </p>
+          <DocBody doc={docs.en}>
+            <p className="text-muted-foreground">{docs.en.contact}</p>
+          </DocBody>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function DocBody({ doc, children }: { doc: LegalDoc; children?: ReactNode }) {
+  return (
+    <section className="mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
+      <p>{doc.intro}</p>
+      {doc.sections.map((s, i) => (
+        <div key={s.heading}>
+          <h2 className="mt-8 border-l-2 border-primary/70 pl-3 text-xl font-extrabold tracking-tight text-foreground first:mt-0">
+            {i + 1}. {s.heading}
+          </h2>
+          {s.body.map((p, j) => (
+            <p key={j} className="mt-2">
+              {p}
+            </p>
+          ))}
+        </div>
+      ))}
+      {children}
+    </section>
   );
 }
