@@ -57,6 +57,7 @@ import { Route as WatchIndexRouteImport } from './routes/watch.index'
 import { Route as WatchGameIdRouteImport } from './routes/watch.$gameId'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminEngineRouteImport } from './routes/_authenticated/admin.engine'
 import { Route as AuthenticatedAdminIntelligenceRouteImport } from './routes/_authenticated/admin.intelligence'
@@ -331,6 +332,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
+  id: '/admin/ai',
+  path: '/admin/ai',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   id: '/admin/audit',
   path: '/admin/audit',
@@ -557,6 +563,7 @@ export interface FileRoutesByFullPath {
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -638,6 +645,7 @@ export interface FileRoutesByTo {
   '/puzzles': typeof PuzzlesIndexRoute
   '/watch': typeof WatchIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -721,6 +729,7 @@ export interface FileRoutesById {
   '/puzzles/': typeof PuzzlesIndexRoute
   '/watch/': typeof WatchIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/engine': typeof AuthenticatedAdminEngineRoute
   '/_authenticated/admin/intelligence': typeof AuthenticatedAdminIntelligenceRoute
@@ -804,6 +813,7 @@ export interface FileRouteTypes {
     | '/puzzles/'
     | '/watch/'
     | '/.lovable/oauth/consent'
+    | '/admin/ai'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -885,6 +895,7 @@ export interface FileRouteTypes {
     | '/puzzles'
     | '/watch'
     | '/.lovable/oauth/consent'
+    | '/admin/ai'
     | '/admin/audit'
     | '/admin/engine'
     | '/admin/intelligence'
@@ -967,6 +978,7 @@ export interface FileRouteTypes {
     | '/puzzles/'
     | '/watch/'
     | '/.lovable/oauth/consent'
+    | '/_authenticated/admin/ai'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/engine'
     | '/_authenticated/admin/intelligence'
@@ -1396,6 +1408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/ai': {
+      id: '/_authenticated/admin/ai'
+      path: '/admin/ai'
+      fullPath: '/admin/ai'
+      preLoaderRoute: typeof AuthenticatedAdminAiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/audit': {
       id: '/_authenticated/admin/audit'
       path: '/admin/audit'
@@ -1640,6 +1659,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
   AuthenticatedStudiesRoute: typeof AuthenticatedStudiesRoute
   AuthenticatedTrainingPlanRoute: typeof AuthenticatedTrainingPlanRoute
+  AuthenticatedAdminAiRoute: typeof AuthenticatedAdminAiRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminEngineRoute: typeof AuthenticatedAdminEngineRoute
   AuthenticatedAdminIntelligenceRoute: typeof AuthenticatedAdminIntelligenceRoute
@@ -1669,6 +1689,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
   AuthenticatedStudiesRoute: AuthenticatedStudiesRoute,
   AuthenticatedTrainingPlanRoute: AuthenticatedTrainingPlanRoute,
+  AuthenticatedAdminAiRoute: AuthenticatedAdminAiRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminEngineRoute: AuthenticatedAdminEngineRoute,
   AuthenticatedAdminIntelligenceRoute: AuthenticatedAdminIntelligenceRoute,
