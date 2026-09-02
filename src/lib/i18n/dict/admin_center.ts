@@ -128,6 +128,8 @@ export default {
     "adminc.engine.reason.illegal_moves": "Engine đã trả về ít nhất một nước đi thực sự không hợp lệ",
     "adminc.engine.reason.benchmark_timeout": "Có vị trí kiểm định bị hết thời gian",
     "adminc.engine.reason.benchmark_engine_error": "Có lỗi tiến trình Stockfish trong kiểm định",
+    "adminc.engine.reason.benchmark_engine_busy": "Máy cờ đang bận nên không chạy hết bộ kiểm định",
+    "adminc.engine.reason.benchmark_no_move": "Có vị trí engine không trả về nước đi nào",
     "adminc.engine.reason.benchmark_config_mismatch": "Benchmark không thuộc cấu hình Titan hiện tại",
     "adminc.engine.reason.benchmark_suite_outdated": "Benchmark được tạo bởi bộ kiểm định cũ — hãy chạy lại kiểm định",
     "adminc.engine.inspector": "Bảng soi sức mạnh",
