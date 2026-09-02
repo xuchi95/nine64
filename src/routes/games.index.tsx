@@ -58,7 +58,29 @@ function GamesPage() {
     );
   }, [localGames, onlineGames, filter]);
 
-  const stats = useMemo(() => historyStats(localGames.filter((g) => g.mode === "ai")), [localGames]);
+  const stats = useMemo(() => {
+    let wins = 0;
+    let draws = 0;
+    let losses = 0;
+    for (const item of items) {
+      if (item.kind === "local") {
+        const g = item.game;
+        if (!g.result) continue;
+        if (g.result.winner === "draw") draws += 1;
+        else if (g.result.winner === g.playerColor) wins += 1;
+        else losses += 1;
+      } else {
+        const g = item.game;
+        if (g.status !== "completed" || !g.result) continue;
+        const isWhite = g.white_id === user?.id;
+        if (g.result === "1/2-1/2") draws += 1;
+        else if ((g.result === "1-0" && isWhite) || (g.result === "0-1" && !isWhite)) wins += 1;
+        else losses += 1;
+      }
+    }
+    return { total: items.length, wins, draws, losses };
+  }, [items, user?.id]);
+
 
   return (
     <AppShell>
