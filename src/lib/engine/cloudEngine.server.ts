@@ -39,6 +39,8 @@ export interface CloudEngineHealth {
   capabilities: EngineCapabilities | null;
   /** Identity of the benchmark suites this engine build ships. */
   benchmarkSuiteVersion: string | null;
+  /** Safe build identity of the deployed container image. */
+  serviceBuildId: string | null;
   latencyMs: number | null;
   checkedAt: number;
   detail: string;
@@ -347,6 +349,8 @@ export function interpretHealthPayload(
   }
 
   const capabilities = parseCapabilities(body["capabilities"]);
+  const buildRaw = body["serviceBuildId"];
+  const serviceBuildId = typeof buildRaw === "string" && /^[\w.\-]{1,64}$/.test(buildRaw) ? buildRaw : null;
   const suiteRaw = body["benchmarkSuiteVersion"];
   const benchmarkSuiteVersion =
     typeof suiteRaw === "string" && suiteRaw ? suiteRaw : (capabilities?.benchmarkSuiteVersion ?? null);
@@ -361,6 +365,7 @@ export function interpretHealthPayload(
       stats,
       capabilities,
       benchmarkSuiteVersion,
+      serviceBuildId,
       latencyMs,
       checkedAt,
       detail: pool ? "Engine chưa sẵn sàng." : "Phản hồi /health không hợp lệ.",
@@ -376,6 +381,7 @@ export function interpretHealthPayload(
     stats,
     capabilities,
     benchmarkSuiteVersion,
+    serviceBuildId,
     latencyMs,
     checkedAt,
     detail: busy ? "Toàn bộ engine process đang bận." : "OK",
@@ -391,6 +397,7 @@ export async function cloudEngineHealth(): Promise<CloudEngineHealth> {
     stats: null,
     capabilities: null,
     benchmarkSuiteVersion: null,
+    serviceBuildId: null,
     checkedAt: Date.now(),
   };
   if (!creds) {
