@@ -32,6 +32,7 @@ import {
   type EngineConfig,
 } from "@/lib/engine/profileTypes";
 import { resourceFit } from "@/lib/engine/capabilities";
+import { EXPECTED_BENCHMARK_SUITE_VERSION } from "@/lib/engine/engineContractTypes";
 import { BENCHMARK_KINDS, type BenchmarkRow } from "@/lib/engine/benchmarkTypes";
 import type { QualificationResult } from "@/lib/engine/qualificationTypes";
 import type { SelfPlayRegression } from "@/lib/engine/selfplayTypes";
