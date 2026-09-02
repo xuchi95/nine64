@@ -385,7 +385,9 @@ function AdminEnginePage() {
                 void run(async () => {
                   const res = await probe({ data: {} });
                    if (res.health && res.contract) {
-                     setData((current) => current ? { ...current, health: res.health!, contract: res.contract! } : current);
+                     const liveHealth = res.health;
+                     const liveContract = res.contract;
+                     setData((current) => current ? { ...current, health: liveHealth, contract: liveContract } : current);
                    }
                   setProbeResult(
                     res.ok

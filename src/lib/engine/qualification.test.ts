@@ -107,7 +107,7 @@ describe("titan qualification suite", () => {
   });
 
   it("fails closed and skips benchmarks when the engine version is unsupported", async () => {
-    health.value = { status: "healthy", engineVersion: "Stockfish 16", pool: { size: 2, busy: 0 } } as never;
+    health.value = { ...health.value, engineVersion: "Stockfish 16" } as never;
     const result = await runSuite();
     expect(result.ok).toBe(false);
     expect(result.steps[0]!.reason).toBe("engine_version_unsupported");
