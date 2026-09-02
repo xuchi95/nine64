@@ -1,6 +1,7 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { requestAiTurn } from "@/lib/rankedAi/rankedAi.functions";
 import { rulesFor, type AppliedMove, type RulesPosition } from "@/lib/chess/rules";
 import type { VariantId } from "@/config/variants";
 import { AppShell } from "@/components/layout/AppShell";
@@ -116,9 +117,13 @@ function OnlineGamePage() {
   const touchPresenceFn = useServerFn(touchPresence);
   const createChallengeFn = useServerFn(createChallenge);
   const getGamePlayersFn = useServerFn(getGamePlayers);
-  const [playerNames, setPlayerNames] = useState<{ whiteName: string; blackName: string } | null>(
-    null,
-  );
+  const requestAiTurnFn = useServerFn(requestAiTurn);
+  const [playerNames, setPlayerNames] = useState<{
+    whiteName: string;
+    blackName: string;
+    whiteIsAi?: boolean;
+    blackIsAi?: boolean;
+  } | null>(null);
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
@@ -323,6 +328,22 @@ function OnlineGamePage() {
     [applyServerState, gameId, syncStateFn],
   );
 
+  // AI seat safety net: if the AI is on move (first move as white, a reload, or
+  // a dropped nudge), ask the server to play. The call is idempotent.
+  const aiGame = Boolean((game as unknown as { ai_game?: boolean } | null)?.ai_game);
+  const aiSideToMove =
+    aiGame &&
+    game?.status === "active" &&
+    myColor !== null &&
+    sideToMoveFromFen(game.current_fen) !== myColor;
+  useEffect(() => {
+    if (!aiSideToMove || !gameId) return;
+    const t = setTimeout(() => {
+      void requestAiTurnFn({ data: { gameId } }).catch(() => undefined);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [aiSideToMove, gameId, requestAiTurnFn]);
+
   // Resolve display names for both seats once per game (hot sync path stays lean).
   useEffect(() => {
     let cancelled = false;
@@ -331,6 +352,8 @@ function OnlineGamePage() {
         const names = (await getGamePlayersFn({ data: { gameId } })) as {
           whiteName: string;
           blackName: string;
+          whiteIsAi?: boolean;
+          blackIsAi?: boolean;
         };
         if (!cancelled) setPlayerNames(names);
       } catch {
@@ -750,8 +773,16 @@ function OnlineGamePage() {
             res.serverNow,
             sideToMoveFromFen(res.game.current_fen),
           );
+          // AI opponent seat: ask the server to play its reply. Idempotent and
+          // version-guarded, and realtime delivers the resulting move.
+          if (res.aiToMove) {
+            void requestAiTurnFn({ data: { gameId: game.id } })
+              .then(() => refresh().catch(() => undefined))
+              .catch(() => undefined);
+          }
           return;
         }
+
 
         // ---- Rejected: resync canonical state, never blind-retry ----
         setPendingMove(null);
@@ -777,7 +808,7 @@ function OnlineGamePage() {
         inFlightRef.current = false;
       }
     },
-    [applyServerState, game, makeMoveFn, myColor, refresh],
+    [applyServerState, game, makeMoveFn, myColor, refresh, requestAiTurnFn],
   );
 
 
@@ -979,9 +1010,12 @@ function OnlineGamePage() {
   }
 
   const opponentId = myColor === "w" ? game.black_id : game.white_id;
+  const opponentIsAi = Boolean(
+    myColor === "w" ? playerNames?.blackIsAi : playerNames?.whiteIsAi,
+  );
   const opponentName =
-    (myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
-    opponentId.slice(0, 8);
+    ((myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
+      opponentId.slice(0, 8)) + (opponentIsAi ? " (AI)" : "");
   const myName =
     (myColor === "w" ? playerNames?.whiteName : playerNames?.blackName) ??
     user?.email?.split("@")[0] ??
