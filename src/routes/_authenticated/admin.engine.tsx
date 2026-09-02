@@ -419,7 +419,19 @@ function AdminEnginePage() {
                 {caps ? (caps.syzygyReady ? `ready · ${caps.syzygyPieces}p` : "not installed") : "—"}
               </p>
               <p className="text-muted-foreground">{t("adminc.engine.suite")}</p>
-              <p className="font-mono">{data?.health.benchmarkSuiteVersion ?? "—"}</p>
+              <p
+                className={cn(
+                  "font-mono",
+                  data?.health.benchmarkSuiteVersion === EXPECTED_BENCHMARK_SUITE_VERSION
+                    ? "text-emerald-400"
+                    : "text-destructive",
+                )}
+              >
+                {data?.health.benchmarkSuiteVersion ?? "—"} / {EXPECTED_BENCHMARK_SUITE_VERSION}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                {data?.health.serviceBuildId ?? "—"}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">{t("adminc.engine.fullStrength")}</p>
