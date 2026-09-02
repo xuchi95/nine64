@@ -12,6 +12,9 @@ import { evaluateReadiness, type ReadinessResult } from "./readiness";
 import { engineConfigFingerprint } from "./configFingerprint";
 import type { EngineConfig } from "./profileTypes";
 import { Chess } from "chess.js";
+import { EXPECTED_BENCHMARK_SUITE_VERSION, checkEngineContract } from "./engineContract.server";
+
+export { EXPECTED_BENCHMARK_SUITE_VERSION };
 
 export { evaluateReadiness, latestBenchmarkByKind } from "./readiness";
 export { engineConfigFingerprint, canonicalConfigJson } from "./configFingerprint";
@@ -286,17 +289,17 @@ export async function runBenchmark(args: {
       profile_version: profile.version,
       kind: args.kind,
       engine_version: run.engineVersion ?? "unknown",
-      hardware: (((run.detail as Record<string, unknown>)["hardware"] ?? {}) as Record<string, Json>) as never,
+      hardware: ((detail["hardware"] ?? {}) as Record<string, Json>) as never,
       nodes: run.nodes ?? null,
       nps: run.nps ?? null,
       depth: run.depth ?? null,
       score: run.score ?? null,
       passed: run.passed,
-      result: run.detail as never,
+      result: detail as never,
       signature: run.engineVersion ?? null,
       // Benchmarks are always recorded against the exact config they ran with.
       config_signature: await engineConfigFingerprint(config),
-      suite_version: QUALIFICATION_SUITE_VERSION,
+      suite_version: run.suiteVersion ?? EXPECTED_BENCHMARK_SUITE_VERSION,
       created_by: args.actorId,
     } as never)
     .select("*")
