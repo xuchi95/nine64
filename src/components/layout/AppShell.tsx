@@ -686,37 +686,48 @@ function PageBreadcrumb({ wide }: { wide?: boolean | undefined }) {
     (gameId ? t("shell.route.game", { id: gameId.slice(0, 6) }) : segments[segments.length - 1] || "");
 
   return (
-    <div className="border-t border-border/40 bg-secondary/20">
+    <nav
+      aria-label={t("shell.breadcrumb.home")}
+      className="border-t border-border/40 bg-secondary/20"
+    >
       <div
         className={cn(
-          "mx-auto flex min-w-0 items-center gap-1 px-4 py-1 text-2xs leading-tight text-muted-foreground sm:gap-1.5 sm:px-6 sm:py-2 sm:text-xs",
+          "mx-auto flex min-w-0 items-center gap-0.5 overflow-hidden px-4 py-1.5 text-2xs leading-tight text-muted-foreground sm:gap-1 sm:px-6 sm:py-2 sm:text-xs",
           wide ? "max-w-[1600px]" : "max-w-6xl",
         )}
       >
-        <Link to="/" className="flex shrink-0 items-center gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-secondary/60 hover:text-foreground">
-          <Home className="size-3" />
+        <Link
+          to="/"
+          className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors hover:bg-secondary/60 hover:text-foreground"
+        >
+          <Home className="size-3.5" />
           <span className="hidden sm:inline">{t("shell.breadcrumb.home")}</span>
         </Link>
         {crumbs.map((crumb) => (
-          <span key={crumb.to} className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-1.5">
-            <ChevronRight className="size-3 shrink-0 opacity-50" />
+          <span
+            key={crumb.to}
+            className="hidden min-w-0 shrink items-center gap-1 sm:flex"
+          >
+            <ChevronRight className="size-3 shrink-0 opacity-40" />
             <Link
               to={crumb.to}
-              className="hidden max-w-[100px] truncate rounded-md px-1.5 py-0.5 transition-colors hover:bg-secondary/60 hover:text-foreground sm:inline-block md:max-w-[180px]"
+              className="max-w-[110px] truncate rounded-md px-1.5 py-1 transition-colors hover:bg-secondary/60 hover:text-foreground md:max-w-[180px]"
             >
               {crumb.label}
             </Link>
           </span>
         ))}
-        <ChevronRight className="size-3 shrink-0 opacity-50" />
+        <ChevronRight className="size-3 shrink-0 opacity-40" />
         <span
           aria-current="page"
-          className="min-w-0 flex-1 truncate rounded-md bg-primary/10 px-1.5 py-0.5 text-2xs font-semibold text-primary sm:px-2 sm:text-xs"
+          className="min-w-0 max-w-full truncate rounded-md px-1.5 py-1 font-semibold text-foreground sm:px-2"
+          title={currentLabel}
         >
           {currentLabel}
         </span>
       </div>
-    </div>
+    </nav>
   );
 }
+
 
