@@ -109,8 +109,8 @@ export async function maybeAiChatReply(gameId: string, ply: number): Promise<boo
   if (lastAi && Date.now() - Date.parse(lastAi.created_at) < COOLDOWN_MS) return false;
 
   const persona = chatPersonaFor(aiId);
-  // Deterministic-per-message randomness: unpredictable, but never a flood.
-  if (Math.random() > persona.replyChance) return false;
+  // A message addressed to the opponent always gets an answer — silence reads
+  // as a broken bot. Variety lives in tone/length, not in dropping replies.
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
