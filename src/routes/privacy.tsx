@@ -59,7 +59,7 @@ const DOCS: Record<Locale, LegalDoc> = {
       {
         heading: "Cam kết Sử dụng hạn chế của Google (Limited Use)",
         body: [
-          "Nine64 tuân thủ nghiêm ngặt Chính sách dữ liệu người dùng dịch vụ API của Google, kể cả các yêu cầu Sử dụng hạn chế.",
+          "Việc Nine64 sử dụng và chuyển giao thông tin nhận được từ các API của Google sang bất kỳ ứng dụng nào khác đều tuân thủ Chính sách dữ liệu người dùng dịch vụ API của Google, bao gồm các yêu cầu Sử dụng hạn chế (https://developers.google.com/terms/api-services-user-data-policy).",
           "Dữ liệu người dùng Google của bạn chỉ được sử dụng để cung cấp và cải thiện tính năng đăng nhập, hồ sơ tài khoản, bảo mật và liên lạc thiết yếu liên quan đến dịch vụ Nine64.",
           "Chúng tôi không bán, cho thuê, chuyển nhượng hoặc chia sẻ dữ liệu Google của bạn cho bên thứ ba nhằm mục đích quảng cáo, tiếp thị, phân tích hành vi tiêu dùng, hoặc xây dựng hồ sơ người dùng bên ngoài Nine64.",
           "Chúng tôi không sử dụng dữ liệu Google để cá nhân hoá quảng cáo, không kết hợp với dữ liệu từ nguồn bên thứ ba để theo dõi người dùng trên web, và không cho phép nhân viên hoặc nhà cung cấp truy cập rộng rãi ngoài phạm vi công việc cần thiết.",
