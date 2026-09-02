@@ -332,7 +332,7 @@ export async function publishReadiness(
   config?: EngineConfig | null,
 ): Promise<ReadinessResult> {
   const signature = config ? await engineConfigFingerprint(config) : null;
-  if (!signature) return evaluateReadiness(await listBenchmarks(slug, 50), null);
+  if (!signature) return evaluateReadiness(await listBenchmarks(slug, 50), null, QUALIFICATION_SUITE_VERSION);
   // Fetch matching rows explicitly so heavy benchmark history from other
   // drafts can never push the authoritative fingerprint out of a global limit.
   const [matching, recent] = await Promise.all([
@@ -340,5 +340,5 @@ export async function publishReadiness(
     listBenchmarks(slug, 50),
   ]);
   const byId = new Map([...matching, ...recent].map((row) => [row.id, row]));
-  return evaluateReadiness([...byId.values()], signature);
+  return evaluateReadiness([...byId.values()], signature, QUALIFICATION_SUITE_VERSION);
 }

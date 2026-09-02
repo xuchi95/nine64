@@ -24,7 +24,8 @@ export type ReadinessReason =
   | "benchmark_timeout"
   | "benchmark_engine_error"
   | "benchmark_stale"
-  | "benchmark_config_mismatch";
+  | "benchmark_config_mismatch"
+  | "benchmark_suite_outdated";
 
 export interface RequiredBenchmarkState {
   present: boolean;
@@ -58,13 +59,22 @@ function counter(row: BenchmarkRow, key: string): number {
  * Evaluate readiness from raw rows. When `signature` is given, the authoritative
  * runs must carry that exact fingerprint.
  */
-export function evaluateReadiness(rows: BenchmarkRow[], signature?: string | null): ReadinessResult {
+export function evaluateReadiness(
+  rows: BenchmarkRow[],
+  signature?: string | null,
+  suiteVersion?: string | null,
+): ReadinessResult {
   // When publishing a concrete config, first scope to that fingerprint. A
   // newer run for another draft must not hide the latest valid run for the
   // config being published. We still inspect all rows below when no matching
   // run exists so the UI can distinguish mismatch/stale from genuinely
   // missing data.
-  const matchingRows = signature ? rows.filter((row) => row.configSignature === signature) : rows;
+  const signatureRows = signature ? rows.filter((row) => row.configSignature === signature) : rows;
+  // A run produced by an older probe suite cannot approve the current suite:
+  // the positions it measured are not the positions we require today.
+  const matchingRows = suiteVersion
+    ? signatureRows.filter((row) => row.suiteVersion === suiteVersion)
+    : signatureRows;
   const latestByKind = latestBenchmarkByKind(matchingRows);
   const latestUnscopedByKind = latestBenchmarkByKind(rows);
   const reasons = new Set<ReadinessReason>();
@@ -80,6 +90,11 @@ export function evaluateReadiness(rows: BenchmarkRow[], signature?: string | nul
       createdAt: row?.createdAt ?? null,
     };
     if (!row) {
+      const staleSuiteRow = suiteVersion ? signatureRows.find((r) => r.kind === kind) : null;
+      if (staleSuiteRow) {
+        reasons.add("benchmark_suite_outdated");
+        continue;
+      }
       if (signature && unscopedRow) {
         if (!unscopedRow.configSignature) reasons.add("benchmark_stale");
         else reasons.add("benchmark_config_mismatch");
