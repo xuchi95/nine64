@@ -113,12 +113,13 @@ export async function playAiTurn(gameId: string, expectedVersion?: number): Prom
     });
 
     if (res.status !== "ok" || !res.bestmove) {
-      last =
-        res.status === "timeout"
-          ? "ENGINE_TIMEOUT"
-          : res.error === "busy" || res.error === "pool_busy"
-            ? "ENGINE_POOL_BUSY"
-            : "ENGINE_UNAVAILABLE";
+      const detail = `${String(res.status)}:${String(res.error ?? "")}`;
+      last = detail.includes("timeout")
+        ? "ENGINE_TIMEOUT"
+        : detail.includes("busy")
+          ? "ENGINE_POOL_BUSY"
+          : "ENGINE_UNAVAILABLE";
+
 
       await sleep(250 * (attempt + 1));
       continue;
