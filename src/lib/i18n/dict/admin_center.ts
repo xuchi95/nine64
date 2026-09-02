@@ -131,7 +131,18 @@ export default {
     "adminc.engine.reason.benchmark_engine_busy": "Máy cờ đang bận nên không chạy hết bộ kiểm định",
     "adminc.engine.reason.benchmark_no_move": "Có vị trí engine không trả về nước đi nào",
     "adminc.engine.reason.benchmark_config_mismatch": "Benchmark không thuộc cấu hình Titan hiện tại",
-    "adminc.engine.reason.benchmark_suite_outdated": "Benchmark được tạo bởi bộ kiểm định cũ — hãy chạy lại kiểm định",
+    "adminc.engine.reason.benchmark_suite_outdated":
+      "Máy cờ trên Cloud Run đang chạy bản cũ (bộ kiểm định không khớp) — hãy deploy bản mới rồi chạy lại kiểm định",
+    "adminc.engine.reason.engine_capabilities_unavailable":
+      "Máy cờ không báo cáo năng lực phần cứng — bản deploy trên Cloud Run đã cũ",
+    "adminc.engine.reason.engine_benchmark_suite_mismatch":
+      "Bộ kiểm định của máy cờ không khớp bản backend yêu cầu — cần deploy lại Cloud Run",
+    "adminc.engine.reason.capabilities_unknown":
+      "Chưa biết năng lực phần cứng vì máy cờ chưa báo cáo (bản deploy cũ)",
+    "adminc.engine.staleDeploy.title": "Cloud Run đang chạy bản play-engine cũ",
+    "adminc.engine.staleDeploy.body":
+      "Hai lỗi “thiếu năng lực phần cứng” và “bộ kiểm định cũ” đều đến từ đây: dịch vụ play-engine chưa được deploy bản mới nên không trả về capabilities và benchmarkSuiteVersion. Deploy lại bằng lệnh dưới đây rồi chạy lại Bộ kiểm định Titan.",
+
     "adminc.engine.inspector": "Bảng soi sức mạnh",
     "adminc.engine.hardware": "Phần cứng máy chủ",
     "adminc.engine.suite": "Bộ kiểm định",
@@ -299,7 +310,18 @@ export default {
     "adminc.engine.reason.benchmark_engine_busy": "The engine pool was busy, so the suite did not complete",
     "adminc.engine.reason.benchmark_no_move": "The engine returned no move for at least one position",
     "adminc.engine.reason.benchmark_config_mismatch": "Benchmark does not match the current Titan configuration",
-    "adminc.engine.reason.benchmark_suite_outdated": "Benchmark came from an older suite — run qualification again",
+    "adminc.engine.reason.benchmark_suite_outdated":
+      "The Cloud Run engine runs an older build (suite mismatch) — redeploy it, then run qualification again",
+    "adminc.engine.reason.engine_capabilities_unavailable":
+      "The engine does not report hardware capabilities — the Cloud Run deployment is outdated",
+    "adminc.engine.reason.engine_benchmark_suite_mismatch":
+      "The engine benchmark suite does not match what this backend requires — redeploy Cloud Run",
+    "adminc.engine.reason.capabilities_unknown":
+      "Hardware capabilities unknown because the engine did not report them (outdated deployment)",
+    "adminc.engine.staleDeploy.title": "Cloud Run is running an outdated play-engine build",
+    "adminc.engine.staleDeploy.body":
+      "Both the “capabilities unavailable” and “outdated suite” errors come from here: the play-engine service has not been redeployed, so it returns no capabilities and no benchmarkSuiteVersion. Redeploy with the commands below, then run the Titan qualification again.",
+
     "adminc.engine.inspector": "Strength inspector",
     "adminc.engine.hardware": "Server hardware",
     "adminc.engine.suite": "Benchmark suite",

@@ -262,8 +262,12 @@ function AdminEnginePage() {
   };
 
   const caps = data?.health.capabilities ?? null;
+  /** Old Cloud Run image: no capabilities block and/or a different benchmark suite. */
+  const staleDeployment =
+    !caps || data?.health.benchmarkSuiteVersion !== EXPECTED_BENCHMARK_SUITE_VERSION;
   const strengthViolations = draft && titan?.slug === TITAN_SLUG ? titanFullStrengthViolations(draft) : [];
   const fit = resourceFit(draft ?? ({} as EngineConfig), caps);
+
   /** Only the fields that really differ between draft and the live profile. */
   const publishedDiff = draft && titan
     ? (Object.keys(draft) as (keyof EngineConfig)[])
@@ -289,6 +293,27 @@ function AdminEnginePage() {
       <p className="mt-3 rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
         {t("adminc.engine.attribution")}
       </p>
+
+      {data && data.health.status !== "unavailable" && staleDeployment ? (
+        <Card className="mt-4 border-destructive/50 bg-destructive/5">
+          <CardContent className="space-y-2 p-4 text-sm">
+            <p className="font-semibold text-destructive">{t("adminc.engine.staleDeploy.title")}</p>
+            <p className="text-muted-foreground">{t("adminc.engine.staleDeploy.body")}</p>
+            <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/60 p-3 font-mono text-[11px] leading-relaxed">
+{`gcloud builds submit services/play-engine \\
+  --tag gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION}
+gcloud run deploy play-engine-v2 \\
+  --image gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION} \\
+  --region asia-southeast1 --project chess-nine64`}
+            </pre>
+            <p className="font-mono text-[10px] text-muted-foreground">
+              suite {data.health.benchmarkSuiteVersion ?? "—"} / {EXPECTED_BENCHMARK_SUITE_VERSION} · capabilities{" "}
+              {caps ? "ok" : "unavailable"}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
 
       {error ? (
         <Card className="mt-4 border-destructive/40">
@@ -719,9 +744,14 @@ function AdminEnginePage() {
                           </span>
                           {s.reason && (
                             <span className={s.status === "skipped" ? "text-muted-foreground" : "text-destructive"}>
-                              {s.reason}
+                              {(() => {
+                                const key = `adminc.engine.reason.${s.reason}`;
+                                const label = t(key);
+                                return label === key ? s.reason : `${label} (${s.reason})`;
+                              })()}
                             </span>
                           )}
+
                         </li>
                       ))}
                     </ul>
