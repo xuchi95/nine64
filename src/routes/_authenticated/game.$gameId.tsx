@@ -1027,6 +1027,20 @@ function OnlineGamePage() {
     "You";
   const turn = gameRef.current.turn() as PieceColor;
   const live = game.status === "active" && !result;
+  const isDaily = game.pace === "daily";
+  /** Daily games are ruled by `deadline_at`, not by a ticking clock. */
+  const hasLiveClock = !!game.time_control && !isDaily;
+  const deadlineLabel = (() => {
+    if (!isDaily || !game.deadline_at) return null;
+    const left = Date.parse(game.deadline_at) - Date.now();
+    if (!Number.isFinite(left)) return null;
+    if (left <= 0) return "đã hết hạn";
+    const hours = Math.floor(left / 3_600_000);
+    const days = Math.floor(hours / 24);
+    if (days >= 1) return `còn ${days} ngày ${hours - days * 24} giờ`;
+    if (hours >= 1) return `còn ${hours} giờ ${Math.floor((left % 3_600_000) / 60_000)} phút`;
+    return `còn ${Math.max(1, Math.floor(left / 60_000))} phút`;
+  })();
   const statusLine = live
     ? `${turn === myColor ? "Your move" : "Waiting for opponent"} · ply ${moves.length + 1} · ${
         syncMode === "realtime" ? "realtime" : "backup sync"
