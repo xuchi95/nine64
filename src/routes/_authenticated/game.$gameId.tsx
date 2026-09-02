@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { requestAiTurn } from "@/lib/rankedAi/rankedAi.functions";
@@ -99,6 +99,7 @@ const REALTIME_TIMEOUT_MS = 6000;
 
 function OnlineGamePage() {
   const { gameId } = useParams({ from: "/_authenticated/game/$gameId" });
+  const navigate = useNavigate();
   const { user } = useAuth();
   const syncStateFn = useServerFn(syncGameState);
   const makeMoveFn = useServerFn(makeMove);
@@ -976,10 +977,15 @@ function OnlineGamePage() {
           spectate: (game.spectate ?? "public") as "public" | "private",
           rematchOf: game.id,
         },
-      })) as { ok: boolean };
+      })) as { ok: boolean; autoAcceptedGame?: { id: string } | null };
       if (out.ok) {
         setRematchSent(true);
-        toast.success("Đã gửi lời mời tái đấu.");
+        if (out.autoAcceptedGame?.id) {
+          toast.success("Đối thủ đã nhận lời tái đấu.");
+          void navigate({ to: "/game/$gameId", params: { gameId: out.autoAcceptedGame.id } });
+        } else {
+          toast.success("Đã gửi lời mời tái đấu.");
+        }
       } else {
         toast.error("Không gửi được lời mời tái đấu.");
       }
@@ -988,7 +994,7 @@ function OnlineGamePage() {
     } finally {
       setRematchBusy(false);
     }
-  }, [createChallengeFn, game, myColor, rematchBusy]);
+  }, [createChallengeFn, game, myColor, navigate, rematchBusy]);
 
   const resign = useCallback(() => runCommand("resign"), [runCommand]);
   const abort = useCallback(() => runCommand("abort"), [runCommand]);
