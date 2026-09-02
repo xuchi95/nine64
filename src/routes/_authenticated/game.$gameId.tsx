@@ -976,10 +976,15 @@ function OnlineGamePage() {
           spectate: (game.spectate ?? "public") as "public" | "private",
           rematchOf: game.id,
         },
-      })) as { ok: boolean };
+      })) as { ok: boolean; autoAcceptedGame?: { id: string } | null };
       if (out.ok) {
         setRematchSent(true);
-        toast.success("Đã gửi lời mời tái đấu.");
+        if (out.autoAcceptedGame?.id) {
+          toast.success("Đối thủ đã nhận lời tái đấu.");
+          void navigate({ to: "/game/$gameId", params: { gameId: out.autoAcceptedGame.id } });
+        } else {
+          toast.success("Đã gửi lời mời tái đấu.");
+        }
       } else {
         toast.error("Không gửi được lời mời tái đấu.");
       }
