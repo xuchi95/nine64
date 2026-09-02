@@ -562,50 +562,6 @@ function AdminEnginePage() {
                     placeholder={t("adminc.engine.reason")}
                     rows={2}
                   />
-                  <div className="rounded-xl border border-border/60 bg-card/40 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold">{t("adminc.engine.selfplay.title")}</p>
-                    <p className="text-xs text-muted-foreground">{t("adminc.engine.selfplay.hint")}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy || qualBusy || regressionBusy || !reasonValid || !parsed?.success || !titan}
-                    onClick={() => void runRegression()}
-                  >
-                    <Gauge className="mr-2 h-4 w-4" />
-                    {regressionBusy
-                      ? t("adminc.engine.selfplay.running")
-                      : t("adminc.engine.selfplay.run")}
-                  </Button>
-                </div>
-                {regression && (
-                  <div className="mt-3 space-y-2 text-xs">
-                    <p className={cn("text-sm font-semibold", regression.ok ? "text-emerald-400" : "text-amber-400")}>
-                      {t("adminc.engine.selfplay.score")}: {regression.wins}W / {regression.draws}D / {regression.losses}L
-                      {regression.score !== null ? ` · ${(regression.score * 100).toFixed(0)}%` : ""}
-                    </p>
-                    {!regression.ok && (
-                      <p className="text-destructive">{regression.code ?? t("adminc.common.failed")}</p>
-                    )}
-                    <ul className="space-y-1 font-mono text-[11px] text-muted-foreground">
-                      {regression.detail.map((g) => (
-                        <li key={g.index}>
-                          #{g.index + 1} · {g.candidateColor} · {g.result} · {g.plies} plies · {g.termination}
-                          {g.error ? ` · ${g.error}` : ""}
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="font-mono text-[11px] text-muted-foreground">
-                      draft {regression.candidateSignature.slice(0, 12)}… vs v{regression.baselineVersion}{" "}
-                      {regression.baselineSignature.slice(0, 12)}… · {regression.moveTimeMs}ms/move ·{" "}
-                      {(regression.durationMs / 1000).toFixed(1)}s
-                      {regression.engineVersion ? ` · ${regression.engineVersion}` : ""}
-                    </p>
-                  </div>
-                )}
-              </div>
               <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
@@ -769,6 +725,50 @@ function AdminEnginePage() {
                     )}
                     <p className="font-mono text-[11px] text-muted-foreground">
                       {qual.configSignature.slice(0, 16)}… · {(qual.durationMs / 1000).toFixed(1)}s
+                    </p>
+                  </div>
+                )}
+              </div>
+                  <div className="rounded-xl border border-border/60 bg-card/40 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">{t("adminc.engine.selfplay.title")}</p>
+                    <p className="text-xs text-muted-foreground">{t("adminc.engine.selfplay.hint")}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy || qualBusy || regressionBusy || !reasonValid || !parsed?.success || !titan}
+                    onClick={() => void runRegression()}
+                  >
+                    <Gauge className="mr-2 h-4 w-4" />
+                    {regressionBusy
+                      ? t("adminc.engine.selfplay.running")
+                      : t("adminc.engine.selfplay.run")}
+                  </Button>
+                </div>
+                {regression && (
+                  <div className="mt-3 space-y-2 text-xs">
+                    <p className={cn("text-sm font-semibold", regression.ok ? "text-emerald-400" : "text-amber-400")}>
+                      {t("adminc.engine.selfplay.score")}: {regression.wins}W / {regression.draws}D / {regression.losses}L
+                      {regression.score !== null ? ` · ${(regression.score * 100).toFixed(0)}%` : ""}
+                    </p>
+                    {!regression.ok && (
+                      <p className="text-destructive">{regression.code ?? t("adminc.common.failed")}</p>
+                    )}
+                    <ul className="space-y-1 font-mono text-[11px] text-muted-foreground">
+                      {regression.detail.map((g) => (
+                        <li key={g.index}>
+                          #{g.index + 1} · {g.candidateColor} · {g.result} · {g.plies} plies · {g.termination}
+                          {g.error ? ` · ${g.error}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="font-mono text-[11px] text-muted-foreground">
+                      draft {regression.candidateSignature.slice(0, 12)}… vs v{regression.baselineVersion}{" "}
+                      {regression.baselineSignature.slice(0, 12)}… · {regression.moveTimeMs}ms/move ·{" "}
+                      {(regression.durationMs / 1000).toFixed(1)}s
+                      {regression.engineVersion ? ` · ${regression.engineVersion}` : ""}
                     </p>
                   </div>
                 )}
