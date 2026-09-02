@@ -140,8 +140,9 @@ export async function maybeAiChatReply(gameId: string, ply: number): Promise<boo
     .join("\n");
 
   const raw = await callGateway(system, `Move number: ${Math.floor(ply / 2) + 1}\n${transcript}`);
-  const body = raw ? sanitizeAiChat(raw) : "";
-  if (!body) return false;
+  const modelBody = raw ? sanitizeAiChat(raw) : "";
+  const pool = FALLBACK[persona.tone] ?? FALLBACK["friendly"]!;
+  const body = modelBody || pool[Math.floor(Math.random() * pool.length)]!;
 
   const { error } = await supabaseAdmin.from("game_chat_messages").insert({
     game_id: gameId,
@@ -149,5 +150,9 @@ export async function maybeAiChatReply(gameId: string, ply: number): Promise<boo
     body,
     ply,
   });
-  return !error;
+  if (error) {
+    console.error("[rankedAi.chat] insert failed", error.message);
+    return false;
+  }
+  return true;
 }
