@@ -1,7 +1,23 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { EngineConfig } from "./profileTypes";
 
-const health = { value: { status: "healthy", engineVersion: "Stockfish 18", pool: { size: 4, busy: 0 } } as never };
+const health = { value: {
+  status: "healthy",
+  engineVersion: "Stockfish 18",
+  pool: { size: 4, busy: 0 },
+  benchmarkSuiteVersion: "titan-v6-3",
+  serviceBuildId: "play-engine-titan-v6.3",
+  capabilities: {
+    cpuCount: 8,
+    memoryMb: 16384,
+    poolSize: 1,
+    maxThreadsPerEngine: 8,
+    recommendedHashMb: 4096,
+    maxSafeHashMb: 8192,
+    syzygyReady: false,
+    syzygyPieces: 0,
+  },
+} as never };
 const env = { value: { configured: true, code: null } as never };
 const benchOutcome: { impl: (kind: string) => unknown } = {
   impl: (kind: string) => ({
@@ -34,7 +50,23 @@ async function runSuite() {
 
 describe("titan qualification suite", () => {
   beforeEach(() => {
-    health.value = { status: "healthy", engineVersion: "Stockfish 18", pool: { size: 4, busy: 0 } } as never;
+    health.value = {
+  status: "healthy",
+  engineVersion: "Stockfish 18",
+  pool: { size: 4, busy: 0 },
+  benchmarkSuiteVersion: "titan-v6-3",
+  serviceBuildId: "play-engine-titan-v6.3",
+  capabilities: {
+    cpuCount: 8,
+    memoryMb: 16384,
+    poolSize: 1,
+    maxThreadsPerEngine: 8,
+    recommendedHashMb: 4096,
+    maxSafeHashMb: 8192,
+    syzygyReady: false,
+    syzygyPieces: 0,
+  },
+} as never;
     env.value = { configured: true, code: null } as never;
     readiness.value = { ready: true, reasons: [] };
     draft.value = { multipv: 1 } as unknown as EngineConfig;

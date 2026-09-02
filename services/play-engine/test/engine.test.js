@@ -93,8 +93,10 @@ import {
   summarize,
   runSuite,
   suiteMovetime,
+  suiteRequestTimeout,
   classifyEngineError,
 } from "../src/benchmark.js";
+import { applyMove, createPosition, isCheckmate } from "../src/rules.js";
 import { handleBenchmark } from "../src/index.js";
 
 const mateEntry = EPD_SUITE[0]; // 6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1, mate = a1a8
@@ -122,11 +124,27 @@ test("timeout is never counted as an illegal move", async () => {
   assert.ok(out.detail.failureReasons.includes("timeout"));
 });
 
-test("engine error is never counted as an illegal move", async () => {
-  const out = await run("epd", [mateEntry], [new Error("pool_busy")]);
+test("engine exit is never counted as an illegal move", async () => {
+  const out = await run("epd", [mateEntry], [new Error("engine_exit"), new Error("engine_exit"), new Error("engine_exit")]);
   assert.equal(out.detail.engineErrors, 1);
   assert.equal(out.detail.illegalMoves, 0);
+  assert.equal(out.detail.timeouts, 0);
   assert.ok(out.detail.failureReasons.includes("engine_error"));
+});
+
+test("pool_busy has its own counter, is retried, and is never illegal", async () => {
+  const out = await run("epd", [mateEntry], [new Error("pool_busy"), new Error("pool_busy"), new Error("pool_busy")]);
+  assert.equal(out.detail.poolBusy, 1);
+  assert.equal(out.detail.illegalMoves, 0);
+  assert.equal(out.detail.engineErrors, 0);
+  assert.equal(out.detail.positions[0].attempts, 3, "transient failures are retried");
+  assert.ok(out.detail.failureReasons.includes("pool_busy"));
+});
+
+test("a legal tactical miss is never retried", async () => {
+  const out = await run("epd", [mateEntry], [{ bestmove: "a1a7", depth: 12 }]);
+  assert.equal(out.detail.positions[0].attempts, 1);
+  assert.equal(out.detail.positions[0].errorCode, "legal_unsolved");
 });
 
 test("missing bestmove is counted as noMove, not illegal", async () => {
@@ -148,8 +166,16 @@ test("a legal but non-tactical move is legal-not-solved, never illegal", () => {
   const row = evaluatePosition(mateEntry, { ok: true, result: { bestmove: "a1a7", depth: 12 } });
   assert.equal(row.legal, true);
   assert.equal(row.solved, false);
-  const alt = evaluatePosition(EPD_SUITE[11], { ok: true, result: { bestmove: "c3b3", depth: 8 } });
-  assert.equal(alt.solved, true, "any move in acceptableMoves counts as solved");
+  assert.equal(row.errorCode, "legal_unsolved");
+  // Semantic goal: ANY legal mating move solves the position, even one that a
+  // hard-coded expected-UCI list would have rejected.
+  const black = EPD_SUITE.find((e) => e.id === "black_mate_01");
+  assert.equal(evaluatePosition(black, { ok: true, result: { bestmove: "c3c2", depth: 8 } }).solved, true);
+  assert.equal(evaluatePosition(black, { ok: true, result: { bestmove: "c3b3", depth: 8 } }).solved, true);
+  const promo = EPD_SUITE.find((e) => e.id === "promotion_mate_01");
+  assert.equal(evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8q", depth: 8 } }).solved, true);
+  assert.equal(evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8r", depth: 8 } }).solved, true);
+  assert.equal(evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8n", depth: 8 } }).solved, false);
 });
 
 test("positions suite passes when every returned move is legal", async () => {
@@ -172,21 +198,62 @@ test("positions suite passes when every returned move is legal", async () => {
   assert.equal(out.depth, 22, "depth is the max real depth reached");
 });
 
-test("EPD passes only at >=80% solved with zero execution failures", async () => {
-  const solveAll = EPD_SUITE.map((e) => ({ bestmove: e.acceptableMoves[0], depth: 20 }));
-  const perfect = await run("epd", EPD_SUITE, solveAll);
-  assert.equal(perfect.passed, true);
-  assert.equal(perfect.score, 1);
+/** First legal move that actually delivers mate — mirrors a correct engine. */
+function matingMove(entry) {
+  const variant = entry.variant ?? "standard";
+  const move = createPosition(variant, entry.fen)
+    .moves({ verbose: true })
+    .find((m) => isCheckmate(applyMove(variant, entry.fen, m)));
+  assert.ok(move, `no mating move for ${entry.id}`);
+  return `${move.from}${move.to}${move.promotion ?? ""}`;
+}
 
-  const missed = solveAll.slice();
+test("a fully solved deterministic EPD suite passes at score 1.0", async () => {
+  const solveAll = EPD_SUITE.map((e) => ({ bestmove: matingMove(e), depth: 20 }));
+  const perfect = await run("epd", EPD_SUITE, solveAll);
+  assert.equal(perfect.score, 1);
+  assert.equal(perfect.passed, true);
+  assert.deepEqual(perfect.detail.failedPositions, []);
+  assert.equal(perfect.detail.requiredScore, 1);
+});
+
+test("one legal_unsolved position fails the deterministic gate with tactics_score", async () => {
+  const missed = EPD_SUITE.map((e) => ({ bestmove: matingMove(e), depth: 20 }));
   missed[0] = { bestmove: "a1a7", depth: 20 }; // legal, not the mate
-  missed[1] = { bestmove: "f3f4", depth: 20 };
-  missed[2] = { bestmove: "c1c7", depth: 20 };
   const weak = await run("epd", EPD_SUITE, missed);
-  assert.ok(weak.score < 0.8);
   assert.equal(weak.passed, false);
+  assert.ok(weak.score < 1);
   assert.ok(weak.detail.failureReasons.includes("tactics_score"));
   assert.equal(weak.detail.illegalMoves, 0);
+  assert.equal(weak.detail.legalUnsolved, 1);
+  assert.equal(weak.detail.failedPositions[0].id, EPD_SUITE[0].id);
+  assert.equal(weak.detail.failedPositions[0].errorCode, "legal_unsolved");
+});
+
+test("a transient failure fails the suite with an execution reason, not only tactics", async () => {
+  const outcomes = EPD_SUITE.map((e) => ({ bestmove: matingMove(e), depth: 20 }));
+  outcomes[0] = new Error("timeout");
+  const out = await run("epd", EPD_SUITE, outcomes);
+  assert.equal(out.passed, false);
+  assert.ok(out.detail.failureReasons.includes("timeout"));
+  assert.equal(out.detail.illegalMoves, 0);
+});
+
+test("every EPD entry has a stable id and a deterministic goal", () => {
+  const ids = EPD_SUITE.map((e) => e.id);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.ok(EPD_SUITE.length >= 10 && EPD_SUITE.length <= 16);
+  for (const entry of EPD_SUITE) {
+    assert.equal(entry.goal.type, "checkmate");
+    assert.equal(entry.goal.maxPlies, 1);
+  }
+});
+
+test("benchmark payloads never expose secrets or filesystem paths", async () => {
+  const solveAll = EPD_SUITE.map((e) => ({ bestmove: matingMove(e), depth: 20 }));
+  const out = await run("epd", EPD_SUITE, solveAll);
+  const serialized = JSON.stringify(out);
+  assert.ok(!/PLAY_ENGINE|PRIVATE KEY|Bearer|SyzygyPath|\/srv\/|\/var\//i.test(serialized));
 });
 
 test("unknown benchmark kind returns a typed 400", async () => {
@@ -201,11 +268,15 @@ test("every benchmark FEN and expected move is valid and legal", () => {
   assert.ok(EPD_SUITE.length >= 8);
 });
 
-test("suite movetime defaults per kind and clamps", () => {
+test("suite movetime defaults per kind and clamps to the stable window", () => {
   assert.equal(suiteMovetime("epd", undefined), 3000);
   assert.equal(suiteMovetime("positions", undefined), 1500);
-  assert.equal(suiteMovetime("epd", 99999), 10_000);
-  assert.equal(classifyEngineError(new Error("engine_exit")), "engine_error");
+  assert.equal(suiteMovetime("epd", 99999), 5000);
+  assert.equal(suiteMovetime("epd", 10), 3000);
+  assert.equal(suiteRequestTimeout(3000), 20_000);
+  assert.equal(suiteRequestTimeout(5000), 20_000);
+  assert.equal(classifyEngineError(new Error("engine_exit")), "engine_exit");
+  assert.equal(classifyEngineError(new Error("pool_busy")), "pool_busy");
   assert.equal(classifyEngineError(new Error("timeout")), "timeout");
 });
 

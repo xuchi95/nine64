@@ -13,8 +13,21 @@ import os from "node:os";
 import { EnginePool } from "./pool.js";
 import { VARIANTS, createPosition, decodeEngineMove, isLegal } from "./rules.js";
 import { verifyIdToken } from "./auth.js";
-import { EPD_SUITE, POSITION_SUITE, runSuite, suiteMovetime, BENCHMARK_SUITE_VERSION } from "./benchmark.js";
-import { capabilities, inspectSyzygy, syzygyPath } from "./capabilities.js";
+import {
+  EPD_SUITE,
+  POSITION_SUITE,
+  runSuite,
+  suiteMovetime,
+  suiteRequestTimeout,
+  validateSuite,
+} from "./benchmark.js";
+import {
+  BENCHMARK_SUITE_VERSION,
+  SERVICE_BUILD_ID,
+  capabilities,
+  inspectSyzygy,
+  syzygyPath,
+} from "./capabilities.js";
 
 const PORT = Number(process.env.PORT || 8080);
 /**
@@ -177,7 +190,13 @@ async function handleBestMove(body) {
 
   const timeoutMs = Math.min(Math.max(Number(body.timeoutMs) || 30_000, 1_000), 120_000);
   const requested = sanitizeOptions(body.options);
-  const mismatch = resourceMismatch(requested);
+  // A caller may ASK for tablebase probing, but never controls the effective
+  // probe limit or path: only `syzygyOptions()` may re-add them, and only when
+  // real tablebase files are installed.
+  const wantsSyzygy = requested["SyzygyProbeLimit"];
+  const safeOptions = { ...requested };
+  delete safeOptions["SyzygyProbeLimit"];
+  const mismatch = resourceMismatch(safeOptions);
   if (mismatch) {
     return { status: 422, payload: { error: "config_resource_mismatch", detail: mismatch } };
   }
@@ -188,8 +207,8 @@ async function handleBestMove(body) {
       // Set on EVERY search so a Chess960 request can never leave a pooled
       // engine process in 960 mode for the next standard request.
       options: {
-        ...requested,
-        ...syzygyOptions(requested),
+        ...safeOptions,
+        ...syzygyOptions({ SyzygyProbeLimit: wantsSyzygy }),
         UCI_Chess960: variant === "chess960" ? "true" : "false",
       },
       goArgs: buildGoArgs(body),
@@ -228,9 +247,11 @@ async function handleBenchmark(body) {
         nps: result.nps,
         passed: Boolean(result.nps),
         suiteVersion: BENCHMARK_SUITE_VERSION,
+        serviceBuildId: SERVICE_BUILD_ID,
         detail: {
           kind,
           suiteVersion: BENCHMARK_SUITE_VERSION,
+          serviceBuildId: SERVICE_BUILD_ID,
           hardware: { threads: Number(process.env.ENGINE_THREADS || 0) || null },
           failureReasons: result.nps ? [] : ["engine_error"],
         },
@@ -239,21 +260,33 @@ async function handleBenchmark(body) {
   }
   if (kind === "epd" || kind === "positions") {
     const suite = kind === "epd" ? EPD_SUITE : POSITION_SUITE;
+    // A malformed suite must fail loudly rather than score the engine wrongly.
+    const problems = validateSuite(suite);
+    if (problems.length) {
+      return { status: 500, payload: { error: "invalid_suite", detail: problems.slice(0, 5) } };
+    }
     const movetimeMs = suiteMovetime(kind, body.movetimeMs);
-    // Request timeout is comfortably larger than the search budget.
-    const timeoutMs = Math.max(movetimeMs * 4, 20_000);
-    const options = sanitizeOptions(body.options);
+    const timeoutMs = suiteRequestTimeout(movetimeMs);
+    const requested = sanitizeOptions(body.options);
+    // Caller-supplied probe limits never reach the engine directly.
+    const wantsSyzygy = requested["SyzygyProbeLimit"];
+    const options = { ...requested };
+    delete options["SyzygyProbeLimit"];
     const run = await runSuite({
       kind,
       suite,
       movetimeMs,
       engineVersion: pool.engineVersion,
+      // Sequential by construction (see runSuite): a pool of size 1 is never
+      // asked to run two positions concurrently.
       search: (entry) =>
         pool.search({
           fen: entry.fen,
           options: {
             ...options,
-            ...syzygyOptions(options),
+            ...syzygyOptions({ SyzygyProbeLimit: wantsSyzygy }),
+            // Explicit on EVERY search: a 960 entry must not leak into the
+            // next standard entry on a reused process.
             UCI_Chess960: entry.variant === "chess960" ? "true" : "false",
           },
           goArgs: `movetime ${movetimeMs}`,
@@ -262,15 +295,24 @@ async function handleBenchmark(body) {
         }),
     });
     pool.stats.illegal += Number(run.detail.illegalMoves || 0);
+    const tb = inspectSyzygy();
     return {
       status: 200,
       payload: {
+        kind,
         engineVersion: run.engineVersion ?? pool.engineVersion,
         depth: run.depth,
         score: run.score,
         passed: run.passed,
         suiteVersion: BENCHMARK_SUITE_VERSION,
-        detail: { ...run.detail, movetimeMs, suiteVersion: BENCHMARK_SUITE_VERSION },
+        serviceBuildId: SERVICE_BUILD_ID,
+        detail: {
+          ...run.detail,
+          movetimeMs,
+          suiteVersion: BENCHMARK_SUITE_VERSION,
+          serviceBuildId: SERVICE_BUILD_ID,
+          syzygyReady: tb.ready,
+        },
       },
     };
   }
@@ -295,6 +337,7 @@ export function healthPayload(enginePool, isReady) {
     pool: { size, busy: alive.filter((e) => e.busy).length },
     capabilities: capabilities(size || 1),
     benchmarkSuiteVersion: BENCHMARK_SUITE_VERSION,
+    serviceBuildId: SERVICE_BUILD_ID,
     stats: {
       searches: Number(stats.searches ?? 0),
       timeouts: Number(stats.timeouts ?? 0),

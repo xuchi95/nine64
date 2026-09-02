@@ -42,6 +42,7 @@ async function preflight(config: EngineConfig): Promise<{ ok: boolean; reason: s
   const { engineConfigSchema } = await import("./profileTypes");
   const { engineEnvDiagnostics } = await import("./engineEnv.server");
   const { cloudEngineHealthCached } = await import("./cloudEngine.server");
+  const { evaluateEngineContract } = await import("./engineContract.server");
 
   if (!engineConfigSchema.safeParse(config).success) {
     return { ok: false, reason: "invalid_config", engineVersion: null };
@@ -58,15 +59,11 @@ async function preflight(config: EngineConfig): Promise<{ ok: boolean; reason: s
     await new Promise((resolve) => setTimeout(resolve, attempt * 500));
     health = await cloudEngineHealthCached(0);
   }
-  if (health.status === "unauthorized") return { ok: false, reason: "engine_auth_failed", engineVersion: null };
-  if (health.status !== "healthy" && health.status !== "degraded") {
-    return { ok: false, reason: "engine_unavailable", engineVersion: health.engineVersion };
-  }
-  if (!health.pool || health.pool.size < 1) {
-    return { ok: false, reason: "engine_pool_unavailable", engineVersion: health.engineVersion };
-  }
-  if (!/stockfish\s*18/i.test(health.engineVersion ?? "")) {
-    return { ok: false, reason: "engine_version_unsupported", engineVersion: health.engineVersion };
+  // One source of truth for the deployment contract: version, pool,
+  // capabilities, benchmark suite identity and resource fit.
+  const contract = evaluateEngineContract(health, config);
+  if (!contract.ok) {
+    return { ok: false, reason: contract.code?.toLowerCase() ?? "engine_unavailable", engineVersion: health.engineVersion };
   }
   return { ok: true, reason: null, engineVersion: health.engineVersion };
 }

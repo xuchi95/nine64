@@ -103,6 +103,30 @@ export function decodeEngineMove(variant, fen, uci) {
   return null;
 }
 
+/**
+ * Applies an already-decoded move to `fen` and returns the resulting position,
+ * or null when the move cannot be played. Used for semantic goal checking.
+ */
+export function applyMove(variant, fen, move) {
+  if (!move) return null;
+  try {
+    const position = createPosition(variant, fen);
+    const played = position.move({
+      from: move.from,
+      to: move.to,
+      ...(move.promotion ? { promotion: move.promotion } : {}),
+    });
+    return played ? position : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True when the given position is checkmate. */
+export function isCheckmate(position) {
+  return Boolean(position && typeof position.isCheckmate === "function" && position.isCheckmate());
+}
+
 /** True when the (from,to) move is legal in `position`. */
 export function isLegal(position, move) {
   return position

@@ -22,6 +22,8 @@ export type ReadinessReason =
   | "tactics_failed"
   | "illegal_moves"
   | "benchmark_timeout"
+  | "benchmark_engine_busy"
+  | "benchmark_no_move"
   | "benchmark_engine_error"
   | "benchmark_stale"
   | "benchmark_config_mismatch"
@@ -103,11 +105,22 @@ export function evaluateReadiness(
       }
       continue;
     }
-    if (!row.passed) reasons.add(kind === "bench" ? "bench_failed" : "tactics_failed");
-    // Execution/rules failures are read ONLY from the authoritative runs.
-    if (counter(row, "illegalMoves") > 0) reasons.add("illegal_moves");
-    if (counter(row, "timeouts") > 0) reasons.add("benchmark_timeout");
-    if (counter(row, "engineErrors") > 0 || counter(row, "noMove") > 0) reasons.add("benchmark_engine_error");
+    // Execution/rules failures are read ONLY from the authoritative runs and
+    // are reported as themselves — a busy pool or a timeout is NEVER reported
+    // as a tactical miss.
+    const illegal = counter(row, "illegalMoves");
+    const timeouts = counter(row, "timeouts");
+    const poolBusy = counter(row, "poolBusy");
+    const noMove = counter(row, "noMove");
+    const engineErrors = counter(row, "engineErrors");
+    if (illegal > 0) reasons.add("illegal_moves");
+    if (timeouts > 0) reasons.add("benchmark_timeout");
+    if (poolBusy > 0) reasons.add("benchmark_engine_busy");
+    if (noMove > 0) reasons.add("benchmark_no_move");
+    if (engineErrors > 0) reasons.add("benchmark_engine_error");
+    const executionFailure = illegal + timeouts + poolBusy + noMove + engineErrors > 0;
+    if (!row.passed && !executionFailure) reasons.add(kind === "bench" ? "bench_failed" : "tactics_failed");
+    else if (!row.passed && kind === "bench" && reasons.size === 0) reasons.add("bench_failed");
   }
 
   return {
