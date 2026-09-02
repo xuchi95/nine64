@@ -107,7 +107,24 @@ describe("titan qualification suite", () => {
   });
 
   it("fails closed and skips benchmarks when the engine version is unsupported", async () => {
-    health.value = { ...health.value, engineVersion: "Stockfish 16" } as never;
+    health.value = {
+      status: "healthy",
+      engineVersion: "Stockfish 16",
+      pool: { size: 4, busy: 0 },
+      benchmarkSuiteVersion: "titan-v6-3",
+      serviceBuildId: "play-engine-titan-v6.3-test",
+      serviceVersion: "play-engine-titan-v6.3",
+      capabilities: {
+        cpuCount: 8,
+        memoryMb: 16384,
+        poolSize: 1,
+        maxThreadsPerEngine: 8,
+        recommendedHashMb: 4096,
+        maxSafeHashMb: 8192,
+        syzygyReady: false,
+        syzygyPieces: 0,
+      },
+    } as never;
     const result = await runSuite();
     expect(result.ok).toBe(false);
     expect(result.steps[0]!.reason).toBe("engine_version_unsupported");

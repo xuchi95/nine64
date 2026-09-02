@@ -87,7 +87,8 @@ export function evaluateEngineContract(
   if (
     health.serviceVersion !== EXPECTED_ENGINE_SERVICE_VERSION ||
     !health.serviceBuildId ||
-    !health.serviceBuildId.startsWith(EXPECTED_ENGINE_SERVICE_VERSION)
+    health.serviceBuildId === EXPECTED_ENGINE_SERVICE_VERSION ||
+    !health.serviceBuildId.startsWith(`${EXPECTED_ENGINE_SERVICE_VERSION}-`)
   ) {
     return fail("SERVICE_BUILD_OUTDATED");
   }

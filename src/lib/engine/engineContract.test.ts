@@ -62,6 +62,7 @@ describe("engine deployment contract", () => {
 
   it("blocks missing or stale service identities", () => {
     expect(evaluateEngineContract(health({ serviceBuildId: null }), config).code).toBe("SERVICE_BUILD_OUTDATED");
+    expect(evaluateEngineContract(health({ serviceBuildId: EXPECTED_ENGINE_SERVICE_VERSION }), config).code).toBe("SERVICE_BUILD_OUTDATED");
     expect(evaluateEngineContract(health({ serviceVersion: null }), config).code).toBe("SERVICE_BUILD_OUTDATED");
     expect(evaluateEngineContract(health({ serviceBuildId: "old-image" }), config).code).toBe("SERVICE_BUILD_OUTDATED");
   });
