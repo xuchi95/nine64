@@ -328,6 +328,22 @@ function OnlineGamePage() {
     [applyServerState, gameId, syncStateFn],
   );
 
+  // AI seat safety net: if the AI is on move (first move as white, a reload, or
+  // a dropped nudge), ask the server to play. The call is idempotent.
+  const aiGame = Boolean((game as unknown as { ai_game?: boolean } | null)?.ai_game);
+  const aiSideToMove =
+    aiGame &&
+    game?.status === "active" &&
+    myColor !== null &&
+    sideToMoveFromFen(game.current_fen) !== myColor;
+  useEffect(() => {
+    if (!aiSideToMove || !gameId) return;
+    const t = setTimeout(() => {
+      void requestAiTurnFn({ data: { gameId } }).catch(() => undefined);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [aiSideToMove, gameId, requestAiTurnFn]);
+
   // Resolve display names for both seats once per game (hot sync path stays lean).
   useEffect(() => {
     let cancelled = false;
