@@ -182,8 +182,10 @@ export async function discoverRouteAssets(routes: string[]): Promise<string[]> {
         if (!response.ok) return;
         const html = await response.text();
         for (const match of html.matchAll(/(?:src|href)="([^"]+\.(?:js|mjs|css))"/g)) {
+          const href = match[1];
+          if (!href) continue;
           try {
-            const url = new URL(match[1], window.location.origin);
+            const url = new URL(href, window.location.origin);
             if (url.origin === window.location.origin) urls.add(url.pathname + url.search);
           } catch {
             /* ignore */
