@@ -31,6 +31,7 @@ import {
   acceptDraw,
   declineDraw,
   cancelDraw,
+  getGamePlayers,
 } from "@/lib/online.functions";
 import type {
   CommandOutcome,
@@ -114,6 +115,10 @@ function OnlineGamePage() {
   const respondTakebackFn = useServerFn(respondTakeback);
   const touchPresenceFn = useServerFn(touchPresence);
   const createChallengeFn = useServerFn(createChallenge);
+  const getGamePlayersFn = useServerFn(getGamePlayers);
+  const [playerNames, setPlayerNames] = useState<{ whiteName: string; blackName: string } | null>(
+    null,
+  );
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
@@ -313,11 +318,29 @@ function OnlineGamePage() {
       } finally {
         if (opts?.showSpinner) setSyncing(false);
       }
+
     },
     [applyServerState, gameId, syncStateFn],
   );
 
-
+  // Resolve display names for both seats once per game (hot sync path stays lean).
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const names = (await getGamePlayersFn({ data: { gameId } })) as {
+          whiteName: string;
+          blackName: string;
+        };
+        if (!cancelled) setPlayerNames(names);
+      } catch {
+        // Fall back to id prefixes — never block the board on a name lookup.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId, getGamePlayersFn]);
 
   useEffect(() => {
     void (async () => {
@@ -955,8 +978,14 @@ function OnlineGamePage() {
     );
   }
 
-  const opponentName = myColor === "w" ? game.black_id.slice(0, 8) : game.white_id.slice(0, 8);
-  const myName = user?.email?.split("@")[0] ?? "You";
+  const opponentId = myColor === "w" ? game.black_id : game.white_id;
+  const opponentName =
+    (myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
+    opponentId.slice(0, 8);
+  const myName =
+    (myColor === "w" ? playerNames?.whiteName : playerNames?.blackName) ??
+    user?.email?.split("@")[0] ??
+    "You";
   const turn = gameRef.current.turn() as PieceColor;
   const live = game.status === "active" && !result;
   const statusLine = live
