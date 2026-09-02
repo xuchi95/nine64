@@ -6,7 +6,7 @@ const health = { value: {
   engineVersion: "Stockfish 18",
   pool: { size: 4, busy: 0 },
   benchmarkSuiteVersion: "titan-v6-3",
-  serviceBuildId: "play-engine-titan-v6.3",
+  serviceBuildId: "play-engine-titan-v6.3-test",
   serviceVersion: "play-engine-titan-v6.3",
   capabilities: {
     cpuCount: 8,
@@ -56,7 +56,7 @@ describe("titan qualification suite", () => {
   engineVersion: "Stockfish 18",
   pool: { size: 4, busy: 0 },
   benchmarkSuiteVersion: "titan-v6-3",
-  serviceBuildId: "play-engine-titan-v6.3",
+  serviceBuildId: "play-engine-titan-v6.3-test",
   serviceVersion: "play-engine-titan-v6.3",
   capabilities: {
     cpuCount: 8,
