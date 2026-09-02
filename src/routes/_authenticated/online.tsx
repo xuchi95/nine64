@@ -224,12 +224,19 @@ function OnlinePage() {
                         className={cn(
                           "rounded-md border px-2 py-2 text-sm transition-colors",
                           timeControl === p.id
-                            ? "border-brass bg-brass/10 font-semibold"
-                            : "border-border hover:bg-muted",
+                            ? "border-primary bg-primary font-semibold text-primary-foreground shadow-sm ring-2 ring-primary/35"
+                            : "border-border text-muted-foreground hover:border-primary/50 hover:bg-muted hover:text-foreground",
                         )}
                       >
                         <span className="block font-mono">{p.label}</span>
-                        <span className="block text-[11px] text-muted-foreground">
+                        <span
+                          className={cn(
+                            "block text-[11px]",
+                            timeControl === p.id
+                              ? "text-primary-foreground/80"
+                              : "text-muted-foreground",
+                          )}
+                        >
                           {POOL_LABELS[p.pool].vi}
                         </span>
                       </button>
@@ -245,8 +252,8 @@ function OnlinePage() {
                         className={cn(
                           "rounded-md border px-2 py-2 text-xs transition-colors",
                           timeControl === p.id
-                            ? "border-brass bg-brass/10 font-semibold"
-                            : "border-border hover:bg-muted",
+                            ? "border-primary bg-primary font-semibold text-primary-foreground shadow-sm ring-2 ring-primary/35"
+                            : "border-border text-muted-foreground hover:border-primary/50 hover:bg-muted hover:text-foreground",
                         )}
                       >
                         {p.label}
