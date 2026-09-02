@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { APP } from "@/config/app";
 import { useT, type Locale } from "@/lib/i18n";
 
 export interface LegalSection {
