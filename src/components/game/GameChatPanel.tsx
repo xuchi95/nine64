@@ -4,7 +4,7 @@ import { Send } from "lucide-react";
 import { GamePanel } from "@/components/game/GamePanel";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { listGameChat, sendGameChat } from "@/lib/chat.functions";
+import { listGameChat, requestAiChatReply, sendGameChat } from "@/lib/chat.functions";
 import {
   buildChatTimeline,
   mergeChatMessages,
