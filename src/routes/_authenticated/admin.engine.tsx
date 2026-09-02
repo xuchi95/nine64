@@ -262,8 +262,12 @@ function AdminEnginePage() {
   };
 
   const caps = data?.health.capabilities ?? null;
+  /** Old Cloud Run image: no capabilities block and/or a different benchmark suite. */
+  const staleDeployment =
+    !caps || data?.health.benchmarkSuiteVersion !== EXPECTED_BENCHMARK_SUITE_VERSION;
   const strengthViolations = draft && titan?.slug === TITAN_SLUG ? titanFullStrengthViolations(draft) : [];
   const fit = resourceFit(draft ?? ({} as EngineConfig), caps);
+
   /** Only the fields that really differ between draft and the live profile. */
   const publishedDiff = draft && titan
     ? (Object.keys(draft) as (keyof EngineConfig)[])
