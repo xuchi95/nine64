@@ -323,7 +323,24 @@ function OnlineGamePage() {
     [applyServerState, gameId, syncStateFn],
   );
 
-
+  // Resolve display names for both seats once per game (hot sync path stays lean).
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const names = (await getGamePlayersFn({ data: { gameId } })) as {
+          whiteName: string;
+          blackName: string;
+        };
+        if (!cancelled) setPlayerNames(names);
+      } catch {
+        // Fall back to id prefixes — never block the board on a name lookup.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId, getGamePlayersFn]);
 
   useEffect(() => {
     void (async () => {
