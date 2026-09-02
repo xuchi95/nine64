@@ -18,5 +18,7 @@ export interface BenchmarkRow {
   result: Record<string, Json>;
   /** Fingerprint of the engine config this run benchmarked (null for legacy rows). */
   configSignature: string | null;
+  /** Identity of the probe suite that produced this row (null for legacy rows). */
+  suiteVersion: string | null;
   createdAt: string;
 }

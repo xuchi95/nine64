@@ -55,6 +55,7 @@ export async function listBenchmarks(
       configSignature: row["config_signature"] === null || row["config_signature"] === undefined
         ? null
         : String(row["config_signature"]),
+      suiteVersion: row["suite_version"] ? String(row["suite_version"]) : null,
       createdAt: String(row["created_at"]),
     };
   });
@@ -313,6 +314,7 @@ export async function runBenchmark(args: {
     configSignature: row["config_signature"] === null || row["config_signature"] === undefined
       ? null
       : String(row["config_signature"]),
+    suiteVersion: row["suite_version"] ? String(row["suite_version"]) : null,
     createdAt: String(row["created_at"]),
   }))[0]!;
   return run.status === "ok"
