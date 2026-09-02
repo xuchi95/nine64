@@ -161,6 +161,23 @@ const DOCS: Record<Locale, LegalDoc> = {
       `Welcome to ${APP.name} — an online chess platform focused on fair play, deep game analysis, and personalized learning. This policy explains what data we collect, why we collect it, how we protect it, and your rights when using our web app, mobile app, and related services. By using the service you agree to this policy.`,
     sections: [
       {
+        heading: "Who we are and how to contact us",
+        body: [
+          `Application: ${APP.name}, an online chess platform available at ${APP.siteUrl}. This policy covers the ${APP.siteUrl} website, the Nine64 mobile app and all related services operated by Nine64.`,
+          `Data controller: the Nine64 team. For any privacy question, data access, correction, export or deletion request, email ${APP.contactEmail} or use the in-app Contact page. We respond within 30 days.`,
+          `Effective date: ${APP.legalEffectiveDate}. Canonical address of this policy: ${APP.siteUrl}/privacy.`,
+        ],
+      },
+      {
+        heading: "Google OAuth scopes we request and why",
+        body: [
+          "openid — to receive your unique Google identifier (sub) and create the matching Nine64 account.",
+          "https://www.googleapis.com/auth/userinfo.email — to obtain your email address for account identification, account recovery and essential security notifications.",
+          "https://www.googleapis.com/auth/userinfo.profile — to obtain your display name and profile picture, shown on your public player profile.",
+          "We request no sensitive or restricted scopes. We never access Gmail, Drive, Calendar, Contacts, Photos, YouTube or location data, never access Google data while you are not signed in, and do not request offline access or call Google APIs in the background after your sign-in session.",
+        ],
+      },
+      {
         heading: "Data we collect",
         body: [
           "Account data: email address, display name, avatar, user identifier, language, board theme and display preferences.",
