@@ -50,16 +50,32 @@ async function callGateway(system: string, user: string): Promise<string | null>
         ],
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[rankedAi.chat] gateway error", res.status);
+      return null;
+    }
     const json = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
     };
     const raw = json.choices?.[0]?.message?.content;
     return typeof raw === "string" ? raw : null;
-  } catch {
+  } catch (err) {
+    console.error("[rankedAi.chat] gateway call failed", err instanceof Error ? err.message : err);
     return null;
   }
 }
+
+/** Human-sounding canned lines, used only when the model gives us nothing. */
+const FALLBACK: Record<string, string[]> = {
+  friendly: ["hey :)", "hi, good luck!", "all good here"],
+  quiet: ["yep", "hm", "ok"],
+  cocky: ["watch this", "we'll see", "haha ok"],
+  sporty: ["gl hf", "nice one", "let's go"],
+  nerdy: ["interesting game so far", "focused here", "yeah agreed"],
+  grumpy: ["busy thinking", "hm ok", "sure"],
+  playful: ["hehe hi", "oh hello there", "haha"],
+  zen: ["taking it slow", "all in the flow", "peaceful game"],
+};
 
 /**
  * Writes one AI chat message for `gameId` when it makes sense.
