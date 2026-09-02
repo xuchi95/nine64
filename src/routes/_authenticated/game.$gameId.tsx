@@ -99,6 +99,7 @@ const REALTIME_TIMEOUT_MS = 6000;
 
 function OnlineGamePage() {
   const { gameId } = useParams({ from: "/_authenticated/game/$gameId" });
+  const navigate = useNavigate();
   const { user } = useAuth();
   const syncStateFn = useServerFn(syncGameState);
   const makeMoveFn = useServerFn(makeMove);
