@@ -40,11 +40,11 @@ export interface EngineContract {
 export function capabilitiesUsable(caps: EngineCapabilities | null): boolean {
   return Boolean(
     caps &&
-      caps.cpuCount > 0 &&
-      caps.memoryMb > 0 &&
-      caps.poolSize > 0 &&
-      caps.maxThreadsPerEngine > 0 &&
-      caps.maxSafeHashMb > 0,
+    caps.cpuCount > 0 &&
+    caps.memoryMb > 0 &&
+    caps.poolSize > 0 &&
+    caps.maxThreadsPerEngine > 0 &&
+    caps.maxSafeHashMb > 0,
   );
 }
 
@@ -93,13 +93,24 @@ export function evaluateEngineContract(
     return fail("SERVICE_BUILD_OUTDATED");
   }
   if (health.status === "starting") return fail("ENGINE_STARTING", true);
-  if (health.status !== "healthy" && health.status !== "degraded") return fail("ENGINE_UNAVAILABLE", true);
+  if (health.status !== "healthy" && health.status !== "degraded")
+    return fail("ENGINE_UNAVAILABLE", true);
   if (!health.pool || health.pool.size < 1) return fail("ENGINE_POOL_UNAVAILABLE", true);
-  if (!/stockfish\s*18/i.test(health.engineVersion ?? "")) return fail("ENGINE_VERSION_UNSUPPORTED", true);
-  if (!config) return { ...base, ok: true, deploymentCompatible: true, engineReady: true, code: null };
+  if (!/stockfish\s*18/i.test(health.engineVersion ?? ""))
+    return fail("ENGINE_VERSION_UNSUPPORTED", true);
+  if (!config)
+    return { ...base, ok: true, deploymentCompatible: true, engineReady: true, code: null };
 
   const fit = resourceFit(config, caps);
-  if (!fit.ok) return { ...base, fit, ok: false, deploymentCompatible: true, engineReady: true, code: "CONFIG_RESOURCE_MISMATCH" };
+  if (!fit.ok)
+    return {
+      ...base,
+      fit,
+      ok: false,
+      deploymentCompatible: true,
+      engineReady: true,
+      code: "CONFIG_RESOURCE_MISMATCH",
+    };
   return { ...base, fit, ok: true, deploymentCompatible: true, engineReady: true, code: null };
 }
 

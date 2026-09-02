@@ -47,13 +47,19 @@ describe("engine deployment contract", () => {
   });
 
   it("blocks when the engine ships a different benchmark suite", () => {
-    const contract = evaluateEngineContract(health({ benchmarkSuiteVersion: "titan-v6-2" }), config);
+    const contract = evaluateEngineContract(
+      health({ benchmarkSuiteVersion: "titan-v6-2" }),
+      config,
+    );
     expect(contract.ok).toBe(false);
     expect(contract.code).toBe("ENGINE_BENCHMARK_SUITE_MISMATCH");
   });
 
   it("treats a current starting deployment as compatible but not ready", () => {
-    const contract = evaluateEngineContract(health({ status: "starting", engineVersion: null }), config);
+    const contract = evaluateEngineContract(
+      health({ status: "starting", engineVersion: null }),
+      config,
+    );
     expect(contract.ok).toBe(false);
     expect(contract.deploymentCompatible).toBe(true);
     expect(contract.engineReady).toBe(false);
@@ -61,10 +67,19 @@ describe("engine deployment contract", () => {
   });
 
   it("blocks missing or stale service identities", () => {
-    expect(evaluateEngineContract(health({ serviceBuildId: null }), config).code).toBe("SERVICE_BUILD_OUTDATED");
-    expect(evaluateEngineContract(health({ serviceBuildId: EXPECTED_ENGINE_SERVICE_VERSION }), config).code).toBe("SERVICE_BUILD_OUTDATED");
-    expect(evaluateEngineContract(health({ serviceVersion: null }), config).code).toBe("SERVICE_BUILD_OUTDATED");
-    expect(evaluateEngineContract(health({ serviceBuildId: "old-image" }), config).code).toBe("SERVICE_BUILD_OUTDATED");
+    expect(evaluateEngineContract(health({ serviceBuildId: null }), config).code).toBe(
+      "SERVICE_BUILD_OUTDATED",
+    );
+    expect(
+      evaluateEngineContract(health({ serviceBuildId: EXPECTED_ENGINE_SERVICE_VERSION }), config)
+        .code,
+    ).toBe("SERVICE_BUILD_OUTDATED");
+    expect(evaluateEngineContract(health({ serviceVersion: null }), config).code).toBe(
+      "SERVICE_BUILD_OUTDATED",
+    );
+    expect(evaluateEngineContract(health({ serviceBuildId: "old-image" }), config).code).toBe(
+      "SERVICE_BUILD_OUTDATED",
+    );
   });
 
   it("blocks a config that does not fit the reported hardware", () => {

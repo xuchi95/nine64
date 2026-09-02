@@ -61,7 +61,8 @@ export default {
     "adminc.dash.notConfigured": "Chưa cấu hình",
 
     "adminc.users.title": "Quản lý người dùng",
-    "adminc.users.soon": "Module người dùng sẽ được bật ở bước tiếp theo. Khung quyền và nhật ký đã sẵn sàng.",
+    "adminc.users.soon":
+      "Module người dùng sẽ được bật ở bước tiếp theo. Khung quyền và nhật ký đã sẵn sàng.",
     "adminc.engine.title": "Máy cờ",
     "adminc.engine.soon": "Hồ sơ máy cờ và benchmark sẽ được bật ở bước tiếp theo.",
     "adminc.engine.subtitle": "Hồ sơ engine, trạng thái dịch vụ, phiên chơi và benchmark.",
@@ -81,7 +82,8 @@ export default {
     "adminc.engine.draftSaved": "Đã lưu nháp cấu hình.",
     "adminc.engine.disabled": "Đã tắt khẩn cấp hồ sơ Titan.",
     "adminc.engine.qualify.title": "Bộ kiểm định phát hành Titan",
-    "adminc.engine.qualify.hint": "Chạy tuần tự preflight → bench → speedtest → EPD → thế cờ hợp lệ trên đúng cấu hình nháp đang hiển thị.",
+    "adminc.engine.qualify.hint":
+      "Chạy tuần tự preflight → bench → speedtest → EPD → thế cờ hợp lệ trên đúng cấu hình nháp đang hiển thị.",
     "adminc.engine.qualify.run": "Chạy bộ kiểm định Titan",
     "adminc.engine.qualify.running": "Đang kiểm định…",
     "adminc.engine.qualify.pass": "ĐỦ ĐIỀU KIỆN PHÁT HÀNH",
@@ -93,7 +95,8 @@ export default {
     "adminc.engine.qualify.step.positions": "Thế cờ hợp lệ",
     "adminc.engine.qualify.step.selfplay": "Tự đấu",
     "adminc.engine.selfplay.title": "Tự đấu đối chứng (nháp vs bản phát hành)",
-    "adminc.engine.selfplay.hint": "Cho cấu hình nháp đấu với cấu hình đang phát hành trên cùng máy cờ, đổi màu luân phiên. Ghi thắng/hoà/thua và vân tay cấu hình — không suy ra Elo.",
+    "adminc.engine.selfplay.hint":
+      "Cho cấu hình nháp đấu với cấu hình đang phát hành trên cùng máy cờ, đổi màu luân phiên. Ghi thắng/hoà/thua và vân tay cấu hình — không suy ra Elo.",
     "adminc.engine.selfplay.run": "Chạy tự đấu đối chứng",
     "adminc.engine.selfplay.running": "Đang tự đấu…",
     "adminc.engine.selfplay.score": "Kết quả nháp",
@@ -125,20 +128,24 @@ export default {
     "adminc.engine.reason.bench_failed": "Benchmark hiệu năng gần nhất không đạt",
     "adminc.engine.reason.missing_tactics": "Chưa có kiểm định chiến thuật EPD",
     "adminc.engine.reason.tactics_failed": "Kiểm định chiến thuật EPD gần nhất không đạt",
-    "adminc.engine.reason.illegal_moves": "Engine đã trả về ít nhất một nước đi thực sự không hợp lệ",
+    "adminc.engine.reason.illegal_moves":
+      "Engine đã trả về ít nhất một nước đi thực sự không hợp lệ",
     "adminc.engine.reason.benchmark_timeout": "Có vị trí kiểm định bị hết thời gian",
     "adminc.engine.reason.benchmark_engine_error": "Có lỗi tiến trình Stockfish trong kiểm định",
     "adminc.engine.reason.benchmark_engine_busy": "Máy cờ đang bận nên không chạy hết bộ kiểm định",
     "adminc.engine.reason.benchmark_no_move": "Có vị trí engine không trả về nước đi nào",
-    "adminc.engine.reason.benchmark_config_mismatch": "Benchmark không thuộc cấu hình Titan hiện tại",
+    "adminc.engine.reason.benchmark_config_mismatch":
+      "Benchmark không thuộc cấu hình Titan hiện tại",
     "adminc.engine.reason.benchmark_suite_outdated":
       "Máy cờ trên Cloud Run đang chạy bản cũ (bộ kiểm định không khớp) — hãy deploy bản mới rồi chạy lại kiểm định",
     "adminc.engine.reason.engine_capabilities_unavailable":
       "Máy cờ không báo cáo năng lực phần cứng — bản deploy trên Cloud Run đã cũ",
     "adminc.engine.reason.engine_benchmark_suite_mismatch":
       "Bộ kiểm định của máy cờ không khớp bản backend yêu cầu — cần deploy lại Cloud Run",
-    "adminc.engine.reason.service_build_outdated": "Build ID của play-engine bị thiếu hoặc đã cũ — cần deploy lại dịch vụ.",
-    "adminc.engine.reason.engine_starting": "Deployment đúng phiên bản nhưng Stockfish vẫn đang khởi động — hãy thử lại sau.",
+    "adminc.engine.reason.service_build_outdated":
+      "Build ID của play-engine bị thiếu hoặc đã cũ — cần deploy lại dịch vụ.",
+    "adminc.engine.reason.engine_starting":
+      "Deployment đúng phiên bản nhưng Stockfish vẫn đang khởi động — hãy thử lại sau.",
     "adminc.engine.reason.capabilities_unknown":
       "Chưa biết năng lực phần cứng vì máy cờ chưa báo cáo (bản deploy cũ)",
     "adminc.engine.staleDeploy.title": "Cloud Run đang chạy bản play-engine cũ",
@@ -160,7 +167,8 @@ export default {
     "adminc.engine.enabled": "Đang bật",
     "adminc.engine.noSessions": "Không có phiên nào đang chạy.",
     "adminc.engine.noBench": "Chưa có benchmark nào. Không công bố NPS hay Elo khi chưa đo thật.",
-    "adminc.engine.attribution": "Nine64 Titan chạy Stockfish 18 (GPLv3). Sức mạnh máy tối đa, không gắn Elo quy đổi.",
+    "adminc.engine.attribution":
+      "Nine64 Titan chạy Stockfish 18 (GPLv3). Sức mạnh máy tối đa, không gắn Elo quy đổi.",
     "adminc.intel.title": "Trí tuệ AI",
     "adminc.intel.soon": "Quản lý prompt và phiên bản AI Coach sẽ được bật ở bước tiếp theo.",
     "adminc.intel.subtitle": "Prompt AI Coach, model cho phép, hạn mức và số liệu sử dụng.",
@@ -242,7 +250,8 @@ export default {
     "adminc.dash.notConfigured": "Not configured",
 
     "adminc.users.title": "User management",
-    "adminc.users.soon": "The user module ships in the next step. Permissions and audit wiring are ready.",
+    "adminc.users.soon":
+      "The user module ships in the next step. Permissions and audit wiring are ready.",
     "adminc.engine.title": "Engine",
     "adminc.engine.soon": "Engine profiles and benchmarks ship in the next step.",
     "adminc.engine.subtitle": "Engine profiles, service status, live sessions and benchmarks.",
@@ -262,7 +271,8 @@ export default {
     "adminc.engine.draftSaved": "Draft configuration saved.",
     "adminc.engine.disabled": "Titan profile emergency-disabled.",
     "adminc.engine.qualify.title": "Titan production qualification",
-    "adminc.engine.qualify.hint": "Runs preflight → bench → speedtest → EPD → legal positions in order against the exact draft config shown here.",
+    "adminc.engine.qualify.hint":
+      "Runs preflight → bench → speedtest → EPD → legal positions in order against the exact draft config shown here.",
     "adminc.engine.qualify.run": "Run Titan qualification",
     "adminc.engine.qualify.running": "Qualifying…",
     "adminc.engine.qualify.pass": "QUALIFIED FOR RELEASE",
@@ -274,7 +284,8 @@ export default {
     "adminc.engine.qualify.step.positions": "Legal positions",
     "adminc.engine.qualify.step.selfplay": "Self-play",
     "adminc.engine.selfplay.title": "Self-play regression (draft vs published)",
-    "adminc.engine.selfplay.hint": "Plays the draft config against the currently published config on the same engine, alternating colours. Records wins/draws/losses and both config fingerprints — no Elo is inferred.",
+    "adminc.engine.selfplay.hint":
+      "Plays the draft config against the currently published config on the same engine, alternating colours. Records wins/draws/losses and both config fingerprints — no Elo is inferred.",
     "adminc.engine.selfplay.run": "Run self-play regression",
     "adminc.engine.selfplay.running": "Playing…",
     "adminc.engine.selfplay.score": "Draft result",
@@ -308,18 +319,24 @@ export default {
     "adminc.engine.reason.tactics_failed": "Latest EPD tactics benchmark did not pass",
     "adminc.engine.reason.illegal_moves": "The engine returned at least one genuinely illegal move",
     "adminc.engine.reason.benchmark_timeout": "At least one benchmark position timed out",
-    "adminc.engine.reason.benchmark_engine_error": "A Stockfish process error occurred during the benchmark",
-    "adminc.engine.reason.benchmark_engine_busy": "The engine pool was busy, so the suite did not complete",
-    "adminc.engine.reason.benchmark_no_move": "The engine returned no move for at least one position",
-    "adminc.engine.reason.benchmark_config_mismatch": "Benchmark does not match the current Titan configuration",
+    "adminc.engine.reason.benchmark_engine_error":
+      "A Stockfish process error occurred during the benchmark",
+    "adminc.engine.reason.benchmark_engine_busy":
+      "The engine pool was busy, so the suite did not complete",
+    "adminc.engine.reason.benchmark_no_move":
+      "The engine returned no move for at least one position",
+    "adminc.engine.reason.benchmark_config_mismatch":
+      "Benchmark does not match the current Titan configuration",
     "adminc.engine.reason.benchmark_suite_outdated":
       "The Cloud Run engine runs an older build (suite mismatch) — redeploy it, then run qualification again",
     "adminc.engine.reason.engine_capabilities_unavailable":
       "The engine does not report hardware capabilities — the Cloud Run deployment is outdated",
     "adminc.engine.reason.engine_benchmark_suite_mismatch":
       "The engine benchmark suite does not match what this backend requires — redeploy Cloud Run",
-    "adminc.engine.reason.service_build_outdated": "The play-engine build ID is missing or stale — redeploy the service.",
-    "adminc.engine.reason.engine_starting": "The deployment is current, but Stockfish is still warming up — retry shortly.",
+    "adminc.engine.reason.service_build_outdated":
+      "The play-engine build ID is missing or stale — redeploy the service.",
+    "adminc.engine.reason.engine_starting":
+      "The deployment is current, but Stockfish is still warming up — retry shortly.",
     "adminc.engine.reason.capabilities_unknown":
       "Hardware capabilities unknown because the engine did not report them (outdated deployment)",
     "adminc.engine.staleDeploy.title": "Cloud Run is running an outdated play-engine build",
@@ -334,14 +351,17 @@ export default {
     "adminc.engine.diff": "Difference from the published profile",
     "adminc.engine.noDiff": "Draft matches the published profile",
     "adminc.engine.recommend": "Recommend config for this hardware",
-    "adminc.engine.recommended": "Recommended config generated — save the draft, then run qualification.",
+    "adminc.engine.recommended":
+      "Recommended config generated — save the draft, then run qualification.",
     "adminc.engine.ok": "Pass",
     "adminc.engine.fail": "Fail",
-    "adminc.engine.reason.benchmark_stale": "Benchmark is stale relative to the current configuration",
+    "adminc.engine.reason.benchmark_stale":
+      "Benchmark is stale relative to the current configuration",
     "adminc.engine.enabled": "Enabled",
     "adminc.engine.noSessions": "No live sessions.",
     "adminc.engine.noBench": "No benchmarks yet. No NPS or Elo is claimed without a real run.",
-    "adminc.engine.attribution": "Nine64 Titan runs Stockfish 18 (GPLv3). Maximum engine strength, no converted Elo.",
+    "adminc.engine.attribution":
+      "Nine64 Titan runs Stockfish 18 (GPLv3). Maximum engine strength, no converted Elo.",
     "adminc.intel.title": "AI intelligence",
     "adminc.intel.soon": "AI Coach prompt and version management ships in the next step.",
     "adminc.intel.subtitle": "AI Coach prompts, allowed models, quotas and usage metrics.",

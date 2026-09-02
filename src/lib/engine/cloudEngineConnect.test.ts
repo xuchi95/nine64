@@ -188,7 +188,8 @@ describe("health probe", () => {
     const health = await (mockFetch({
       status: 503,
       body: { ...HEALTHY, status: "starting", engineVersion: null },
-    }), cloudEngineHealth());
+    }),
+    cloudEngineHealth());
     expect(health.status).toBe("starting");
     expect(health.benchmarkSuiteVersion).toBe("titan-v6-3");
     expect(health.serviceBuildId).toBe("play-engine-titan-v6.3-test");
@@ -196,7 +197,9 @@ describe("health probe", () => {
   });
 
   it("refuses to call a 200 healthy when the payload is wrong", () => {
-    expect(interpretHealthPayload({ status: "starting", pool: { size: 1, busy: 0 } }, 10).status).toBe("starting");
+    expect(
+      interpretHealthPayload({ status: "starting", pool: { size: 1, busy: 0 } }, 10).status,
+    ).toBe("starting");
     expect(interpretHealthPayload({ status: "ok", pool: { size: 1, busy: 0 } }, 10).status).toBe(
       "degraded",
     );

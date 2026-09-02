@@ -14,14 +14,20 @@ import { BENCHMARK_KINDS } from "@/lib/engine/benchmarkTypes";
 import { TITAN_SLUG } from "@/lib/engine/profileTypes";
 
 const reason = z.string().trim().min(10).max(500);
-const slug = z.string().trim().min(2).max(40).regex(/^[a-z0-9-]+$/);
+const slug = z
+  .string()
+  .trim()
+  .min(2)
+  .max(40)
+  .regex(/^[a-z0-9-]+$/);
 
 export const getEngineOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context, "engine");
     const { listEngineProfiles, ensureTitanProfile } = await import("@/lib/engine/profiles.server");
-    const { cloudEngineHealthCached, breakerState } = await import("@/lib/engine/cloudEngine.server");
+    const { cloudEngineHealthCached, breakerState } =
+      await import("@/lib/engine/cloudEngine.server");
     const { evaluateEngineContract } = await import("@/lib/engine/engineContract.server");
     const { listBenchmarks, publishReadiness } = await import("@/lib/engine/benchmarks.server");
     const { listActiveSessions } = await import("@/lib/engine/botSessions.server");
@@ -46,7 +52,17 @@ export const getEngineOverview = createServerFn({ method: "GET" })
     // Booleans + codes only — never a secret value.
     const env = engineEnvDiagnostics();
     const contract = evaluateEngineContract(health, titan?.draftConfig ?? titan?.config ?? null);
-    return { profiles: rows, degraded, health, contract, breaker: breakerState(), benchmarks, readiness, sessions, env };
+    return {
+      profiles: rows,
+      degraded,
+      health,
+      contract,
+      breaker: breakerState(),
+      benchmarks,
+      readiness,
+      sessions,
+      env,
+    };
   });
 
 export type EngineOverview = Awaited<ReturnType<typeof getEngineOverview>>;
@@ -73,12 +89,11 @@ export const checkEngineConnection = createServerFn({ method: "POST" })
     const ok = contract.ok;
     return {
       ok,
-      code: ok ? "READY" : contract.code ?? "ENGINE_UNAVAILABLE",
+      code: ok ? "READY" : (contract.code ?? "ENGINE_UNAVAILABLE"),
       health,
       contract,
     };
   });
-
 
 export const saveEngineDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -116,7 +131,6 @@ export const recommendTitanDraft = createServerFn({ method: "POST" })
     const config = recommendTitanConfig(caps);
     return { ok: true as const, config, capabilities: caps, fit: resourceFit(config, caps) };
   });
-
 
 export const publishEngineProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -80,7 +80,12 @@ function pieceCountFromName(name) {
  */
 export function inspectSyzygy(rawPath = process.env.SYZYGY_PATH) {
   const path = (rawPath ?? "").trim();
-  const empty = { ready: false, pieces: 0, files: 0, reason: path ? "unreadable" : "not_configured" };
+  const empty = {
+    ready: false,
+    pieces: 0,
+    files: 0,
+    reason: path ? "unreadable" : "not_configured",
+  };
   if (!path) return empty;
   let entries;
   try {
