@@ -21,6 +21,7 @@ import {
   disableEngineProfile,
   checkEngineConnection,
   runTitanQualificationSuite,
+  runTitanSelfPlayRegression,
   recommendTitanDraft,
   type EngineOverview,
 } from "@/lib/adminEngine.functions";
@@ -33,6 +34,7 @@ import {
 import { resourceFit } from "@/lib/engine/capabilities";
 import { BENCHMARK_KINDS, type BenchmarkRow } from "@/lib/engine/benchmarkTypes";
 import type { QualificationResult } from "@/lib/engine/qualificationTypes";
+import type { SelfPlayRegression } from "@/lib/engine/selfplayTypes";
 
 /** Typed, secret-free failure summary for a benchmark row. */
 function benchmarkIssues(row: BenchmarkRow): string {
@@ -166,6 +168,9 @@ function AdminEnginePage() {
   const recommend = useServerFn(recommendTitanDraft);
   const [probeResult, setProbeResult] = useState<string | null>(null);
   const qualify = useServerFn(runTitanQualificationSuite);
+  const selfPlay = useServerFn(runTitanSelfPlayRegression);
+  const [regression, setRegression] = useState<SelfPlayRegression | null>(null);
+  const [regressionBusy, setRegressionBusy] = useState(false);
   const [qual, setQual] = useState<QualificationResult | null>(null);
   const [qualBusy, setQualBusy] = useState(false);
   const [openRows, setOpenRows] = useState<Record<string, boolean>>({});
@@ -225,6 +230,25 @@ function AdminEnginePage() {
       setNotice({ kind: "error", text: err instanceof Error ? err.message : t("adminc.common.failed") });
     } finally {
       setQualBusy(false);
+    }
+  };
+
+  /** Candidate draft vs the published live config on the same engine. */
+  const runRegression = async () => {
+    if (!titan || !parsed?.success) return;
+    setRegressionBusy(true);
+    setNotice(null);
+    setRegression(null);
+    try {
+      const result = await selfPlay({
+        data: { reason: reason.trim(), slug: titan.slug, config: parsed.data, games: 4, moveTimeMs: 250 },
+      });
+      setRegression(result as SelfPlayRegression);
+      await refresh();
+    } catch (err) {
+      setNotice({ kind: "error", text: err instanceof Error ? err.message : t("adminc.common.failed") });
+    } finally {
+      setRegressionBusy(false);
     }
   };
 
@@ -538,7 +562,51 @@ function AdminEnginePage() {
                     placeholder={t("adminc.engine.reason")}
                     rows={2}
                   />
-                  <div className="flex flex-wrap gap-2">
+                  <div className="rounded-xl border border-border/60 bg-card/40 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">{t("adminc.engine.selfplay.title")}</p>
+                    <p className="text-xs text-muted-foreground">{t("adminc.engine.selfplay.hint")}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy || qualBusy || regressionBusy || !reasonValid || !parsed?.success || !titan}
+                    onClick={() => void runRegression()}
+                  >
+                    <Gauge className="mr-2 h-4 w-4" />
+                    {regressionBusy
+                      ? t("adminc.engine.selfplay.running")
+                      : t("adminc.engine.selfplay.run")}
+                  </Button>
+                </div>
+                {regression && (
+                  <div className="mt-3 space-y-2 text-xs">
+                    <p className={cn("text-sm font-semibold", regression.ok ? "text-emerald-400" : "text-amber-400")}>
+                      {t("adminc.engine.selfplay.score")}: {regression.wins}W / {regression.draws}D / {regression.losses}L
+                      {regression.score !== null ? ` · ${(regression.score * 100).toFixed(0)}%` : ""}
+                    </p>
+                    {!regression.ok && (
+                      <p className="text-destructive">{regression.code ?? t("adminc.common.failed")}</p>
+                    )}
+                    <ul className="space-y-1 font-mono text-[11px] text-muted-foreground">
+                      {regression.detail.map((g) => (
+                        <li key={g.index}>
+                          #{g.index + 1} · {g.candidateColor} · {g.result} · {g.plies} plies · {g.termination}
+                          {g.error ? ` · ${g.error}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="font-mono text-[11px] text-muted-foreground">
+                      draft {regression.candidateSignature.slice(0, 12)}… vs v{regression.baselineVersion}{" "}
+                      {regression.baselineSignature.slice(0, 12)}… · {regression.moveTimeMs}ms/move ·{" "}
+                      {(regression.durationMs / 1000).toFixed(1)}s
+                      {regression.engineVersion ? ` · ${regression.engineVersion}` : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
