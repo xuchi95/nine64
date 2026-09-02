@@ -66,8 +66,10 @@ function GamesPage() {
         const g = item.game;
         if (!g.result) continue;
         if (g.result.winner === "draw") draws += 1;
+        else if (g.playerColor === null) continue;
         else if (g.result.winner === g.playerColor) wins += 1;
         else losses += 1;
+
       } else {
         const g = item.game;
         if (g.status !== "completed" || !g.result) continue;
