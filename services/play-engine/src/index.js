@@ -247,9 +247,11 @@ async function handleBenchmark(body) {
         nps: result.nps,
         passed: Boolean(result.nps),
         suiteVersion: BENCHMARK_SUITE_VERSION,
+        serviceBuildId: SERVICE_BUILD_ID,
         detail: {
           kind,
           suiteVersion: BENCHMARK_SUITE_VERSION,
+          serviceBuildId: SERVICE_BUILD_ID,
           hardware: { threads: Number(process.env.ENGINE_THREADS || 0) || null },
           failureReasons: result.nps ? [] : ["engine_error"],
         },
@@ -335,6 +337,7 @@ export function healthPayload(enginePool, isReady) {
     pool: { size, busy: alive.filter((e) => e.busy).length },
     capabilities: capabilities(size || 1),
     benchmarkSuiteVersion: BENCHMARK_SUITE_VERSION,
+    serviceBuildId: SERVICE_BUILD_ID,
     stats: {
       searches: Number(stats.searches ?? 0),
       timeouts: Number(stats.timeouts ?? 0),
