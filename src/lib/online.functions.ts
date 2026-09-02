@@ -260,6 +260,9 @@ export const getGame = createServerFn({ method: "GET" })
 export type GamePlayerNames = {
   whiteName: string;
   blackName: string;
+  /** True when that seat is a Nine64 AI opponent (always disclosed in the UI). */
+  whiteIsAi: boolean;
+  blackIsAi: boolean;
 };
 
 /** Display names for both seats. Authenticated users may read profiles, and
@@ -280,13 +283,16 @@ export const getGamePlayers = createServerFn({ method: "GET" })
     }
     const { data: rows, error: pErr } = await context.supabase
       .from("profiles")
-      .select("id, display_name")
+      .select("id, display_name, is_ai")
       .in("id", [game.white_id, game.black_id]);
     if (pErr) throw new Error(pErr.message);
     const names = new Map((rows ?? []).map((r) => [r.id as string, r.display_name as string]));
+    const aiSeats = new Set((rows ?? []).filter((r) => r.is_ai).map((r) => r.id as string));
     return {
       whiteName: names.get(game.white_id) ?? game.white_id.slice(0, 8),
       blackName: names.get(game.black_id) ?? game.black_id.slice(0, 8),
+      whiteIsAi: aiSeats.has(game.white_id),
+      blackIsAi: aiSeats.has(game.black_id),
     };
   });
 
