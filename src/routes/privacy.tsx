@@ -215,7 +215,8 @@ const DOCS: Record<Locale, LegalDoc> = {
         heading: "Sharing and transfer",
         body: [
           "We do not sell, trade, or rent your personal data, including Google data, in any form.",
-          "We rely on select infrastructure providers (cloud hosting, database, chess engine servers, AI analysis services, email delivery, abuse prevention). They process data only on our instructions and under equivalent security obligations.",
+          "Our sub-processors are: Supabase (authentication, database and storage), Cloudflare (content delivery, network security and application hosting), Google Cloud Run (chess engine and Fair Play analysis services), and Google AI / Gemini (game analysis and AI coach text generation). They process data only on our documented instructions and under equivalent security and confidentiality obligations.",
+          "Data may be processed on servers located outside your country, including in the United States and the European Union. Where required, transfers rely on Standard Contractual Clauses or equivalent safeguards.",
           "We may disclose data where required by law, where necessary to protect the legitimate rights and safety of users and Nine64, or where you have given explicit consent.",
         ],
       },
