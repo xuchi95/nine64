@@ -351,19 +351,32 @@ function AdminUserDetailPage() {
                       : ["anonymize", "adminc.users.action.anonymize"],
                     ["export", "adminc.users.action.export"],
                   ] as [ActionKind, string][]
-                ).map(([kind, labelKey]) => (
-                  <Button
-                    key={kind}
-                    size="sm"
-                    variant={kind === "anonymize" || kind === "revokeAdmin" ? "destructive" : "outline"}
-                    onClick={() => {
-                      setFeedback(null);
-                      setAction(kind);
-                    }}
-                  >
-                    {t(labelKey)}
-                  </Button>
-                ))}
+                ).map(([kind, labelKey]) => {
+                  const suspended = o.status === "suspended";
+                  const disabled =
+                    (kind === "suspend" && o.status !== "active") ||
+                    (kind === "unsuspend" && !suspended);
+                  const variant =
+                    kind === "anonymize" || kind === "revokeAdmin"
+                      ? "destructive"
+                      : kind === "unsuspend" && suspended
+                        ? "default"
+                        : "outline";
+                  return (
+                    <Button
+                      key={kind}
+                      size="sm"
+                      variant={variant}
+                      disabled={disabled}
+                      onClick={() => {
+                        setFeedback(null);
+                        setAction(kind);
+                      }}
+                    >
+                      {t(labelKey)}
+                    </Button>
+                  );
+                })}
               </CardContent>
             </Card>
 
