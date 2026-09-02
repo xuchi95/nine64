@@ -36,8 +36,8 @@ export function TimeControlPicker({
                 className={cn(
                   "tabular rounded-md border px-3 py-1.5 text-sm transition-colors",
                   value?.id === tc.id
-                    ? "border-primary/60 bg-primary/15 text-foreground"
-                    : "border-border bg-surface-2 text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                    ? "border-primary bg-primary font-semibold text-primary-foreground shadow-sm ring-2 ring-primary/35"
+                    : "border-border bg-surface-2 text-muted-foreground hover:border-primary/50 hover:text-foreground",
                 )}
               >
                 {tc.label}
