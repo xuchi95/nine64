@@ -44,7 +44,7 @@ function AdminAiPage() {
   }, [q]);
 
   return (
-    <AdminShell>
+    <AdminShell module="system" title="AI Player Network">
       <div className="space-y-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
