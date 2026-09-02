@@ -118,9 +118,12 @@ function OnlineGamePage() {
   const createChallengeFn = useServerFn(createChallenge);
   const getGamePlayersFn = useServerFn(getGamePlayers);
   const requestAiTurnFn = useServerFn(requestAiTurn);
-  const [playerNames, setPlayerNames] = useState<{ whiteName: string; blackName: string } | null>(
-    null,
-  );
+  const [playerNames, setPlayerNames] = useState<{
+    whiteName: string;
+    blackName: string;
+    whiteIsAi?: boolean;
+    blackIsAi?: boolean;
+  } | null>(null);
   const [ratingEvent, setRatingEvent] = useState<RatingEvent | null>(null);
 
   const [game, setGame] = useState<Game | null>(null);
@@ -333,6 +336,8 @@ function OnlineGamePage() {
         const names = (await getGamePlayersFn({ data: { gameId } })) as {
           whiteName: string;
           blackName: string;
+          whiteIsAi?: boolean;
+          blackIsAi?: boolean;
         };
         if (!cancelled) setPlayerNames(names);
       } catch {
@@ -989,9 +994,12 @@ function OnlineGamePage() {
   }
 
   const opponentId = myColor === "w" ? game.black_id : game.white_id;
+  const opponentIsAi = Boolean(
+    myColor === "w" ? playerNames?.blackIsAi : playerNames?.whiteIsAi,
+  );
   const opponentName =
-    (myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
-    opponentId.slice(0, 8);
+    ((myColor === "w" ? playerNames?.blackName : playerNames?.whiteName) ??
+      opponentId.slice(0, 8)) + (opponentIsAi ? " (AI)" : "");
   const myName =
     (myColor === "w" ? playerNames?.whiteName : playerNames?.blackName) ??
     user?.email?.split("@")[0] ??
