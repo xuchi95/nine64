@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   Smartphone,
   Trash2,
+  Trophy,
   Upload,
   User,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { removeAvatar, uploadAvatar, useAvatarUrl } from "@/lib/avatar";
 import { FormSkeleton } from "@/components/layout/PageSkeleton";
+import { RatingLadder } from "@/components/rating/RatingLadder";
 
 export const Route = createFileRoute("/_authenticated/account")({
   head: () => ({
@@ -49,6 +51,7 @@ function useSections() {
   const { t } = useT();
   return [
     { value: "profile", label: t("study.account.sectionProfile"), hint: t("study.account.sectionProfileHint"), icon: User },
+    { value: "rating", label: t("rank.section"), hint: t("rank.sectionHint"), icon: Trophy },
     { value: "email", label: t("study.account.sectionEmail"), hint: t("study.account.sectionEmailHint"), icon: Mail },
     { value: "password", label: t("study.account.sectionPassword"), hint: t("study.account.sectionPasswordHint"), icon: KeyRound },
     { value: "mfa", label: t("study.account.sectionMfa"), hint: t("study.account.sectionMfaHint"), icon: ShieldCheck },
@@ -116,6 +119,12 @@ function AccountPage() {
         <div className="mt-4 lg:mt-0">
           <TabsContent value="profile">
             <ProfileCard />
+          </TabsContent>
+          <TabsContent value="rating">
+            <div className="space-y-5">
+              <SectionHead title={t("rank.title")} desc={t("rank.desc")} />
+              {user ? <RatingLadder userId={user.id} /> : null}
+            </div>
           </TabsContent>
           <TabsContent value="email">
             <EmailCard />
