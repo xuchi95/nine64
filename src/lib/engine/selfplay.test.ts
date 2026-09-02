@@ -2,9 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Chess } from "chess.js";
 import type { EngineConfig } from "./profileTypes";
 
+type MoveReply = { status: string; bestmove: string | null; engineVersion: string | null };
 const moveImpl = {
-  fn: (_fen: string, _isCandidate: boolean) =>
-    ({ status: "ok", bestmove: null as string | null, engineVersion: "Stockfish 18" }),
+  fn: (_fen: string, _isCandidate: boolean): MoveReply => ({
+    status: "ok",
+    bestmove: null,
+    engineVersion: "Stockfish 18",
+  }),
 };
 const inserted: Record<string, unknown>[] = [];
 
