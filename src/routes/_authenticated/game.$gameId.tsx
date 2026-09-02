@@ -440,6 +440,10 @@ function OnlineGamePage() {
   // monotonic timer. Nothing here is ever written back to the database.
   useEffect(() => {
     if (!game || game.status !== "active") return;
+    // Daily games have no running countdown (base clock is 0ms); they are ruled
+    // by `deadline_at` on the server. Running the extrapolator there would flag
+    // instantly and spam timeout claims.
+    if (game.pace === "daily") return;
     const id = window.setInterval(() => {
       const base = clockBaseRef.current;
       if (!base.running) return;
@@ -453,11 +457,12 @@ function OnlineGamePage() {
         },
         performance.now() - base.localAt,
       );
-      setClock({ w: next.w, b: next.b });
+      setClock((prev) => (prev.w === next.w && prev.b === next.b ? prev : { w: next.w, b: next.b }));
       if (next.expired) setAwaitingFlag(true);
     }, 100);
     return () => window.clearInterval(id);
   }, [game, boardRev]);
+
 
 
   // Resync canonical state on reconnect and when the tab regains focus.
@@ -719,7 +724,7 @@ function OnlineGamePage() {
   // When the estimated countdown hits zero we ask the server to rule on it.
   // The client never declares a winner by itself.
   useEffect(() => {
-    if (!awaitingFlag || !game || game.status !== "active") return;
+    if (!awaitingFlag || !game || game.status !== "active" || game.pace === "daily") return;
     let cancelled = false;
     const claim = () => {
       if (cancelled) return;
@@ -1022,6 +1027,20 @@ function OnlineGamePage() {
     "You";
   const turn = gameRef.current.turn() as PieceColor;
   const live = game.status === "active" && !result;
+  const isDaily = game.pace === "daily";
+  /** Daily games are ruled by `deadline_at`, not by a ticking clock. */
+  const hasLiveClock = !!game.time_control && !isDaily;
+  const deadlineLabel = (() => {
+    if (!isDaily || !game.deadline_at) return null;
+    const left = Date.parse(game.deadline_at) - Date.now();
+    if (!Number.isFinite(left)) return null;
+    if (left <= 0) return "đã hết hạn";
+    const hours = Math.floor(left / 3_600_000);
+    const days = Math.floor(hours / 24);
+    if (days >= 1) return `còn ${days} ngày ${hours - days * 24} giờ`;
+    if (hours >= 1) return `còn ${hours} giờ ${Math.floor((left % 3_600_000) / 60_000)} phút`;
+    return `còn ${Math.max(1, Math.floor(left / 60_000))} phút`;
+  })();
   const statusLine = live
     ? `${turn === myColor ? "Your move" : "Waiting for opponent"} · ply ${moves.length + 1} · ${
         syncMode === "realtime" ? "realtime" : "backup sync"
@@ -1045,7 +1064,7 @@ function OnlineGamePage() {
               }}
               seconds={(opponentColor === "w" ? clock.w : clock.b) / 1000}
               active={turn !== myColor && live}
-              clockEnabled={!!game.time_control}
+              clockEnabled={hasLiveClock}
               captured={[]}
             />
             <PlayerCard
@@ -1056,7 +1075,7 @@ function OnlineGamePage() {
               }}
               seconds={((myColor ?? "w") === "w" ? clock.w : clock.b) / 1000}
               active={turn === myColor && live}
-              clockEnabled={!!game.time_control}
+              clockEnabled={hasLiveClock}
               captured={[]}
             />
             <GamePanel
@@ -1071,12 +1090,15 @@ function OnlineGamePage() {
               <StatRow label="Variant" value={game.variant} />
               <StatRow label="Time control" value={timeControlLabel(game.time_control)} mono />
               <StatRow label="Pool" value={game.pool ?? "—"} />
-              {game.pace === "daily" && game.deadline_at && live && (
+              {isDaily && game.deadline_at && live && (
                 <StatRow
                   label="Hạn nước đi"
-                  value={new Date(game.deadline_at).toLocaleString("vi-VN")}
+                  value={`${new Date(game.deadline_at).toLocaleString("vi-VN")}${
+                    deadlineLabel ? ` · ${deadlineLabel}` : ""
+                  }`}
                 />
               )}
+
               <StatRow label="Sync" value={syncMode === "realtime" ? "Realtime" : "Backup"} />
               {result && <StatRow label="Result" value={`${result.reason} · ${result.code}`} />}
             </GamePanel>
@@ -1151,7 +1173,7 @@ function OnlineGamePage() {
               className="max-h-[420px]"
               bodyClassName="overflow-hidden p-4"
             >
-              <MoveJournal entries={journalEntries} statusLine={statusLine} />
+              <MoveJournal entries={journalEntries} statusLine={statusLine} showClocks={hasLiveClock} />
             </GamePanel>
 
             <GameChatPanel
