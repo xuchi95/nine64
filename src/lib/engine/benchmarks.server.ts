@@ -72,7 +72,7 @@ export interface BenchmarkOutcome {
  * never be compared against a run produced by a different set of positions.
  * Bump this whenever the probe sets below change.
  */
-export const QUALIFICATION_SUITE_VERSION = "titan-v6-1";
+export const QUALIFICATION_SUITE_VERSION = "titan-v6-2";
 
 const PERFORMANCE_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -97,8 +97,9 @@ const TACTICAL_PROBES: readonly Probe[] = [
   { fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", moves: ["h6f7"] },
   // Promotion mate: the promotion piece is part of the expected UCI.
   { fen: "6k1/4Pppp/8/8/8/8/5PPP/6K1 w - - 0 1", moves: ["e7e8q", "e7e8r"] },
-  // Black to move: two mating queen moves are both acceptable.
-  { fen: "8/8/8/8/8/2k5/1q6/K7 b - - 0 1", moves: ["c3c2", "c3b3"] },
+  // Black to move: the queen delivers mate on b2. (The whole mating set is
+  // enumerated with chess.js so a correct alternative can never count as a miss.)
+  { fen: "8/8/8/8/8/1qk5/8/K7 b - - 0 1", moves: ["b3b2"] },
 ];
 
 /**
