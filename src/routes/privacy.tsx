@@ -94,7 +94,8 @@ const DOCS: Record<Locale, LegalDoc> = {
         heading: "Chia sẻ và chuyển giao dữ liệu",
         body: [
           "Chúng tôi không bán, trao đổi hoặc cho thuê dữ liệu cá nhân của bạn, kể cả dữ liệu Google, dưới bất kỳ hình thức nào.",
-          "Chúng tôi sử dụng các nhà cung cấp hạ tầng cần thiết (lưu trữ đám mây, cơ sở dữ liệu, máy chủ cờ, dịch vụ AI phân tích, gửi email, chống lạm dụng) được chọn lọc. Họ chỉ xử lý dữ liệu theo chỉ dẫn của chúng tôi và theo các điều khoản bảo mật tương đương.",
+          "Danh sách nhà cung cấp xử lý dữ liệu (sub-processor): Supabase (xác thực, cơ sở dữ liệu, lưu trữ), Cloudflare (CDN, bảo mật mạng, vận hành ứng dụng), Google Cloud Run (máy chủ engine cờ và dịch vụ phân tích Fair Play), Google AI / Gemini (phân tích ván đấu và huấn luyện viên AI). Họ chỉ xử lý dữ liệu theo chỉ dẫn bằng văn bản của chúng tôi và theo nghĩa vụ bảo mật tương đương.",
+          "Dữ liệu có thể được xử lý trên máy chủ đặt ngoài quốc gia của bạn, bao gồm Hoa Kỳ và Liên minh châu Âu. Khi cần thiết, việc chuyển dữ liệu được bảo đảm bằng Điều khoản hợp đồng tiêu chuẩn (SCC) hoặc cơ chế tương đương.",
           "Chúng tôi chỉ tiết lộ dữ liệu khi luật pháp yêu cầu, khi cần thiết để bảo vệ quyền lợi hợp pháp, an toàn của người dùng và của Nine64, hoặc khi bạn đã đồng ý rõ ràng.",
         ],
       },
