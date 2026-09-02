@@ -259,10 +259,24 @@ export async function runBenchmark(args: {
   const profile = row ?? (await titanProfile());
   // Benchmark exactly what the admin intends to publish, not the live config.
   const config = args.config ?? row?.draftConfig ?? profile.config;
-  // All qualification kinds use bounded real searches. This avoids native
-  // `bench` request ceilings and keeps qualification independent of a stale
-  // benchmark suite deployment while still exercising Stockfish 18 itself.
-  const run = await runBoundedBenchmark(args.kind, config);
+
+  // The deployment contract is checked BEFORE any row is written, so a stale
+  // image can never produce a row tagged with a suite it does not ship.
+  const contract = await checkEngineContract(config);
+  if (!contract.ok) return { ok: false, code: contract.code ?? "ENGINE_UNAVAILABLE" };
+
+  // Tactics/legality are scored by the canonical service-side suite;
+  // bench/speedtest stay bounded throughput probes.
+  const run =
+    args.kind === "epd" || args.kind === "positions"
+      ? await runCanonicalSuite(args.kind, config)
+      : await runBoundedBenchmark(args.kind, config);
+  const detail = {
+    ...run.detail,
+    suiteVersion: run.suiteVersion ?? EXPECTED_BENCHMARK_SUITE_VERSION,
+    serviceBuildId: run.serviceBuildId ?? contract.serviceBuildId,
+  } as Record<string, unknown>;
+
 
   const db = await admin();
   const { data, error } = await db
