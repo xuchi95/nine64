@@ -357,10 +357,10 @@ export function interpretHealthPayload(raw: unknown, latencyMs: number): CloudEn
   const capabilities = parseCapabilities(body["capabilities"]);
   const buildRaw = body["serviceBuildId"];
   const serviceBuildId =
-    typeof buildRaw === "string" && /^[\w.\-]{1,64}$/.test(buildRaw) ? buildRaw : null;
+    typeof buildRaw === "string" && /^[\w.-]{1,64}$/.test(buildRaw) ? buildRaw : null;
   const versionRaw = body["serviceVersion"];
   const serviceVersion =
-    typeof versionRaw === "string" && /^[\w.\-]{1,64}$/.test(versionRaw) ? versionRaw : null;
+    typeof versionRaw === "string" && /^[\w.-]{1,64}$/.test(versionRaw) ? versionRaw : null;
   const suiteRaw = body["benchmarkSuiteVersion"];
   const benchmarkSuiteVersion =
     typeof suiteRaw === "string" && suiteRaw
