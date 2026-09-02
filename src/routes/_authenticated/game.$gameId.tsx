@@ -724,7 +724,7 @@ function OnlineGamePage() {
   // When the estimated countdown hits zero we ask the server to rule on it.
   // The client never declares a winner by itself.
   useEffect(() => {
-    if (!awaitingFlag || !game || game.status !== "active") return;
+    if (!awaitingFlag || !game || game.status !== "active" || game.pace === "daily") return;
     let cancelled = false;
     const claim = () => {
       if (cancelled) return;
