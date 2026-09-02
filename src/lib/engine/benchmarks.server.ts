@@ -68,11 +68,14 @@ export interface BenchmarkOutcome {
 }
 
 /**
- * Identity of the qualification suite. Stored on every row so a result can
- * never be compared against a run produced by a different set of positions.
- * Bump this whenever the probe sets below change.
+ * Identity of the qualification suite the backend REQUIRES.
+ *
+ * The tactical/position suites themselves live in `services/play-engine`
+ * (single source of truth). This constant only expresses what the backend
+ * accepts: preflight refuses to run when the deployed engine reports a
+ * different suite, so a row can never claim a suite the engine does not ship.
  */
-export const QUALIFICATION_SUITE_VERSION = "titan-v6-2";
+export const QUALIFICATION_SUITE_VERSION = EXPECTED_BENCHMARK_SUITE_VERSION;
 
 const PERFORMANCE_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -81,41 +84,6 @@ type Probe = {
   moves: readonly string[];
   variant?: "standard" | "chess960";
 };
-
-/**
- * Deterministic tactical probes: every entry is a forced mate whose complete
- * mating-move set is enumerated, so a healthy Stockfish 18 must find one.
- */
-const TACTICAL_PROBES: readonly Probe[] = [
-  { fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", moves: ["f3f7"] },
-  { fen: "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1", moves: ["c1c8"] },
-  { fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", moves: ["d1d8"] },
-  { fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", moves: ["a1a8"] },
-  { fen: "7k/6pp/8/8/8/8/6PP/5R1K w - - 0 1", moves: ["f1f8"] },
-  { fen: "k7/7R/1K6/8/8/8/8/8 w - - 0 1", moves: ["h7h8"] },
-  // Smothered mate.
-  { fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", moves: ["h6f7"] },
-  // Promotion mate: the promotion piece is part of the expected UCI.
-  { fen: "6k1/4Pppp/8/8/8/8/5PPP/6K1 w - - 0 1", moves: ["e7e8q", "e7e8r"] },
-  // Black to move: the queen delivers mate on b2. (The whole mating set is
-  // enumerated with chess.js so a correct alternative can never count as a miss.)
-  { fen: "8/8/8/8/8/1qk5/8/K7 b - - 0 1", moves: ["b3b2"] },
-];
-
-/**
- * Legality probes: any legal move passes. Includes Chess960 start positions —
- * the engine service validates 960 castling encoding itself, so a regression
- * there surfaces as an engine error here instead of only in a live game.
- */
-const POSITION_PROBES: readonly Probe[] = [
-  { fen: PERFORMANCE_FEN, moves: [] },
-  { fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", moves: [] },
-  { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", moves: [] },
-  { fen: "r3k2r/pppq1ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPPQ1PPP/R3K2R w KQkq - 6 8", moves: [] },
-  { fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", moves: [] },
-  { fen: "bqnbrkrn/pppppppp/8/8/8/8/PPPPPPPP/BQNBRKRN w KQkq - 0 1", moves: [], variant: "chess960" },
-  { fen: "rknbbqnr/pppppppp/8/8/8/8/PPPPPPPP/RKNBBQNR w KQkq - 0 1", moves: [], variant: "chess960" },
-];
 
 const TRANSIENT_STATUSES = new Set(["timeout", "unavailable"]);
 
