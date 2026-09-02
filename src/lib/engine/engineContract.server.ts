@@ -13,22 +13,10 @@ import type { EngineConfig } from "./profileTypes";
 import type { CloudEngineHealth } from "./cloudEngine.server";
 import { resourceFit, type EngineCapabilities, type ResourceFit } from "./capabilities";
 
-/**
- * The benchmark suite this backend requires. It must equal the value the
- * engine reports — the backend never assumes the engine runs it.
- * Bump together with `services/play-engine/src/capabilities.js`.
- */
-export const EXPECTED_BENCHMARK_SUITE_VERSION = "titan-v6-3";
+import { EXPECTED_BENCHMARK_SUITE_VERSION, type EngineContractCode } from "./engineContractTypes";
 
-export type EngineContractCode =
-  | "ENGINE_NOT_CONFIGURED"
-  | "ENGINE_AUTH_FAILED"
-  | "ENGINE_UNAVAILABLE"
-  | "ENGINE_POOL_UNAVAILABLE"
-  | "ENGINE_VERSION_UNSUPPORTED"
-  | "ENGINE_CAPABILITIES_UNAVAILABLE"
-  | "ENGINE_BENCHMARK_SUITE_MISMATCH"
-  | "CONFIG_RESOURCE_MISMATCH";
+export { EXPECTED_BENCHMARK_SUITE_VERSION };
+export type { EngineContractCode };
 
 export interface EngineContract {
   ok: boolean;
