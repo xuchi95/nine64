@@ -22,6 +22,8 @@ export type ReadinessReason =
   | "tactics_failed"
   | "illegal_moves"
   | "benchmark_timeout"
+  | "benchmark_engine_busy"
+  | "benchmark_no_move"
   | "benchmark_engine_error"
   | "benchmark_stale"
   | "benchmark_config_mismatch"
