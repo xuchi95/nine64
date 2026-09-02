@@ -23,6 +23,23 @@ const DOCS: Record<Locale, LegalDoc> = {
       `Chào mừng bạn đến với ${APP.name} — nền tảng cờ vua trực tuyến tập trung vào tính công bằng, phân tích chuyên sâu và trải nghiệm học tập cá nhân hoá. Chính sách này giải thích rõ ràng dữ liệu chúng tôi thu thập, lý do thu thập, cách chúng tôi bảo vệ dữ liệu và quyền của bạn khi sử dụng ứng dụng web, ứng dụng di động và các dịch vụ liên quan. Bằng việc sử dụng dịch vụ, bạn đồng ý với chính sách này.`,
     sections: [
       {
+        heading: "Đơn vị vận hành và cách liên hệ",
+        body: [
+          `Ứng dụng: ${APP.name} (nền tảng cờ vua trực tuyến), truy cập tại ${APP.siteUrl}. Chính sách này áp dụng cho website ${APP.siteUrl}, ứng dụng di động Nine64 và mọi dịch vụ liên quan do Nine64 vận hành.`,
+          `Đơn vị chịu trách nhiệm dữ liệu (data controller): đội ngũ Nine64. Mọi câu hỏi, yêu cầu truy cập, chỉnh sửa hoặc xoá dữ liệu xin gửi tới ${APP.contactEmail} hoặc trang Liên hệ trong ứng dụng. Chúng tôi phản hồi trong vòng 30 ngày.`,
+          `Có hiệu lực từ ${APP.legalEffectiveDate}. Địa chỉ chính sách này: ${APP.siteUrl}/privacy.`,
+        ],
+      },
+      {
+        heading: "Phạm vi quyền Google mà chúng tôi yêu cầu (OAuth scopes)",
+        body: [
+          "openid — dùng để nhận mã định danh Google duy nhất (sub) và tạo tài khoản Nine64 tương ứng.",
+          "https://www.googleapis.com/auth/userinfo.email — dùng để lấy địa chỉ email nhằm nhận diện tài khoản, khôi phục truy cập và gửi thông báo bảo mật thiết yếu.",
+          "https://www.googleapis.com/auth/userinfo.profile — dùng để lấy tên hiển thị và ảnh đại diện hiển thị trên hồ sơ người chơi.",
+          "Chúng tôi không yêu cầu bất kỳ phạm vi nhạy cảm (sensitive) hay hạn chế (restricted) nào, không truy cập Gmail, Drive, Calendar, Contacts, Photos, YouTube hay dữ liệu vị trí. Chúng tôi không truy cập dữ liệu Google khi bạn không đăng nhập và không gọi API Google nền (offline access) sau phiên đăng nhập.",
+        ],
+      },
+      {
         heading: "Dữ liệu chúng tôi thu thập",
         body: [
           "Dữ liệu tài khoản: địa chỉ email, tên hiển thị, ảnh đại diện, mã định danh người dùng, ngôn ngữ, tùy chọn theme bàn cờ và cài đặt hiển thị.",
