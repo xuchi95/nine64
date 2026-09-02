@@ -93,8 +93,10 @@ import {
   summarize,
   runSuite,
   suiteMovetime,
+  suiteRequestTimeout,
   classifyEngineError,
 } from "../src/benchmark.js";
+import { applyMove, createPosition, isCheckmate } from "../src/rules.js";
 import { handleBenchmark } from "../src/index.js";
 
 const mateEntry = EPD_SUITE[0]; // 6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1, mate = a1a8
