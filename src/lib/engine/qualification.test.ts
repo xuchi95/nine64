@@ -7,6 +7,7 @@ const health = { value: {
   pool: { size: 4, busy: 0 },
   benchmarkSuiteVersion: "titan-v6-3",
   serviceBuildId: "play-engine-titan-v6.3",
+  serviceVersion: "play-engine-titan-v6.3",
   capabilities: {
     cpuCount: 8,
     memoryMb: 16384,
@@ -56,6 +57,7 @@ describe("titan qualification suite", () => {
   pool: { size: 4, busy: 0 },
   benchmarkSuiteVersion: "titan-v6-3",
   serviceBuildId: "play-engine-titan-v6.3",
+  serviceVersion: "play-engine-titan-v6.3",
   capabilities: {
     cpuCount: 8,
     memoryMb: 16384,

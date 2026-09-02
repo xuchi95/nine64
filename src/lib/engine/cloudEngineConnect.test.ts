@@ -27,6 +27,20 @@ const HEALTHY = {
   arch: "x64",
   pool: { size: 1, busy: 0 },
   stats: { searches: 0, timeouts: 0, restarts: 0, illegal: 0 },
+  benchmarkSuiteVersion: "titan-v6-3",
+  serviceVersion: "play-engine-titan-v6.3",
+  serviceBuildId: "play-engine-titan-v6.3-test",
+  capabilities: {
+    cpuCount: 8,
+    memoryMb: 16384,
+    poolSize: 1,
+    maxThreadsPerEngine: 8,
+    recommendedHashMb: 4096,
+    maxSafeHashMb: 8192,
+    syzygyReady: false,
+    syzygyPieces: 0,
+    benchmarkSuiteVersion: "titan-v6-3",
+  },
 };
 
 function envSetup(overrides: Record<string, string | undefined> = {}) {
@@ -157,7 +171,6 @@ describe("health probe", () => {
       [401, "unauthorized"],
       [403, "unauthorized"],
       [500, "unavailable"],
-      [503, "unavailable"],
       [0, "unavailable"], // network abort is surfaced as unavailable, never as an error
     ];
     for (const [status, expected] of cases) {
@@ -170,10 +183,20 @@ describe("health probe", () => {
     }
   });
 
+  it("preserves the deployment contract from a 503 warmup response", async () => {
+    envSetup();
+    const health = await (mockFetch({
+      status: 503,
+      body: { ...HEALTHY, status: "starting", engineVersion: null },
+    }), cloudEngineHealth());
+    expect(health.status).toBe("starting");
+    expect(health.benchmarkSuiteVersion).toBe("titan-v6-3");
+    expect(health.serviceBuildId).toBe("play-engine-titan-v6.3-test");
+    expect(health.capabilities?.cpuCount).toBe(8);
+  });
+
   it("refuses to call a 200 healthy when the payload is wrong", () => {
-    expect(interpretHealthPayload({ status: "starting", pool: { size: 1, busy: 0 } }, 10).status).toBe(
-      "degraded",
-    );
+    expect(interpretHealthPayload({ status: "starting", pool: { size: 1, busy: 0 } }, 10).status).toBe("starting");
     expect(interpretHealthPayload({ status: "ok", pool: { size: 1, busy: 0 } }, 10).status).toBe(
       "degraded",
     );

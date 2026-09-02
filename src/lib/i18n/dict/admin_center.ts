@@ -137,6 +137,8 @@ export default {
       "Máy cờ không báo cáo năng lực phần cứng — bản deploy trên Cloud Run đã cũ",
     "adminc.engine.reason.engine_benchmark_suite_mismatch":
       "Bộ kiểm định của máy cờ không khớp bản backend yêu cầu — cần deploy lại Cloud Run",
+    "adminc.engine.reason.service_build_outdated": "Build ID của play-engine bị thiếu hoặc đã cũ — cần deploy lại dịch vụ.",
+    "adminc.engine.reason.engine_starting": "Deployment đúng phiên bản nhưng Stockfish vẫn đang khởi động — hãy thử lại sau.",
     "adminc.engine.reason.capabilities_unknown":
       "Chưa biết năng lực phần cứng vì máy cờ chưa báo cáo (bản deploy cũ)",
     "adminc.engine.staleDeploy.title": "Cloud Run đang chạy bản play-engine cũ",
@@ -316,6 +318,8 @@ export default {
       "The engine does not report hardware capabilities — the Cloud Run deployment is outdated",
     "adminc.engine.reason.engine_benchmark_suite_mismatch":
       "The engine benchmark suite does not match what this backend requires — redeploy Cloud Run",
+    "adminc.engine.reason.service_build_outdated": "The play-engine build ID is missing or stale — redeploy the service.",
+    "adminc.engine.reason.engine_starting": "The deployment is current, but Stockfish is still warming up — retry shortly.",
     "adminc.engine.reason.capabilities_unknown":
       "Hardware capabilities unknown because the engine did not report them (outdated deployment)",
     "adminc.engine.staleDeploy.title": "Cloud Run is running an outdated play-engine build",

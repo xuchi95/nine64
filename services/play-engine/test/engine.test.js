@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { sanitizeOptions, buildGoArgs, healthPayload } from "../src/index.js";
 import { verifyIdToken } from "../src/auth.js";
+import { BENCHMARK_SUITE_VERSION as CANONICAL_SUITE, SERVICE_BUILD_ID, SERVICE_VERSION } from "../src/version.js";
 
 test("sanitizeOptions drops anything outside the allowlist", () => {
   const out = sanitizeOptions({
@@ -61,6 +62,8 @@ test("healthPayload reports a healthy pool with real busy counts", () => {
   assert.equal(typeof out.arch, "string");
   assert.deepEqual(out.pool, { size: 2, busy: 1 });
   assert.deepEqual(out.stats, { searches: 3, timeouts: 0, restarts: 1, illegal: 0, hardStops: 0 });
+  assert.equal(out.serviceVersion, SERVICE_VERSION);
+  assert.equal(out.serviceBuildId, SERVICE_BUILD_ID);
 });
 
 test("healthPayload reports starting before the pool is ready and never leaks env", () => {
@@ -352,6 +355,14 @@ test("health advertises the benchmark suite version", () => {
   const out = healthPayload({ size: 1, engines: [], stats: {} }, true);
   assert.equal(out.benchmarkSuiteVersion, BENCHMARK_SUITE_VERSION);
   assert.equal(out.capabilities.benchmarkSuiteVersion, BENCHMARK_SUITE_VERSION);
+});
+
+test("canonical version source drives every public contract field", () => {
+  const out = healthPayload({ size: 1, engines: [], stats: {} }, false);
+  assert.equal(out.benchmarkSuiteVersion, CANONICAL_SUITE);
+  assert.equal(out.capabilities.benchmarkSuiteVersion, CANONICAL_SUITE);
+  assert.equal(out.serviceVersion, SERVICE_VERSION);
+  assert.match(out.serviceBuildId, /^[\w.-]{1,64}$/);
 });
 
 test("the position suite covers Chess960 as well as standard chess", () => {

@@ -20,7 +20,7 @@ export interface TitanStatus {
   available: boolean;
   configured: boolean;
   enabled: boolean;
-  health: "healthy" | "degraded" | "unavailable" | "not_configured";
+  health: "healthy" | "degraded" | "starting" | "unavailable" | "not_configured";
   name: string;
   stockfishVersion: string | null;
   source: "database" | "fallback";
@@ -41,6 +41,7 @@ export const getTitanStatus = createServerFn({ method: "GET" }).handler(async ()
   try {
     const { titanProfile } = await import("@/lib/engine/profiles.server");
     const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+    const { evaluateEngineContract } = await import("@/lib/engine/engineContract.server");
     const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
 
     const env = engineEnvDiagnostics();
@@ -76,14 +77,9 @@ export const getTitanStatus = createServerFn({ method: "GET" }).handler(async ()
     }
 
     const health = await cloudEngineHealthCached();
-    const ready = health.status === "healthy" || health.status === "degraded";
-    const code = ready
-      ? "READY"
-      : health.status === "unauthorized"
-        ? "ENGINE_AUTH_FAILED"
-        : health.status === "not_configured"
-          ? "ENGINE_NOT_CONFIGURED"
-          : "ENGINE_UNAVAILABLE";
+    const contract = evaluateEngineContract(health, profile.config);
+    const ready = contract.ok;
+    const code = ready ? "READY" : contract.code ?? "ENGINE_UNAVAILABLE";
     return {
       ...info,
       // The live engine version wins over the stored profile metadata.
@@ -147,6 +143,7 @@ export const startTitanSession = createServerFn({ method: "POST" })
 
     const { titanProfile } = await import("@/lib/engine/profiles.server");
     const { cloudEngineHealthCached } = await import("@/lib/engine/cloudEngine.server");
+    const { evaluateEngineContract } = await import("@/lib/engine/engineContract.server");
     const { engineEnvDiagnostics } = await import("@/lib/engine/engineEnv.server");
     const { createSession } = await import("@/lib/engine/botSessions.server");
     type Snap = Extract<Awaited<ReturnType<typeof createSession>>, { ok: true }>["snapshot"];
@@ -176,17 +173,8 @@ export const startTitanSession = createServerFn({ method: "POST" })
       return { ok: false as const, code: "ENGINE_NOT_CONFIGURED" };
     }
     const health = await cloudEngineHealthCached();
-    if (health.status !== "healthy" && health.status !== "degraded") {
-      return {
-        ok: false as const,
-        code:
-          health.status === "unauthorized"
-            ? "ENGINE_AUTH_FAILED"
-            : health.status === "not_configured"
-              ? "ENGINE_NOT_CONFIGURED"
-              : "ENGINE_UNAVAILABLE",
-      };
-    }
+    const contract = evaluateEngineContract(health, profile.config);
+    if (!contract.ok) return { ok: false as const, code: contract.code ?? "ENGINE_UNAVAILABLE" };
 
 
     const { startWithRollback } = await import("@/lib/engine/sessionLifecycle");
