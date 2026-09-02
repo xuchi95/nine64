@@ -1,67 +1,79 @@
 /**
- * Benchmark suites and the structured result model for the play-engine.
+ * Canonical benchmark suites for the Nine64 play-engine.
  *
- * Design rules (see Nine64 benchmark spec):
- *  - Execution failures (timeout, pool_busy, engine_exit, protocol errors) are
+ * THIS FILE IS THE SINGLE SOURCE OF TRUTH for the EPD/position suites, their
+ * scoring, their failure classification and the suite version. The Nine64
+ * backend must NOT keep a second tactical suite: it calls `/benchmark` and
+ * only verifies + stores what this service returns.
+ *
+ * Design rules:
+ *  - Execution failures (timeout, pool_busy, engine_exit, engine_error) are
  *    NEVER classified as illegal chess moves.
  *  - A move is only "illegal" when Stockfish actually returned a move and the
  *    rules engine proves it illegal in that position.
- *  - Tactical scoring compares full normalized UCI against an acceptable-move
- *    set, never `startsWith`.
+ *  - A legal move that misses the goal is `legal_unsolved`, never an error.
+ *  - Mate goals are verified SEMANTICALLY: any legal move that delivers
+ *    checkmate solves the position, whatever UCI it uses.
  *
  * Copyright (C) 2026 Nine64. GPL-3.0-or-later.
  */
-import { createPosition, decodeEngineMove, isLegal } from "./rules.js";
-
-/**
- * Deterministic tactical regression suite: every entry is a forced mate whose
- * full mating-move set is enumerable, so a correct Stockfish 18 must find one.
- * `acceptableMoves` holds every legal move that delivers the mate.
- */
-export const EPD_SUITE = [
-  { fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", acceptableMoves: ["a1a8"] },
-  { fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", acceptableMoves: ["f3f7"] },
-  { fen: "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1", acceptableMoves: ["c1c8"] },
-  { fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", acceptableMoves: ["d1d8"] },
-  { fen: "7k/6pp/8/8/8/8/6PP/5R1K w - - 0 1", acceptableMoves: ["f1f8"] },
-  { fen: "7k/5ppp/8/8/8/8/5PPP/1R5K w - - 0 1", acceptableMoves: ["b1b8"] },
-  { fen: "k7/8/1K6/8/8/8/8/7R w - - 0 1", acceptableMoves: ["h1h8"] },
-  { fen: "2k5/8/2K5/8/8/8/8/7R w - - 0 1", acceptableMoves: ["h1h8"] },
-  { fen: "k7/7R/1K6/8/8/8/8/8 w - - 0 1", acceptableMoves: ["h7h8"] },
-  // Promotion mate: full UCI (with promotion piece) must match.
-  { fen: "6k1/4Pppp/8/8/8/8/5PPP/6K1 w - - 0 1", acceptableMoves: ["e7e8q", "e7e8r"] },
-  // Smothered mate.
-  { fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", acceptableMoves: ["h6f7"] },
-  // Black to move, two mating queen moves.
-  { fen: "8/8/8/8/8/2k5/1q6/K7 b - - 0 1", acceptableMoves: ["c3c2", "c3b3"] },
-];
-
-/**
- * Health suite: any legal move passes; there is no expected tactical move.
- * It also carries the Chess960 smoke positions, so a castling-encoding
- * regression in 960 mode fails the suite instead of only failing in a game.
- */
-export const POSITION_SUITE = [
-  { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", acceptableMoves: [] },
-  { fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", acceptableMoves: [] },
-  { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", acceptableMoves: [] },
-  { fen: "r3k2r/pppq1ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPPQ1PPP/R3K2R w KQkq - 6 8", acceptableMoves: [] },
-  { fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", acceptableMoves: [] },
-  { fen: "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1", acceptableMoves: [] },
-  // Rook + pawn endgame, and a queen endgame: deeper search, still bounded.
-  { fen: "8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 0 1", acceptableMoves: [] },
-  { fen: "8/8/1p1r1k2/p1pPN1p1/P3KnP1/1P6/8/3R4 b - - 0 1", acceptableMoves: [] },
-  // Chess960 smoke: castling rights on non-standard start files.
-  { fen: "bqnbrkrn/pppppppp/8/8/8/8/PPPPPPPP/BQNBRKRN w KQkq - 0 1", acceptableMoves: [], variant: "chess960" },
-  { fen: "rknbbqnr/pppppppp/8/8/8/8/PPPPPPPP/RKNBBQNR w KQkq - 0 1", acceptableMoves: [], variant: "chess960" },
-];
+import { applyMove, createPosition, decodeEngineMove, isCheckmate, isLegal } from "./rules.js";
 
 /** Suite identity: stored with every benchmark row so results stay comparable. */
-export { BENCHMARK_SUITE_VERSION } from "./capabilities.js";
+export { BENCHMARK_SUITE_VERSION, SERVICE_BUILD_ID } from "./capabilities.js";
+
+const MATE_IN_ONE = { type: "checkmate", maxPlies: 1 };
+const LEGAL_MOVE = { type: "legal_move" };
+
+/**
+ * Deterministic EPD health gate: every entry is a forced mate in one.
+ * Scoring is semantic (position after bestmove must be checkmate), so the
+ * engine is free to choose any of several equivalent mating moves.
+ */
+export const EPD_SUITE = [
+  { id: "mate_rook_01", fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_rook_02", fen: "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_rook_03", fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_rook_04", fen: "7k/6pp/8/8/8/8/6PP/5R1K w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_rook_05", fen: "7k/5ppp/8/8/8/8/5PPP/1R5K w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_rook_box_01", fen: "k7/8/1K6/8/8/8/8/7R w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_rook_box_02", fen: "2k5/8/2K5/8/8/8/8/7R w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_rook_box_03", fen: "k7/7R/1K6/8/8/8/8/8 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "mate_queen_scholar_01", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", variant: "standard", goal: MATE_IN_ONE },
+  { id: "promotion_mate_01", fen: "6k1/4Pppp/8/8/8/8/5PPP/6K1 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "smothered_mate_01", fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "black_mate_01", fen: "8/8/8/8/8/2k5/1q6/K7 b - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "black_mate_02", fen: "8/8/8/8/8/1qk5/8/K7 b - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+];
+
+/**
+ * Health suite: any legal move passes. It also carries the Chess960 smoke
+ * positions, so a castling-encoding regression in 960 mode fails the suite
+ * instead of only failing in a live game.
+ */
+export const POSITION_SUITE = [
+  { id: "startpos", fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", variant: "standard", goal: LEGAL_MOVE },
+  { id: "middlegame_01", fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2QK2R w KQ - 0 9", variant: "standard", goal: LEGAL_MOVE },
+  { id: "endgame_kp_01", fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", variant: "standard", goal: LEGAL_MOVE },
+  { id: "castling_rights_01", fen: "r3k2r/pppq1ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPPQ1PPP/R3K2R w KQkq - 6 8", variant: "standard", goal: LEGAL_MOVE },
+  { id: "endgame_rook_01", fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", variant: "standard", goal: LEGAL_MOVE },
+  { id: "endgame_kp_02", fen: "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1", variant: "standard", goal: LEGAL_MOVE },
+  { id: "endgame_bishop_01", fen: "8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 0 1", variant: "standard", goal: LEGAL_MOVE },
+  { id: "endgame_rook_02", fen: "8/8/1p1r1k2/p1pPN1p1/P3KnP1/1P6/8/3R4 b - - 0 1", variant: "standard", goal: LEGAL_MOVE },
+  { id: "chess960_01", fen: "bqnbrkrn/pppppppp/8/8/8/8/PPPPPPPP/BQNBRKRN w KQkq - 0 1", variant: "chess960", goal: LEGAL_MOVE },
+  { id: "chess960_02", fen: "rknbbqnr/pppppppp/8/8/8/8/PPPPPPPP/RKNBBQNR w KQkq - 0 1", variant: "chess960", goal: LEGAL_MOVE },
+];
+
+/** EPD is a deterministic health gate: nothing less than 100% is acceptable. */
+export const REQUIRED_SCORE = { epd: 1, positions: 1 };
 
 export const BENCHMARK_DEFAULT_MOVETIME_MS = { epd: 3000, positions: 1500 };
-export const BENCHMARK_MAX_MOVETIME_MS = 10_000;
+export const BENCHMARK_MIN_MOVETIME_MS = { epd: 3000, positions: 500 };
+export const BENCHMARK_MAX_MOVETIME_MS = { epd: 5000, positions: 5000 };
 
+/** Transient outcomes that may be retried; a tactical miss never is. */
+const RETRYABLE = new Set(["pool_busy", "engine_exit"]);
+const MAX_ATTEMPTS = 3; // one call + two retries
 
 /** Full UCI normalization: lowercase, promotion piece preserved. */
 export function normalizeUci(uci) {
@@ -72,27 +84,50 @@ export function normalizeUci(uci) {
 export function classifyEngineError(err) {
   const message = err && typeof err.message === "string" ? err.message : "";
   if (message === "timeout") return "timeout";
+  if (message === "pool_busy") return "pool_busy";
+  if (message === "engine_exit" || message === "engine_dead") return "engine_exit";
   return "engine_error";
 }
 
-/** Validates every suite FEN and every acceptable move at load/test time. */
-export function validateSuite(suite, variant = "standard") {
+/** Validates every suite FEN and every hard-coded acceptable move. */
+export function validateSuite(suite) {
   const problems = [];
+  const seen = new Set();
   for (const entry of suite) {
+    const variant = entry.variant ?? "standard";
+    if (!entry.id || seen.has(entry.id)) problems.push({ fen: entry.fen, error: "duplicate_or_missing_id" });
+    seen.add(entry.id);
     let position;
     try {
       position = createPosition(variant, entry.fen);
     } catch {
-      problems.push({ fen: entry.fen, error: "invalid_fen" });
+      problems.push({ id: entry.id, fen: entry.fen, error: "invalid_fen" });
       continue;
     }
-    for (const uci of entry.acceptableMoves ?? []) {
-      const decoded = decodeEngineMove(variant, entry.fen, normalizeUci(uci));
-      if (!decoded || !isLegal(createPosition(variant, entry.fen), decoded)) {
-        problems.push({ fen: entry.fen, error: "illegal_expected_move", move: uci });
+    const goal = entry.goal;
+    if (!goal || !["checkmate", "acceptable_moves", "legal_move"].includes(goal.type)) {
+      problems.push({ id: entry.id, fen: entry.fen, error: "invalid_goal" });
+      continue;
+    }
+    if (goal.type === "checkmate") {
+      // A mate goal is only deterministic when at least one mating move exists.
+      const mates = position
+        .moves({ verbose: true })
+        .filter((m) => isCheckmate(applyMove(variant, entry.fen, m) ?? createPosition(variant, entry.fen)));
+      if (mates.length === 0) problems.push({ id: entry.id, fen: entry.fen, error: "no_mate_available" });
+    }
+    if (goal.type === "acceptable_moves") {
+      if (!Array.isArray(goal.moves) || goal.moves.length === 0) {
+        problems.push({ id: entry.id, fen: entry.fen, error: "empty_acceptable_moves" });
+        continue;
+      }
+      for (const uci of goal.moves) {
+        const decoded = decodeEngineMove(variant, entry.fen, normalizeUci(uci));
+        if (!decoded || !isLegal(createPosition(variant, entry.fen), decoded)) {
+          problems.push({ id: entry.id, fen: entry.fen, error: "illegal_expected_move", move: uci });
+        }
       }
     }
-    void position;
   }
   return problems;
 }
@@ -101,9 +136,13 @@ export function validateSuite(suite, variant = "standard") {
  * Evaluates one search outcome against a suite entry.
  * `outcome` is either { ok: true, result } or { ok: false, errorCode }.
  */
-export function evaluatePosition(entry, outcome, variant = "standard") {
+export function evaluatePosition(entry, outcome, attempts = 1) {
+  const variant = entry.variant ?? "standard";
   const base = {
+    id: entry.id ?? null,
     fen: entry.fen,
+    variant,
+    goal: entry.goal ?? LEGAL_MOVE,
     bestmove: null,
     legal: false,
     solved: false,
@@ -111,6 +150,8 @@ export function evaluatePosition(entry, outcome, variant = "standard") {
     nodes: null,
     nps: null,
     timeMs: null,
+    tbHits: null,
+    attempts,
     errorCode: null,
   };
   if (!outcome.ok) return { ...base, errorCode: outcome.errorCode };
@@ -124,57 +165,117 @@ export function evaluatePosition(entry, outcome, variant = "standard") {
     nodes: Number.isFinite(res.nodes) ? res.nodes : null,
     nps: Number.isFinite(res.nps) ? res.nps : null,
     timeMs: Number.isFinite(res.timeMs) ? res.timeMs : null,
+    tbHits: Number.isFinite(res.tbHits) ? res.tbHits : null,
   };
   if (!bestmove) return { ...row, errorCode: "no_move" };
 
-  const decoded = decodeEngineMove(variant, entry.fen, bestmove);
-  const legal = Boolean(decoded) && isLegal(createPosition(variant, entry.fen), decoded);
+  let decoded = null;
+  let legal = false;
+  try {
+    decoded = decodeEngineMove(variant, entry.fen, bestmove);
+    legal = Boolean(decoded) && isLegal(createPosition(variant, entry.fen), decoded);
+  } catch {
+    return { ...row, errorCode: "invalid_position" };
+  }
   if (!legal) return { ...row, legal: false, errorCode: "illegal_move" };
 
-  const acceptable = (entry.acceptableMoves ?? []).map(normalizeUci);
-  const solved = acceptable.length === 0 ? true : acceptable.includes(bestmove);
-  const belowDepth =
-    Number.isFinite(entry.minDepth) && (row.depth ?? 0) < entry.minDepth ? true : false;
-  return { ...row, legal: true, solved: solved && !belowDepth };
+  const goal = entry.goal ?? LEGAL_MOVE;
+  let solved = false;
+  if (goal.type === "legal_move") {
+    solved = true;
+  } else if (goal.type === "acceptable_moves") {
+    solved = (goal.moves ?? []).map(normalizeUci).includes(bestmove);
+  } else if (goal.type === "checkmate") {
+    const after = applyMove(variant, entry.fen, decoded);
+    solved = Boolean(after) && isCheckmate(after);
+  }
+  // A legal move that misses the goal is a real tactical miss, not an error.
+  return { ...row, legal: true, solved, errorCode: solved ? null : "legal_unsolved" };
 }
 
 /** Aggregates per-position rows into the structured benchmark detail. */
 export function summarize(kind, rows, engineVersion) {
   const total = rows.length;
-  const counters = { legalMoves: 0, illegalMoves: 0, noMove: 0, timeouts: 0, engineErrors: 0 };
+  const counters = {
+    legalMoves: 0,
+    legalUnsolved: 0,
+    illegalMoves: 0,
+    noMove: 0,
+    timeouts: 0,
+    poolBusy: 0,
+    engineErrors: 0,
+    invalidPositions: 0,
+  };
   let solved = 0;
   let depth = 0;
   const failedPositions = [];
 
   for (const row of rows) {
-    if (row.errorCode === "timeout") counters.timeouts += 1;
-    else if (row.errorCode === "engine_error") counters.engineErrors += 1;
-    else if (row.errorCode === "no_move") counters.noMove += 1;
-    else if (row.errorCode === "illegal_move") counters.illegalMoves += 1;
-    else if (row.legal) counters.legalMoves += 1;
+    switch (row.errorCode) {
+      case "timeout":
+        counters.timeouts += 1;
+        break;
+      case "pool_busy":
+        counters.poolBusy += 1;
+        break;
+      case "engine_exit":
+      case "engine_error":
+        counters.engineErrors += 1;
+        break;
+      case "no_move":
+        counters.noMove += 1;
+        break;
+      case "illegal_move":
+        counters.illegalMoves += 1;
+        break;
+      case "invalid_position":
+        counters.invalidPositions += 1;
+        break;
+      default:
+        break;
+    }
+    if (row.legal) counters.legalMoves += 1;
+    if (row.legal && !row.solved) counters.legalUnsolved += 1;
 
     if (row.legal && Number.isFinite(row.depth)) depth = Math.max(depth, row.depth);
     if (row.solved) solved += 1;
-    else failedPositions.push({ fen: row.fen, bestmove: row.bestmove, errorCode: row.errorCode });
+    else {
+      failedPositions.push({
+        id: row.id,
+        fen: row.fen,
+        variant: row.variant,
+        goal: row.goal,
+        bestmove: row.bestmove,
+        legal: row.legal,
+        solved: false,
+        depth: row.depth,
+        timeMs: row.timeMs,
+        attempts: row.attempts,
+        errorCode: row.errorCode ?? "legal_unsolved",
+      });
+    }
   }
 
   const score = total ? solved / total : 0;
+  const requiredScore = REQUIRED_SCORE[kind] ?? 1;
   const executionClean =
     counters.illegalMoves === 0 &&
     counters.timeouts === 0 &&
+    counters.poolBusy === 0 &&
     counters.engineErrors === 0 &&
-    counters.noMove === 0;
-  const passed =
-    kind === "epd"
-      ? executionClean && total > 0 && score >= 0.8
-      : executionClean && total > 0 && counters.legalMoves === total;
+    counters.noMove === 0 &&
+    counters.invalidPositions === 0;
+  const passed = executionClean && total > 0 && score >= requiredScore;
 
+  // Execution failures must never be reported merely as a tactics score.
   const failureReasons = [];
   if (counters.timeouts > 0) failureReasons.push("timeout");
+  if (counters.poolBusy > 0) failureReasons.push("pool_busy");
   if (counters.noMove > 0) failureReasons.push("no_move");
   if (counters.illegalMoves > 0) failureReasons.push("illegal_move");
   if (counters.engineErrors > 0) failureReasons.push("engine_error");
-  if (kind === "epd" && score < 0.8) failureReasons.push("tactics_score");
+  if (counters.invalidPositions > 0) failureReasons.push("invalid_position");
+  if (score < requiredScore) failureReasons.push("tactics_score");
 
   return {
     engineVersion: engineVersion ?? null,
@@ -185,6 +286,7 @@ export function summarize(kind, rows, engineVersion) {
       kind,
       solved,
       total,
+      requiredScore,
       ...counters,
       failedPositions,
       failureReasons,
@@ -194,22 +296,29 @@ export function summarize(kind, rows, engineVersion) {
 }
 
 /**
- * Runs a suite with an injected `search({ fen, movetimeMs, timeoutMs })`
- * function so the aggregation logic is unit-testable without a live engine.
+ * Runs a suite with an injected `search(entry, movetimeMs)` function so the
+ * aggregation logic is unit-testable without a live engine. Positions run
+ * strictly sequentially: a pool of size 1 must never be asked to search two
+ * positions at once.
  */
-export async function runSuite({ kind, suite, search, movetimeMs, engineVersion, variant = "standard" }) {
+export async function runSuite({ kind, suite, search, movetimeMs, engineVersion }) {
   const rows = [];
   for (const entry of suite) {
-    let outcome;
-    try {
-      const result = await search(entry, movetimeMs);
-      outcome = { ok: true, result };
-    } catch (err) {
-      outcome = { ok: false, errorCode: classifyEngineError(err) };
+    let outcome = null;
+    let attempts = 0;
+    while (attempts < MAX_ATTEMPTS) {
+      attempts += 1;
+      try {
+        outcome = { ok: true, result: await search(entry, movetimeMs) };
+        break;
+      } catch (err) {
+        const errorCode = classifyEngineError(err);
+        outcome = { ok: false, errorCode };
+        if (!RETRYABLE.has(errorCode) || attempts >= MAX_ATTEMPTS) break;
+        await new Promise((resolve) => setTimeout(resolve, attempts * 250));
+      }
     }
-    // A per-entry variant wins so one suite can mix Standard and Chess960.
-    rows.push(evaluatePosition(entry, outcome, entry.variant ?? variant));
-
+    rows.push(evaluatePosition(entry, outcome ?? { ok: false, errorCode: "engine_error" }, attempts));
   }
   return summarize(kind, rows, engineVersion);
 }
@@ -217,7 +326,14 @@ export async function runSuite({ kind, suite, search, movetimeMs, engineVersion,
 /** Clamped per-position search time for a suite benchmark. */
 export function suiteMovetime(kind, requested) {
   const fallback = BENCHMARK_DEFAULT_MOVETIME_MS[kind] ?? 1500;
+  const min = BENCHMARK_MIN_MOVETIME_MS[kind] ?? 100;
+  const max = BENCHMARK_MAX_MOVETIME_MS[kind] ?? 5000;
   const value = Number(requested);
   if (!Number.isFinite(value) || value <= 0) return fallback;
-  return Math.min(Math.max(Math.trunc(value), 100), BENCHMARK_MAX_MOVETIME_MS);
+  return Math.min(Math.max(Math.trunc(value), min), max);
+}
+
+/** Per-position engine request budget: generous relative to the search. */
+export function suiteRequestTimeout(movetimeMs) {
+  return Math.max(Math.trunc(movetimeMs) * 4, 20_000);
 }
