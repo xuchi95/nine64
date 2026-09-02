@@ -116,6 +116,10 @@ export function GameChatPanel({
       const row = (await sendFn({ data: { gameId, body, ply } })) as GameChatMessage;
       ingest([row]);
       setDraft("");
+      // Opponent answer runs after the send resolves; realtime delivers it.
+      void aiReplyFn({ data: { gameId, ply } })
+        .then(() => window.setTimeout(() => void refresh(), 600))
+        .catch(() => undefined);
     } catch {
       setError("Không gửi được tin nhắn. Thử lại nhé.");
     } finally {
