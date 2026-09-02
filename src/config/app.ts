@@ -7,6 +7,12 @@ export const APP = {
   tagline: "Play. Analyse. Ascend.",
   description:
     "Nine64 is a premium 2D chess platform: play the Stockfish-powered engine, local matches, and study every move with instant analysis.",
+  /** Public contact used on legal pages and for Google OAuth verification. */
+  contactEmail: "support@nine64.com",
+  /** Canonical public origin used in legal documents. */
+  siteUrl: "https://nine64.com",
+  /** Fixed effective date shown on legal pages (do not auto-generate). */
+  legalEffectiveDate: "2026-09-03",
 } as const;
 
 export type TimeCategory = "Bullet" | "Blitz" | "Rapid" | "Classical";
