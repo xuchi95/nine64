@@ -180,7 +180,7 @@ const DOCS: Record<Locale, LegalDoc> = {
       {
         heading: "Google Limited Use commitment",
         body: [
-          `${APP.name} strictly adheres to the Google API Services User Data Policy, including the Limited Use requirements.`,
+          `${APP.name}'s use and transfer of information received from Google APIs to any other app will adhere to the Google API Services User Data Policy, including the Limited Use requirements (https://developers.google.com/terms/api-services-user-data-policy).`,
           "Your Google user data is used only to provide and improve sign-in, account profile, security, and essential service-related communications for Nine64.",
           "We do not sell, lease, transfer, or share Google data with third parties for advertising, marketing, consumer behavior analysis, or building user profiles outside of Nine64.",
           "We do not use Google data to personalize ads, do not combine it with third-party data to track users across the web, and do not allow broad employee or vendor access beyond what is strictly necessary for their job function.",
