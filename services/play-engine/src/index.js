@@ -13,8 +13,21 @@ import os from "node:os";
 import { EnginePool } from "./pool.js";
 import { VARIANTS, createPosition, decodeEngineMove, isLegal } from "./rules.js";
 import { verifyIdToken } from "./auth.js";
-import { EPD_SUITE, POSITION_SUITE, runSuite, suiteMovetime, BENCHMARK_SUITE_VERSION } from "./benchmark.js";
-import { capabilities, inspectSyzygy, syzygyPath } from "./capabilities.js";
+import {
+  EPD_SUITE,
+  POSITION_SUITE,
+  runSuite,
+  suiteMovetime,
+  suiteRequestTimeout,
+  validateSuite,
+} from "./benchmark.js";
+import {
+  BENCHMARK_SUITE_VERSION,
+  SERVICE_BUILD_ID,
+  capabilities,
+  inspectSyzygy,
+  syzygyPath,
+} from "./capabilities.js";
 
 const PORT = Number(process.env.PORT || 8080);
 /**
@@ -177,7 +190,13 @@ async function handleBestMove(body) {
 
   const timeoutMs = Math.min(Math.max(Number(body.timeoutMs) || 30_000, 1_000), 120_000);
   const requested = sanitizeOptions(body.options);
-  const mismatch = resourceMismatch(requested);
+  // A caller may ASK for tablebase probing, but never controls the effective
+  // probe limit or path: only `syzygyOptions()` may re-add them, and only when
+  // real tablebase files are installed.
+  const wantsSyzygy = requested["SyzygyProbeLimit"];
+  const safeOptions = { ...requested };
+  delete safeOptions["SyzygyProbeLimit"];
+  const mismatch = resourceMismatch(safeOptions);
   if (mismatch) {
     return { status: 422, payload: { error: "config_resource_mismatch", detail: mismatch } };
   }
@@ -188,8 +207,8 @@ async function handleBestMove(body) {
       // Set on EVERY search so a Chess960 request can never leave a pooled
       // engine process in 960 mode for the next standard request.
       options: {
-        ...requested,
-        ...syzygyOptions(requested),
+        ...safeOptions,
+        ...syzygyOptions({ SyzygyProbeLimit: wantsSyzygy }),
         UCI_Chess960: variant === "chess960" ? "true" : "false",
       },
       goArgs: buildGoArgs(body),
