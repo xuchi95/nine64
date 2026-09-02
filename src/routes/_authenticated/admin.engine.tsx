@@ -150,7 +150,7 @@ function AdminEnginePage() {
   const [data, setData] = useState<EngineOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [draft, setDraft] = useState<EngineConfig | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [reason, setReason] = useState("");
@@ -183,16 +183,19 @@ function AdminEnginePage() {
 
   const titan = data?.profiles.find((p) => p.slug === TITAN_SLUG) ?? data?.profiles[0] ?? null;
 
-  const run = async (fn: () => Promise<unknown>) => {
+  const run = async (fn: () => Promise<unknown>, successText?: string) => {
     setBusy(true);
     setNotice(null);
     try {
       const result = (await fn()) as { ok?: boolean; code?: string } | undefined;
-      if (result && result.ok === false) setNotice(result.code ?? t("adminc.common.failed"));
-      else setNotice(t("adminc.common.saved"));
+      if (result && result.ok === false) {
+        setNotice({ kind: "error", text: result.code ?? t("adminc.common.failed") });
+      } else {
+        setNotice({ kind: "success", text: successText ?? t("adminc.common.saved") });
+      }
       await refresh();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : t("adminc.common.failed"));
+      setNotice({ kind: "error", text: err instanceof Error ? err.message : t("adminc.common.failed") });
     } finally {
       setBusy(false);
     }
@@ -250,8 +253,22 @@ function AdminEnginePage() {
         </Card>
       ) : null}
       {notice ? (
-        <Card className="mt-4">
-          <CardContent className="p-3 text-sm">{notice}</CardContent>
+        <Card
+          className={
+            notice.kind === "success"
+              ? "mt-4 border-emerald-500/50 bg-emerald-500/10"
+              : "mt-4 border-destructive/50 bg-destructive/10"
+          }
+          role="status"
+        >
+          <CardContent className="flex items-center gap-2 p-3 text-sm font-medium">
+            {notice.kind === "success" ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden />
+            ) : (
+              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-hidden />
+            )}
+            {notice.text}
+          </CardContent>
         </Card>
       ) : null}
 
