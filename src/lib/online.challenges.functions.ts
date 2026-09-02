@@ -123,8 +123,74 @@ export const createChallenge = createServerFn({ method: "POST" })
 
     const payload = (raw ?? {}) as unknown as RpcEnvelope<{ challenge?: Challenge }>;
     if (payload.ok) await kickOutbox();
-    return { ok: payload.ok, code: payload.code, challenge: payload.challenge ?? null };
+
+    // An AI opponent answers a direct challenge (typically a rematch) right
+    // away, and accepts far more often than it declines.
+    let autoGame: Game | null = null;
+    if (payload.ok && payload.challenge && data.opponentId) {
+      autoGame = await maybeAiAutoRespond(payload.challenge, data.opponentId);
+    }
+
+    return {
+      ok: payload.ok,
+      code: payload.code,
+      challenge: payload.challenge ?? null,
+      autoAcceptedGame: autoGame,
+    };
   });
+
+/** Share of direct challenges an AI opponent accepts. */
+const AI_ACCEPT_RATE = 0.85;
+
+/**
+ * Answers a challenge on behalf of an AI profile. Returns the freshly created
+ * game when the AI accepted, `null` when it declined or is not an AI at all.
+ */
+async function maybeAiAutoRespond(challenge: Challenge, opponentId: string): Promise<Game | null> {
+  const client = await admin();
+  const { data: profile } = await client
+    .from("profiles")
+    .select("id, is_ai")
+    .eq("id", opponentId)
+    .maybeSingle();
+  if (!profile?.is_ai) return null;
+
+  const accept = Math.random() < AI_ACCEPT_RATE;
+  const { data: raw, error } = await client.rpc("challenge_respond", {
+    _challenge_id: challenge.id,
+    _user_id: opponentId,
+    _action: accept ? "accept" : "decline",
+    _initial_fen: accept ? startingFenForVariant(challenge.variant) : "",
+  });
+  if (error) {
+    console.error("AI challenge auto-response failed", error.message);
+    return null;
+  }
+
+  const payload = (raw ?? {}) as unknown as RpcEnvelope<{ game?: Game }>;
+  const game = payload.ok ? (payload.game ?? null) : null;
+  if (!game) return null;
+
+  // The game was born through the generic challenge path, so it still has to be
+  // flagged as an AI game and, when the AI is white, get its first turn queued.
+  const { error: flagError } = await client
+    .from("games")
+    .update({ ai_game: true, ai_profile_id: opponentId })
+    .eq("id", game.id);
+  if (flagError) {
+    console.error("AI rematch flagging failed", flagError.message);
+    return null;
+  }
+
+  if (game.white_id === opponentId) {
+    await client
+      .from("ai_move_jobs")
+      .insert({ game_id: game.id, expected_version: 0, status: "queued" });
+  }
+
+  await kickOutbox();
+  return { ...game, ai_game: true, ai_profile_id: opponentId } as Game;
+}
 
 /** Accept / decline / cancel. Accepting is where the game row is born. */
 export const respondChallenge = createServerFn({ method: "POST" })
