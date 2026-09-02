@@ -5,12 +5,11 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { APP } from "@/config/app";
 import {
-  historyStats,
-
   outcomeLabel,
   useGameHistory,
   type SavedGame,
 } from "@/lib/history";
+
 import { useOnlineGames, type OnlineGameDetail } from "@/hooks/useOnlineGames";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
