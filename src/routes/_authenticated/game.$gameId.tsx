@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { requestAiTurn } from "@/lib/rankedAi/rankedAi.functions";
@@ -993,7 +993,7 @@ function OnlineGamePage() {
     } finally {
       setRematchBusy(false);
     }
-  }, [createChallengeFn, game, myColor, rematchBusy]);
+  }, [createChallengeFn, game, myColor, navigate, rematchBusy]);
 
   const resign = useCallback(() => runCommand("resign"), [runCommand]);
   const abort = useCallback(() => runCommand("abort"), [runCommand]);
