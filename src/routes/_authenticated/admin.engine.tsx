@@ -744,9 +744,14 @@ gcloud run deploy play-engine-v2 \\
                           </span>
                           {s.reason && (
                             <span className={s.status === "skipped" ? "text-muted-foreground" : "text-destructive"}>
-                              {s.reason}
+                              {(() => {
+                                const key = `adminc.engine.reason.${s.reason}`;
+                                const label = t(key);
+                                return label === key ? s.reason : `${label} (${s.reason})`;
+                              })()}
                             </span>
                           )}
+
                         </li>
                       ))}
                     </ul>
