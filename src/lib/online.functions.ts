@@ -231,6 +231,39 @@ export const getGame = createServerFn({ method: "GET" })
     return game as Game;
   });
 
+export type GamePlayerNames = {
+  whiteName: string;
+  blackName: string;
+};
+
+/** Display names for both seats. Authenticated users may read profiles, and
+ *  the caller must be a participant — never leak names to spectators of
+ *  private games through this path. */
+export const getGamePlayers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => GAME_ID_SCHEMA.parse(input))
+  .handler(async ({ data, context }): Promise<GamePlayerNames> => {
+    const { data: game, error } = await context.supabase
+      .from("games")
+      .select("white_id, black_id")
+      .eq("id", data.gameId)
+      .single();
+    if (error || !game) throw new Error("Game not found");
+    if (game.white_id !== context.userId && game.black_id !== context.userId) {
+      throw new Error("Not a participant");
+    }
+    const { data: rows, error: pErr } = await context.supabase
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", [game.white_id, game.black_id]);
+    if (pErr) throw new Error(pErr.message);
+    const names = new Map((rows ?? []).map((r) => [r.id as string, r.display_name as string]));
+    return {
+      whiteName: names.get(game.white_id) ?? game.white_id.slice(0, 8),
+      blackName: names.get(game.black_id) ?? game.black_id.slice(0, 8),
+    };
+  });
+
 export const getGameMoves = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => GAME_ID_SCHEMA.parse(input))
