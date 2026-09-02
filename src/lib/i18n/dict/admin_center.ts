@@ -131,7 +131,18 @@ export default {
     "adminc.engine.reason.benchmark_engine_busy": "Máy cờ đang bận nên không chạy hết bộ kiểm định",
     "adminc.engine.reason.benchmark_no_move": "Có vị trí engine không trả về nước đi nào",
     "adminc.engine.reason.benchmark_config_mismatch": "Benchmark không thuộc cấu hình Titan hiện tại",
-    "adminc.engine.reason.benchmark_suite_outdated": "Benchmark được tạo bởi bộ kiểm định cũ — hãy chạy lại kiểm định",
+    "adminc.engine.reason.benchmark_suite_outdated":
+      "Máy cờ trên Cloud Run đang chạy bản cũ (bộ kiểm định không khớp) — hãy deploy bản mới rồi chạy lại kiểm định",
+    "adminc.engine.reason.engine_capabilities_unavailable":
+      "Máy cờ không báo cáo năng lực phần cứng — bản deploy trên Cloud Run đã cũ",
+    "adminc.engine.reason.engine_benchmark_suite_mismatch":
+      "Bộ kiểm định của máy cờ không khớp bản backend yêu cầu — cần deploy lại Cloud Run",
+    "adminc.engine.reason.capabilities_unknown":
+      "Chưa biết năng lực phần cứng vì máy cờ chưa báo cáo (bản deploy cũ)",
+    "adminc.engine.staleDeploy.title": "Cloud Run đang chạy bản play-engine cũ",
+    "adminc.engine.staleDeploy.body":
+      "Hai lỗi “thiếu năng lực phần cứng” và “bộ kiểm định cũ” đều đến từ đây: dịch vụ play-engine chưa được deploy bản mới nên không trả về capabilities và benchmarkSuiteVersion. Deploy lại bằng lệnh dưới đây rồi chạy lại Bộ kiểm định Titan.",
+
     "adminc.engine.inspector": "Bảng soi sức mạnh",
     "adminc.engine.hardware": "Phần cứng máy chủ",
     "adminc.engine.suite": "Bộ kiểm định",
