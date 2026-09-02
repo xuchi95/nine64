@@ -32,7 +32,10 @@ import {
   type EngineConfig,
 } from "@/lib/engine/profileTypes";
 import { resourceFit } from "@/lib/engine/capabilities";
-import { EXPECTED_BENCHMARK_SUITE_VERSION } from "@/lib/engine/engineContractTypes";
+import {
+  EXPECTED_BENCHMARK_SUITE_VERSION,
+  EXPECTED_ENGINE_SERVICE_VERSION,
+} from "@/lib/engine/engineContractTypes";
 import { BENCHMARK_KINDS, type BenchmarkRow } from "@/lib/engine/benchmarkTypes";
 import type { QualificationResult } from "@/lib/engine/qualificationTypes";
 import type { SelfPlayRegression } from "@/lib/engine/selfplayTypes";
@@ -113,6 +116,7 @@ export const Route = createFileRoute("/_authenticated/admin/engine")({
 const HEALTH_TONE: Record<string, string> = {
   healthy: "text-emerald-400",
   degraded: "text-amber-400",
+  starting: "text-amber-400",
   unavailable: "text-destructive",
   unauthorized: "text-destructive",
   not_configured: "text-muted-foreground",
@@ -191,6 +195,19 @@ function AdminEnginePage() {
     }
   }, [load]);
 
+  const refreshLive = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await probe({ data: {} });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "refresh_failed");
+    } finally {
+      setBusy(false);
+    }
+  }, [probe, refresh]);
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -262,9 +279,7 @@ function AdminEnginePage() {
   };
 
   const caps = data?.health.capabilities ?? null;
-  /** Old Cloud Run image: no capabilities block and/or a different benchmark suite. */
-  const staleDeployment =
-    !caps || data?.health.benchmarkSuiteVersion !== EXPECTED_BENCHMARK_SUITE_VERSION;
+  const staleDeployment = data ? !data.contract.deploymentCompatible : false;
   const strengthViolations = draft && titan?.slug === TITAN_SLUG ? titanFullStrengthViolations(draft) : [];
   const fit = resourceFit(draft ?? ({} as EngineConfig), caps);
 
@@ -285,7 +300,7 @@ function AdminEnginePage() {
           <h1 className="text-2xl font-bold">{t("adminc.engine.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("adminc.engine.subtitle")}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={busy}>
+        <Button variant="outline" size="sm" onClick={() => void refreshLive()} disabled={busy}>
           <RefreshCw className="mr-2 h-4 w-4" /> {t("adminc.common.refresh")}
         </Button>
       </div>
@@ -294,21 +309,16 @@ function AdminEnginePage() {
         {t("adminc.engine.attribution")}
       </p>
 
-      {data && data.health.status !== "unavailable" && staleDeployment ? (
+      {data && staleDeployment ? (
         <Card className="mt-4 border-destructive/50 bg-destructive/5">
           <CardContent className="space-y-2 p-4 text-sm">
             <p className="font-semibold text-destructive">{t("adminc.engine.staleDeploy.title")}</p>
             <p className="text-muted-foreground">{t("adminc.engine.staleDeploy.body")}</p>
             <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/60 p-3 font-mono text-[11px] leading-relaxed">
-{`gcloud builds submit services/play-engine \\
-  --tag gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION}
-gcloud run deploy play-engine-v2 \\
-  --image gcr.io/chess-nine64/play-engine:${EXPECTED_BENCHMARK_SUITE_VERSION} \\
-  --region asia-southeast1 --project chess-nine64`}
+              ./scripts/deploy-play-engine.sh
             </pre>
             <p className="font-mono text-[10px] text-muted-foreground">
-              suite {data.health.benchmarkSuiteVersion ?? "—"} / {EXPECTED_BENCHMARK_SUITE_VERSION} · capabilities{" "}
-              {caps ? "ok" : "unavailable"}
+              {data.contract.code ?? "ENGINE_UNAVAILABLE"}
             </p>
           </CardContent>
         </Card>
@@ -374,9 +384,12 @@ gcloud run deploy play-engine-v2 \\
                 setProbeResult(null);
                 void run(async () => {
                   const res = await probe({ data: {} });
+                   if (res.health && res.contract) {
+                     setData((current) => current ? { ...current, health: res.health!, contract: res.contract! } : current);
+                   }
                   setProbeResult(
                     res.ok
-                      ? `Đã kết nối Nine64 Titan · ${res.health?.engineVersion ?? "engine"}`
+                      ? `Deployment PASS · Engine READY · ${res.health?.engineVersion ?? "engine"}`
                       : res.code,
                   );
                   return res;
@@ -460,6 +473,31 @@ gcloud run deploy play-engine-v2 \\
               </p>
             </div>
             <div>
+              <p className="text-muted-foreground">Deployment contract</p>
+              <p className={cn("font-semibold", data?.contract.deploymentCompatible ? "text-emerald-400" : "text-destructive") }>
+                {data?.contract.deploymentCompatible ? "PASS" : "FAIL"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Backend: {EXPECTED_ENGINE_SERVICE_VERSION} / {EXPECTED_BENCHMARK_SUITE_VERSION}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Engine: {data?.health.serviceVersion ?? "—"} / {data?.health.benchmarkSuiteVersion ?? "—"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Build: {data?.health.serviceBuildId ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Engine readiness</p>
+              <p className={cn("font-semibold", data?.contract.engineReady ? "text-emerald-400" : "text-amber-400") }>
+                {data?.contract.engineReady ? "READY" : data?.health.status === "starting" ? "WARMING UP" : "BLOCKED"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Qualification: {data?.contract.ok ? "ALLOWED" : "BLOCKED"}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">{data?.contract.code ?? "—"}</p>
+            </div>
+            <div>
               <p className="text-muted-foreground">{t("adminc.engine.fullStrength")}</p>
               <p className={cn("font-semibold", strengthViolations.length ? "text-destructive" : "text-emerald-400")}>
                 {strengthViolations.length ? t("adminc.engine.fail") : t("adminc.engine.ok")}
@@ -471,7 +509,7 @@ gcloud run deploy play-engine-v2 \\
               </p>
               <p className="font-mono text-[10px] text-muted-foreground">{fit.reasons.join(", ") || "—"}</p>
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <p className="text-muted-foreground">{t("adminc.engine.diff")}</p>
               {publishedDiff.length === 0 ? (
                 <p className="text-muted-foreground">{t("adminc.engine.noDiff")}</p>

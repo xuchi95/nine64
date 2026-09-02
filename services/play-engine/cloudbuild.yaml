@@ -1,0 +1,16 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - SERVICE_BUILD_ID=${_SERVICE_BUILD_ID}
+      - --tag
+      - ${_IMAGE}
+      - .
+images:
+  - ${_IMAGE}
+substitutions:
+  _SERVICE_BUILD_ID: play-engine-titan-v6.3-manual
+  _IMAGE: asia-southeast1-docker.pkg.dev/chess-nine64/nine64/play-engine:titan-v6-3
+options:
+  logging: CLOUD_LOGGING_ONLY
