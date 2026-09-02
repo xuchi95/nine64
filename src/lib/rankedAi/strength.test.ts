@@ -55,6 +55,27 @@ describe("ranked AI strength mapping", () => {
     }
   });
 
+  it("keeps the top band on native UCI_Elo with a single thread (never Titan)", () => {
+    for (const rating of [2600, 2800, 3000]) {
+      const cfg = rankedAiConfigForRating({ ...rapid, rating });
+      expect(cfg.limitStrength).toBe(true);
+      expect(cfg.uciElo).toBe(rating);
+      expect(cfg.threads).toBe(1);
+      expect(cfg.hashMb).toBeLessThanOrEqual(256);
+      expect(cfg.syzygyEnabled).toBe(false);
+    }
+  });
+
+  it("never emits a Titan-sized search for any roster rating", () => {
+    for (const rating of [700, 1200, 1319, 1320, 2200, 3190]) {
+      const cfg = rankedAiConfigForRating({ ...rapid, rating });
+      expect(cfg.threads).toBe(1);
+      expect(cfg.hashMb).toBeLessThan(1024);
+      expect(cfg.multiPv).toBe(1);
+    }
+  });
+
+
   it("shrinks the search budget for fast time controls", () => {
     const bullet = maxSearchMsFor({ pace: "realtime", baseMs: 60_000, incMs: 0 });
     const classical = maxSearchMsFor({ pace: "realtime", baseMs: 1_800_000, incMs: 10_000 });
