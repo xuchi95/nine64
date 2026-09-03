@@ -43,12 +43,16 @@ async function callGateway(system: string, user: string): Promise<string | null>
       body: JSON.stringify({
         model: MODEL,
         temperature: 1,
-        max_tokens: 120,
+        // Reasoning must stay off: thinking tokens otherwise consume the whole
+        // budget and the gateway returns an empty message.
+        reasoning_effort: "none",
+        max_tokens: 300,
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
         ],
       }),
+
     });
     if (!res.ok) {
       console.error("[rankedAi.chat] gateway error", res.status);

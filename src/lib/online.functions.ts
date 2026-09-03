@@ -793,8 +793,18 @@ export const offerDraw = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const out = toDrawOutcome(raw);
     await kickNotificationOutbox();
+    if (out.code === "OFFER_CREATED") {
+      // A ranked-AI opponent answers like a human instead of ignoring the offer.
+      try {
+        const { maybeAiDrawResponse } = await import("@/lib/rankedAi/draw.server");
+        await maybeAiDrawResponse(data.gameId);
+      } catch (err) {
+        console.error("[draw] ai response failed", err instanceof Error ? err.message : err);
+      }
+    }
     return out;
   });
+
 
 export const acceptDraw = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
