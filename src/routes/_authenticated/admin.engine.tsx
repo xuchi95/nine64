@@ -1102,6 +1102,38 @@ function AdminEnginePage() {
                                     </div>
                                   ))}
                                 </dl>
+                                {benchmarkFailedPositions(b).length > 0 && (
+                                  <div className="mt-3 overflow-x-auto">
+                                    <p className="mb-1 font-sans text-[11px] text-destructive">
+                                      Thế cờ thất bại ({benchmarkFailedPositions(b).length})
+                                    </p>
+                                    <table className="w-full text-left font-mono text-[11px]">
+                                      <thead className="text-muted-foreground">
+                                        <tr>
+                                          <th className="pr-3 font-sans font-normal">ID</th>
+                                          <th className="pr-3 font-sans font-normal">FEN</th>
+                                          <th className="pr-3 font-sans font-normal">bestmove</th>
+                                          <th className="pr-3 font-sans font-normal">legal</th>
+                                          <th className="pr-3 font-sans font-normal">solved</th>
+                                          <th className="font-sans font-normal">reason</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {benchmarkFailedPositions(b).map((p) => (
+                                          <tr key={`${p.id}-${p.fen}`} className="align-top">
+                                            <td className="pr-3">{p.id}</td>
+                                            <td className="pr-3 break-all">{p.fen}</td>
+                                            <td className="pr-3">{p.bestmove}</td>
+                                            <td className="pr-3">{p.legal ? "yes" : "no"}</td>
+                                            <td className="pr-3">{p.solved ? "yes" : "no"}</td>
+                                            <td className="text-destructive">{p.reason}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+
                               </td>
                             </tr>
                           )}
