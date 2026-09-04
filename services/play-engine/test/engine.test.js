@@ -104,6 +104,7 @@ import {
   EPD_SUITE,
   POSITION_SUITE,
   validateSuite,
+  validateGameState,
   evaluatePosition,
   summarize,
   runSuite,
@@ -307,6 +308,42 @@ test("every benchmark FEN and expected move is valid and legal", () => {
   assert.deepEqual(validateSuite(EPD_SUITE), []);
   assert.deepEqual(validateSuite(POSITION_SUITE), []);
   assert.ok(EPD_SUITE.length >= 8);
+});
+
+test("every suite FEN describes a legal game state", () => {
+  for (const entry of [...EPD_SUITE, ...POSITION_SUITE]) {
+    assert.deepEqual(validateGameState(entry.fen, entry.variant ?? "standard"), [], entry.id);
+  }
+});
+
+test("the retired black_mate_01 FEN is rejected as an illegal game state", () => {
+  // White was already in check with Black to move: undefined behaviour for a search.
+  assert.deepEqual(validateGameState("8/8/8/8/8/2k5/1q6/K7 b - - 0 1"), [
+    "side_not_to_move_in_check",
+  ]);
+});
+
+test("the replacement black_mate_01 FEN is legal and has a legal mate in one", () => {
+  const entry = EPD_SUITE.find((e) => e.id === "black_mate_01");
+  assert.equal(entry.fen, "8/8/8/8/8/2k5/2q5/K7 b - - 0 1");
+  assert.deepEqual(validateGameState(entry.fen), []);
+  const position = createPosition("standard", entry.fen);
+  const mates = position
+    .moves({ verbose: true })
+    .filter((m) => isCheckmate(applyMove("standard", entry.fen, m)))
+    .map((m) => `${m.from}${m.to}`);
+  assert.deepEqual(mates, ["c2b2"]);
+});
+
+test("game-state validation catches structurally impossible positions", () => {
+  assert.deepEqual(validateGameState("8/8/8/8/8/8/8/KK6 w - - 0 1").sort(), [
+    "black_king_count",
+    "kings_adjacent",
+    "white_king_count",
+  ]);
+  assert.ok(validateGameState("k6K/8/8/8/8/8/8/8 w - - 0 1").includes("kings_adjacent") === false);
+  assert.ok(validateGameState("P6k/8/8/8/8/8/8/K7 w - - 0 1").includes("pawn_on_back_rank"));
+  assert.deepEqual(validateGameState("not-a-fen"), ["invalid_fen_syntax"]);
 });
 
 test("suite movetime defaults per kind and clamps to the stable window", () => {
