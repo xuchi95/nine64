@@ -10,7 +10,7 @@ steps:
 images:
   - ${_IMAGE}
 substitutions:
-  _SERVICE_BUILD_ID: play-engine-titan-v6.3-manual
-  _IMAGE: asia-southeast1-docker.pkg.dev/chess-nine64/nine64/play-engine:titan-v6-3
+  _SERVICE_BUILD_ID: play-engine-titan-v6.4-manual
+  _IMAGE: asia-southeast1-docker.pkg.dev/chess-nine64/nine64/play-engine:titan-v6-4
 options:
   logging: CLOUD_LOGGING_ONLY

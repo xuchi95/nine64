@@ -8,11 +8,11 @@ SERVICE="${SERVICE:-play-engine-v2}"
 MAX_INSTANCES="${MAX_INSTANCES:-4}"
 RUN_SERVICE_ACCOUNT="${RUN_SERVICE_ACCOUNT:-play-engine-run@$PROJECT_ID.iam.gserviceaccount.com}"
 CALLER_SERVICE_ACCOUNT="${CALLER_SERVICE_ACCOUNT:-nine64-backend@$PROJECT_ID.iam.gserviceaccount.com}"
-SUITE="titan-v6-3"
+SUITE="titan-v6-4"
 
 command -v gcloud >/dev/null || { echo "gcloud is required" >&2; exit 1; }
 sha="$(git rev-parse --short=12 HEAD)"
-build_id="play-engine-titan-v6.3-$sha"
+build_id="play-engine-titan-v6.4-$sha"
 image="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/play-engine:$SUITE"
 
 gcloud artifacts repositories describe "$REPOSITORY" --project "$PROJECT_ID" --location "$REGION" >/dev/null
@@ -37,5 +37,5 @@ gcloud run services add-iam-policy-binding "$SERVICE" --project "$PROJECT_ID" --
 gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
   --format='value(status.conditions[0].status)' | grep -qx True
 
-PLAY_ENGINE_URL="$service_url" EXPECTED_SUITE="$SUITE" EXPECTED_SERVICE_VERSION="play-engine-titan-v6.3" \
+PLAY_ENGINE_URL="$service_url" EXPECTED_SUITE="$SUITE" EXPECTED_SERVICE_VERSION="play-engine-titan-v6.4" \
   ./scripts/verify-play-engine.sh

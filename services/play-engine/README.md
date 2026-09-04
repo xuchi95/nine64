@@ -35,9 +35,9 @@ upstream tag (`STOCKFISH_REF`, default `sf_18`) and builds it unmodified with
   "arch": "x64",
   "pool": { "size": 1, "busy": 0 },
   "capabilities": { "cpuCount": 8, "memoryMb": 16384, "poolSize": 1, "maxThreadsPerEngine": 8 },
-  "benchmarkSuiteVersion": "titan-v6-3",
-  "serviceVersion": "play-engine-titan-v6.3",
-  "serviceBuildId": "play-engine-titan-v6.3-a1b2c3d4e5f6",
+  "benchmarkSuiteVersion": "titan-v6-4",
+  "serviceVersion": "play-engine-titan-v6.4",
+  "serviceBuildId": "play-engine-titan-v6.4-a1b2c3d4e5f6",
   "stats": { "searches": 0, "timeouts": 0, "restarts": 0, "illegal": 0, "hardStops": 0 }
 }
 ```
@@ -122,7 +122,7 @@ PROJECT_ID=PROJECT_ID REGION=REGION MAX_INSTANCES=4 ./scripts/deploy-play-engine
 ```
 
 The script uses `services/play-engine/cloudbuild.yaml`, injects an immutable
-`play-engine-titan-v6.3-<git-sha>` build ID, pushes to Artifact Registry,
+`play-engine-titan-v6.4-<git-sha>` build ID, pushes to Artifact Registry,
 deploys a private 8 vCPU / 16 GiB revision, waits for readiness, grants only the
 backend caller `run.invoker`, then executes the strict health contract verifier.
 The build compiles Stockfish from source (10–20 minutes on the first run).
@@ -141,7 +141,7 @@ capabilities, pool size and Titan v6 Max resources all match exactly.
 
 ```bash
 gcloud run deploy play-engine \
-  --image REGION-docker.pkg.dev/PROJECT_ID/nine64/play-engine:titan-v6-3 \
+  --image REGION-docker.pkg.dev/PROJECT_ID/nine64/play-engine:titan-v6-4 \
   --region REGION \
   --no-allow-unauthenticated \
   --service-account play-engine-run@PROJECT_ID.iam.gserviceaccount.com \

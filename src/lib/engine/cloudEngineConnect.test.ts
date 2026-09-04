@@ -27,9 +27,9 @@ const HEALTHY = {
   arch: "x64",
   pool: { size: 1, busy: 0 },
   stats: { searches: 0, timeouts: 0, restarts: 0, illegal: 0 },
-  benchmarkSuiteVersion: "titan-v6-3",
-  serviceVersion: "play-engine-titan-v6.3",
-  serviceBuildId: "play-engine-titan-v6.3-test",
+  benchmarkSuiteVersion: "titan-v6-4",
+  serviceVersion: "play-engine-titan-v6.4",
+  serviceBuildId: "play-engine-titan-v6.4-test",
   capabilities: {
     cpuCount: 8,
     memoryMb: 16384,
@@ -39,7 +39,7 @@ const HEALTHY = {
     maxSafeHashMb: 8192,
     syzygyReady: false,
     syzygyPieces: 0,
-    benchmarkSuiteVersion: "titan-v6-3",
+    benchmarkSuiteVersion: "titan-v6-4",
   },
 };
 
@@ -191,8 +191,8 @@ describe("health probe", () => {
     }),
     cloudEngineHealth());
     expect(health.status).toBe("starting");
-    expect(health.benchmarkSuiteVersion).toBe("titan-v6-3");
-    expect(health.serviceBuildId).toBe("play-engine-titan-v6.3-test");
+    expect(health.benchmarkSuiteVersion).toBe("titan-v6-4");
+    expect(health.serviceBuildId).toBe("play-engine-titan-v6.4-test");
     expect(health.capabilities?.cpuCount).toBe(8);
   });
 
