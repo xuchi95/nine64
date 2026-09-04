@@ -338,10 +338,10 @@ test("the replacement black_mate_01 FEN is legal and has a legal mate in one", (
 test("game-state validation catches structurally impossible positions", () => {
   assert.deepEqual(validateGameState("8/8/8/8/8/8/8/KK6 w - - 0 1").sort(), [
     "black_king_count",
-    "kings_adjacent",
     "white_king_count",
   ]);
-  assert.ok(validateGameState("k6K/8/8/8/8/8/8/8 w - - 0 1").includes("kings_adjacent") === false);
+  assert.ok(validateGameState("8/8/8/8/8/8/8/Kk6 w - - 0 1").includes("kings_adjacent"));
+  assert.ok(!validateGameState("k6K/8/8/8/8/8/8/8 w - - 0 1").includes("kings_adjacent"));
   assert.ok(validateGameState("P6k/8/8/8/8/8/8/K7 w - - 0 1").includes("pawn_on_back_rank"));
   assert.deepEqual(validateGameState("not-a-fen"), ["invalid_fen_syntax"]);
 });
