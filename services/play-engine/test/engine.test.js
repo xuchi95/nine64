@@ -257,6 +257,16 @@ test("a fully solved deterministic EPD suite passes at score 1.0", async () => {
   assert.equal(perfect.passed, true);
   assert.deepEqual(perfect.detail.failedPositions, []);
   assert.equal(perfect.detail.requiredScore, 1);
+  assert.equal(perfect.detail.total, 13);
+  assert.equal(perfect.detail.solved, 13);
+  assert.equal(perfect.detail.legalMoves, 13);
+  assert.equal(perfect.detail.legalUnsolved, 0);
+  assert.equal(perfect.detail.illegalMoves, 0);
+  assert.equal(perfect.detail.noMove, 0);
+  assert.equal(perfect.detail.timeouts, 0);
+  assert.equal(perfect.detail.poolBusy, 0);
+  assert.equal(perfect.detail.engineErrors, 0);
+  assert.equal(perfect.detail.invalidPositions, 0);
 });
 
 test("one legal_unsolved position fails the deterministic gate with tactics_score", async () => {
