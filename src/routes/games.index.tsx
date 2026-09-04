@@ -71,8 +71,8 @@ function GamesPage() {
         else losses += 1;
       } else {
         const g = item.game;
-        // Finished online games can be marked completed/finished/aborted; rely
-        // on the canonical result (and winner_id when present) instead.
+        // Only count completed games; in-progress and aborted games have no result.
+        if (g.status !== "completed") continue;
         const result = g.result ?? null;
         const winnerId = (g as { winner_id?: string | null }).winner_id ?? null;
         if (!result && !winnerId) continue;
