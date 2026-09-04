@@ -5,8 +5,8 @@
  * constant lives here instead of in the server-only contract module.
  * Bump together with `services/play-engine/src/capabilities.js`.
  */
-export const EXPECTED_BENCHMARK_SUITE_VERSION = "titan-v6-3";
-export const EXPECTED_ENGINE_SERVICE_VERSION = "play-engine-titan-v6.3";
+export const EXPECTED_BENCHMARK_SUITE_VERSION = "titan-v6-4";
+export const EXPECTED_ENGINE_SERVICE_VERSION = "play-engine-titan-v6.4";
 
 export type EngineContractCode =
   | "ENGINE_NOT_CONFIGURED"

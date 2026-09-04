@@ -59,7 +59,11 @@ function benchmarkIssues(row: BenchmarkRow): string {
     .map((key) => [key, Number(detail[key] ?? 0)] as const)
     .filter(([, value]) => value > 0)
     .map(([key, value]) => `${key}=${value}`);
-  return [...new Set([...reasons, ...counts])].join(", ");
+  const total = Number(detail["total"] ?? 0);
+  const solved = Number(detail["solved"] ?? 0);
+  const ratio = !row.passed && total > 0 ? [`${solved} / ${total}`] : [];
+  return [...new Set([...ratio, ...reasons, ...counts])].join(", ");
+
 }
 
 type DetailField = { key: string; value: string; tone?: string | undefined };
@@ -111,6 +115,37 @@ function benchmarkDetailFields(
     { key: "createdAt", value: new Date(row.createdAt).toLocaleString() },
   ];
 }
+
+type FailedPosition = {
+  id: string;
+  fen: string;
+  bestmove: string;
+  legal: boolean;
+  solved: boolean;
+  reason: string;
+};
+
+/** Per-position failures stored on a benchmark row (secret-free, may be empty). */
+function benchmarkFailedPositions(row: BenchmarkRow): FailedPosition[] {
+  const raw = (row.result ?? {})["failedPositions"];
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const entry = item as Record<string, unknown>;
+    const str = (key: string) => (typeof entry[key] === "string" ? (entry[key] as string) : "—");
+    return [
+      {
+        id: str("id"),
+        fen: str("fen"),
+        bestmove: str("bestmove"),
+        legal: entry["legal"] === true,
+        solved: entry["solved"] === true,
+        reason: str("errorCode"),
+      },
+    ];
+  });
+}
+
 
 export const Route = createFileRoute("/_authenticated/admin/engine")({
   head: () => ({
@@ -1071,6 +1106,38 @@ function AdminEnginePage() {
                                     </div>
                                   ))}
                                 </dl>
+                                {benchmarkFailedPositions(b).length > 0 && (
+                                  <div className="mt-3 overflow-x-auto">
+                                    <p className="mb-1 font-sans text-[11px] text-destructive">
+                                      Thế cờ thất bại ({benchmarkFailedPositions(b).length})
+                                    </p>
+                                    <table className="w-full text-left font-mono text-[11px]">
+                                      <thead className="text-muted-foreground">
+                                        <tr>
+                                          <th className="pr-3 font-sans font-normal">ID</th>
+                                          <th className="pr-3 font-sans font-normal">FEN</th>
+                                          <th className="pr-3 font-sans font-normal">bestmove</th>
+                                          <th className="pr-3 font-sans font-normal">legal</th>
+                                          <th className="pr-3 font-sans font-normal">solved</th>
+                                          <th className="font-sans font-normal">reason</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {benchmarkFailedPositions(b).map((p) => (
+                                          <tr key={`${p.id}-${p.fen}`} className="align-top">
+                                            <td className="pr-3">{p.id}</td>
+                                            <td className="pr-3 break-all">{p.fen}</td>
+                                            <td className="pr-3">{p.bestmove}</td>
+                                            <td className="pr-3">{p.legal ? "yes" : "no"}</td>
+                                            <td className="pr-3">{p.solved ? "yes" : "no"}</td>
+                                            <td className="text-destructive">{p.reason}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+
                               </td>
                             </tr>
                           )}

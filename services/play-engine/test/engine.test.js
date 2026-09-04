@@ -104,6 +104,7 @@ import {
   EPD_SUITE,
   POSITION_SUITE,
   validateSuite,
+  validateGameState,
   evaluatePosition,
   summarize,
   runSuite,
@@ -193,14 +194,17 @@ test("a legal but non-tactical move is legal-not-solved, never illegal", () => {
   // Semantic goal: ANY legal mating move solves the position, even one that a
   // hard-coded expected-UCI list would have rejected.
   const black = EPD_SUITE.find((e) => e.id === "black_mate_01");
+  assert.equal(black.fen, "8/8/8/8/8/2k5/2q5/K7 b - - 0 1");
   assert.equal(
-    evaluatePosition(black, { ok: true, result: { bestmove: "c3c2", depth: 8 } }).solved,
+    evaluatePosition(black, { ok: true, result: { bestmove: "c2b2", depth: 8 } }).solved,
     true,
   );
+  // A legal but non-mating move is a tactical miss, never an execution error.
   assert.equal(
-    evaluatePosition(black, { ok: true, result: { bestmove: "c3b3", depth: 8 } }).solved,
-    true,
+    evaluatePosition(black, { ok: true, result: { bestmove: "c2c1", depth: 8 } }).errorCode,
+    "legal_unsolved",
   );
+
   const promo = EPD_SUITE.find((e) => e.id === "promotion_mate_01");
   assert.equal(
     evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8q", depth: 8 } }).solved,
@@ -253,6 +257,16 @@ test("a fully solved deterministic EPD suite passes at score 1.0", async () => {
   assert.equal(perfect.passed, true);
   assert.deepEqual(perfect.detail.failedPositions, []);
   assert.equal(perfect.detail.requiredScore, 1);
+  assert.equal(perfect.detail.total, 13);
+  assert.equal(perfect.detail.solved, 13);
+  assert.equal(perfect.detail.legalMoves, 13);
+  assert.equal(perfect.detail.legalUnsolved, 0);
+  assert.equal(perfect.detail.illegalMoves, 0);
+  assert.equal(perfect.detail.noMove, 0);
+  assert.equal(perfect.detail.timeouts, 0);
+  assert.equal(perfect.detail.poolBusy, 0);
+  assert.equal(perfect.detail.engineErrors, 0);
+  assert.equal(perfect.detail.invalidPositions, 0);
 });
 
 test("one legal_unsolved position fails the deterministic gate with tactics_score", async () => {
@@ -304,6 +318,42 @@ test("every benchmark FEN and expected move is valid and legal", () => {
   assert.deepEqual(validateSuite(EPD_SUITE), []);
   assert.deepEqual(validateSuite(POSITION_SUITE), []);
   assert.ok(EPD_SUITE.length >= 8);
+});
+
+test("every suite FEN describes a legal game state", () => {
+  for (const entry of [...EPD_SUITE, ...POSITION_SUITE]) {
+    assert.deepEqual(validateGameState(entry.fen, entry.variant ?? "standard"), [], entry.id);
+  }
+});
+
+test("the retired black_mate_01 FEN is rejected as an illegal game state", () => {
+  // White was already in check with Black to move: undefined behaviour for a search.
+  assert.deepEqual(validateGameState("8/8/8/8/8/2k5/1q6/K7 b - - 0 1"), [
+    "side_not_to_move_in_check",
+  ]);
+});
+
+test("the replacement black_mate_01 FEN is legal and has a legal mate in one", () => {
+  const entry = EPD_SUITE.find((e) => e.id === "black_mate_01");
+  assert.equal(entry.fen, "8/8/8/8/8/2k5/2q5/K7 b - - 0 1");
+  assert.deepEqual(validateGameState(entry.fen), []);
+  const position = createPosition("standard", entry.fen);
+  const mates = position
+    .moves({ verbose: true })
+    .filter((m) => isCheckmate(applyMove("standard", entry.fen, m)))
+    .map((m) => `${m.from}${m.to}`);
+  assert.deepEqual(mates, ["c2b2"]);
+});
+
+test("game-state validation catches structurally impossible positions", () => {
+  assert.deepEqual(validateGameState("8/8/8/8/8/8/8/KK6 w - - 0 1").sort(), [
+    "black_king_count",
+    "white_king_count",
+  ]);
+  assert.ok(validateGameState("8/8/8/8/8/8/8/Kk6 w - - 0 1").includes("kings_adjacent"));
+  assert.ok(!validateGameState("k6K/8/8/8/8/8/8/8 w - - 0 1").includes("kings_adjacent"));
+  assert.ok(validateGameState("P6k/8/8/8/8/8/8/K7 w - - 0 1").includes("pawn_on_back_rank"));
+  assert.deepEqual(validateGameState("not-a-fen"), ["invalid_fen_syntax"]);
 });
 
 test("suite movetime defaults per kind and clamps to the stable window", () => {

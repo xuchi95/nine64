@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EXPECTED_SUITE="${EXPECTED_SUITE:-titan-v6-3}"
-EXPECTED_SERVICE_VERSION="${EXPECTED_SERVICE_VERSION:-play-engine-titan-v6.3}"
+EXPECTED_SUITE="${EXPECTED_SUITE:-titan-v6-4}"
+EXPECTED_SERVICE_VERSION="${EXPECTED_SERVICE_VERSION:-play-engine-titan-v6.4}"
 PLAY_ENGINE_URL="${PLAY_ENGINE_URL:-${1:-}}"
 
 fail() { printf 'DEPLOYMENT CONTRACT FAILED: %s\n' "$1" >&2; exit 1; }

@@ -5,7 +5,7 @@ command -v docker >/dev/null || { echo "SKIP: Docker is unavailable"; exit 0; }
 image="nine64/play-engine:smoke"
 name="nine64-play-engine-smoke-$$"
 trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
-docker build --build-arg SERVICE_BUILD_ID=play-engine-titan-v6.3-smoke -t "$image" .
+docker build --build-arg SERVICE_BUILD_ID=play-engine-titan-v6.4-smoke -t "$image" .
 docker run -d --name "$name" -p 127.0.0.1::8080 "$image" >/dev/null
 port="$(docker port "$name" 8080/tcp | awk -F: '{print $NF}')"
 for _ in $(seq 1 120); do

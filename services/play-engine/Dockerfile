@@ -21,7 +21,7 @@ RUN make -j"$(nproc)" profile-build ARCH=${ARCH} && make net && strip stockfish
 
 FROM node:20-slim AS runtime
 
-ARG SERVICE_BUILD_ID=play-engine-titan-v6.3
+ARG SERVICE_BUILD_ID=play-engine-titan-v6.4
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*
