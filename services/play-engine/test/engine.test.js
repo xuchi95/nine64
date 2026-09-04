@@ -193,14 +193,17 @@ test("a legal but non-tactical move is legal-not-solved, never illegal", () => {
   // Semantic goal: ANY legal mating move solves the position, even one that a
   // hard-coded expected-UCI list would have rejected.
   const black = EPD_SUITE.find((e) => e.id === "black_mate_01");
+  assert.equal(black.fen, "8/8/8/8/8/2k5/2q5/K7 b - - 0 1");
   assert.equal(
-    evaluatePosition(black, { ok: true, result: { bestmove: "c3c2", depth: 8 } }).solved,
+    evaluatePosition(black, { ok: true, result: { bestmove: "c2b2", depth: 8 } }).solved,
     true,
   );
+  // A legal but non-mating move is a tactical miss, never an execution error.
   assert.equal(
-    evaluatePosition(black, { ok: true, result: { bestmove: "c3b3", depth: 8 } }).solved,
-    true,
+    evaluatePosition(black, { ok: true, result: { bestmove: "c2c1", depth: 8 } }).errorCode,
+    "legal_unsolved",
   );
+
   const promo = EPD_SUITE.find((e) => e.id === "promotion_mate_01");
   assert.equal(
     evaluatePosition(promo, { ok: true, result: { bestmove: "e7e8q", depth: 8 } }).solved,
