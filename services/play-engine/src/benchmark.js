@@ -203,6 +203,10 @@ export function validateSuite(suite) {
       problems.push({ id: entry.id, fen: entry.fen, error: "invalid_fen" });
       continue;
     }
+    for (const error of validateGameState(entry.fen, variant)) {
+      problems.push({ id: entry.id, fen: entry.fen, error });
+    }
+
     const goal = entry.goal;
     if (!goal || !["checkmate", "acceptable_moves", "legal_move"].includes(goal.type)) {
       problems.push({ id: entry.id, fen: entry.fen, error: "invalid_goal" });
