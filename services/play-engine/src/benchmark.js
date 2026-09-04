@@ -89,7 +89,106 @@ export function classifyEngineError(err) {
   return "engine_error";
 }
 
+/** Board array (8 ranks x 8 files) parsed from the placement field, or null. */
+function parsePlacement(placement) {
+  const ranks = (placement ?? "").split("/");
+  if (ranks.length !== 8) return null;
+  const board = [];
+  for (const rank of ranks) {
+    const row = [];
+    for (const ch of rank) {
+      if (/[1-8]/.test(ch)) {
+        for (let i = 0; i < Number(ch); i += 1) row.push(null);
+      } else if (/[prnbqkPRNBQK]/.test(ch)) {
+        row.push(ch);
+      } else {
+        return null;
+      }
+    }
+    if (row.length !== 8) return null;
+    board.push(row);
+  }
+  return board;
+}
+
+function findPieces(board, piece) {
+  const found = [];
+  for (let r = 0; r < 8; r += 1) {
+    for (let f = 0; f < 8; f += 1) {
+      if (board[r][f] === piece) found.push({ r, f });
+    }
+  }
+  return found;
+}
+
+/** True when `fen` (any side to move) leaves that side's own king in check. */
+function sideToMoveInCheck(variant, fen) {
+  try {
+    const position = createPosition(variant, fen);
+    return typeof position.isCheck === "function" ? position.isCheck() : position.inCheck();
+  } catch {
+    return false;
+  }
+}
+
+function withSideToMove(fen, color) {
+  const parts = fen.trim().split(/\s+/);
+  if (parts.length < 2) return null;
+  parts[1] = color;
+  // A stale en-passant square belongs to the other side; drop it when flipping.
+  if (parts.length > 3) parts[3] = "-";
+  return parts.join(" ");
+}
+
+/**
+ * Proves that a FEN describes a LEGAL game state, not merely a parseable one.
+ * A benchmark must never search a position where the side that just moved is
+ * still in check — Stockfish's answer there is undefined behaviour.
+ * Returns an array of error codes (empty means legal).
+ */
+export function validateGameState(fen, variant = "standard") {
+  const errors = [];
+  const parts = typeof fen === "string" ? fen.trim().split(/\s+/) : [];
+  if (parts.length < 4) return ["invalid_fen_syntax"];
+  const [placement, active] = parts;
+  if (active !== "w" && active !== "b") errors.push("invalid_active_color");
+  const board = parsePlacement(placement);
+  if (!board) return [...errors, "invalid_fen_syntax"];
+
+  const whiteKings = findPieces(board, "K");
+  const blackKings = findPieces(board, "k");
+  if (whiteKings.length !== 1) errors.push("white_king_count");
+  if (blackKings.length !== 1) errors.push("black_king_count");
+  if (whiteKings.length === 1 && blackKings.length === 1) {
+    const dr = Math.abs(whiteKings[0].r - blackKings[0].r);
+    const df = Math.abs(whiteKings[0].f - blackKings[0].f);
+    if (Math.max(dr, df) <= 1) errors.push("kings_adjacent");
+  }
+  for (const rank of [0, 7]) {
+    if (board[rank].some((cell) => cell === "p" || cell === "P")) {
+      errors.push("pawn_on_back_rank");
+      break;
+    }
+  }
+  if (errors.length > 0) return [...new Set(errors)];
+
+  try {
+    createPosition(variant, fen);
+  } catch {
+    return ["invalid_fen_syntax"];
+  }
+
+  const other = active === "w" ? "b" : "w";
+  const otherFen = withSideToMove(fen, other);
+  const sideNotToMoveInCheck = otherFen ? sideToMoveInCheck(variant, otherFen) : false;
+  if (sideNotToMoveInCheck) errors.push("side_not_to_move_in_check");
+  if (sideNotToMoveInCheck && sideToMoveInCheck(variant, fen)) errors.push("both_kings_in_check");
+
+  return [...new Set(errors)];
+}
+
 /** Validates every suite FEN and every hard-coded acceptable move. */
+
 export function validateSuite(suite) {
   const problems = [];
   const seen = new Set();
