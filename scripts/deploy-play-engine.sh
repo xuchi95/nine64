@@ -11,8 +11,15 @@ CALLER_SERVICE_ACCOUNT="${CALLER_SERVICE_ACCOUNT:-nine64-backend@$PROJECT_ID.iam
 SUITE="titan-v6-4"
 
 command -v gcloud >/dev/null || { echo "gcloud is required" >&2; exit 1; }
-sha="$(git rev-parse --short=12 HEAD)"
-build_id="play-engine-titan-v6.4-$sha"
+# Build identity: git SHA when this is a repository, timestamp when the source
+# was extracted from a ZIP (no .git). Never abort with "not a git repository".
+if sha="$(git rev-parse --short=12 HEAD 2>/dev/null)" && test -n "$sha"; then
+  revision="$sha"
+else
+  revision="zip$(date -u +%Y%m%d%H%M%S)"
+fi
+build_id="play-engine-titan-v6.4-$revision"
+
 image="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/play-engine:$SUITE"
 
 gcloud artifacts repositories describe "$REPOSITORY" --project "$PROJECT_ID" --location "$REGION" >/dev/null
