@@ -59,7 +59,11 @@ function benchmarkIssues(row: BenchmarkRow): string {
     .map((key) => [key, Number(detail[key] ?? 0)] as const)
     .filter(([, value]) => value > 0)
     .map(([key, value]) => `${key}=${value}`);
-  return [...new Set([...reasons, ...counts])].join(", ");
+  const total = Number(detail["total"] ?? 0);
+  const solved = Number(detail["solved"] ?? 0);
+  const ratio = !row.passed && total > 0 ? [`${solved} / ${total}`] : [];
+  return [...new Set([...ratio, ...reasons, ...counts])].join(", ");
+
 }
 
 type DetailField = { key: string; value: string; tone?: string | undefined };
