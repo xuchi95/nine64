@@ -42,7 +42,7 @@ export const EPD_SUITE = [
   { id: "mate_queen_scholar_01", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", variant: "standard", goal: MATE_IN_ONE },
   { id: "promotion_mate_01", fen: "6k1/4Pppp/8/8/8/8/5PPP/6K1 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
   { id: "smothered_mate_01", fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", variant: "standard", goal: MATE_IN_ONE },
-  { id: "black_mate_01", fen: "8/8/8/8/8/2k5/1q6/K7 b - - 0 1", variant: "standard", goal: MATE_IN_ONE },
+  { id: "black_mate_01", fen: "8/8/8/8/8/2k5/2q5/K7 b - - 0 1", variant: "standard", goal: MATE_IN_ONE },
   { id: "black_mate_02", fen: "8/8/8/8/8/1qk5/8/K7 b - - 0 1", variant: "standard", goal: MATE_IN_ONE },
 ];
 
