@@ -112,6 +112,37 @@ function benchmarkDetailFields(
   ];
 }
 
+type FailedPosition = {
+  id: string;
+  fen: string;
+  bestmove: string;
+  legal: boolean;
+  solved: boolean;
+  reason: string;
+};
+
+/** Per-position failures stored on a benchmark row (secret-free, may be empty). */
+function benchmarkFailedPositions(row: BenchmarkRow): FailedPosition[] {
+  const raw = (row.result ?? {})["failedPositions"];
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const entry = item as Record<string, unknown>;
+    const str = (key: string) => (typeof entry[key] === "string" ? (entry[key] as string) : "—");
+    return [
+      {
+        id: str("id"),
+        fen: str("fen"),
+        bestmove: str("bestmove"),
+        legal: entry["legal"] === true,
+        solved: entry["solved"] === true,
+        reason: str("errorCode"),
+      },
+    ];
+  });
+}
+
+
 export const Route = createFileRoute("/_authenticated/admin/engine")({
   head: () => ({
     meta: [
